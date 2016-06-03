@@ -42,7 +42,7 @@ int LiBiNorm::main(int argc, char **argv)
 
 	transData.loadData(consFileName);
 	transData.remove_invalid_values();
-	consData.consolidateWith(transData,100);
+	transData.transferTo(consData,100);
 
 
 

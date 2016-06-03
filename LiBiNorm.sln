@@ -5,7 +5,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LiBiNorm", "LiBiNormSrc\LiB
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "bioinformaticsLib", "..\bioinformaticsLib\bioinformaticsLib.vcxproj", "{1BB748F9-A024-405E-8286-A2D2F85953F2}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mcmc", "mcmc\mcmc.vcxproj", "{24FD17EE-ECC8-4ABC-8F5F-0D29D10ABA5C}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mcmcLib", "mcmcLib\mcmcLib.vcxproj", "{24FD17EE-ECC8-4ABC-8F5F-0D29D10ABA5C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -45,7 +45,8 @@ Global
 		{24FD17EE-ECC8-4ABC-8F5F-0D29D10ABA5C}.Debug|Mixed Platforms.Build.0 = Debug|Win32
 		{24FD17EE-ECC8-4ABC-8F5F-0D29D10ABA5C}.Debug|Win32.ActiveCfg = Debug|Win32
 		{24FD17EE-ECC8-4ABC-8F5F-0D29D10ABA5C}.Debug|Win32.Build.0 = Debug|Win32
-		{24FD17EE-ECC8-4ABC-8F5F-0D29D10ABA5C}.Debug|x64.ActiveCfg = Debug|Win32
+		{24FD17EE-ECC8-4ABC-8F5F-0D29D10ABA5C}.Debug|x64.ActiveCfg = Debug|x64
+		{24FD17EE-ECC8-4ABC-8F5F-0D29D10ABA5C}.Debug|x64.Build.0 = Debug|x64
 		{24FD17EE-ECC8-4ABC-8F5F-0D29D10ABA5C}.Release|Mixed Platforms.ActiveCfg = Release|Win32
 		{24FD17EE-ECC8-4ABC-8F5F-0D29D10ABA5C}.Release|Mixed Platforms.Build.0 = Release|Win32
 		{24FD17EE-ECC8-4ABC-8F5F-0D29D10ABA5C}.Release|Win32.ActiveCfg = Release|Win32

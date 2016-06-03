@@ -36,3 +36,23 @@ int transcriptDataMap::loadData(const string filename)
 
 	return EXIT_SUCCESS;
 }
+
+void transcriptDataMap::transferTo(dataType & mcmcData,size_t maxLength)
+//void dataType::consolidateWith(transcriptDataMap & transData,size_t maxLength)
+{
+	for (auto & gene : *this)
+	{
+		for (auto & counts : gene.second.counts)
+		{
+			counts.selectAtMost(maxLength);
+
+			size_t insertSize = max<size_t>(maxLength,counts.size());
+			mcmcData[0].append(counts);
+			mcmcData[1].append(counts.size(),gene.second.length);
+			//Still need data[2]
+		}
+
+	}
+
+}
+

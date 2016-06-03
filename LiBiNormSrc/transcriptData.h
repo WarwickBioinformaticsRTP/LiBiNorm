@@ -2,7 +2,7 @@
 #define TRANSDATA_H
 
 #include <map>
-#include "LogLiklihoods.h"
+#include "dataVec.h"
 
 using namespace std;
 
@@ -32,6 +32,7 @@ class transcriptDataMap : public map<string,transcriptData>
 public:
 	void remove_invalid_values();
 	int loadData(const string filename);
+	void transferTo(dataType & mcmcData,size_t maxLength);
 
 };
 
