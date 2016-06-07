@@ -5,6 +5,9 @@
 #include "dataVec.h"
 #include "params.h"
 
+
+double rand(double a);
+
 /*
 % MODEL   model options structure
 %    model.ssfun    -2*log(likelihood) function
@@ -18,7 +21,7 @@
 class modelType
 {
 public:
-	double (*ssfun)(dataVec & param, dataType & data);
+	double (*ssfun)(const dataVec & param, const dataType & data);
 
 };
 
@@ -38,11 +41,18 @@ public:
 
 class mcmc
 {
+	std::vector<dataVec> _chain;
+	dataVec _sschain;
 public:
+	double rej,reju,ii,rejl;
+
+	const std::vector<dataVec> & chain() {return _chain;};
 	mcmc(void);
 	~mcmc(void);
 
 	void mcmcrun(const modelType & model, const dataType & data,const paramSet & params,const optionsType & options);
+	double priorfun(const dataVec & th, const dataVec & mu, const dataVec & sig);
+
 };
 
 

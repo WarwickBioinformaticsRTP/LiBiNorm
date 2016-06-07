@@ -5,7 +5,8 @@
 #include "dataVec.h"
 
 
-double FLL_ModelBD(dataVec & param, dataType & data);
+double FLL_ModelBD(const dataVec & param, const dataType & data);
+double FLL_ModelB(const dataVec & param, const dataType & data);
 
 
 

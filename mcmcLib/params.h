@@ -13,16 +13,20 @@ public:
 	std::string name;
 	double value, min, max, pri_mu, pri_sig;
 	bool targetflag, localflag;
-
 };
 
 class paramSet: public vectorEx<paramType>
 {
 public:
+	//  template constructors do not require explicit declaration of the template type when they are used, as this is taken from the types
+	//	in the constructor
 	template<typename... P>paramSet(const P & ... params) : vectorEx<paramType>(params...){};
+	bool isValid(const dataVec & data) const;
 
 	dataVec getvalues() const;
 	dataVec getSigmas() const;
+	dataVec getMus() const;
+
 };
 
 #endif

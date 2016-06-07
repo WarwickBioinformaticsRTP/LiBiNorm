@@ -8,45 +8,46 @@ class dataVec: public std::vector<double>
 {
 public:
 	dataVec(size_t s = 0): std::vector<double>(s){};
+	dataVec(const std::vector<double> & a): std::vector<double>(a){};
 
 	vector<double> & values() { return *this;};
 
-	dataVec operator > (double a) 
+	dataVec operator > (double a) const
 	{
 		dataVec retVal(size());
 		for (size_t i = 0; i < size();i++)
 			retVal[i] = at(i)>a?1:0;
 		return retVal;
 	}
-	dataVec operator - (double a) 
+	dataVec operator - (double a) const
 	{
 		dataVec retVal(size());
 		for (size_t i = 0; i < size();i++)
 			retVal[i] = at(i) - a;
 		return retVal;
 	}
-	dataVec operator + (double a) 
+	dataVec operator + (double a) const
 	{
 		dataVec retVal(size());
 		for (size_t i = 0; i < size();i++)
 			retVal[i] = at(i) + a;
 		return retVal;
 	}
-	dataVec operator / (double a) 
+	dataVec operator / (double a) const
 	{
 		dataVec retVal(size());
 		for (size_t i = 0; i < size();i++)
 			retVal[i] = at(i) / a;
 		return retVal;
 	}
-	dataVec operator * (double a)
+	dataVec operator * (double a) const
 	{
 		dataVec retVal(size());
 		for (size_t i = 0; i < size();i++)
 			retVal[i] = at(i) * a;
 		return retVal;
 	}
-	dataVec operator ^ (double a)
+	dataVec operator ^ (double a) const
 	{
 		dataVec retVal(size());
 		for (size_t i = 0; i < size();i++)
@@ -54,39 +55,47 @@ public:
 		return retVal;
 	}
 
-	dataVec operator * (const dataVec & a)
+	dataVec operator * (const dataVec & a) const
 	{
 		dataVec retVal(size());
 		for (size_t i = 0; i < size();i++)
 			retVal[i] = at(i) * a[i];
 		return retVal;
 	}
-	dataVec operator / (const dataVec & a)
+	dataVec operator / (const dataVec & a) const 
 	{
 		dataVec retVal(size());
 		for (size_t i = 0; i < size();i++)
 			retVal[i] = at(i) / a[i];
 		return retVal;
 	}
-	dataVec operator + (const dataVec & a)
+	dataVec operator + (const dataVec & a) const
 	{
 		dataVec retVal(size());
 		for (size_t i = 0; i < size();i++)
 			retVal[i] = at(i) + a[i];
 		return retVal;
 	}
-	dataVec operator - (const dataVec & a)
+	dataVec operator - (const dataVec & a) const 
 	{
 		dataVec retVal(size());
 		for (size_t i = 0; i < size();i++)
 			retVal[i] = at(i) - a[i];
 		return retVal;
 	}
-	dataVec operator - ()
+	dataVec operator - () const
 	{
 		dataVec retVal(size());
 		for (size_t i = 0; i < size();i++)
 			retVal[i] = -at(i);
+		return retVal;
+	}
+
+	double sum() const
+	{
+		double retVal = 0;
+		for (auto & i : *this)
+			retVal += i;
 		return retVal;
 	}
 
@@ -135,6 +144,15 @@ public:
 		resize(j - begin());
 		return *this;
 	}
+
+	dataVec chol();
+
+};
+
+class dataArray : public std::vector<dataVec>
+{
+public:
+	dataArray(size_t s): std::vector<dataVec>(s,dataVec(s)){};
 };
 
 inline double sum(const dataVec & a)
@@ -197,6 +215,7 @@ class dataType
 	std::vector<dataVec> data;
 public:
 	dataVec & operator [] (int i) { return data[i];};
+	const dataVec & operator [] (int i) const { return data[i];};
 
 	dataType() : data(3){};
 };

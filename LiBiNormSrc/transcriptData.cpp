@@ -84,7 +84,7 @@ void transcriptDataMap::transferTo(dataType & mcmcData,size_t maxLength)
 
 			mcmcData[0].append(counts);
 			mcmcData[1].append(counts.size(),gene.second.length);
-			mcmcData[1].append(counts.size(),freq[gene.second.histoGram_ind]);
+			mcmcData[2].append(counts.size(),freq[gene.second.histoGram_ind]);
 		}
 
 	}

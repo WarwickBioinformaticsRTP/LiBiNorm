@@ -1,8 +1,15 @@
-#include "mcmc.h"
 #include <random>
+#include "mcmc.h"
 
 using namespace std;
 
+double rand(double a)
+{
+	static std::random_device rd;
+	static std::mt19937 gen(rd());
+	static std::uniform_real_distribution<> dis(0, 1);
+	return dis(gen) * a;
+}
 
 
 dataVec randn(size_t x)
@@ -10,7 +17,7 @@ dataVec randn(size_t x)
 	static	std::default_random_engine generator;
 	static	std::normal_distribution<double> distribution;
 
-	dataVec retVal;
+	dataVec retVal(x);
 	for (auto & i : retVal)
 		i = distribution(generator);
 	return retVal;
@@ -26,21 +33,50 @@ mcmc::~mcmc(void)
 {
 }
 
+double mcmc::priorfun(const dataVec & th, const dataVec & mu, const dataVec & sig)
+{
+	  return (((th-mu)/sig)^2).sum();
+}
 void mcmc::mcmcrun(const modelType & model,const dataType & data,const paramSet & params,const optionsType & options)
 {
 
+	dataVec qcov = options.qcov;
 	size_t npar = params.size();
 	dataVec oldpar = params.getvalues();
+	dataVec thetamu = params.getMus();
+	dataVec thetasig = params.getSigmas();
 
-	dataVec qcov = params.getSigmas()^2.0;
-
-	for (size_t i = 0;i < qcov.size();i++)
+/*	if (qcov.empty())
 	{
-		if (qcov[i] ==0)
-			qcov[i] = 1;
+		qcov = params.getSigmas()^2.0;
+
+		for (size_t i = 0;i < qcov.size();i++)
+		{
+			if (qcov[i] ==0)
+				qcov[i] = 1;
+		}
 	}
 
-	double qcov_scale = 2.4 / sqrt(npar);
+	double qcov_scale = 2.4 / sqrt(npar);*/
+	dataVec R = qcov.chol();
+
+
+	double ss = model.ssfun(oldpar,data);
+//	ss = sseval(ssfun,ssstyle,oldpar,parind,value,local,data,modelfun);
+	double ss1 = ss;
+	double ss2 = ss;
+
+	double oldprior = priorfun(oldpar,thetamu,thetasig);
+
+	double sigma2 = 1;
+
+	_chain.resize(options.nsimu);
+	_sschain.resize(options.nsimu);
+	_chain[0] = oldpar;
+	_sschain[0] = ss;
+
+	rej=0; reju=0; ii=1; rejl = 0;
+
 
 /*
 if isempty(qcov)
@@ -103,8 +139,13 @@ for isimu=2:nsimu % simulation loop
   message(verbosity,100,'i:%d/%d\n',isimu,nsimu);
 */
 
-	for (size_t isimu = 2; isimu <= options.nsimu; isimu++)
+	bool accept,outbound;
+	double newprior,tst;
+	int chainind = 0;
+	for (size_t isimu = 1; isimu < options.nsimu; isimu++)
 	{
+		chainind++;
+
 
 
 /*
@@ -147,7 +188,37 @@ for isimu=2:nsimu % simulation loop
 
 */
 	dataVec u = randn(params.size());
-//	paramSet newpar = oldpar + u*R;
+	dataVec newpar = oldpar + u*R;
+
+	if (!params.isValid(newpar))
+	{
+		accept = false;
+		newprior = 0;
+		tst      = 0;
+		ss1      = std::numeric_limits<double>::max();
+		ss2      = ss;
+		outbound = true;
+
+	}
+	else
+	{
+		outbound = false;
+		newprior = priorfun(newpar,thetamu,thetasig);
+
+		ss2 = ss;             //old ss
+		ss1 = model.ssfun(newpar,data);
+
+		tst = exp(-0.5*( (ss1-ss2)/sigma2) + newprior-oldprior); //???????????????
+		if (tst <= 0)
+			accept = false;
+		else if (tst >= 1)
+			accept = true;
+		else if (tst > rand(1))
+			accept = true;
+		else
+			accept = false;
+
+	}
 
 
 /*
@@ -205,5 +276,44 @@ for isimu=2:nsimu % simulation loop
   end % DR --------------------------------------------------------
   */
 
-	}
+/*
+	  if accept
+	%%% accept
+	chain(chainind,:) = newpar;
+	oldpar     = newpar;
+	oldprior   = newprior;
+	ss         = ss1;
+	if dostats2
+	  accechain(chainind) = 1;
+	end
+  else
+	%%%% reject
+	chain(chainind,:) = oldpar;
+	rej        = rej + 1;
+	reju       = reju + 1;
+	if outbound
+	  rejl     = rejl + 1;
+	end
+  end
+  */
+
+  if (accept)
+  {
+	  _chain[chainind] = newpar;
+	  oldpar     = newpar;
+	  oldprior   = newprior;
+	  ss         = ss1;
   }
+  else
+  {
+	  _chain[chainind] = oldpar;
+	  rej++;
+	  reju++;
+	  if (outbound)
+		  rejl++;
+  }
+
+  _sschain[chainind]=ss;
+
+}
+}
