@@ -10,6 +10,7 @@ class transcriptData
 {
 public:
 	int length;
+	int histoGram_ind;
 	vector<dataVec > counts;
 	transcriptData(): counts(2),length(0) {	};
 
@@ -30,9 +31,13 @@ public:
 class transcriptDataMap : public map<string,transcriptData>
 {
 public:
+	vector<int> freq;
+
 	void remove_invalid_values();
 	int loadData(const string filename);
+	void histc (const vector<int> E);
 	void transferTo(dataType & mcmcData,size_t maxLength);
+
 
 };
 

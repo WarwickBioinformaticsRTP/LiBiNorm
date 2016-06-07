@@ -21,10 +21,12 @@
   <ItemGroup>
     <ClInclude Include="dataVec.h" />
     <ClInclude Include="mcmc.h" />
+    <ClInclude Include="params.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dataVec.cpp" />
     <ClCompile Include="mcmc.cpp" />
+    <ClCompile Include="params.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{24FD17EE-ECC8-4ABC-8F5F-0D29D10ABA5C}</ProjectGuid>
@@ -91,6 +93,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <AdditionalIncludeDirectories>../../bioinformaticsLib</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -118,6 +121,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <AdditionalIncludeDirectories>../../bioinformaticsLib</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>

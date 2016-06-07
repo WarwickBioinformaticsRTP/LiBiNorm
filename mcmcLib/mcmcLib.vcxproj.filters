@@ -21,12 +21,18 @@
     <ClInclude Include="dataVec.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="params.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="mcmc.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="dataVec.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="params.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

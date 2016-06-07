@@ -4,8 +4,6 @@
 #include <vector>
 #include <string>
 
-class transcriptDataMap;
-
 class dataVec: public std::vector<double>
 {
 public:
@@ -194,11 +192,6 @@ inline dataVec operator - (double a, dataVec && b)
 	return b;
 }
 
-
-
-
-
-typedef std::vector<double> paramType;
 class dataType 
 {
 	std::vector<dataVec> data;
