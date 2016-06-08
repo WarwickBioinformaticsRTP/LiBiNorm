@@ -11,7 +11,7 @@ void transcriptDataMap::histc (const vector<int> E)
 	freq.assign (E.size(),0);
 	for (auto & i : *this)
 	{
-		double v = i.second.length;
+		double v = i.length;
 		size_t l = 0;
 		size_t h = E.size()-1;
 		size_t k = l;
@@ -27,7 +27,7 @@ void transcriptDataMap::histc (const vector<int> E)
 			k = h;
 		else
 			k = l;
-		i.second.histoGram_ind = k;
+		i.histoGram_ind = k;
 		freq[k]++;
 	}
 }
@@ -37,7 +37,7 @@ void transcriptDataMap::histc (const vector<int> E)
 void transcriptDataMap::remove_invalid_values()
 {
 	for (auto & i : *this)
-		i.second.remove_invalid_values();
+		i.remove_invalid_values();
 }
 
 int transcriptDataMap::loadData(const string filename)
@@ -55,10 +55,11 @@ int transcriptDataMap::loadData(const string filename)
 		transcriptData tempData;
 
 		getline(f,buffer);
-		parseTsv(buffer,gene,tempData.length," ",direction,tempData.counts[0].values());
+		parseTsv(buffer,tempData.gene,tempData.length," ",direction,tempData.counts[0].values());
 		getline(f,buffer);
-		parseTsv(buffer,gene,tempData.length," ",direction,tempData.counts[1].values());
-		emplace(gene,move(tempData));
+		parseTsv(buffer,tempData.gene,tempData.length," ",direction,tempData.counts[1].values());
+		push_back(move(tempData));
+
 		a++;
 	}
 
@@ -69,22 +70,30 @@ void transcriptDataMap::transferTo(dataType & mcmcData,size_t maxLength)
 //void dataType::consolidateWith(transcriptDataMap & transData,size_t maxLength)
 {
 	vectorEx<int> bins(0,300);
-	for (size_t i = 500;i <= 10000;i++)
+	for (size_t i = 500;i <= 10000;i+=500)
 		bins.push_back(i);
 	bins.add(11000,12000,13000,15000,30000);
 
 
 	histc(bins);
 
+	freq[0] = freq[0]*2;
+	freq[1] = freq[1]*2;
+	freq[21] = freq[21]/2;
+	freq[22] = freq[22]/2;
+	freq[23] = freq[23]/6;
+	freq[24] = freq[24]/6;
+
+
 	for (auto & gene : *this)
 	{
-		for (auto & counts : gene.second.counts)
+		for (auto & counts : gene.counts)
 		{
 			counts.selectAtMost(maxLength);
 
 			mcmcData[0].append(counts);
-			mcmcData[1].append(counts.size(),gene.second.length);
-			mcmcData[2].append(counts.size(),freq[gene.second.histoGram_ind]);
+			mcmcData[1].append(counts.size(),gene.length);
+			mcmcData[2].append(counts.size(),freq[gene.histoGram_ind]);
 		}
 
 	}

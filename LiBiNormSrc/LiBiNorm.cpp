@@ -78,9 +78,13 @@ int LiBiNorm::main(int argc, char **argv)
 		for (size_t kk = 1; kk <= Nruns; kk++)
 		{
 			cout << kk << endl; 
-			//create input arguments for the dramrun function
-			vectorEx<double> p0(rand(3), rand(3), rand(4)-5, rand(4)-5, rand(1));
 
+//#define _TEST
+#ifdef _TEST
+			vectorEx<double> p0(1.5, 1.6,-3.1, -3.2);
+#else
+			vectorEx<double> p0(rand(3), rand(3), rand(4)-5, rand(4)-5, rand(1));
+#endif
 			switch (Model)
 			{
 			case 2: case 4: case 5:
