@@ -4,6 +4,9 @@
 #include "mcmc.h"
 #include "dataVec.h"
 
+#ifdef _DEBUG
+#define VERIFY_SPEEDUP
+#endif
 
 double FLL_ModelBD(const dataVec & param, const dataType & data);
 double FLL_ModelB(const dataVec & param, const dataType & data);

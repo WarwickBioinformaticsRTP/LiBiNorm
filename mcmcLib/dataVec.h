@@ -305,12 +305,12 @@ dataVec operator > (dataVec && a,double b);
 
 class dataType 
 {
-	std::vector<dataVec> data;
+	dataVec data[3];
+
 public:
 	dataVec & operator [] (int i) { return data[i];};
 	const dataVec & operator [] (int i) const { return data[i];};
 
-	dataType() : data(3){};
 };
 
 #endif

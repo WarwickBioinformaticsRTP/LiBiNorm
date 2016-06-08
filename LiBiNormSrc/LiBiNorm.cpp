@@ -57,7 +57,11 @@ int LiBiNorm::main(int argc, char **argv)
 
 	double JumpSize = 0.01;
 	options.nsimu = 2000;
+#ifdef _DEBUG
+	size_t Nruns = 10;
+#else
 	size_t Nruns = 100;
+#endif
 
 	double drscale  = 0;
 	double adaptint = 0;
@@ -104,7 +108,7 @@ int LiBiNorm::main(int argc, char **argv)
 			
 			mcmcEngine.mcmcrun(model,consData,params,options);
 
-			Chain.push_back(mcmcEngine.chain());
+//			Chain.push_back(mcmcEngine.chain());
 
 		}
 	}
