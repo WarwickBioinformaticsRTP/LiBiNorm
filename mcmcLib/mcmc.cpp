@@ -35,7 +35,7 @@ mcmc::~mcmc(void)
 
 double mcmc::priorfun(const dataVec & th, const dataVec & mu, const dataVec & sig)
 {
-	  return (((th-mu)/sig)^2).sum();
+	  return sum(((th-mu)/sig)^2);
 }
 void mcmc::mcmcrun(const modelType & model,const dataType & data,const paramSet & params,const optionsType & options)
 {
@@ -68,7 +68,7 @@ void mcmc::mcmcrun(const modelType & model,const dataType & data,const paramSet 
 
 	double oldprior = priorfun(oldpar,thetamu,thetasig);
 
-	double sigma2 = 1;
+	double sigma2 = model.sigma2;
 
 	_chain.resize(options.nsimu);
 	_sschain.resize(options.nsimu);

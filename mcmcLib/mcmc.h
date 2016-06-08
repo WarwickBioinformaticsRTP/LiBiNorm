@@ -21,8 +21,8 @@ double rand(double a);
 class modelType
 {
 public:
+	double sigma2;
 	double (*ssfun)(const dataVec & param, const dataType & data);
-
 };
 
 

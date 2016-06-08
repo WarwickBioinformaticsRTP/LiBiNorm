@@ -6,7 +6,7 @@
     <LocalDebuggerDebuggerType>Mixed</LocalDebuggerDebuggerType>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LocalDebuggerCommandArguments>-c "D:\Hebenstreit\ReferenceData\Test.plus.minus.txt"</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>-c "D:\MATLAB\Hebenstreit\TestLessThan100.plus.minus.txt"</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
 </Project>

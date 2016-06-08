@@ -66,6 +66,8 @@ int LiBiNorm::main(int argc, char **argv)
 
 	options.method = method;
 
+	model.sigma2 = 1;
+
 	for (size_t Model = 2; Model < 3;Model++)
 	{
 		switch (Model)

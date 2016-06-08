@@ -19,42 +19,19 @@ public:
 			retVal[i] = at(i)>a?1:0;
 		return retVal;
 	}
-	dataVec operator - (double a) const
+	dataVec operator < (const dataVec & a) const
 	{
 		dataVec retVal(size());
 		for (size_t i = 0; i < size();i++)
-			retVal[i] = at(i) - a;
+			retVal[i] = at(i)<a[i]?1:0;
 		return retVal;
 	}
-	dataVec operator + (double a) const
+	dataVec operator < (dataVec && a) const
 	{
-		dataVec retVal(size());
 		for (size_t i = 0; i < size();i++)
-			retVal[i] = at(i) + a;
-		return retVal;
+			a[i] = at(i)<a[i]?1:0;
+		return a;
 	}
-	dataVec operator / (double a) const
-	{
-		dataVec retVal(size());
-		for (size_t i = 0; i < size();i++)
-			retVal[i] = at(i) / a;
-		return retVal;
-	}
-	dataVec operator * (double a) const
-	{
-		dataVec retVal(size());
-		for (size_t i = 0; i < size();i++)
-			retVal[i] = at(i) * a;
-		return retVal;
-	}
-/*	dataVec operator ^ (double a)
-	{
-		dataVec retVal(size());
-		for (size_t i = 0; i < size();i++)
-			retVal[i] = pow(at(i),a);
-		return retVal;
-	}
-*/
 	dataVec operator * (const dataVec & a) const
 	{
 		dataVec retVal(size());
@@ -107,14 +84,6 @@ public:
 		dataVec retVal(size());
 		for (size_t i = 0; i < size();i++)
 			retVal[i] = -at(i);
-		return retVal;
-	}
-
-	double sum() const
-	{
-		double retVal = 0;
-		for (auto & i : *this)
-			retVal += i;
 		return retVal;
 	}
 
@@ -173,6 +142,8 @@ class dataArray : public std::vector<dataVec>
 public:
 	dataArray(size_t s): std::vector<dataVec>(s,dataVec(s)){};
 };
+
+
 
 inline double sum(const dataVec & a)
 {
@@ -245,11 +216,26 @@ inline dataVec operator + (dataVec && a,double b)
 		a[i] += b;
 	return a;
 }
+inline dataVec operator + (const dataVec & a ,double b)
+{
+	dataVec retVal(a.size());
+	for (size_t i = 0; i < a.size();i++)
+		retVal[i] = a[i] + b;
+	return retVal;
+}
+
 inline dataVec operator - (dataVec && a,double b)
 {
 	for (size_t i = 0; i < a.size();i++)
 		a[i] -= b;
 	return a;
+}
+inline dataVec operator - (const dataVec & a ,double b)
+{
+	dataVec retVal(a.size());
+	for (size_t i = 0; i < a.size();i++)
+		retVal[i] = a[i] - b;
+	return retVal;
 }
 inline dataVec operator * (dataVec && a,double b)
 {
@@ -257,12 +243,28 @@ inline dataVec operator * (dataVec && a,double b)
 		a[i] *= b;
 	return a;
 }
+inline dataVec operator * (const dataVec & a ,double b)
+{
+	dataVec retVal(a.size());
+	for (size_t i = 0; i < a.size();i++)
+		retVal[i] = a[i] * b;
+	return retVal;
+}
+
 inline dataVec operator / (dataVec && a,double b)
 {
 	for (size_t i = 0; i < a.size();i++)
 		a[i] /= b;
 	return a;
 }
+inline dataVec operator / (const dataVec & a ,double b)
+{
+	dataVec retVal(a.size());
+	for (size_t i = 0; i < a.size();i++)
+		retVal[i] = a[i] / b;
+	return retVal;
+}
+
 
 inline dataVec operator ^ (dataVec && a,int b)
 {
@@ -271,15 +273,6 @@ inline dataVec operator ^ (dataVec && a,int b)
 			a[i] *= a[i];
 	return a;
 }
-/*
-inline dataVec operator ^ (dataVec && a,double b)
-{
-	for (size_t i = 0; i < a.size();i++)
-			a[i] = pow(a[i],b);
-	return a;
-}
-*/
-
 
 inline dataVec operator > (dataVec && a,double b)
 {
@@ -287,8 +280,28 @@ inline dataVec operator > (dataVec && a,double b)
 		a[i] = a[i]>b?1:0;
 	return a;
 }
+/*
+double sum(const dataVec & a);
+dataVec exp(dataVec && a);
+dataVec log(dataVec && a);
+dataVec operator * (double a, const dataVec & b);
+dataVec operator * (double a, dataVec && b);
+dataVec operator < (double a, const dataVec & b);
+dataVec operator < (double a, dataVec && b);
+dataVec operator - (double a, const dataVec & b);
+dataVec operator - (double a, dataVec && b);
+dataVec operator + (dataVec && a,double b);
+dataVec operator + (const dataVec & a ,double b);
+dataVec operator - (dataVec && a,double b);
+dataVec operator - (const dataVec & a ,double b);
+dataVec operator * (dataVec && a,double b);
+dataVec operator * (const dataVec & a ,double b);
+dataVec operator / (dataVec && a,double b);
+dataVec operator / (const dataVec & a ,double b);
+dataVec operator ^ (dataVec && a,int b);
+dataVec operator > (dataVec && a,double b);
 
-
+*/
 
 class dataType 
 {
