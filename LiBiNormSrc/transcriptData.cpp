@@ -85,18 +85,25 @@ void transcriptDataMap::transferTo(dataType & mcmcData,size_t maxLength)
 	freq[24] = freq[24]/6;
 
 
+	size_t geneIndex = 0;
+	mcmcData.geneData[0].resize(size());
+	mcmcData.geneData[1].resize(size());
+
+
 	for (auto & gene : *this)
 	{
 		for (auto & counts : gene.counts)
 		{
 			counts.selectAtMost(maxLength);
 
-			mcmcData[0].append(counts);
-			mcmcData[1].append(counts.size(),gene.length);
-			mcmcData[2].append(counts.size(),freq[gene.histoGram_ind]);
+			mcmcData.fragData.append(counts);
+
+			mcmcData.geneIndex.insert(mcmcData.geneIndex.end(),counts.size(),geneIndex);//gene.length);
 		}
+		mcmcData.geneData[0][geneIndex] = gene.length;
+		mcmcData.geneData[1][geneIndex] = freq[gene.histoGram_ind];
 
+		geneIndex++;
 	}
-
 }
 

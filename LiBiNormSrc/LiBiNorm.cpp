@@ -85,7 +85,9 @@ int LiBiNorm::main(int argc, char **argv)
 		{
 			cout << kk << endl; 
 
-//#define _TEST
+#ifdef _DEBUG
+#define _TEST
+#endif
 #ifdef _TEST
 			vectorEx<double> p0(1.5, 1.6,-3.1, -3.2);
 #else

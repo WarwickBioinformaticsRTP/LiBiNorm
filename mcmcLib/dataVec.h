@@ -135,6 +135,14 @@ public:
 
 	dataVec chol();
 
+	dataVec operator () (const vector<int> & i) const
+	{
+		dataVec retVal(i.size());
+		for (size_t j = 0;j < i.size();j++)
+			retVal[j] = at(i[j]);
+		return retVal;
+	}
+
 };
 
 class dataArray : public std::vector<dataVec>
@@ -305,12 +313,10 @@ dataVec operator > (dataVec && a,double b);
 
 class dataType 
 {
-	dataVec data[3];
-
 public:
-	dataVec & operator [] (int i) { return data[i];};
-	const dataVec & operator [] (int i) const { return data[i];};
-
+	dataVec fragData;
+	std::vector<int> geneIndex;
+	dataVec geneData[2];
 };
 
 #endif
