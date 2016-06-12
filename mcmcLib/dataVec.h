@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <string>
+#include <valarray>
 
 class dataVec: public std::vector<double>
 {
@@ -89,7 +90,7 @@ public:
 
 	bool does_not_contain_null()
 	{
-		for (auto & i : *this)
+		for (double & i : *this)
 			if (i == 0)
 				return false;
 		return true;
@@ -113,7 +114,7 @@ public:
 		iterator i = begin();
 		for (size_t j = 0;j < s;j++)
 		{
-			std::swap (*(i),*(begin() + rand() % size()));
+			std::swap (*(i++),*(begin() + rand() % size()));
 		}
 		resize(s);
 	}
@@ -163,14 +164,14 @@ inline double sum(const dataVec & a)
 
 inline dataVec exp(dataVec && a)
 {
-	for (size_t i = 0; i < a.size();i++)
-		a[i] = exp(a[i]);
+	for (double & i : a)
+		i = exp(i);
 	return a;
 }
 inline dataVec log(dataVec && a)
 {
-	for (size_t i = 0; i < a.size();i++)
-		a[i] = log(a[i]);
+	for (double & i : a)
+		i = log(i);
 	return a;
 }
 
@@ -184,8 +185,8 @@ inline dataVec operator * (double a, const dataVec & b)
 
 inline dataVec operator * (double a, dataVec && b)
 {
-	for (size_t i = 0; i < b.size();i++)
-		b[i] *= a;
+	for (double & i : b)
+		i *= a;
 	return b;
 }
 
@@ -198,8 +199,8 @@ inline dataVec operator < (double a, const dataVec & b)
 }
 inline dataVec operator < (double a, dataVec && b)
 {
-	for (size_t i = 0; i < b.size();i++)
-		b[i] = a < b[i]?1:0;
+	for (double & i : b)
+		i = a < i?1:0;
 	return b;
 }
 
@@ -213,15 +214,15 @@ inline dataVec operator - (double a, const dataVec & b)
 }
 inline dataVec operator - (double a, dataVec && b)
 {
-	for (size_t i = 0; i < b.size();i++)
-		b[i] = a - b[i];
+	for (double & i : b)
+		i = a - i;
 	return b;
 
 }
 inline dataVec operator + (dataVec && a,double b)
 {
-	for (size_t i = 0; i < a.size();i++)
-		a[i] += b;
+	for (double & i : a)
+		i += b;
 	return a;
 }
 inline dataVec operator + (const dataVec & a ,double b)
@@ -234,8 +235,8 @@ inline dataVec operator + (const dataVec & a ,double b)
 
 inline dataVec operator - (dataVec && a,double b)
 {
-	for (size_t i = 0; i < a.size();i++)
-		a[i] -= b;
+	for (double & i : a)
+		i -= b;
 	return a;
 }
 inline dataVec operator - (const dataVec & a ,double b)
@@ -247,8 +248,8 @@ inline dataVec operator - (const dataVec & a ,double b)
 }
 inline dataVec operator * (dataVec && a,double b)
 {
-	for (size_t i = 0; i < a.size();i++)
-		a[i] *= b;
+	for (double &  i : a)
+		i *= b;
 	return a;
 }
 inline dataVec operator * (const dataVec & a ,double b)
@@ -261,8 +262,8 @@ inline dataVec operator * (const dataVec & a ,double b)
 
 inline dataVec operator / (dataVec && a,double b)
 {
-	for (size_t i = 0; i < a.size();i++)
-		a[i] /= b;
+	for (double &  i : a)
+		i /= b;
 	return a;
 }
 inline dataVec operator / (const dataVec & a ,double b)
@@ -277,15 +278,15 @@ inline dataVec operator / (const dataVec & a ,double b)
 inline dataVec operator ^ (dataVec && a,int b)
 {
 	for (int p = 0;p < b;p++)
-		for (size_t i = 0; i < a.size();i++)
-			a[i] *= a[i];
+		for (double & i : a)
+			i *= i;
 	return a;
 }
 
 inline dataVec operator > (dataVec && a,double b)
 {
-	for (size_t i = 0; i < a.size();i++)
-		a[i] = a[i]>b?1:0;
+	for (double &  i : a)
+		i = i>b?1:0;
 	return a;
 }
 /*

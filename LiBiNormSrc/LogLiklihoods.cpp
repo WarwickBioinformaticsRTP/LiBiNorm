@@ -69,12 +69,12 @@ double FLL_ModelB(const dataVec & param, const dataType & data)
 
 	dataVec exp_l_t1_t2 = exp(-L * (t1+t2));
 
-	dataVec exp_l_t1_t2_full = exp_l_t1_t2(geneIndex);
+	dataVec t2_exp_l_t1_t2_full = t2*exp_l_t1_t2(geneIndex);
 	dataVec l = L(geneIndex);
-	dataVec exp_c_l_t1_t2 = exp((x-l)*(t1+t2));
+	dataVec t1_exp_c_l_t1_t2 = t1*exp((x-l)*(t1+t2));
 
 //	dataVec f_frag = ((x> h)*(x < (l-h)) * (t1*exp((x-l-h)*(t1+t2)) + t2*exp_l_t1_t2_full) + (t1*exp((x-l)*(t1+t2)) + t2*exp_l_t1_t2_full)/d)/(t1+t2);
-	dataVec f_frag = ((x> h)*(x < (l-h)) * (t1*exp_c_l_t1_t2/exp(h*(t1+t2)) + t2*exp_l_t1_t2_full) + (t1*exp_c_l_t1_t2 + t2*exp_l_t1_t2_full)/d)/(t1+t2);
+	dataVec f_frag = ((x> h)*(x < (l-h)) * (t1_exp_c_l_t1_t2/exp(h*(t1+t2)) + t2_exp_l_t1_t2_full) + (t1_exp_c_l_t1_t2 + t2_exp_l_t1_t2_full)/d)/(t1+t2);
 
 #ifdef VERIFY_SPEEDUP
 	dataVec f_frag_full = (x> h)*(x < (l-h))/(t1+ t2) * (t1*exp(-2 * l *(t1+t2)+(l-h+x)*(t1+t2)) + t2*exp(-l * (t1+t2))) + 
