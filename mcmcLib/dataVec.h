@@ -11,79 +11,95 @@ public:
 	dataVec(size_t s = 0): std::vector<double>(s){};
 	dataVec(const std::vector<double> & a): std::vector<double>(a){};
 
+#ifdef _DEBUG
+	virtual ~dataVec()
+	{
+	}
+#endif
 	vector<double> & values() { return *this;};
 
 	dataVec operator > (double a) const
 	{
-		dataVec retVal(size());
-		for (size_t i = 0; i < size();i++)
+		size_t s = size();
+		dataVec retVal(s);
+		for (size_t i = 0; i < s;i++)
 			retVal[i] = at(i)>a?1:0;
 		return retVal;
 	}
 	dataVec operator < (const dataVec & a) const
 	{
-		dataVec retVal(size());
-		for (size_t i = 0; i < size();i++)
+		size_t s = size();
+		dataVec retVal(s);
+		for (size_t i = 0; i < s;i++)
 			retVal[i] = at(i)<a[i]?1:0;
 		return retVal;
 	}
 	dataVec operator < (dataVec && a) const
 	{
-		for (size_t i = 0; i < size();i++)
+		size_t s = size();
+		for (size_t i = 0; i < s;i++)
 			a[i] = at(i)<a[i]?1:0;
 		return a;
 	}
 	dataVec operator * (const dataVec & a) const
 	{
-		dataVec retVal(size());
-		for (size_t i = 0; i < size();i++)
+		size_t s = size();
+		dataVec retVal(s);
+		for (size_t i = 0; i < s;i++)
 			retVal[i] = at(i) * a[i];
 		return retVal;
 	}
 	dataVec operator * (dataVec && a) const
 	{
-		for (size_t i = 0; i < size();i++)
+		size_t s = size();
+		for (size_t i = 0; i < s;i++)
 			a[i] *= at(i);
 		return a;
 	}
 	dataVec operator / (const dataVec & a) const 
 	{
-		dataVec retVal(size());
-		for (size_t i = 0; i < size();i++)
+		size_t s = size();
+		dataVec retVal(s);
+		for (size_t i = 0; i < s;i++)
 			retVal[i] = at(i) / a[i];
 		return retVal;
 	}
 	dataVec operator / (dataVec && a) const 
 	{
-		for (size_t i = 0; i < size();i++)
+		size_t s = size();
+		for (size_t i = 0; i < s;i++)
 			a[i] = at(i) / a[i];
 		return a;
 	}
 	dataVec operator + (const dataVec & a) const
 	{
-		dataVec retVal(size());
-		for (size_t i = 0; i < size();i++)
+		size_t s = size();
+		dataVec retVal(s);
+		for (size_t i = 0; i < s;i++)
 			retVal[i] = at(i) + a[i];
 		return retVal;
 	}
 	dataVec operator + (dataVec && a) const
 	{
-		for (size_t i = 0; i < size();i++)
+		size_t s = size();
+		for (size_t i = 0; i < s;i++)
 			a[i] += at(i);
 		return a;
 	}
 
 	dataVec operator - (const dataVec & a) const 
 	{
-		dataVec retVal(size());
-		for (size_t i = 0; i < size();i++)
+		size_t s = size();
+		dataVec retVal(s);
+		for (size_t i = 0; i < s;i++)
 			retVal[i] = at(i) - a[i];
 		return retVal;
 	}
 	dataVec operator - () const
 	{
-		dataVec retVal(size());
-		for (size_t i = 0; i < size();i++)
+		size_t s = size();
+		dataVec retVal(s);
+		for (size_t i = 0; i < s;i++)
 			retVal[i] = -at(i);
 		return retVal;
 	}
@@ -111,6 +127,7 @@ public:
 	{
 		if (s > size())
 			return;
+		//	Swap the first s entries with the entry at some other position, then resize to just have the s entries
 		iterator i = begin();
 		for (size_t j = 0;j < s;j++)
 		{
@@ -122,10 +139,11 @@ public:
 	dataVec & removeInvalidValues(double maxVal)
 	{
 		//	Sort in place for maximum efficiency, if we find an invalid value, replace with one from the end;
+		//	Note that if we swap with a value from the end we have to check it as well to see if it is invalid
 		iterator i = begin(), j = end();
 		while (i != j)
 		{
-			if ((*i < 0) || (*i > maxVal))
+			if ((*i < 0) || (*i >= maxVal))
 				std::swap(*i,*--j);
 			else
 				i++;
@@ -277,7 +295,8 @@ inline dataVec operator / (const dataVec & a ,double b)
 
 inline dataVec operator ^ (dataVec && a,int b)
 {
-	for (int p = 0;p < b;p++)
+	_ASSERT(b>1);
+	for (int p = 0;p < (b - 1);p++)
 		for (double & i : a)
 			i *= i;
 	return a;

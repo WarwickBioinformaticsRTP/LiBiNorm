@@ -1,19 +1,26 @@
-#include "containerEx.h"
+#define _CRTDBG_MAP_ALLOC
+#include <stdlib.h>
+#include <crtdbg.h>
+#include <vector>
 #include "libCommon.h"
+#include "containerEx.h"
 #include "mcmc.h"
 #include "logLiklihoods.h"
 #include "LiBiNorm.h"
 
 using namespace std;
 
-
 int main(int argc, char **argv)
 {
-	LiBiNorm lbn;
-	return lbn.main(argc,argv);
+	_CrtSetDbgFlag ( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );
+
+	//	New data management 100 runs 54 secs, no datavec memory management 50.4, ie leave it to the OS to sort out
+	LiBiNorm libi;
+	libi.main(argc,argv);
+
 }
 
-
+//#ifdef XXXX
 int LiBiNorm::main(int argc, char **argv)
 {
 
@@ -113,6 +120,7 @@ int LiBiNorm::main(int argc, char **argv)
 //			Chain.push_back(mcmcEngine.chain());
 
 		}
+		int a = 1;
 	}
 
 
