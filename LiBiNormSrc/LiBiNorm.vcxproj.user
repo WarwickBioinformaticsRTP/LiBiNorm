@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LocalDebuggerCommandArguments>-c "D:\MATLAB\Hebenstreit\TestLessThan100.plus.minus.txt"</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>-g "Y:\SysmedIBD\CD\gtfs\Homo_sapiens.GRCh38.84.subset.gtf"</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
     <LocalDebuggerDebuggerType>NativeOnly</LocalDebuggerDebuggerType>
   </PropertyGroup>

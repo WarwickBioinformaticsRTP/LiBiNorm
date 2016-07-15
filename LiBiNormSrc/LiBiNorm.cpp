@@ -7,6 +7,7 @@
 #include "mcmc.h"
 #include "logLiklihoods.h"
 #include "LiBiNorm.h"
+#include "LiBiCount.h"
 
 using namespace std;
 
@@ -15,8 +16,12 @@ int main(int argc, char **argv)
 	_CrtSetDbgFlag ( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );
 
 	//	New data management 100 runs 54 secs, no datavec memory management 50.4, ie leave it to the OS to sort out
-	LiBiNorm libi;
-	libi.main(argc,argv);
+//	LiBiNorm libiN;
+//	libiN.main(argc,argv);
+
+	LiBiCount libiC;
+	libiC.main(argc,argv);
+
 
 }
 

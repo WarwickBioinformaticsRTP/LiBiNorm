@@ -77,8 +77,8 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>../../bioinformaticsLib;../mcmcLib</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\..\bamtools;../../bioinformaticsLib;../mcmcLib</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>STATIC_LINK;WIN32</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -87,8 +87,8 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>../../bioinformaticsLib;../mcmcLib</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\..\bamtools;../../bioinformaticsLib;../mcmcLib</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>STATIC_LINK;WIN32</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
     </ClCompile>
@@ -100,16 +100,21 @@
     <Text Include="readme.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="LiBiCount.cpp" />
     <ClCompile Include="LiBiNorm.cpp" />
     <ClCompile Include="LogLiklihoods.cpp" />
     <ClCompile Include="transcriptData.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="LiBiCount.h" />
     <ClInclude Include="LiBiNorm.h" />
     <ClInclude Include="LogLiklihoods.h" />
     <ClInclude Include="transcriptData.h" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\bamtools\api.vcxproj">
+      <Project>{4728390f-4f60-4904-b088-c8385524bb02}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\..\bioinformaticsLib\bioinformaticsLib.vcxproj">
       <Project>{1bb748f9-a024-405e-8286-a2d2f85953f2}</Project>
     </ProjectReference>

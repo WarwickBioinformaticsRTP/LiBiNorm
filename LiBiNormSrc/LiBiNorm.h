@@ -14,7 +14,6 @@ class LiBiNorm
 public:
 	int main(int argc, char **argv);
 	int loadData();
-
 	
 };
 

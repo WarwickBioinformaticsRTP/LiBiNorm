@@ -27,6 +27,9 @@
     <ClCompile Include="transcriptData.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="LiBiCount.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="LiBiNorm.h">
@@ -36,6 +39,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="LogLiklihoods.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LiBiCount.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
