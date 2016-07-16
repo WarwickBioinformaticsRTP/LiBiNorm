@@ -6,7 +6,7 @@
     <LocalDebuggerDebuggerType>NativeOnly</LocalDebuggerDebuggerType>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LocalDebuggerCommandArguments>-c "D:\MATLAB\Hebenstreit\TestLessThan100.plus.minus.txt"</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>-g "Y:\SysmedIBD\CD\gtfs\Homo_sapiens.GRCh38.84.gtf"</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
 </Project>
