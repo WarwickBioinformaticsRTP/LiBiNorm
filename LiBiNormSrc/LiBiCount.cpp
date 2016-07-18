@@ -1,9 +1,10 @@
-#include "LiBiCount.h"
 #include <stdlib.h>
 #include <crtdbg.h>
+#include <ctime>
 #include "libCommon.h"
 #include "containerEx.h"
 #include "api/BamReader.h"
+#include "LiBiCount.h"
 
 using namespace std;
 using namespace BamTools;
@@ -17,10 +18,10 @@ void gtfFileEx::index(const string & feature,const string & attribute)
 		chromosomeData & thisChromData = chromData[chrom.first];
 		for (auto entry : chrom.second)
 		{
-			if (entries[entry].type == feature)
+			if (entry.type == feature)
 			{
 				string attName;
-				for (auto & tag : entries[entry].tags)
+				for (auto & tag : entry.tags)
 				{
 					if (tag.type == attribute_id)
 					{
@@ -28,12 +29,12 @@ void gtfFileEx::index(const string & feature,const string & attribute)
 						break;
 					}
 				}
-				chromosomeData::iterator i = thisChromData.find(entries[entry].start);
+				chromosomeData::iterator i = thisChromData.find(entry.start);
 				bool duplicate = false;
 
-				while (i != thisChromData.end() && (i->first == entries[entry].start))
+				while (i != thisChromData.end() && (i->first == entry.start))
 				{
-					if ((i->second.finish == entries[entry].finish) &&
+					if ((i->second.finish == entry.finish) &&
 						(i->second.name == attName))
 					{
 						duplicate = true;
@@ -43,7 +44,7 @@ void gtfFileEx::index(const string & feature,const string & attribute)
 				}
 				if (!duplicate)
 				{
-					thisChromData.emplace(entries[entry].start,region(entries[entry].finish,attName));
+					thisChromData.emplace(entry.start,region(entry.finish,attName));
 				}
 			}
 		}
@@ -62,8 +63,9 @@ void gtfFileEx::index(const string & feature,const string & attribute)
 int LiBiCount::main(int argc, char **argv)
 {
 	string bamFileName,gtfFileName,
-		feature = "exon",
-		attribute = "gene_id";
+		id_attribute;// = "gene_id";
+
+	setEx<string> feature_type("exon");
 
 	if(argc < 1)
 	{
@@ -106,15 +108,22 @@ int LiBiCount::main(int argc, char **argv)
 
 	gtfFileEx genomeDef;
 
-	genomeDef.open(gtfFileName);
+    clock_t begin = clock();
+
+
+
+	genomeDef.open(gtfFileName,id_attribute,feature_type);
 	cout << "Data read";
 
-	genomeDef.index(feature,attribute);
+//	genomeDef.index(feature,attribute);
+
+    clock_t end = clock();
+    double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+
+	cout << "Elapsed time " << elapsed_secs;
 
 	string test;
-	cout << "Finished";
 	cin >> test;
-
 
 	return EXIT_SUCCESS;
 }
