@@ -9,10 +9,10 @@ class region
 {
 public:
 	size_t finish;
-	vector<region *> overlaps;
 	string name;
-	region(	size_t finish,const string name):finish(finish),name(name){};
-
+	char strand;
+	vector<region *> overlaps;
+	region(	size_t finish,const string & name,char strand):finish(finish),name(name),strand(strand){};
 };
 
 
@@ -25,11 +25,9 @@ class chromosomeData : public multimap<size_t, region>
 class gtfFileEx : public gtfFile
 {
 	map<string,chromosomeData> chromData; 
-
 public: 
-	void index(const string & feature,const string & attribute);
-
-
+	void index();
+	void outputChromData(const string & filename);
 
 };
 

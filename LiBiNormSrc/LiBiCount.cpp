@@ -2,6 +2,7 @@
 #include <crtdbg.h>
 #include <ctime>
 #include "libCommon.h"
+#include "stringEx.h"
 #include "containerEx.h"
 #include "api/BamReader.h"
 #include "LiBiCount.h"
@@ -9,44 +10,37 @@
 using namespace std;
 using namespace BamTools;
 
-void gtfFileEx::index(const string & feature,const string & attribute)
+void gtfFileEx::index()
 {
-	size_t attribute_id = gtfEntryTags::idMap[attribute];
 
 	for (auto & chrom : entryMap)
 	{
+		//	In each chromosome
 		chromosomeData & thisChromData = chromData[chrom.first];
-		for (auto entry : chrom.second)
+		for (auto i = chrom.second.begin(); i != chrom.second.end();i++)
 		{
-			if (entry.type == feature)
+			size_t finish = i->second.finish;
+			for (auto j = next(i,1);(j != chrom.second.end()) && (j->first < finish);)
 			{
-				string attName;
-				for (auto & tag : entry.tags)
+				auto k = j++;
+				if (i->second.tags[0].val == k->second.tags[0].val)
 				{
-					if (tag.type == attribute_id)
+					if (k->second.finish > finish)
 					{
-						attName = tag.val;
-						break;
+						finish = k->second.finish;
+						chrom.second.erase(k);
 					}
-				}
-				chromosomeData::iterator i = thisChromData.find(entry.start);
-				bool duplicate = false;
-
-				while (i != thisChromData.end() && (i->first == entry.start))
-				{
-					if ((i->second.finish == entry.finish) &&
-						(i->second.name == attName))
+					else if (k->second.finish <= finish)
 					{
-						duplicate = true;
-						break;
+						chrom.second.erase(k);
 					}
-					i++;
-				}
-				if (!duplicate)
-				{
-					thisChromData.emplace(entry.start,region(entry.finish,attName));
 				}
 			}
+
+
+			string & attName = i->second.tags[0].val;
+			thisChromData.emplace(i->first,region(i->second.finish,i->second.tags[0].val,i->second.strand));
+
 		}
 		//	And now produce overlap list
 		for (chromosomeData::iterator i = thisChromData.begin(); i != thisChromData.end();i++)
@@ -57,13 +51,25 @@ void gtfFileEx::index(const string & feature,const string & attribute)
 	}
 }
 
+void gtfFileEx::outputChromData(const string & filename)
+{
+	TsvFile output;
+	output.open(filename);
+
+	for(auto i : chromData)
+	{
+		for (auto j : i.second)
+			output.printEnd(i.first,j.first,j.second.finish,j.second.strand,j.second.name);
+	}
+
+}
 
 
 
 int LiBiCount::main(int argc, char **argv)
 {
-	string bamFileName,gtfFileName,
-		id_attribute;// = "gene_id";
+	stringEx bamFileName,gtfFileName,
+		id_attribute = "gene_id";
 
 	setEx<string> feature_type("exon");
 
@@ -115,7 +121,9 @@ int LiBiCount::main(int argc, char **argv)
 	genomeDef.open(gtfFileName,id_attribute,feature_type);
 	cout << "Data read";
 
-//	genomeDef.index(feature,attribute);
+	genomeDef.index();
+
+	genomeDef.outputChromData(gtfFileName.replaceSuffix(".txt"));
 
     clock_t end = clock();
     double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
