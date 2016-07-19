@@ -64,7 +64,8 @@ bool gtfRegion::checkOverlap(const region & segment,bool & strict)
 		return true;
 	}
 	else if (((segment.start < finish) && (segment.start >= start)) ||
-				((segment.end < finish) && (segment.end >= start)))
+				((segment.end < finish) && (segment.end >= start)) ||
+				((segment.start < start) && (segment.end > finish)))
 	{
 		strict = false;
 		return true;
