@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LocalDebuggerCommandArguments>-g "Y:\SysmedIBD\CD\gtfs\Homo_sapiens.GRCh38.84.subset.gtf" -b "Y:\SysmedIBD\CD\aligned\C1492.subset_10.sorted.bam"</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>-g "Y:\SysmedIBD\CD\gtfs\Homo_sapiens.GRCh38.84.subset.gtf" -b "Y:\SysmedIBD\CD\aligned\C1492.subset.sorted.bam"</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
     <LocalDebuggerDebuggerType>NativeOnly</LocalDebuggerDebuggerType>
   </PropertyGroup>

@@ -7,58 +7,64 @@
 #include "LiBiCount.h"
 
 
-bool regionList::combineRegion(size_t start,size_t end)
+bool regionList::combineRegion(size_t start,size_t finish,bool revStrand)
 {
 	bool combined = false;
-	size_t i;
 
-	for (i = 0;i < size();i++)
+	for (iterator i = begin();i != end();i++)
 	{
-		if (start < at(i).second)
+		if (start < i->second.end)
 		{
-			if (end > at(i).second)
-				at(i).second = end;
-			if (start < at(i).first)
-				at(i).first = start;
-			combined = true;
-			break;
+			if (finish > i->second.end)
+			{
+				i->second.end = finish;
+				combined = true;
+				break;	
+			}
+			if ((start < i->second.start) && (finish >= i->second.start)) 
+			{
+				region r = i->second;
+				r.start = start;
+				if (i == begin())
+				{
+					erase(i);
+					emplace(start,r);
+					i = begin();
+				}
+				else
+				{
+					iterator j = next(i,-1);
+					erase(i);
+					emplace(start,r);
+					i = next(j,1);
+				}
+				combined = true;
+				break;	
+			}
 		}
 	}
-	if (combined)
+	if (!combined)
 	{
-		if (i >= (size() -1))
-			return false;
-	}
-	else
-	{
-		emplace_back(start,end);
+		emplace(start,region(start,finish,revStrand));
 		return false;
 	}
 	return true;
 }
 
-void regionList::add(size_t start,size_t end)
+void regionList::add(size_t start,size_t end,bool revStrand)
 {
-	if (size())
-	{
-		if (end < at(0).second)
-			insert(begin(),region(start,end));
-		else
-			emplace_back(start,end);
-	}
-	else
-		emplace_back(start,end);
+	emplace(start,region(start,end,revStrand));
 }
 
 bool gtfRegion::checkOverlap(const region & segment,bool & strict)
 {
-	if ((segment.first >= start) && (segment.second <= finish))
+	if ((segment.start >= start) && (segment.end <= finish))
 	{
 		strict = true;
 		return true;
 	}
-	else if (((segment.first < finish) && (segment.first >= start)) ||
-				((segment.second < finish) && (segment.second >= start)))
+	else if (((segment.start < finish) && (segment.start >= start)) ||
+				((segment.end < finish) && (segment.end >= start)))
 	{
 		strict = false;
 		return true;
@@ -72,8 +78,13 @@ void regionList::GetRegions(const BamAlignment & ba) {
 
 	//	If we already have some regions then we need to combine them
 	bool combine = size();
-	strand = ba.IsReverseStrand()?'-':'+';
+//	strand = ba.IsReverseStrand()?'-':'+';
 
+	//	Dont combine if the two reads are on reverse strands
+	if (combine && (ba.IsReverseStrand() && (begin()->second.strand == '+')))
+		combine = false;
+
+	bool revStrand = ba.IsReverseStrand() != ba.IsFirstMate();
 
 	auto & CigarData = ba.CigarData;
 
@@ -104,9 +115,9 @@ void regionList::GetRegions(const BamAlignment & ba) {
 			case Constants::BAM_CIGAR_REFSKIP_CHAR  :
 				{
 					if (combine)
-						combine = combineRegion(start,end-1);
+						combine = combineRegion(start,end-1,revStrand);
 					else
-						emplace_back(start,end-1);
+						add(start,end-1,revStrand);
 					end = start = (end + op.Length);
 					break;
 				}
@@ -116,9 +127,9 @@ void regionList::GetRegions(const BamAlignment & ba) {
 		}
 	}
 	if (combine)
-		combine = combineRegion(start,end-1);
+		combine = combineRegion(start,end-1,revStrand);
 	else
-		emplace_back(start,end-1);
+		add(start,end-1,revStrand);
 }
 
 
@@ -162,10 +173,20 @@ void gtfFileEx::index()
 		//	And now produce overlap list:  The list of all regions that start before this region has ended.
 		for (chromosomeData::iterator i = thisChromData.begin(); i != thisChromData.end();i++)
 		{
+			//	Create entry if it does not exist
+			geneCounts[i->second.name];
+		
 			for (chromosomeData::iterator j = next(i,1);(j != thisChromData.end()) && (j->first < i->second.finish);j++)
 				j->second.overlaps.push_back(&i->second);
 		}
 	}
+
+	geneCounts["__no_feature"];
+	geneCounts["__ambiguous"];
+	geneCounts["__too_low_aQual"];
+	geneCounts["__not_aligned"];
+	geneCounts["__alignment_not_unique"];
+
 }
 
 void gtfFileEx::outputChromData(const string & filename)
@@ -197,35 +218,35 @@ void gtfFileEx::addRead(const string & chromosome,const regionList regions,mode 
 {
 	chromosomeData & thisChromData = chromData[chromosome];
 
-	auto i = thisChromData.lower_bound(regions[0].first);
+	auto i = thisChromData.lower_bound(regions.begin()->second.start);
 
 	if (i == thisChromData.end())
 	{
 		i--;
-		if(i->second.start > regions.back().second)
+		if(i->second.start > regions.rbegin()->second.end)
 		{
 			geneCounts["__no_feature"]++;
 			return;
 		}
 	}
 
-	while ((i->second.finish > regions[0].first) && (i != thisChromData.begin()))
+	while ((i->second.finish > regions.begin()->second.start) && (i != thisChromData.begin()))
 		i--;
 
 	map<string,bool> genes;
 
-	if (regions.back().second > i->second.start)
+	if (regions.rbegin()->second.end > i->second.start)
 	{
 		//It overlaps
 		for (auto & segment : regions)
 		{
 			auto j = i;
-			while ((j != thisChromData.end()) && (j->first < segment.second))
+			while ((j != thisChromData.end()) && (j->first < segment.second.end))
 			{
 				bool strict;
-				if (!useStrand || ((j->second.strand == regions.strand) != reverseStrand))
+				if (!useStrand || ((j->second.strand == segment.second.strand) != reverseStrand))
 				{
-					if (j->second.checkOverlap(segment,strict))
+					if (j->second.checkOverlap(segment.second,strict))
 					{
 						auto g = genes.find(j->second.name);
 						if (g != genes.end())
@@ -344,10 +365,18 @@ int LiBiCount::main(int argc, char **argv)
 	size_t currStart;
 	string currName;
 
-	while (reader.GetNextAlignment(ba1))
+	bool OK = reader.GetNextAlignment(ba1);
+
+	while (OK)
 	{
+		_DBG(string name = ba1.Name;
+//		bool found = (name == "HWI-D00133:32:C26V9ACXX:3:1308:16179:69226");)
+		bool found = (name == "HWI-D00133:18:DTWTJACXX:4:1101:6860:12650");)
+
+			
 		regionList regions;
-		bool OK = true;
+
+		bool readAlreadyRead = false;
 		
 		regions.GetRegions(ba1);
 
@@ -355,10 +384,14 @@ int LiBiCount::main(int argc, char **argv)
 		{
 			reader.GetNextAlignment(ba2);
 
-			if (genomeDef.useStrand && (ba1.IsReverseStrand() != ba2.IsMateReverseStrand() != genomeDef.reverseStrand))
-				OK = false;
-			else
+			if (ba2.Name == ba1.Name)
+			{
 				regions.GetRegions(ba2);
+			}
+			else
+			{
+				readAlreadyRead = true;
+			}
 		}
 
 		if (OK)
@@ -366,6 +399,10 @@ int LiBiCount::main(int argc, char **argv)
 		else
 			genomeDef.geneCounts["__no_feature"]++;
 
+		if (readAlreadyRead)
+			ba1 = ba2;
+		else
+			OK = reader.GetNextAlignment(ba1);
 	}
 
 	genomeDef.outputGeneCounts(bamFileName.replaceSuffix(".counts.txt"));

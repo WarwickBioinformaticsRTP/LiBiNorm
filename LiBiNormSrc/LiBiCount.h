@@ -17,20 +17,21 @@ enum mode {
 };
 
 
-class region : public pair<size_t,size_t>
+class region 
 {
 public:
-	region(size_t first,size_t second) : pair<size_t,size_t>(first,second){};
+	size_t start,end;
+	char strand;
+	region(size_t start,size_t end,bool revStrand) : start(start),end(end),strand(revStrand?'-':'+') {};
 };
 
 
-class regionList : public vector<region>
+class regionList : public map<size_t,region>
 {
 public:
-	char strand;
 	void GetRegions(const BamAlignment & ba);
-	bool combineRegion(size_t start,size_t end);
-	void add(size_t start,size_t end);
+	bool combineRegion(size_t start,size_t end,bool revStrand);
+	void add(size_t start,size_t end,bool revStrand);
 };
 
 
