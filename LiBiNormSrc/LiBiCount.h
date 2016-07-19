@@ -3,11 +3,19 @@
 
 #include <vector>
 #include <utility>
+#include "containerEx.h"
 #include "api/BamReader.h"
 #include "gtfFile.h"
 
 using namespace std;
 using namespace BamTools;
+
+enum mode {
+	intersect_union,
+	intersect_strict,
+	intersect_nonempty
+};
+
 
 class region : public pair<size_t,size_t>
 {
@@ -19,11 +27,12 @@ public:
 class regionList : public vector<region>
 {
 public:
-	bool combine(size_t start,size_t end);
+	char strand;
+	void GetRegions(const BamAlignment & ba);
+	bool combineRegion(size_t start,size_t end);
 	void add(size_t start,size_t end);
 };
 
-void GetRegions(const BamAlignment & ba,regionList & regions);
 
 
 class gtfRegion
@@ -31,10 +40,11 @@ class gtfRegion
 public:
 	size_t start,finish;
 	string name;
+	setEx<string> type;
 	char strand;
 	vector<gtfRegion *> overlaps;
-	gtfRegion(	size_t start, size_t finish,const string & name,char strand):start(start),finish(finish),name(name),strand(strand){};
-	bool checkOverlap(const region & segment);
+	gtfRegion(	size_t start, size_t finish,const string & name,char strand,setEx<string> && type ):start(start),finish(finish),name(name),strand(strand),type(type){};
+	bool checkOverlap(const region & segment,bool & strict);
 };
 
 
@@ -48,9 +58,14 @@ class gtfFileEx : public gtfFile
 {
 	map<string,chromosomeData> chromData; 
 public: 
+	bool useStrand,reverseStrand;
+
+	mapZeroDef<string,size_t> geneCounts;
+
 	void index();
 	void outputChromData(const string & filename);
-	void addRead(const string & chromosome,const regionList regions);
+	void outputGeneCounts(const string & filename);
+	void addRead(const string & chromosome,const regionList regions,mode countMode);
 
 };
 

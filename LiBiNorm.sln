@@ -13,6 +13,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "zlib", "..\zlib\zlib.vcxproj", "{C1B5C97E-4EF4-4797-BCE6-FFB430504B84}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "HTSeq", "HTSeq\HTSeq.vcxproj", "{49FFC15F-C2B4-4B19-B405-522FE6B6042E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Mixed Platforms = Debug|Mixed Platforms
@@ -347,6 +349,56 @@ Global
 		{C1B5C97E-4EF4-4797-BCE6-FFB430504B84}.Release|Win32.Build.0 = Release|Win32
 		{C1B5C97E-4EF4-4797-BCE6-FFB430504B84}.Release|x64.ActiveCfg = Release|x64
 		{C1B5C97E-4EF4-4797-BCE6-FFB430504B84}.Release|x64.Build.0 = Release|x64
+		{49FFC15F-C2B4-4B19-B405-522FE6B6042E}.Debug|Mixed Platforms.ActiveCfg = Debug|Win32
+		{49FFC15F-C2B4-4B19-B405-522FE6B6042E}.Debug|Mixed Platforms.Build.0 = Debug|Win32
+		{49FFC15F-C2B4-4B19-B405-522FE6B6042E}.Debug|Win32.ActiveCfg = Debug|Win32
+		{49FFC15F-C2B4-4B19-B405-522FE6B6042E}.Debug|Win32.Build.0 = Debug|Win32
+		{49FFC15F-C2B4-4B19-B405-522FE6B6042E}.Debug|x64.ActiveCfg = Debug|Win32
+		{49FFC15F-C2B4-4B19-B405-522FE6B6042E}.DLL ASM Debug|Mixed Platforms.ActiveCfg = Debug|Win32
+		{49FFC15F-C2B4-4B19-B405-522FE6B6042E}.DLL ASM Debug|Mixed Platforms.Build.0 = Debug|Win32
+		{49FFC15F-C2B4-4B19-B405-522FE6B6042E}.DLL ASM Debug|Win32.ActiveCfg = Debug|Win32
+		{49FFC15F-C2B4-4B19-B405-522FE6B6042E}.DLL ASM Debug|Win32.Build.0 = Debug|Win32
+		{49FFC15F-C2B4-4B19-B405-522FE6B6042E}.DLL ASM Debug|x64.ActiveCfg = Debug|Win32
+		{49FFC15F-C2B4-4B19-B405-522FE6B6042E}.DLL ASM Release|Mixed Platforms.ActiveCfg = Release|Win32
+		{49FFC15F-C2B4-4B19-B405-522FE6B6042E}.DLL ASM Release|Mixed Platforms.Build.0 = Release|Win32
+		{49FFC15F-C2B4-4B19-B405-522FE6B6042E}.DLL ASM Release|Win32.ActiveCfg = Release|Win32
+		{49FFC15F-C2B4-4B19-B405-522FE6B6042E}.DLL ASM Release|Win32.Build.0 = Release|Win32
+		{49FFC15F-C2B4-4B19-B405-522FE6B6042E}.DLL ASM Release|x64.ActiveCfg = Release|Win32
+		{49FFC15F-C2B4-4B19-B405-522FE6B6042E}.DLL Debug|Mixed Platforms.ActiveCfg = Debug|Win32
+		{49FFC15F-C2B4-4B19-B405-522FE6B6042E}.DLL Debug|Mixed Platforms.Build.0 = Debug|Win32
+		{49FFC15F-C2B4-4B19-B405-522FE6B6042E}.DLL Debug|Win32.ActiveCfg = Debug|Win32
+		{49FFC15F-C2B4-4B19-B405-522FE6B6042E}.DLL Debug|Win32.Build.0 = Debug|Win32
+		{49FFC15F-C2B4-4B19-B405-522FE6B6042E}.DLL Debug|x64.ActiveCfg = Debug|Win32
+		{49FFC15F-C2B4-4B19-B405-522FE6B6042E}.DLL Release|Mixed Platforms.ActiveCfg = Release|Win32
+		{49FFC15F-C2B4-4B19-B405-522FE6B6042E}.DLL Release|Mixed Platforms.Build.0 = Release|Win32
+		{49FFC15F-C2B4-4B19-B405-522FE6B6042E}.DLL Release|Win32.ActiveCfg = Release|Win32
+		{49FFC15F-C2B4-4B19-B405-522FE6B6042E}.DLL Release|Win32.Build.0 = Release|Win32
+		{49FFC15F-C2B4-4B19-B405-522FE6B6042E}.DLL Release|x64.ActiveCfg = Release|Win32
+		{49FFC15F-C2B4-4B19-B405-522FE6B6042E}.LIB ASM Debug|Mixed Platforms.ActiveCfg = Debug|Win32
+		{49FFC15F-C2B4-4B19-B405-522FE6B6042E}.LIB ASM Debug|Mixed Platforms.Build.0 = Debug|Win32
+		{49FFC15F-C2B4-4B19-B405-522FE6B6042E}.LIB ASM Debug|Win32.ActiveCfg = Debug|Win32
+		{49FFC15F-C2B4-4B19-B405-522FE6B6042E}.LIB ASM Debug|Win32.Build.0 = Debug|Win32
+		{49FFC15F-C2B4-4B19-B405-522FE6B6042E}.LIB ASM Debug|x64.ActiveCfg = Debug|Win32
+		{49FFC15F-C2B4-4B19-B405-522FE6B6042E}.LIB ASM Release|Mixed Platforms.ActiveCfg = Release|Win32
+		{49FFC15F-C2B4-4B19-B405-522FE6B6042E}.LIB ASM Release|Mixed Platforms.Build.0 = Release|Win32
+		{49FFC15F-C2B4-4B19-B405-522FE6B6042E}.LIB ASM Release|Win32.ActiveCfg = Release|Win32
+		{49FFC15F-C2B4-4B19-B405-522FE6B6042E}.LIB ASM Release|Win32.Build.0 = Release|Win32
+		{49FFC15F-C2B4-4B19-B405-522FE6B6042E}.LIB ASM Release|x64.ActiveCfg = Release|Win32
+		{49FFC15F-C2B4-4B19-B405-522FE6B6042E}.LIB Debug|Mixed Platforms.ActiveCfg = Debug|Win32
+		{49FFC15F-C2B4-4B19-B405-522FE6B6042E}.LIB Debug|Mixed Platforms.Build.0 = Debug|Win32
+		{49FFC15F-C2B4-4B19-B405-522FE6B6042E}.LIB Debug|Win32.ActiveCfg = Debug|Win32
+		{49FFC15F-C2B4-4B19-B405-522FE6B6042E}.LIB Debug|Win32.Build.0 = Debug|Win32
+		{49FFC15F-C2B4-4B19-B405-522FE6B6042E}.LIB Debug|x64.ActiveCfg = Debug|Win32
+		{49FFC15F-C2B4-4B19-B405-522FE6B6042E}.LIB Release|Mixed Platforms.ActiveCfg = Release|Win32
+		{49FFC15F-C2B4-4B19-B405-522FE6B6042E}.LIB Release|Mixed Platforms.Build.0 = Release|Win32
+		{49FFC15F-C2B4-4B19-B405-522FE6B6042E}.LIB Release|Win32.ActiveCfg = Release|Win32
+		{49FFC15F-C2B4-4B19-B405-522FE6B6042E}.LIB Release|Win32.Build.0 = Release|Win32
+		{49FFC15F-C2B4-4B19-B405-522FE6B6042E}.LIB Release|x64.ActiveCfg = Release|Win32
+		{49FFC15F-C2B4-4B19-B405-522FE6B6042E}.Release|Mixed Platforms.ActiveCfg = Release|Win32
+		{49FFC15F-C2B4-4B19-B405-522FE6B6042E}.Release|Mixed Platforms.Build.0 = Release|Win32
+		{49FFC15F-C2B4-4B19-B405-522FE6B6042E}.Release|Win32.ActiveCfg = Release|Win32
+		{49FFC15F-C2B4-4B19-B405-522FE6B6042E}.Release|Win32.Build.0 = Release|Win32
+		{49FFC15F-C2B4-4B19-B405-522FE6B6042E}.Release|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
