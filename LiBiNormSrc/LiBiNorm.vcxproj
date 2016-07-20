@@ -100,15 +100,19 @@
     <Text Include="readme.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="GtfFileEx.cpp" />
     <ClCompile Include="LiBiCount.cpp" />
     <ClCompile Include="LiBiNorm.cpp" />
     <ClCompile Include="LogLiklihoods.cpp" />
+    <ClCompile Include="Regions.cpp" />
     <ClCompile Include="transcriptData.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="GtfFileEx.h" />
     <ClInclude Include="LiBiCount.h" />
     <ClInclude Include="LiBiNorm.h" />
     <ClInclude Include="LogLiklihoods.h" />
+    <ClInclude Include="Regions.h" />
     <ClInclude Include="transcriptData.h" />
   </ItemGroup>
   <ItemGroup>

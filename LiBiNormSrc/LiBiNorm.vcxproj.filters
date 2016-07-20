@@ -30,6 +30,12 @@
     <ClCompile Include="LiBiCount.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Regions.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GtfFileEx.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="LiBiNorm.h">
@@ -42,6 +48,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="LiBiCount.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Regions.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GtfFileEx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
