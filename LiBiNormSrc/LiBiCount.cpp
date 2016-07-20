@@ -264,7 +264,7 @@ void LiBiCount::addRead(const regionLists & regions,const gtfFileEx & gtfData)
 				for (auto & segment : chromRegion.second)
 				{
 					auto j = gtfRegion;
-					while ((j != thisChromGtfRegions->second.end()) && (j->first < segment.second.end))
+					while ((j != thisChromGtfRegions->second.end()) && (j->first <= segment.second.end))
 					{
 						bool strict;
 						if (!useStrand || ((j->second.strand == segment.second.strand) != reverseStrand))
@@ -293,7 +293,12 @@ void LiBiCount::addRead(const regionLists & regions,const gtfFileEx & gtfData)
 	{
 	case intersect_union:
 		if (genes.size() == 1)
+		{
+			_DBG(
+				if (genes.begin()->first == "CMC1")
+				cout << regions.name << endl;)
 			geneCounts[genes.begin()->first]++;
+		}
 		else if (genes.size() > 1)
 			geneCounts["__ambiguous"]++;
 		else
@@ -391,10 +396,11 @@ int LiBiCount::main(int argc, char **argv)
 	while (OK)
 	{
 		_DBG(string name = ba1.Name;
-		bool found = (name == "HWI-D00133:18:DTWTJACXX:4:1102:11130:16191");)
+		bool found = (name == "HWI-D00133:18:DTWTJACXX:4:1102:17033:20218");)
 
 			
 		regionLists regions;
+		_DBG(regions.name = name;)
 
 		bool readAlreadyRead = false;
 		
@@ -433,8 +439,8 @@ int LiBiCount::main(int argc, char **argv)
 
 	cout << "Elapsed time " << elapsed_secs;
 
-//	string test;
-//	cin >> test;
+	_DBG(string test;
+	cin >> test;)
 
 	return EXIT_SUCCESS;
 }

@@ -37,6 +37,7 @@ public:
 class regionLists : public map<int,regionList>
 {
 public:
+	_DBG( string name;)
 	void GetRegions(const BamAlignment & ba);
 };
 
