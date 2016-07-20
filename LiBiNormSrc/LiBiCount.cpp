@@ -63,9 +63,9 @@ bool gtfRegion::checkOverlap(const region & segment,bool & strict) const
 		strict = true;
 		return true;
 	}
-	else if (((segment.start < finish) && (segment.start >= start)) ||
-				((segment.end < finish) && (segment.end >= start)) ||
-				((segment.start < start) && (segment.end > finish)))
+	else if (((segment.start <= finish) && (segment.start >= start)) ||
+				((segment.end <= finish) && (segment.end >= start)) ||
+				((segment.start <= start) && (segment.end >= finish)))
 	{
 		strict = false;
 		return true;
@@ -187,8 +187,8 @@ void gtfFileEx::index(mapZeroDef<string,size_t> & geneCounts)
 
 			thisChromEndMap.emplace(i->second.finish,i);
 		
-//			for (chromosomeData::iterator j = next(i,1);(j != thisChromData.end()) && (j->first < i->second.finish);j++)
-//				j->second.overlaps.push_back(&i->second);
+			for (chromosomeData::iterator j = next(i,1);(j != thisChromData.end()) && (j->first < i->second.finish);j++)
+				j->second.overlaps.emplace(i->first,i);
 		}
 	}
 
@@ -236,15 +236,26 @@ void LiBiCount::addRead(const regionLists & regions,const gtfFileEx & gtfData)
 		{
 			const multimap<size_t,chromosomeData::iterator> & thisChromEndMap = gtfData.chromEndIndex.at(references[chromRegion.first].RefName);
 
-			multimap<size_t,chromosomeData::iterator>::const_iterator endIterator = thisChromEndMap.lower_bound(chromRegion.second.begin()->second.start);
+			multimap<size_t,chromosomeData::iterator>::const_iterator indirectIteratorStart = thisChromEndMap.lower_bound(chromRegion.second.begin()->second.start);
 
-			if (endIterator == thisChromEndMap.end())
+			if (indirectIteratorStart != thisChromEndMap.begin())
+				indirectIteratorStart--;
+
+			/*			size_t initStart = endIterator->second->second.start;
+
+			while ((endIterator != thisChromEndMap.begin()) && 
+				((endIterator->first > chromRegion.second.begin()->second.start) ||
+				(endIterator->second->second.start >= initStart)))
 				endIterator--;
+*/
+			chromosomeData::iterator gtfRegion = indirectIteratorStart->second;
 
-			chromosomeData::iterator gtfRegion = endIterator->second;
+			if (gtfRegion->second.overlaps.size())
+				gtfRegion = gtfRegion->second.overlaps.begin()->second;
 
-			if (gtfRegion != thisChromGtfRegions->second.begin())
-				gtfRegion--;
+
+//			if (gtfRegion != thisChromGtfRegions->second.begin())
+//				gtfRegion--;
 
 
 			if (chromRegion.second.rbegin()->second.end > gtfRegion->second.start)
@@ -269,7 +280,6 @@ void LiBiCount::addRead(const regionLists & regions,const gtfFileEx & gtfData)
 								else
 									genes.emplace(j->second.name,strict);
 								gtfRegion = j;
-								break;
 							}
 						}
 						j++;
@@ -383,7 +393,7 @@ int LiBiCount::main(int argc, char **argv)
 		_DBG(string name = ba1.Name;
 //		bool found = (name == "HWI-D00133:32:C26V9ACXX:3:1308:16179:69226");)
 //		bool found = (name == "HWI-D00133:18:DTWTJACXX:4:1101:6860:12650");)
-		bool found = (name == "HWI-D00133:18:DTWTJACXX:4:1102:15170:83171");)
+		bool found = (name == "HWI-D00133:18:DTWTJACXX:4:1103:4222:63201");)
 
 			
 		regionLists regions;
