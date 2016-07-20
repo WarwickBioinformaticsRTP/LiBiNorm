@@ -26,7 +26,7 @@ public:
 class regionLists : public std::map<int,regionList>
 {
 public:
-	_DBG( string name;)
+	_DBG( std::string name;)
 	void GetRegions(const BamTools::BamAlignment & ba);
 };
 

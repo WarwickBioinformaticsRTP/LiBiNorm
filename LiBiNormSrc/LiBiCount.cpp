@@ -7,123 +7,6 @@
 #include "LiBiCount.h"
 
 
-void LiBiCount::outputGeneCounts(const string & filename)
-{
-	TsvFile output;
-	output.open(filename);
-
-	for(auto i : geneCounts)
-	{
-		if (i.first.substr(0,2) != "__")
-			output.printEnd(i.first,i.second);
-	}
-	geneCounts.print("__no_feature",output);
-	geneCounts.print("__ambiguous",output);
-	geneCounts.print("__too_low_aQual",output);
-	geneCounts.print("__not_aligned",output);
-	geneCounts.print("__alignment_not_unique",output);
-}
-
-
-void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
-{
-	//	The paired end read consists of a number of segments.   If the two ends were aligned to different chromosomes
-	//	then the segments will be on different chromosomes
-	map<string,bool> genes;
-
-	for (auto & chromSegments : segments)
-	{
-		//	For teh segments on each of the chromosomes (normally only one chromosome) get the gtfRegions for the chromosome
-		map<string,chromosomeData>::const_iterator thisChromGtfRegions = gtfData.chromData.find(references[chromSegments.first].RefName);
-
-		if (thisChromGtfRegions != gtfData.chromData.end())
-		{
-
-			//	Get the map of neds of gtfRegions associated with the chromosome
-			const multimap<size_t,chromosomeData::iterator> & thisChromEndMap = gtfData.chromEndIndex.at(references[chromSegments.first].RefName);
-
-			//	And find the first one that finishes at or beyond the start of the first segment
-			multimap<size_t,chromosomeData::iterator>::const_iterator indirectIteratorStart = thisChromEndMap.lower_bound(chromSegments.second.begin()->second.start);
-
-			//	And move back one to ensure we have the region that covers segment
-			if (indirectIteratorStart != thisChromEndMap.begin())
-				indirectIteratorStart--;
-
-			chromosomeData::iterator gtfRegion = indirectIteratorStart->second;
-
-			//	If this region overlaps any other regions then go to the one that starts the earliest.
-//			if (gtfRegion->second.overlaps.size())
-//				gtfRegion = gtfRegion->second.overlaps.begin()->second;
-			gtfRegion = gtfRegion->second.overlaps;
-
-
-			//And now go through each of the segments
-			for (auto & segment : chromSegments.second)
-			{
-				//	Trying out each of the gtfRegions in turn to see if there is an overlap
-				auto j = gtfRegion;
-				while ((j != thisChromGtfRegions->second.end()) && (j->first <= segment.second.end))
-				{
-					//	Check for strand match
-					if (!useStrand || ((j->second.strand == segment.second.strand) != reverseStrand))
-					{
-						bool strict;
-						if (j->second.checkOverlap(segment.second,strict))
-						{
-							//	If there are multiple matches and one is not strict then
-							//	the overall match is not strict.
-							auto g = genes.find(j->second.name);
-							if (g != genes.end())
-							{
-								if (!strict)
-									g->second = false;
-							}
-							else
-								genes.emplace(j->second.name,strict);
-							gtfRegion = j;
-						}
-					}
-					j++;
-				}
-			}
-		}
-	}
-
-	switch(countMode)
-	{
-	case intersect_union:
-		if (genes.size() == 1)
-		{
-			_DBG(
-				if (genes.begin()->first == "TLE4")
-				cout << regions.name << endl;)
-			geneCounts[genes.begin()->first]++;
-		}
-		else if (genes.size() > 1)
-			geneCounts["__ambiguous"]++;
-		else
-			geneCounts["__no_feature"]++;
-		break;
-	case intersect_strict:
-	case intersect_nonempty:
-		{
-			vector<string> strictNames,nonemptyNames;
-			for (auto & gene : genes)
-			{
-				if (gene.second)
-					strictNames.push_back(gene.first);
-				else if (gene.second)
-					nonemptyNames.push_back(gene.first);
-			}
-			if (strictNames.size() == 1)
-				geneCounts[strictNames[0]]++;
-			else if ((nonemptyNames.size() ==1) && (countMode == intersect_nonempty))
-				geneCounts[nonemptyNames[0]]++;
-			break;
-		}
-	}
-}
-
 int LiBiCount::main(int argc, char **argv)
 {
 	stringEx bamFileName,gtfFileName,
@@ -159,9 +42,21 @@ int LiBiCount::main(int argc, char **argv)
 		{
 			gtfFileName = argv[++ni];
 		}
+		else if((strcmp(argv[ni], "-m") == 0) || (strcmp(argv[ni], "-mode") == 0))
+		{
+			string mode = argv[++ni];
+			if (mode == "union")
+				countMode = intersect_union;
+			else if (mode == "intersection-strict")
+				countMode = intersect_strict;
+			else if (mode == "intersection-nonempty")
+				countMode = intersect_nonempty;
+			else
+				exitFail("Invalid parameter: ",mode);
+		}
 		else
 		{
-			cout << "Invalid parameter";
+			exitFail("Invalid parameter: ",argv[ni]);
 		}
 		ni++;
 	}
@@ -185,11 +80,9 @@ int LiBiCount::main(int argc, char **argv)
 	double elapsed_secs = double(now - begin) / CLOCKS_PER_SEC;
 	cout << "Elapsed time " << elapsed_secs << endl;
 
-//	genomeDef.outputChromData(gtfFileName.replaceSuffix(".txt"));
-
+	_DBG(genomeDef.outputChromData(gtfFileName.replaceSuffix(".txt"));)
 
 	processBamData();
-
 
 	outputGeneCounts(bamFileName.replaceSuffix(".counts.txt"));
 
@@ -205,6 +98,131 @@ int LiBiCount::main(int argc, char **argv)
 }
 
 
+
+void LiBiCount::outputGeneCounts(const string & filename)
+{
+	TsvFile output;
+	output.open(filename);
+
+	for(auto i : geneCounts)
+	{
+		if (i.first.substr(0,2) != "__")
+			output.printEnd(i.first,i.second);
+	}
+	geneCounts.print("__no_feature",output);
+	geneCounts.print("__ambiguous",output);
+	geneCounts.print("__too_low_aQual",output);
+	geneCounts.print("__not_aligned",output);
+	geneCounts.print("__alignment_not_unique",output);
+}
+
+
+void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
+{
+	//	The paired end read consists of a number of segments.   If the two ends were aligned to different chromosomes
+	//	then the segments will be on different chromosomes
+	mapZeroDef<string,size_t> genes;
+	size_t Nsegments = 0;
+
+	for (auto & chromSegments : segments)
+	{
+		//	For teh segments on each of the chromosomes (normally only one chromosome) get the gtfRegions for the chromosome
+		map<string,chromosomeData>::const_iterator thisChromGtfRegions = gtfData.chromData.find(references[chromSegments.first].RefName);
+
+		if (thisChromGtfRegions != gtfData.chromData.end())
+		{
+
+			//	Get the map of neds of gtfRegions associated with the chromosome
+			const multimap<size_t,chromosomeData::iterator> & thisChromEndMap = gtfData.chromEndIndex.at(references[chromSegments.first].RefName);
+
+			//	And find the first one that finishes at or beyond the start of the first segment
+			multimap<size_t,chromosomeData::iterator>::const_iterator indirectIteratorStart = thisChromEndMap.lower_bound(chromSegments.second.begin()->second.start);
+
+			//	And move back one to ensure we have the region that covers segment
+			if (indirectIteratorStart != thisChromEndMap.begin())
+				indirectIteratorStart--;
+
+			chromosomeData::iterator gtfRegion = indirectIteratorStart->second;
+
+			//	If this region overlaps any other regions then go to the one that starts the earliest.
+			//	If there were no overlaps then default is the overlaps points to self
+			gtfRegion = gtfRegion->second.overlaps;
+
+
+			//And now go through each of the segments
+			for (auto & segment : chromSegments.second)
+			{
+				Nsegments++;
+				//	Trying out each of the gtfRegions in turn to see if there is an overlap
+				auto j = gtfRegion;
+				while ((j != thisChromGtfRegions->second.end()) && (j->first <= segment.second.end))
+				{
+					//	Check for strand match
+					if (!useStrand || ((j->second.strand == segment.second.strand) != reverseStrand))
+					{
+						bool strict;
+						if (j->second.checkOverlap(segment.second,strict))
+						{
+							//	If there are multiple matches and one is not strict then
+							//	the overall match is not strict.
+							auto g = genes.find(j->second.name);
+							if (g != genes.end())
+							{
+								if (strict)
+									g->second++;
+							}
+							else
+								genes.emplace(j->second.name,strict?1:0);
+							if (j->second.start > segment.second.end)
+								gtfRegion = j;
+						}
+					}
+					j++;
+				}
+			}
+		}
+	}
+
+	switch(countMode)
+	{
+	case intersect_union:
+		if (genes.size() == 1)
+		{
+			_DBG(
+				if (genes.begin()->first == "TLE4")
+				cout << segments.name << endl;)
+			geneCounts[genes.begin()->first]++;
+		}
+		else if (genes.size() > 1)
+			geneCounts["__ambiguous"]++;
+		else
+			geneCounts["__no_feature"]++;
+		break;
+	case intersect_strict:
+	case intersect_nonempty:
+		{
+			vector<string> strictNames,nonemptyNames;
+			for (auto & gene : genes)
+			{
+				if (gene.second == Nsegments)
+					strictNames.push_back(gene.first);
+				else
+					nonemptyNames.push_back(gene.first);
+			}
+			if (strictNames.size() == 1)
+				geneCounts[strictNames[0]]++;
+			else if ((nonemptyNames.size() ==1) && (countMode == intersect_nonempty))
+				geneCounts[nonemptyNames[0]]++;
+			else if (genes.size() > 1)
+				geneCounts["__ambiguous"]++;
+			else
+				geneCounts["__no_feature"]++;
+			break;
+		}
+	}
+}
+
+
 void LiBiCount::processBamData()
 {
 	BamAlignment ba1;
@@ -217,7 +235,7 @@ void LiBiCount::processBamData()
 	while (OK)
 	{
 		_DBG(string name = ba1.Name;
-		bool found = (name == "HWI-D00133:18:DTWTJACXX:4:1102:10307:46089");)
+		bool found = (name == "HWI-D00133:18:DTWTJACXX:4:1101:10452:52867");)
 
 			
 		regionLists regions;

@@ -101,7 +101,7 @@ void regionList::GetRegions(const BamAlignment & ba) {
 			case Constants::BAM_CIGAR_REFSKIP_CHAR  :
 				{
 					if (combine)
-						combine = combineRegion(start,end-1,revStrand);
+						combineRegion(start,end-1,revStrand);
 					else
 						add(start,end-1,revStrand);
 					end = start = (end + op.Length);
@@ -115,7 +115,7 @@ void regionList::GetRegions(const BamAlignment & ba) {
 		}
 	}
 	if (combine)
-		combine = combineRegion(start,end-1,revStrand);
+		combineRegion(start,end-1,revStrand);
 	else
 		add(start,end-1,revStrand);
 }
