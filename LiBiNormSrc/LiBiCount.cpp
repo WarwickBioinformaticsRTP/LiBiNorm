@@ -13,15 +13,15 @@ bool regionList::combineRegion(size_t start,size_t finish,bool revStrand)
 
 	for (iterator i = begin();i != end();i++)
 	{
-		if (start < i->second.end)
+		if (start <= i->second.end)
 		{
-			if (finish > i->second.end)
+			if (finish >= i->second.end)
 			{
 				i->second.end = finish;
 				combined = true;
 				break;	
 			}
-			if ((start < i->second.start) && (finish >= i->second.start)) 
+			if ((start <= i->second.start) && (finish >= i->second.start)) 
 			{
 				region r = i->second;
 				r.start = start;
@@ -391,9 +391,7 @@ int LiBiCount::main(int argc, char **argv)
 	while (OK)
 	{
 		_DBG(string name = ba1.Name;
-//		bool found = (name == "HWI-D00133:32:C26V9ACXX:3:1308:16179:69226");)
-//		bool found = (name == "HWI-D00133:18:DTWTJACXX:4:1101:6860:12650");)
-		bool found = (name == "HWI-D00133:18:DTWTJACXX:4:1103:4222:63201");)
+		bool found = (name == "HWI-D00133:18:DTWTJACXX:4:1102:11130:16191");)
 
 			
 		regionLists regions;
