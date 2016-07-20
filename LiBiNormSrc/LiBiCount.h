@@ -34,6 +34,11 @@ public:
 	void add(size_t start,size_t end,bool revStrand);
 };
 
+class regionLists : public map<int,regionList>
+{
+public:
+	void GetRegions(const BamAlignment & ba);
+};
 
 
 class gtfRegion
@@ -45,7 +50,7 @@ public:
 	char strand;
 	vector<gtfRegion *> overlaps;
 	gtfRegion(	size_t start, size_t finish,const string & name,char strand,setEx<string> && type ):start(start),finish(finish),name(name),strand(strand),type(type){};
-	bool checkOverlap(const region & segment,bool & strict);
+	bool checkOverlap(const region & segment,bool & strict) const;
 };
 
 
@@ -57,16 +62,11 @@ class chromosomeData : public multimap<size_t, gtfRegion>
 
 class gtfFileEx : public gtfFile
 {
-	map<string,chromosomeData> chromData; 
 public: 
-	bool useStrand,reverseStrand;
+	map<string,chromosomeData> chromData; 
 
-	mapZeroDef<string,size_t> geneCounts;
-
-	void index();
+	void index(mapZeroDef<string,size_t> & geneCounts);
 	void outputChromData(const string & filename);
-	void outputGeneCounts(const string & filename);
-	void addRead(const string & chromosome,const regionList regions,mode countMode);
 
 };
 
@@ -75,8 +75,16 @@ class LiBiCount
 {
 
 public:
-	int main(int argc, char **argv);
+	bool useStrand,reverseStrand;
+	mode countMode;
 
+	mapZeroDef<string,size_t> geneCounts;
+	RefVector references;
+
+
+	int main(int argc, char **argv);
+	void outputGeneCounts(const string & filename);
+	void addRead(const regionLists & regions,const map<string,chromosomeData> & chromData);
 
 };
 

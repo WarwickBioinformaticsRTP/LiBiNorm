@@ -6,7 +6,7 @@
     <LocalDebuggerDebuggerType>NativeOnly</LocalDebuggerDebuggerType>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LocalDebuggerCommandArguments>-g "Y:\SysmedIBD\CD\gtfs\Homo_sapiens.GRCh38.84.gtf"</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>-g "Y:\SysmedIBD\CD\gtfs\Homo_sapiens.GRCh38.84.gtf" -b  "Y:\SysmedIBD\CD\test\C1492.sorted.subset_large.bam"</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
 </Project>

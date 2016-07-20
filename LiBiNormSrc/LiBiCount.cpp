@@ -56,7 +56,7 @@ void regionList::add(size_t start,size_t end,bool revStrand)
 	emplace(start,region(start,end,revStrand));
 }
 
-bool gtfRegion::checkOverlap(const region & segment,bool & strict)
+bool gtfRegion::checkOverlap(const region & segment,bool & strict) const
 {
 	if ((segment.start >= start) && (segment.end <= finish))
 	{
@@ -72,6 +72,10 @@ bool gtfRegion::checkOverlap(const region & segment,bool & strict)
 	}
 
 	return false;
+}
+
+void regionLists::GetRegions(const BamAlignment & ba) {
+	This[ba.RefID].GetRegions(ba);
 }
 
 
@@ -135,7 +139,7 @@ void regionList::GetRegions(const BamAlignment & ba) {
 
 
 
-void gtfFileEx::index()
+void gtfFileEx::index(mapZeroDef<string,size_t> & geneCounts)
 {
 
 	for (auto & chrom : entryMap)
@@ -202,7 +206,7 @@ void gtfFileEx::outputChromData(const string & filename)
 	}
 }
 
-void gtfFileEx::outputGeneCounts(const string & filename)
+void LiBiCount::outputGeneCounts(const string & filename)
 {
 	TsvFile output;
 	output.open(filename);
@@ -215,53 +219,62 @@ void gtfFileEx::outputGeneCounts(const string & filename)
 }
 
 
-void gtfFileEx::addRead(const string & chromosome,const regionList regions,mode countMode)
+void LiBiCount::addRead(const regionLists & regions,const map<string,chromosomeData> & gtfRegions)
 {
-	chromosomeData & thisChromData = chromData[chromosome];
-
-	auto i = thisChromData.lower_bound(regions.begin()->second.start);
-
-	if (i == thisChromData.end())
-	{
-		i--;
-		if(i->second.start > regions.rbegin()->second.end)
-		{
-			geneCounts["__no_feature"]++;
-			return;
-		}
-	}
-
-	while ((i->second.finish > regions.begin()->second.start) && (i != thisChromData.begin()))
-		i--;
-
 	map<string,bool> genes;
 
-	if (regions.rbegin()->second.end > i->second.start)
+	for (auto & chromRegion : regions)
 	{
-		//It overlaps
-		for (auto & segment : regions)
+		auto thisChromGtfRegions = gtfRegions.find(references[chromRegion.first].RefName);
+		if (thisChromGtfRegions != gtfRegions.end())
 		{
-			auto j = i;
-			while ((j != thisChromData.end()) && (j->first < segment.second.end))
+
+			auto gtfRegion = thisChromGtfRegions->second.lower_bound(chromRegion.second.begin()->second.start);
+
+			if (gtfRegion == thisChromGtfRegions->second.end())
 			{
-				bool strict;
-				if (!useStrand || ((j->second.strand == segment.second.strand) != reverseStrand))
+				gtfRegion--;
+				if(gtfRegion->second.start > chromRegion.second.rbegin()->second.end)
 				{
-					if (j->second.checkOverlap(segment.second,strict))
+					break;
+//					geneCounts["__no_feature"]++;
+	//				return;
+				}
+			}
+
+			//	Step backwards until we get a gtfRegion that finishes before the start of the region
+			while ((gtfRegion->second.finish > chromRegion.second.begin()->second.start) && 
+				(gtfRegion != thisChromGtfRegions->second.begin()))
+				gtfRegion--;
+
+			if (chromRegion.second.rbegin()->second.end > gtfRegion->second.start)
+			{
+				//It overlaps
+				for (auto & segment : chromRegion.second)
+				{
+					auto j = gtfRegion;
+					while ((j != thisChromGtfRegions->second.end()) && (j->first < segment.second.end))
 					{
-						auto g = genes.find(j->second.name);
-						if (g != genes.end())
+						bool strict;
+						if (!useStrand || ((j->second.strand == segment.second.strand) != reverseStrand))
 						{
-							if (!strict)
-								g->second = false;
+							if (j->second.checkOverlap(segment.second,strict))
+							{
+								auto g = genes.find(j->second.name);
+								if (g != genes.end())
+								{
+									if (!strict)
+										g->second = false;
+								}
+								else
+									genes.emplace(j->second.name,strict);
+								gtfRegion = j;
+								break;
+							}
 						}
-						else
-							genes.emplace(j->second.name,strict);
-						i = j;
-						break;
+						j++;
 					}
 				}
-				j++;
 			}
 		}
 	}
@@ -305,9 +318,9 @@ int LiBiCount::main(int argc, char **argv)
 
 	gtfFileEx genomeDef;
 
-	genomeDef.reverseStrand = false;
-	genomeDef.useStrand = true;
-	mode countMode = intersect_union;
+	reverseStrand = false;
+	useStrand = true;
+	countMode = intersect_union;
 //	setEx<string> feature_type("exon","five_prime_utr","three_prime_utr");
 
 	if(argc < 1)
@@ -345,26 +358,21 @@ int LiBiCount::main(int argc, char **argv)
 		exitFail("Could not open input BAM files: ",bamFileName);
 
 	// retrieve 'metadata' from BAM files.
-	const SamHeader header = reader.GetHeader();
-	const RefVector references = reader.GetReferenceData();
-
-
+	references = reader.GetReferenceData();
 
 	clock_t begin = clock();
-
-
 
 	genomeDef.open(gtfFileName,id_attribute,feature_type);
 	cout << "Data read";
 
-	genomeDef.index();
+	genomeDef.index(geneCounts);
 	genomeDef.outputChromData(gtfFileName.replaceSuffix(".txt"));
 
 
 	BamAlignment ba1;
 	BamAlignment ba2;
-	size_t currStart;
-	string currName;
+
+	size_t samCounter(0);
 
 	bool OK = reader.GetNextAlignment(ba1);
 
@@ -375,7 +383,7 @@ int LiBiCount::main(int argc, char **argv)
 		bool found = (name == "HWI-D00133:18:DTWTJACXX:4:1101:6860:12650");)
 
 			
-		regionList regions;
+		regionLists regions;
 
 		bool readAlreadyRead = false;
 		
@@ -395,10 +403,10 @@ int LiBiCount::main(int argc, char **argv)
 			}
 		}
 
-		if (OK)
-			genomeDef.addRead(references[ba1.RefID].RefName,regions,countMode);
-		else
-			genomeDef.geneCounts["__no_feature"]++;
+		if ((++samCounter % 100000) == 0)
+			cout << samCounter << " SAM alignment record pairs processed." << endl;
+
+		addRead(regions,genomeDef.chromData);
 
 		if (readAlreadyRead)
 			ba1 = ba2;
@@ -406,7 +414,7 @@ int LiBiCount::main(int argc, char **argv)
 			OK = reader.GetNextAlignment(ba1);
 	}
 
-	genomeDef.outputGeneCounts(bamFileName.replaceSuffix(".counts.txt"));
+	outputGeneCounts(bamFileName.replaceSuffix(".counts.txt"));
 
 
 	clock_t end = clock();
