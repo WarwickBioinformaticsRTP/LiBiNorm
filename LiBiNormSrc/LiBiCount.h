@@ -84,13 +84,23 @@ public:
 	bool useStrand,reverseStrand;
 	mode countMode;
 
-	mapZeroDef<string,size_t> geneCounts;
+	class geneCounts : public mapZeroDef<string,size_t>
+	{
+	public:
+		void print(const string index,TsvFile & output)	{
+			output.printEnd(index,This[index]);
+		};
+	} geneCounts;
+
+	gtfFileEx genomeDef;
+
+	BamReader reader;
 	RefVector references;
 
-
 	int main(int argc, char **argv);
+	void processBamData();
 	void outputGeneCounts(const string & filename);
-	void addRead(const regionLists & regions,const gtfFileEx & gtfData);
+	void addRead(const regionLists & segments,const gtfFileEx & gtfData);
 
 };
 
