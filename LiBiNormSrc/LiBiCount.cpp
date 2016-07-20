@@ -15,16 +15,13 @@ bool regionList::combineRegion(size_t start,size_t finish,bool revStrand)
 	{
 		if (start <= i->second.end)
 		{
-			if (finish >= i->second.end)
-			{
-				i->second.end = finish;
-				combined = true;
-				break;	
-			}
 			if ((start <= i->second.start) && (finish >= i->second.start)) 
 			{
 				region r = i->second;
 				r.start = start;
+				if (finish >= i->second.end)
+					r.end = finish;
+
 				if (i == begin())
 				{
 					erase(i);
@@ -38,6 +35,12 @@ bool regionList::combineRegion(size_t start,size_t finish,bool revStrand)
 					emplace(start,r);
 					i = next(j,1);
 				}
+				combined = true;
+				break;	
+			}
+			if (finish >= i->second.end)
+			{
+				i->second.end = finish;
 				combined = true;
 				break;	
 			}
@@ -295,7 +298,7 @@ void LiBiCount::addRead(const regionLists & regions,const gtfFileEx & gtfData)
 		if (genes.size() == 1)
 		{
 			_DBG(
-				if (genes.begin()->first == "CMC1")
+				if (genes.begin()->first == "AGO2")
 				cout << regions.name << endl;)
 			geneCounts[genes.begin()->first]++;
 		}
@@ -396,7 +399,7 @@ int LiBiCount::main(int argc, char **argv)
 	while (OK)
 	{
 		_DBG(string name = ba1.Name;
-		bool found = (name == "HWI-D00133:18:DTWTJACXX:4:1102:17033:20218");)
+		bool found = (name == "HWI-D00133:18:DTWTJACXX:4:1103:4286:84317");)
 
 			
 		regionLists regions;
