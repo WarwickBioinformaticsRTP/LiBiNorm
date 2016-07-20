@@ -176,13 +176,19 @@ void gtfFileEx::index(mapZeroDef<string,size_t> & geneCounts)
 
 		}
 		//	And now produce overlap list:  The list of all regions that start before this region has ended.
+
+		multimap<size_t,chromosomeData::iterator> & thisChromEndMap = chromEndIndex[chrom.first];
+
 		for (chromosomeData::iterator i = thisChromData.begin(); i != thisChromData.end();i++)
 		{
+
 			//	Create entry if it does not exist
 			geneCounts[i->second.name];
+
+			thisChromEndMap.emplace(i->second.finish,i);
 		
-			for (chromosomeData::iterator j = next(i,1);(j != thisChromData.end()) && (j->first < i->second.finish);j++)
-				j->second.overlaps.push_back(&i->second);
+//			for (chromosomeData::iterator j = next(i,1);(j != thisChromData.end()) && (j->first < i->second.finish);j++)
+//				j->second.overlaps.push_back(&i->second);
 		}
 	}
 
@@ -219,43 +225,27 @@ void LiBiCount::outputGeneCounts(const string & filename)
 }
 
 
-void LiBiCount::addRead(const regionLists & regions,const map<string,chromosomeData> & gtfRegions)
+void LiBiCount::addRead(const regionLists & regions,const gtfFileEx & gtfData)
 {
 	map<string,bool> genes;
 
 	for (auto & chromRegion : regions)
 	{
-		auto thisChromGtfRegions = gtfRegions.find(references[chromRegion.first].RefName);
-		if (thisChromGtfRegions != gtfRegions.end())
+		auto thisChromGtfRegions = gtfData.chromData.find(references[chromRegion.first].RefName);
+		if (thisChromGtfRegions != gtfData.chromData.end())
 		{
+			const multimap<size_t,chromosomeData::iterator> & thisChromEndMap = gtfData.chromEndIndex.at(references[chromRegion.first].RefName);
 
-			auto gtfRegion = thisChromGtfRegions->second.lower_bound(chromRegion.second.begin()->second.start);
+			multimap<size_t,chromosomeData::iterator>::const_iterator endIterator = thisChromEndMap.lower_bound(chromRegion.second.begin()->second.start);
 
-			if (gtfRegion == thisChromGtfRegions->second.end())
-			{
+			if (endIterator == thisChromEndMap.end())
+				endIterator--;
+
+			chromosomeData::iterator gtfRegion = endIterator->second;
+
+			if (gtfRegion != thisChromGtfRegions->second.begin())
 				gtfRegion--;
-				if(gtfRegion->second.start > chromRegion.second.rbegin()->second.end)
-				{
-					break;
-//					geneCounts["__no_feature"]++;
-	//				return;
-				}
-			}
 
-			//	Step backwards until we get a gtfRegion that finishes before the start of the region
-			while ((gtfRegion->second.finish > chromRegion.second.begin()->second.start) && 
-				(gtfRegion != thisChromGtfRegions->second.begin()))
-			{
-				gtfRegion--;
-				for (auto i : gtfRegion ->second.overlaps)
-				{
-					if (i->finish > chromRegion.second.begin()->second.start)
-					{
-						gtfRegion--;
-						break;
-					}
-				}
-			}
 
 			if (chromRegion.second.rbegin()->second.end > gtfRegion->second.start)
 			{
@@ -419,7 +409,7 @@ int LiBiCount::main(int argc, char **argv)
 		if ((++samCounter % 100000) == 0)
 			cout << samCounter << " SAM alignment record pairs processed." << endl;
 
-		addRead(regions,genomeDef.chromData);
+		addRead(regions,genomeDef);
 
 		if (readAlreadyRead)
 			ba1 = ba2;
