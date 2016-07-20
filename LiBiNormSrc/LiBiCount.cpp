@@ -245,7 +245,17 @@ void LiBiCount::addRead(const regionLists & regions,const map<string,chromosomeD
 			//	Step backwards until we get a gtfRegion that finishes before the start of the region
 			while ((gtfRegion->second.finish > chromRegion.second.begin()->second.start) && 
 				(gtfRegion != thisChromGtfRegions->second.begin()))
+			{
 				gtfRegion--;
+				for (auto i : gtfRegion ->second.overlaps)
+				{
+					if (i->finish > chromRegion.second.begin()->second.start)
+					{
+						gtfRegion--;
+						break;
+					}
+				}
+			}
 
 			if (chromRegion.second.rbegin()->second.end > gtfRegion->second.start)
 			{
@@ -363,9 +373,11 @@ int LiBiCount::main(int argc, char **argv)
 	clock_t begin = clock();
 
 	genomeDef.open(gtfFileName,id_attribute,feature_type);
-	cout << "Data read";
 
 	genomeDef.index(geneCounts);
+
+	cout << "GFF file sonsolidated." << endl;
+
 	genomeDef.outputChromData(gtfFileName.replaceSuffix(".txt"));
 
 
@@ -380,7 +392,8 @@ int LiBiCount::main(int argc, char **argv)
 	{
 		_DBG(string name = ba1.Name;
 //		bool found = (name == "HWI-D00133:32:C26V9ACXX:3:1308:16179:69226");)
-		bool found = (name == "HWI-D00133:18:DTWTJACXX:4:1101:6860:12650");)
+//		bool found = (name == "HWI-D00133:18:DTWTJACXX:4:1101:6860:12650");)
+		bool found = (name == "HWI-D00133:18:DTWTJACXX:4:1102:15170:83171");)
 
 			
 		regionLists regions;
