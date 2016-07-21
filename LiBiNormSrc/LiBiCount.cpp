@@ -131,22 +131,22 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 	for (auto & chromSegments : segments)
 	{
 		//	For teh segments on each of the chromosomes (normally only one chromosome) get the gtfRegions for the chromosome
-		map<string,chromosomeData>::const_iterator thisChromGtfRegions = gtfData.chromData.find(references[chromSegments.first].RefName);
+		genomeGtfRegions::const_iterator thisChromGtfRegions = gtfData.genomeGtfData.find(references[chromSegments.first].RefName);
 
-		if (thisChromGtfRegions != gtfData.chromData.end())
+		if (thisChromGtfRegions != gtfData.genomeGtfData.end())
 		{
 
 			//	Get the map of neds of gtfRegions associated with the chromosome
-			const multimap<size_t,chromosomeData::iterator> & thisChromEndMap = gtfData.chromEndIndex.at(references[chromSegments.first].RefName);
+			const chromosomeEndIndexMap & thisChromEndMap = gtfData.genomeEndIndex.at(references[chromSegments.first].RefName);
 
 			//	And find the first one that finishes at or beyond the start of the first segment
-			multimap<size_t,chromosomeData::iterator>::const_iterator indirectIteratorStart = thisChromEndMap.lower_bound(chromSegments.second.begin()->second.start);
+			chromosomeEndIndexMap::const_iterator indirectIteratorStart = thisChromEndMap.lower_bound(chromSegments.second.begin()->second.start);
 
 			//	And move back one to ensure we have the region that covers segment
 			if (indirectIteratorStart != thisChromEndMap.begin())
 				indirectIteratorStart--;
 
-			chromosomeData::iterator gtfRegion = indirectIteratorStart->second;
+			chromosomeGtfData::iterator gtfRegion = indirectIteratorStart->second;
 
 			//	If this region overlaps any other regions then go to the one that starts the earliest.
 			//	If there were no overlaps then default is the overlaps points to self

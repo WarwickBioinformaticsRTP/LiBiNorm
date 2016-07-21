@@ -28,7 +28,7 @@ void gtfFileEx::index(mapZeroDef<string,size_t> & geneCounts)
 	for (auto & chrom : entryMap)
 	{
 		//	In each chromosome
-		chromosomeData & thisChromData = chromData[chrom.first];
+		chromosomeGtfData & thisChromData = genomeGtfData[chrom.first];
 		for (auto i = chrom.second.begin(); i != chrom.second.end();i++)
 		{
 			size_t finish = i->second.finish;
@@ -62,13 +62,13 @@ void gtfFileEx::index(mapZeroDef<string,size_t> & geneCounts)
 
 		//	And now for each region find the regions that it overlapsproduce overlap list:  The list of all regions that start before this region has ended.
 		//	Then select the first of the regions, which will be used as the starting point for checking for region overlaps
-		multimap<size_t,chromosomeData::iterator> & thisChromEndMap = chromEndIndex[chrom.first];
+		chromosomeEndIndexMap & thisChromEndMap = genomeEndIndex[chrom.first];
 
 		//	We are using a temporary map of the address of the gtfEntries used to store the data.  This only works because the entries will not be moved
 		//	during this process
-		map<size_t,map<size_t,chromosomeData::iterator> > tempMap;
+		map<size_t,map<size_t,chromosomeGtfData::iterator> > tempMap;
 
-		for (chromosomeData::iterator i = thisChromData.begin(); i != thisChromData.end();i++)
+		for (chromosomeGtfData::iterator i = thisChromData.begin(); i != thisChromData.end();i++)
 		{
 			//	Take the opportunity to produce a map of all the genes for holding counts
 			geneCounts[i->second.name];
@@ -76,12 +76,12 @@ void gtfFileEx::index(mapZeroDef<string,size_t> & geneCounts)
 			//	And a parallel map of the ends of all of the gtfRegions/
 			thisChromEndMap.emplace(i->second.finish,i);
 		
-			for (chromosomeData::iterator j = next(i,1);(j != thisChromData.end()) && (j->first < i->second.finish);j++)
+			for (chromosomeGtfData::iterator j = next(i,1);(j != thisChromData.end()) && (j->first < i->second.finish);j++)
 				tempMap[(size_t)&j->second].emplace(i->first,i);
 		}
-		for (chromosomeData::iterator i = thisChromData.begin(); i != thisChromData.end();i++)
+		for (chromosomeGtfData::iterator i = thisChromData.begin(); i != thisChromData.end();i++)
 		{
-			map<size_t,map<size_t,chromosomeData::iterator> >::iterator j = tempMap.find((size_t)&i->second);
+			map<size_t,map<size_t,chromosomeGtfData::iterator> >::iterator j = tempMap.find((size_t)&i->second);
 
 			if (j == tempMap.end())
 				i->second.overlaps = i;
@@ -104,7 +104,7 @@ void gtfFileEx::outputChromData(const string & filename)
 	TsvFile output;
 	output.open(filename);
 
-	for(auto i : chromData)
+	for(auto i : genomeGtfData)
 	{
 		for (auto j : i.second)
 			output.printEnd(i.first,j.first,j.second.finish,j.second.strand,j.second.name,j.second.type);

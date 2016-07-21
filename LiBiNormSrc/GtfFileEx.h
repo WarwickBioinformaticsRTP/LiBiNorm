@@ -8,7 +8,7 @@
 
 class gtfRegion;
 
-typedef std::multimap<size_t, gtfRegion> chromosomeData ;
+typedef std::multimap<size_t, gtfRegion> chromosomeGtfData ;
 
 class gtfRegion
 {
@@ -17,20 +17,23 @@ public:
 	std::string name;
 	setEx<std::string> type;
 	char strand;
-	chromosomeData::iterator overlaps;
+	chromosomeGtfData::iterator overlaps;
 	gtfRegion(	size_t start, size_t finish,const std::string & name,char strand,setEx<std::string> && type ):start(start),finish(finish),name(name),strand(strand),type(type){};
 	bool checkOverlap(const region & segment,bool & strict) const;
 };
 
 
+typedef std::map<std::string,chromosomeGtfData> genomeGtfRegions;
+typedef std::multimap<size_t,chromosomeGtfData::iterator> chromosomeEndIndexMap;
+typedef std::map<std::string,chromosomeEndIndexMap > genomeEndIndexMap;
 
 
 class gtfFileEx : public gtfFile
 {
 public: 
-	std::map<std::string,chromosomeData> chromData; 
+	genomeGtfRegions genomeGtfData; 
 
-	std::map<std::string,std::multimap<size_t,chromosomeData::iterator> > chromEndIndex;
+	genomeEndIndexMap genomeEndIndex;
 
 	void index(mapZeroDef<std::string,size_t> & geneCounts);
 	void outputChromData(const std::string & filename);
