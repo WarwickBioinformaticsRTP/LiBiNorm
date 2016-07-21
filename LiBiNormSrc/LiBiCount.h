@@ -18,7 +18,7 @@ class LiBiCount
 {
 
 public:
-	bool useStrand,reverseStrand;
+	bool useStrand,reverseStrand,verbose;
 	mode countMode;
 
 	class geneCounts : public mapZeroDef<string,size_t>

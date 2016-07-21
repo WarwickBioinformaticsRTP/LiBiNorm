@@ -1,6 +1,5 @@
 #include <stdlib.h>
 #include <crtdbg.h>
-#include <ctime>
 #include "libCommon.h"
 #include "stringEx.h"
 #include "containerEx.h"
@@ -16,6 +15,7 @@ int LiBiCount::main(int argc, char **argv)
 
 	reverseStrand = false;
 	useStrand = true;
+	verbose = true;
 	countMode = intersect_union;
 //	setEx<string> feature_type("exon","five_prime_utr","three_prime_utr");
 
@@ -42,7 +42,7 @@ int LiBiCount::main(int argc, char **argv)
 		{
 			gtfFileName = argv[++ni];
 		}
-		else if((strcmp(argv[ni], "-m") == 0) || (strcmp(argv[ni], "-mode") == 0))
+		else if((strcmp(argv[ni], "-m") == 0) || (strcmp(argv[ni], "--mode") == 0))
 		{
 			string mode = argv[++ni];
 			if (mode == "union")
@@ -52,7 +52,11 @@ int LiBiCount::main(int argc, char **argv)
 			else if (mode == "intersection-nonempty")
 				countMode = intersect_nonempty;
 			else
-				exitFail("Invalid parameter: ",mode);
+				exitFail("Invalid mode: ",mode);
+		}
+		else if((strcmp(argv[ni], "-q") == 0) || (strcmp(argv[ni], "--quiet") == 0))
+		{
+			verbose = false;
 		}
 		else
 		{
@@ -67,18 +71,20 @@ int LiBiCount::main(int argc, char **argv)
 	// retrieve 'metadata' from BAM files.
 	references = reader.GetReferenceData();
 
-	clock_t begin = clock();
+	initClock();
 
-	if (!genomeDef.open(gtfFileName,id_attribute,feature_type))
+//	clock_t begin = clock();
+
+	if (!genomeDef.open(gtfFileName,verbose,id_attribute,feature_type))
 		exitFail("Could not open gtf file: ",gtfFileName);
 
 	genomeDef.index(geneCounts);
 
-	cout << "GFF file sonsolidated." << endl;
-
-	clock_t now = clock();
-	double elapsed_secs = double(now - begin) / CLOCKS_PER_SEC;
-	cout << "Elapsed time " << elapsed_secs << endl;
+	if (verbose)
+	{
+		cerr << "GFF file sonsolidated." << endl;
+		elapsedTime();
+	}
 
 	_DBG(genomeDef.outputChromData(gtfFileName.replaceSuffix(".txt"));)
 
@@ -86,10 +92,8 @@ int LiBiCount::main(int argc, char **argv)
 
 	outputGeneCounts(bamFileName.replaceSuffix(".counts.txt"));
 
-	now = clock();
-	elapsed_secs = double(now - begin) / CLOCKS_PER_SEC;
-
-	cout << "Elapsed time " << elapsed_secs << endl;
+	if (verbose)
+		elapsedTime();
 
 	string test;
 	cin >> test;
@@ -190,7 +194,7 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 		{
 			_DBG(
 				if (genes.begin()->first == "TLE4")
-				cout << segments.name << endl;)
+				cerr << segments.name << endl;)
 			geneCounts[genes.begin()->first]++;
 		}
 		else if (genes.size() > 1)
@@ -199,6 +203,21 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 			geneCounts["__no_feature"]++;
 		break;
 	case intersect_strict:
+		{
+			vector<string> strictNames;
+			for (auto & gene : genes)
+			{
+				if (gene.second == Nsegments)
+					strictNames.push_back(gene.first);
+			}
+			if (strictNames.size() == 1)
+				geneCounts[strictNames[0]]++;
+			else if (strictNames.size() > 1)
+				geneCounts["__ambiguous"]++;
+			else
+				geneCounts["__no_feature"]++;
+			break;
+		}
 	case intersect_nonempty:
 		{
 			vector<string> strictNames,nonemptyNames;
@@ -211,9 +230,9 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 			}
 			if (strictNames.size() == 1)
 				geneCounts[strictNames[0]]++;
-			else if ((nonemptyNames.size() ==1) && (countMode == intersect_nonempty))
+			else if (nonemptyNames.size() ==1)
 				geneCounts[nonemptyNames[0]]++;
-			else if (genes.size() > 1)
+			else if ((strictNames.size() > 1) || ((strictNames.size() == 0 ) && (nonemptyNames.size() > 1)))
 				geneCounts["__ambiguous"]++;
 			else
 				geneCounts["__no_feature"]++;
@@ -265,7 +284,7 @@ void LiBiCount::processBamData()
 		addRead(regions,genomeDef);
 
 		if (readAlreadyRead)
-			ba1 = ba2;
+			swap(ba1,ba2);
 		else
 			OK = reader.GetNextAlignment(ba1);
 	}
