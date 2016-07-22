@@ -254,7 +254,7 @@ void LiBiCount::processBamData()
 	while (OK)
 	{
 		_DBG(string name = ba1.Name;
-		bool found = (name == "HWI-D00133:18:DTWTJACXX:4:1101:10452:52867");)
+		bool found = (name == "HWI-D00133:18:DTWTJACXX:4:1101:18840:53081");)
 
 			
 		regionLists regions;

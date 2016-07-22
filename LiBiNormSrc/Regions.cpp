@@ -66,11 +66,11 @@ void regionList::GetRegions(const BamAlignment & ba) {
 	//	If we already have some regions then we need to combine them
 	bool combine = size();
 
-	//	Dont combine if the two reads are on reverse strands
-	if (combine && (ba.IsReverseStrand() && (begin()->second.strand == '+')))
-		combine = false;
-
 	bool revStrand = ba.IsReverseStrand() != ba.IsFirstMate();
+
+	//	Dont combine if the two reads are on reverse strands
+	if (combine && (revStrand != (begin()->second.strand == '-')))
+		combine = false;
 
 	auto & CigarData = ba.CigarData;
 

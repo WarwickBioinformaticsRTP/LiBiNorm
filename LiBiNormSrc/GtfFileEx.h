@@ -14,7 +14,7 @@ class gtfRegion
 {
 public:
 	size_t start,finish;
-	std::string name;
+	stringEx name;
 	setEx<std::string> type;
 	char strand;
 	chromosomeGtfData::iterator overlaps;

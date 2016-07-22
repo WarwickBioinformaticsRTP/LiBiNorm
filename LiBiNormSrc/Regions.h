@@ -6,6 +6,8 @@
 #include "api/BamReader.h"
 #include "libCommon.h"
 
+#define _DEBUG 1
+
 class region 
 {
 public:
@@ -26,7 +28,7 @@ public:
 class regionLists : public std::map<int,regionList>
 {
 public:
-	_DBG( std::string name;)
+	std::string name;
 	void GetRegions(const BamTools::BamAlignment & ba);
 };
 
