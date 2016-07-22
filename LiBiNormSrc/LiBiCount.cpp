@@ -96,7 +96,7 @@ int LiBiCount::main(int argc, char **argv)
 		elapsedTime();
 
 	string test;
-	cin >> test;
+	_DBG(cin >> test;)
 
 	return EXIT_SUCCESS;
 }
@@ -125,7 +125,15 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 {
 	//	The paired end read consists of a number of segments.   If the two ends were aligned to different chromosomes
 	//	then the segments will be on different chromosomes
-	mapZeroDef<string,size_t> genes;
+
+	struct overlapCounts
+	{
+		size_t partial;
+		size_t strict;
+		overlapCounts(size_t partial,size_t strict):partial(partial),strict(strict){};
+	};
+
+	map<string,overlapCounts> genes;
 	size_t Nsegments = 0;
 
 	for (auto & chromSegments : segments)
@@ -172,11 +180,12 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 							auto g = genes.find(j->second.name);
 							if (g != genes.end())
 							{
+								g->second.partial++;
 								if (strict)
-									g->second++;
+									g->second.strict++;
 							}
 							else
-								genes.emplace(j->second.name,strict?1:0);
+								genes.emplace(j->second.name,overlapCounts(1,strict?1:0));
 							if (j->second.start > segment.second.end)
 								gtfRegion = j;
 						}
@@ -195,7 +204,7 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 			vector<string> strictNames;
 			for (auto & gene : genes)
 			{
-				if (gene.second == Nsegments)
+				if (gene.second.strict == Nsegments)
 					strictNames.push_back(gene.first);
 			}
 			if (strictNames.size() == 1)
@@ -210,21 +219,34 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 			}
 			else if (countMode == intersect_strict)
 			{
-				geneCounts["__no_feature"]++;
+				geneCounts["__no_feature"]++;	
 				break;
 			}
 			//  If we have not found a match, and it is not strict, run on and try union
 		}
 	case intersect_union:
 		if (genes.size() == 1)
-		{
-			_DBG(
-				if (genes.begin()->first == "TLE4")
-				cerr << segments.name << endl;)
 			geneCounts[genes.begin()->first]++;
-		}
 		else if (genes.size() > 1)
-			geneCounts["__ambiguous"]++;
+		{
+			if (countMode == intersect_union)
+				geneCounts["__ambiguous"]++;
+			else 
+			{
+/*				set<string> partialNames;
+				for (auto & gene : genes)
+				{
+					if (gene.second.partial == Nsegments)
+						partialNames.emplace(gene.first);
+				}
+				if (partialNames.size() > 1)
+					geneCounts["__ambiguous"]++;
+				else if (partialNames.size() == 1)
+					geneCounts[*partialNames.begin()]++;
+				else*/
+					geneCounts["__ambiguous"]++;
+			}
+		}
 		else
 			geneCounts["__no_feature"]++;
 		break;

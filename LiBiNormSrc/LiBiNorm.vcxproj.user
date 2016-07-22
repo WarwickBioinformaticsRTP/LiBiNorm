@@ -1,12 +1,12 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LocalDebuggerCommandArguments>-m union -g "Y:\SysmedIBD\CD\gtfs\Homo_sapiens.GRCh38.84.subset2.gtf" -b  "Y:\SysmedIBD\CD\test\C1492.sorted.subset_large.bam"</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>-m intersection-nonempty -g "Y:\SysmedIBD\CD\gtfs\Homo_sapiens.GRCh38.84.subset2.gtf" -b  "Y:\SysmedIBD\CD\test\C1492.sorted.subset_HIST.bam"</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
     <LocalDebuggerDebuggerType>NativeOnly</LocalDebuggerDebuggerType>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LocalDebuggerCommandArguments>-m intersection-nonempty -g "Y:\SysmedIBD\CD\gtfs\Homo_sapiens.GRCh38.84.gtf" -b  "Y:\SysmedIBD\CD\test\C1492.sorted.subset_large.bam"</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>-m intersection-nonempty -g "Y:\SysmedIBD\CD\gtfs\Homo_sapiens.GRCh38.84.gtf" -b  "Y:\SysmedIBD\CD\test\C1492.sorted.subset_HIST.bam"</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
 </Project>
