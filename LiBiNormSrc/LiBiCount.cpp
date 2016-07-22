@@ -189,6 +189,32 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 
 	switch(countMode)
 	{
+	case intersect_strict:
+	case intersect_nonempty:		
+		{
+			vector<string> strictNames;
+			for (auto & gene : genes)
+			{
+				if (gene.second == Nsegments)
+					strictNames.push_back(gene.first);
+			}
+			if (strictNames.size() == 1)
+			{
+				geneCounts[strictNames[0]]++;
+				break;
+			}
+			else if (strictNames.size() > 1)
+			{
+				geneCounts["__ambiguous"]++;
+				break;
+			}
+			else if (countMode == intersect_strict)
+			{
+				geneCounts["__no_feature"]++;
+				break;
+			}
+			//  If we have not found a match, and it is not strict, run on and try union
+		}
 	case intersect_union:
 		if (genes.size() == 1)
 		{
@@ -202,23 +228,7 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 		else
 			geneCounts["__no_feature"]++;
 		break;
-	case intersect_strict:
-		{
-			vector<string> strictNames;
-			for (auto & gene : genes)
-			{
-				if (gene.second == Nsegments)
-					strictNames.push_back(gene.first);
-			}
-			if (strictNames.size() == 1)
-				geneCounts[strictNames[0]]++;
-			else if (strictNames.size() > 1)
-				geneCounts["__ambiguous"]++;
-			else
-				geneCounts["__no_feature"]++;
-			break;
-		}
-	case intersect_nonempty:
+/*	case intersect_nonempty:
 		{
 			vector<string> strictNames,nonemptyNames;
 			for (auto & gene : genes)
@@ -237,7 +247,7 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 			else
 				geneCounts["__no_feature"]++;
 			break;
-		}
+		}*/
 	}
 }
 
