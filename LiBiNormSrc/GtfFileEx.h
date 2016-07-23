@@ -13,8 +13,9 @@ typedef std::multimap<size_t, gtfRegion> chromosomeGtfData ;
 struct gtfOverlap
 {
 	size_t start,finish;
+	bool strict;
 	const gtfRegion & gtfReg;
-	gtfOverlap(size_t start,size_t finish,const gtfRegion & gtfReg): start(start),finish(finish),gtfReg(gtfReg){};
+	gtfOverlap(size_t start,size_t finish,bool strict,const gtfRegion & gtfReg): start(start),finish(finish),strict(strict),gtfReg(gtfReg){};
 };
 
 class gtfRegion

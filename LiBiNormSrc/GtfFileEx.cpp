@@ -7,14 +7,14 @@ bool gtfRegion::checkOverlap(const region & segment,bool & strict,vector<gtfOver
 	if ((segment.start >= start) && (segment.end <= finish))
 	{
 		strict = true;
-		overlaps.emplace_back(segment.start,segment.end,*this);
+		overlaps.emplace_back(segment.start,segment.end,true,*this);
 		return true;
 	}
 	else if (((segment.start <= finish) && (segment.start >= start)) ||
 				((segment.end <= finish) && (segment.end >= start)) ||
 				((segment.start <= start) && (segment.end >= finish)))
 	{
-		overlaps.emplace_back(max(segment.start,start),min(segment.end,finish),*this);
+		overlaps.emplace_back(max(segment.start,start),min(segment.end,finish),false,*this);
 		strict = false;
 		return true;
 	}

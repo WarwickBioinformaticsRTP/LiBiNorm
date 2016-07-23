@@ -147,7 +147,7 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 		size_t partial;
 		size_t strict;
 		size_t length;
-		overlapCounts(size_t partial=0,size_t strict=0):partial(partial),strict(strict),length(0){};
+		overlapCounts(size_t partial=0,size_t strict=0,size_t length = 0):partial(partial),strict(strict),length(length){};
 	};
 
 	struct chromosomeGeneInfo: public map<string,overlapCounts>
@@ -205,7 +205,7 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 						{
 							//	If there are multiple matches and one is not strict then
 							//	the overall match is not strict.
-							auto g = genes[pairNo].find(j->second.name);
+/*							auto g = genes[pairNo].find(j->second.name);
 							if (g != genes[pairNo].end())
 							{
 								g->second.partial++;
@@ -213,7 +213,7 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 									g->second.strict++;
 							}
 							else
-								genes[pairNo].emplace(j->second.name,overlapCounts(1,strict?1:0));
+								genes[pairNo].emplace(j->second.name,overlapCounts(1,strict?1:0));*/
 							if (j->second.start > segment.second.end)
 								gtfRegion = j;
 						}
@@ -224,22 +224,46 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 				{
 					genes[pairNo].noMatch++;
 				}
-				else if (overlaps.size() == 1)
+/*				else if (overlaps.size() == 1)
 				{
-					auto g = genes[pairNo].find(overlaps[0].gtfReg.name);
-					if (g != genes[pairNo].end())
-						g->second.length = overlaps[0].gtfReg.finish - overlaps[0].gtfReg.start;
-				}
-				else
-				{
-					size_t min = overlaps[0].start,max = overlaps[0].finish;
-					stringEx gene = overlaps[0].gtfReg.name;
-					for (size_t x = 1;x < overlaps.size();x++)
+					size_t length = overlaps[0].gtfReg.finish - overlaps[0].gtfReg.start;
+					overlapCounts & olc = genes[pairNo][overlaps[0].gtfReg.name];
+					olc.partial++;
+					olc.strict += overlaps[0].strict?1:0;
+					olc.length += length;*/
+
+/*					auto g = genes[pairNo].find(overlaps[0].gtfReg.name);
+					size_t length = overlaps[0].gtfReg.finish - overlaps[0].gtfReg.start;
+					if (g == genes[pairNo].end())
 					{
+						genes[pairNo].emplace(overlaps[0].gtfReg.name,overlapCounts(1,overlaps[0].strict?1:0,length));
+					}
+					else
+					{
+						g->second.partial++;
+						g->second.strict += overlaps[0].strict?1:0;
+						g->second.length += length;
+					}*/
+/*				}
+				else*/
+				{
+					size_t min = INT_MAX,max = 0;
+					stringEx gene;
+	
+					for (size_t x = 0;x < overlaps.size();x++)
+					{
+						//	Create dummy entry for every gene;
+						genes[pairNo][overlaps[x].gtfReg.name];
+
+						if (overlaps[x].strict)
+							genes[pairNo][overlaps[x].gtfReg.name].strict++;
+
+
 						if ((overlaps[x].start == min) && (overlaps[x].finish == max))
 						{
 							//Identical
 							gene = "";
+
 						}
 						else if ((overlaps[x].start >= min) && (overlaps[x].finish <= max))
 						{
@@ -258,9 +282,23 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 					}
 					if (gene)
 					{
+						overlapCounts & olc = genes[pairNo][gene];
+						olc.partial++;
+						olc.length += (max-min);
+/*
 						auto g = genes[pairNo].find(gene);
-						if (g != genes[pairNo].end())
-							g->second.length = max - min;
+						if (g == genes[pairNo].end())
+						{
+							genes[pairNo].emplace(gene,overlapCounts(1,strict?1:0,max-min));
+						}
+						else
+						{
+							g->second.partial++;
+							g->second.strict += strict?1:0;
+							g->second.length += (max-min);
+						}*/
+//						if (g != genes[pairNo].end())
+//							g->second.length = max - min;
 					}
 				}
 			}
