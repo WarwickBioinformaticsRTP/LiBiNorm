@@ -34,10 +34,16 @@ public:
 	BamReader reader;
 	RefVector references;
 
+	TsvFile outputFile;
+
 	int main(int argc, char **argv);
 	void processBamData();
 	void outputGeneCounts(const string & filename);
 	void addRead(const regionLists & segments,const gtfFileEx & gtfData);
+
+
+
+	void fileCompare();
 
 };
 

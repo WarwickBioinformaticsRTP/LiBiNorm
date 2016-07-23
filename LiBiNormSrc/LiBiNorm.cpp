@@ -19,7 +19,10 @@ int main(int argc, char **argv)
 //	LiBiNorm libiN;
 //	libiN.main(argc,argv);
 
+
 	LiBiCount libiC;
+
+//	libiC.fileCompare();
 	libiC.main(argc,argv);
 
 

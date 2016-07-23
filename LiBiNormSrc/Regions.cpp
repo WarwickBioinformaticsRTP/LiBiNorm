@@ -56,8 +56,7 @@ void regionList::add(size_t start,size_t end,bool revStrand)
 	emplace(start,region(start,end,revStrand));
 }
 
-void regionLists::GetRegions(const BamAlignment & ba) {
-	This[ba.RefID].GetRegions(ba);
+void regionLists::GetRegions(const BamAlignment & ba) { 	This[ba.RefID].GetRegions(ba);
 }
 
 
@@ -65,9 +64,34 @@ void regionList::GetRegions(const BamAlignment & ba) {
 
 	//	If we already have some regions then we need to combine them
 	bool combine = size();
+	standardPair = true;
 
-	bool revStrand = ba.IsReverseStrand() != ba.IsFirstMate();
+	_DBG(
+		bool firstMate = ba.IsFirstMate();
+	bool revSt = ba.IsReverseStrand();
+	bool mateMapped = ba.IsMateMapped();
 
+	bool paired = ba.IsProperPair();
+	)
+
+/*	bool revStrand = ba.IsMateMapped()?
+		(ba.IsProperPair()?(ba.IsReverseStrand() == ba.IsFirstMate()):!ba.IsReverseStrand()):
+		ba.IsReverseStrand();
+*/
+	bool revStrand = (ba.IsReverseStrand() == ba.IsFirstMate());
+
+	if (!ba.IsMateMapped())
+	{
+		revStrand = (ba.IsReverseStrand() == ba.IsFirstMate());
+//		revStrand = ba.IsReverseStrand();
+	}
+	else if (!ba.IsProperPair())
+	{
+		revStrand = (ba.IsReverseStrand() == ba.IsFirstMate());
+//		standardPair = false;
+//		revStrand = !ba.IsReverseStrand();
+	}
+	
 	//	Dont combine if the two reads are on reverse strands
 	if (combine && (revStrand != (begin()->second.strand == '-')))
 		combine = false;

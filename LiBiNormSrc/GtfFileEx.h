@@ -10,6 +10,13 @@ class gtfRegion;
 
 typedef std::multimap<size_t, gtfRegion> chromosomeGtfData ;
 
+struct gtfOverlap
+{
+	size_t start,finish;
+	const gtfRegion & gtfReg;
+	gtfOverlap(size_t start,size_t finish,const gtfRegion & gtfReg): start(start),finish(finish),gtfReg(gtfReg){};
+};
+
 class gtfRegion
 {
 public:
@@ -19,7 +26,7 @@ public:
 	char strand;
 	chromosomeGtfData::iterator overlaps;
 	gtfRegion(	size_t start, size_t finish,const std::string & name,char strand,setEx<std::string> && type ):start(start),finish(finish),name(name),strand(strand),type(type){};
-	bool checkOverlap(const region & segment,bool & strict) const;
+	bool checkOverlap(const region & segment,bool & strict,std::vector<gtfOverlap> & overlaps) const;
 };
 
 
