@@ -64,7 +64,7 @@ void regionList::GetRegions(const BamAlignment & ba) {
 
 	//	If we already have some regions then we need to combine them
 	bool combine = size();
-	standardPair = true;
+//	standardPair = true;
 
 	_DBG(
 		bool firstMate = ba.IsFirstMate();

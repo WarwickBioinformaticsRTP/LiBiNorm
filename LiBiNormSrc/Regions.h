@@ -20,7 +20,7 @@ public:
 class regionList : public std::map<size_t,region>
 {
 public:
-	bool standardPair;
+//	bool standardPair;
 	void GetRegions(const BamTools::BamAlignment & ba);
 	bool combineRegion(size_t start,size_t end,bool revStrand);
 	void add(size_t start,size_t end,bool revStrand);

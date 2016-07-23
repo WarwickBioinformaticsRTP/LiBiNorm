@@ -27,7 +27,7 @@ public:
 	char strand;
 	chromosomeGtfData::iterator overlaps;
 	gtfRegion(	size_t start, size_t finish,const std::string & name,char strand,setEx<std::string> && type ):start(start),finish(finish),name(name),strand(strand),type(type){};
-	bool checkOverlap(const region & segment,bool & strict,std::vector<gtfOverlap> & overlaps) const;
+	bool checkOverlap(const region & segment,std::vector<gtfOverlap> & overlaps) const;
 };
 
 

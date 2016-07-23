@@ -2,11 +2,10 @@
 
 using namespace std;
 
-bool gtfRegion::checkOverlap(const region & segment,bool & strict,vector<gtfOverlap> & overlaps) const
+bool gtfRegion::checkOverlap(const region & segment,vector<gtfOverlap> & overlaps) const
 {
 	if ((segment.start >= start) && (segment.end <= finish))
 	{
-		strict = true;
 		overlaps.emplace_back(segment.start,segment.end,true,*this);
 		return true;
 	}
@@ -15,7 +14,6 @@ bool gtfRegion::checkOverlap(const region & segment,bool & strict,vector<gtfOver
 				((segment.start <= start) && (segment.end >= finish)))
 	{
 		overlaps.emplace_back(max(segment.start,start),min(segment.end,finish),false,*this);
-		strict = false;
 		return true;
 	}
 
