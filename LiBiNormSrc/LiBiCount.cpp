@@ -155,16 +155,13 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 		size_t noMatch;
 		size_t nSegments;
 		chromosomeGeneInfo():noMatch(0),nSegments(0){};
-	} genes[2];
+	} genes;
 
-//	bool standardPair = true;
 	bool nonOverlappingGenes = false;
 
 	size_t pairNo = 0;
 	for (auto & chromSegments : segments)
 	{
-//		if (!chromSegments.second.standardPair)
-//			standardPair = false;
 		//	For teh segments on each of the chromosomes (normally only one chromosome) get the gtfRegions for the chromosome
 		genomeGtfRegions::const_iterator thisChromGtfRegions = gtfData.genomeGtfData.find(references[chromSegments.first].RefName);
 
@@ -191,7 +188,7 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 			//And now go through each of the segments
 			for (auto & segment : chromSegments.second)
 			{
-				genes[pairNo].nSegments++;
+				genes.nSegments++;
 				vector<gtfOverlap> overlaps;
 				//	Trying out each of the gtfRegions in turn to see if there is an overlap
 				auto j = gtfRegion;
@@ -210,7 +207,7 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 				}
 				if (overlaps.size() == 0)
 				{
-					genes[pairNo].noMatch++;
+					genes.noMatch++;
 				}
 				else
 				{
@@ -220,17 +217,17 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 					for (size_t x = 0;x < overlaps.size();x++)
 					{
 						//	Create dummy entry for every gene;
-						genes[pairNo][overlaps[x].gtfReg.name];
+						genes[overlaps[x].gtfReg.name];
 
 						if (overlaps[x].strict)
-							genes[pairNo][overlaps[x].gtfReg.name].strict++;
+							genes[overlaps[x].gtfReg.name].strict++;
 
 
 						if ((overlaps[x].start == min) && (overlaps[x].finish == max))
 						{
 							//Identical
 
-							overlapCounts & olc = genes[pairNo][gene];
+							overlapCounts & olc = genes[gene];
 							olc.partial++;
 							olc.length += (max-min);
 
@@ -254,7 +251,7 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 					}
 					if (gene)
 					{
-						overlapCounts & olc = genes[pairNo][gene];
+						overlapCounts & olc = genes[gene];
 						olc.partial++;
 						olc.length += (max-min);
 					}
@@ -270,65 +267,57 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 	case intersect_strict:
 	case intersect_nonempty:		
 		{
-//			if ((countMode == intersect_nonempty) || standardPair)
+			mapZeroDef <string,size_t> strictNames;
+
+			for (auto & gene : genes)
 			{
-				mapZeroDef <string,size_t> strictNames;
-
-				size_t totSegments = genes[0].nSegments + genes[1].nSegments;
-
-				for (size_t chromosome = 0;chromosome < 2;chromosome++)
-				{
-					for (auto & gene : genes[chromosome])
-					{
-						if (gene.second.strict == genes[chromosome].nSegments)
-							strictNames[gene.first] += gene.second.strict;
-					}
-				}
-				for (auto i = strictNames.begin(); i != strictNames.end();)
-				{
-					if (i->second != totSegments)
-					{
-						auto j = i++;
-						strictNames.erase(j);
-					}
-					else
-						i++;
-				}
-
-				if (strictNames.size() == 1)
-				{
-					const string & name = strictNames.begin()->first;
-					geneCounts[name]++;
-					if (outputFile.is_open())
-						outputFile.printEnd("strict",name,segments.name);
-					break;
-				}
-				else if (strictNames.size() > 1)
-				{
-					if (outputFile.is_open())
-						outputFile.printEnd("strict","__ambiguous",segments.name);
-					geneCounts["__ambiguous"]++;
-					break;
-				}
-				else if (countMode == intersect_strict)
-				{
-					if (outputFile.is_open())
-						outputFile.printEnd("strict","__no_feature",segments.name);
-					geneCounts["__no_feature"]++;	
-					break;
-				}
+				if (gene.second.strict == genes.nSegments)
+					strictNames[gene.first] += gene.second.strict;
 			}
-			//  If we have not found a match, and it is not strict, run on and try union
+
+			for (auto i = strictNames.begin(); i != strictNames.end();)
+			{
+				if (i->second != genes.nSegments)
+				{
+					auto j = i++;
+					strictNames.erase(j);
+				}
+				else
+					i++;
+			}
+
+			if (strictNames.size() == 1)
+			{
+				const string & name = strictNames.begin()->first;
+				geneCounts[name]++;
+				if (outputFile.is_open())
+					outputFile.printEnd("strict",name,segments.name);
+				break;
+			}
+			else if (strictNames.size() > 1)
+			{
+				if (outputFile.is_open())
+					outputFile.printEnd("strict","__ambiguous",segments.name);
+				geneCounts["__ambiguous"]++;
+				break;
+			}
+			else if (countMode == intersect_strict)
+			{
+				if (outputFile.is_open())
+					outputFile.printEnd("strict","__no_feature",segments.name);
+				geneCounts["__no_feature"]++;	
+				break;
+			}
 		}
 	case intersect_union:
 		{
-			size_t Ngenes = genes[0].size() + genes[1].size();
-			if ((Ngenes == 1)) // && (standardPair || (countMode == intersect_nonempty)))
+			size_t Ngenes = genes.size();
+
+			if (Ngenes == 1)
 			{
-				size_t readNo = genes[1].size();
 				if (outputFile.is_open())
-					outputFile.printEnd("strict",genes[readNo].begin()->first,segments.name);
-				geneCounts[genes[readNo].begin()->first]++;
+					outputFile.printEnd("strict",genes.begin()->first,segments.name);
+				geneCounts[genes.begin()->first]++;
 			}
 			else if (Ngenes > 1)
 			{
@@ -345,26 +334,23 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 					int maxLength = 0;
 					bool ambiguous = false;
 
-					if ((genes[0].size() == 0) || (genes[1].size() == 0))
-					{
-						size_t chromId = (genes[0].size())?0:1;
 
-						for (auto & gene : genes[chromId])
+					for (auto & gene : genes)
+					{
+						if (gene.second.partial == (genes.nSegments - genes.noMatch))
 						{
-							if (gene.second.partial == (genes[chromId].nSegments - genes[chromId].noMatch))
+							if (gene.second.length > bestLength)
 							{
-								if (gene.second.length > bestLength)
-								{
-									bestGene = gene.first;
-									bestLength = gene.second.length;
-								}
-								else if (gene.second.length == bestLength)
-								{
-									ambiguous = true;
-								}
+								bestGene = gene.first;
+								bestLength = gene.second.length;
+							}
+							else if (gene.second.length == bestLength)
+							{
+								ambiguous = true;
 							}
 						}
 					}
+
 					if (ambiguous || nonOverlappingGenes)
 					{
 						if (outputFile.is_open())
@@ -393,26 +379,6 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 			}
 			break;
 		}
-/*	case intersect_nonempty:
-		{
-			vector<string> strictNames,nonemptyNames;
-			for (auto & gene : genes)
-			{
-				if (gene.second == Nsegments)
-					strictNames.push_back(gene.first);
-				else
-					nonemptyNames.push_back(gene.first);
-			}
-			if (strictNames.size() == 1)
-				geneCounts[strictNames[0]]++;
-			else if (nonemptyNames.size() ==1)
-				geneCounts[nonemptyNames[0]]++;
-			else if ((strictNames.size() > 1) || ((strictNames.size() == 0 ) && (nonemptyNames.size() > 1)))
-				geneCounts["__ambiguous"]++;
-			else
-				geneCounts["__no_feature"]++;
-			break;
-		}*/
 	}
 }
 
@@ -429,7 +395,7 @@ void LiBiCount::processBamData()
 	while (OK)
 	{
 		_DBG(string name = ba1.Name;
-		bool found = (name == "HWI-D00133:18:DTWTJACXX:4:1102:6564:59885");)
+		bool found = (name == "HWI-D00133:18:DTWTJACXX:4:1102:16555:57554");)
 
 			
 		regionLists regions;
