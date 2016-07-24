@@ -41,7 +41,7 @@ void mcmc::mcmcrun(const modelType & model,const dataType & data,const paramSet 
 {
 
 	dataVec qcov = options.qcov;
-	size_t npar = params.size();
+//	size_t npar = params.size();
 	dataVec oldpar = params.getvalues();
 	dataVec thetamu = params.getMus();
 	dataVec thetasig = params.getSigmas();

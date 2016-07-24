@@ -14,8 +14,8 @@ struct gtfOverlap
 {
 	size_t start,finish;
 	bool strict;
-	const gtfRegion & gtfReg;
-	gtfOverlap(size_t start,size_t finish,bool strict,const gtfRegion & gtfReg): start(start),finish(finish),strict(strict),gtfReg(gtfReg){};
+	const std::string & geneName;
+	gtfOverlap(size_t start,size_t finish,bool strict,const std::string & geneName): start(start),finish(finish),strict(strict),geneName(geneName){};
 };
 
 class gtfRegion

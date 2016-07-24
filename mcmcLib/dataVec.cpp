@@ -13,7 +13,7 @@ dataVec dataVec::chol()
 	for (size_t i = 0; i < size(); i++)
 		for (size_t j = 0; j < size(); j++)
 		{
-			double temp = 0, temp2 = 0;
+			double temp = 0;// , temp2 = 0;
 			if (i > j)
 			{
 //				if (j > 0)

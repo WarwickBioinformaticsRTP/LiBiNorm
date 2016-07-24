@@ -104,8 +104,6 @@ void regionList::GetRegions(const BamAlignment & ba) {
 					else
 						add(start,end-1,revStrand);
 					start = (end + op.Length);
-//					start++;		//Not convinced that the increement should be here, but is required for
-									//compatibility with htseq-count.
 					end = start;
 					break;
 				}

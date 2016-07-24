@@ -1,5 +1,9 @@
 #include <stdlib.h>
+
+#ifdef _WIN32
 #include <crtdbg.h>
+#endif
+
 #include "libCommon.h"
 #include "stringEx.h"
 #include "containerEx.h"
@@ -211,48 +215,46 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 				else
 				{
 					size_t min = INT_MAX,max = 0;
-					stringEx gene;
+					set<string> geneSet;
 	
-					for (size_t x = 0;x < overlaps.size();x++)
+					for (auto & overlap: overlaps)
 					{
 						//	Create dummy entry for every gene;
-						genes[overlaps[x].gtfReg.name];
+						genes[overlap.geneName];
 
-						if (overlaps[x].strict)
-							genes[overlaps[x].gtfReg.name].strict++;
+						if (overlap.strict)
+							genes[overlap.geneName].strict++;
 
 
-						if ((overlaps[x].start == min) && (overlaps[x].finish == max))
+						if ((overlap.start == min) && (overlap.finish == max))
 						{
 							//Identical
-
-							overlapCounts & olc = genes[gene];
-							olc.partial++;
-							olc.length += (max-min);
-
-							gene = overlaps[x].gtfReg.name;
-
+							geneSet.emplace(overlap.geneName);
 						}
-						else if ((overlaps[x].start >= min) && (overlaps[x].finish <= max))
+						else if ((overlap.start >= min) && (overlap.finish <= max))
 						{
 							//	smaller ignore
 						}
-						else if ((overlaps[x].start <= min) && (overlaps[x].finish >= max))
+						else if ((overlap.start <= min) && (overlap.finish >= max))
 						{
 							//	bigger replace
-							min = overlaps[x].start,max = overlaps[x].finish;
-							gene = overlaps[x].gtfReg.name;
+							min = overlap.start;
+							max = overlap.finish;
+							geneSet.clear();
+							geneSet.emplace(overlap.geneName);
 						}
 						else
 						{
 							nonOverlappingGenes = true;
 						}
 					}
-					if (gene)
+					if (geneSet.size())
 					{
-						overlapCounts & olc = genes[gene];
-						olc.partial++;
-						olc.length += (max-min);
+						for (auto gene:geneSet)
+						{
+							genes[gene].partial++;
+							genes[gene].length += (max-min);
+						}
 					}
 				}
 			}
@@ -398,7 +400,7 @@ void LiBiCount::processBamData()
 		}
 
 		if ((++samCounter % 100000) == 0)
-			cout << samCounter << " SAM alignment record pairs processed." << endl;
+			cout << samCounter << " BAM alignment record pairs processed." << endl;
 
 		addRead(regions,genomeDef);
 
@@ -438,7 +440,8 @@ void LiBiCount::fileCompare(const string & mode)
 	vector<string> myParams;
 	vector<stringEx> samParams[2];
 
-	bool OK = getline(samFile,line);
+	bool OK = getline(samFile,line).good();
+
 	parseTsv(line,samParams[0]);
 
 	while (OK) {
@@ -475,7 +478,7 @@ void LiBiCount::fileCompare(const string & mode)
 		}
 		else
 		{
-			OK = getline(samFile,line);
+			OK = getline(samFile,line).good();
 			samParams[0].clear();
 			parseTsv(line,samParams[0]);
 		}

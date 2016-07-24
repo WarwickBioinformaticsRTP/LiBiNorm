@@ -295,7 +295,6 @@ inline dataVec operator / (const dataVec & a ,double b)
 
 inline dataVec operator ^ (dataVec && a,int b)
 {
-	_ASSERT(b>1);
 	for (int p = 0;p < (b - 1);p++)
 		for (double & i : a)
 			i *= i;

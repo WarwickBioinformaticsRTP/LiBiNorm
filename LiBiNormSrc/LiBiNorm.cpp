@@ -1,6 +1,9 @@
+#ifdef _WIN32
 #define _CRTDBG_MAP_ALLOC
-#include <stdlib.h>
 #include <crtdbg.h>
+#endif
+
+#include <stdlib.h>
 #include <vector>
 #include "libCommon.h"
 #include "containerEx.h"
@@ -13,7 +16,10 @@ using namespace std;
 
 int main(int argc, char **argv)
 {
+
+#ifdef _WIN32
 	_CrtSetDbgFlag ( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );
+#endif
 
 	//	New data management 100 runs 54 secs, no datavec memory management 50.4, ie leave it to the OS to sort out
 //	LiBiNorm libiN;
@@ -22,7 +28,6 @@ int main(int argc, char **argv)
 
 	LiBiCount libiC;
 
-//	libiC.fileCompare();
 	libiC.main(argc,argv);
 
 
@@ -78,8 +83,8 @@ int LiBiNorm::main(int argc, char **argv)
 	size_t Nruns = 100;
 #endif
 
-	double drscale  = 0;
-	double adaptint = 0;
+//	double drscale  = 0;
+//	double adaptint = 0;
 
 	options.updatesigma = 0;
 
@@ -128,7 +133,6 @@ int LiBiNorm::main(int argc, char **argv)
 //			Chain.push_back(mcmcEngine.chain());
 
 		}
-		int a = 1;
 	}
 
 
