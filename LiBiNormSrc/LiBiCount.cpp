@@ -38,7 +38,7 @@ int LiBiCount::main(int argc, char **argv)
 	{
 		if(strcmp(argv[ni], "-f") == 0)
 		{
-			fileCompare();
+			fileCompare(argv[++ni]);
 			exitSuccess();
 		}
 		else if(strcmp(argv[ni], "-b") == 0)
@@ -188,23 +188,22 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 			//And now go through each of the segments
 			for (auto & segment : chromSegments.second)
 			{
+
 				genes.nSegments++;
 				vector<gtfOverlap> overlaps;
 				//	Trying out each of the gtfRegions in turn to see if there is an overlap
-				auto j = gtfRegion;
-				while ((j != thisChromGtfRegions->second.end()) && (j->first <= segment.second.end))
+
+				for (auto j = gtfRegion; (j != thisChromGtfRegions->second.end()) && (j->first <= segment.second.end); j++)
 				{
 					//	Check for strand match
 					if (!useStrand || ((j->second.strand == segment.second.strand) != reverseStrand))
 					{
-						if (j->second.checkOverlap(segment.second,overlaps))
-						{
-							if (j->second.start > segment.second.end)
-								gtfRegion = j;
-						}
+						j->second.checkOverlap(segment.second,overlaps);
 					}
-					j++;
+
+					gtfRegion = j->second.overlaps;
 				}
+
 				if (overlaps.size() == 0)
 				{
 					genes.noMatch++;
@@ -261,79 +260,64 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 		pairNo++;
 	}
 
+	static string ambiguousString = "__ambiguous";
+	static string noFeatureString = "__no_feature";
 
 	switch(countMode)
 	{
 	case intersect_strict:
 	case intersect_nonempty:		
 		{
-			mapZeroDef <string,size_t> strictNames;
+
+			const string * result = nullptr;
 
 			for (auto & gene : genes)
 			{
 				if (gene.second.strict == genes.nSegments)
-					strictNames[gene.first] += gene.second.strict;
-			}
-
-			for (auto i = strictNames.begin(); i != strictNames.end();)
-			{
-				if (i->second != genes.nSegments)
 				{
-					auto j = i++;
-					strictNames.erase(j);
+					if (result)
+					{
+						result = &ambiguousString;
+						break;
+					}
+					else
+						result = &gene.first;
 				}
-				else
-					i++;
 			}
 
-			if (strictNames.size() == 1)
+
+			if ((countMode == intersect_strict) && (result == nullptr))
+				result = &noFeatureString;
+
+			if (result != nullptr)
 			{
-				const string & name = strictNames.begin()->first;
-				geneCounts[name]++;
+				geneCounts[*result]++;
 				if (outputFile.is_open())
-					outputFile.printEnd("strict",name,segments.name);
+					outputFile.printEnd("strict",*result,segments.name);
 				break;
 			}
-			else if (strictNames.size() > 1)
-			{
-				if (outputFile.is_open())
-					outputFile.printEnd("strict","__ambiguous",segments.name);
-				geneCounts["__ambiguous"]++;
-				break;
-			}
-			else if (countMode == intersect_strict)
-			{
-				if (outputFile.is_open())
-					outputFile.printEnd("strict","__no_feature",segments.name);
-				geneCounts["__no_feature"]++;	
-				break;
-			}
+
 		}
 	case intersect_union:
 		{
 			size_t Ngenes = genes.size();
+			const string * result = nullptr;
 
 			if (Ngenes == 1)
 			{
-				if (outputFile.is_open())
-					outputFile.printEnd("strict",genes.begin()->first,segments.name);
-				geneCounts[genes.begin()->first]++;
+				result = &genes.begin()->first;
 			}
 			else if (Ngenes > 1)
 			{
 				if (countMode == intersect_union)
 				{
-					if (outputFile.is_open())
-						outputFile.printEnd("union","__ambiguous",segments.name);
-					geneCounts["__ambiguous"]++;
+					result = &ambiguousString;
 				}
 				else 
 				{
 					size_t bestLength = 0;
-					stringEx bestGene;
-					int maxLength = 0;
-					bool ambiguous = false;
 
+					result = &noFeatureString;
 
 					for (auto & gene : genes)
 					{
@@ -341,42 +325,36 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 						{
 							if (gene.second.length > bestLength)
 							{
-								bestGene = gene.first;
+								result = &gene.first;
 								bestLength = gene.second.length;
 							}
 							else if (gene.second.length == bestLength)
 							{
-								ambiguous = true;
+								result = &ambiguousString;
 							}
 						}
 					}
 
-					if (ambiguous || nonOverlappingGenes)
+					if (nonOverlappingGenes && (result != &ambiguousString))
 					{
-						if (outputFile.is_open())
-							outputFile.printEnd("non_empty","__ambiguous",segments.name);
-						geneCounts["__ambiguous"]++;
+						result = &noFeatureString;
 					}
-					else if (bestGene)
-					{
-						if (outputFile.is_open())
-							outputFile.printEnd("non_empty",bestGene,segments.name);
-						geneCounts[bestGene]++;
-					}
-					else
-					{
-						if (outputFile.is_open())
-							outputFile.printEnd("non_empty","__no_feature",segments.name);
-						geneCounts["__no_feature"]++;
-					}
+
+
+					if (outputFile.is_open())
+						outputFile.printEnd("non_empty",*result,segments.name);
+					geneCounts[*result]++;
+					break;
 				}
 			}
 			else
 			{
-				if (outputFile.is_open())
-					outputFile.printEnd("union","__no_feature",segments.name);
-				geneCounts["__no_feature"]++;
+				result = &noFeatureString;
 			}
+
+			if (outputFile.is_open())
+				outputFile.printEnd("union",*result,segments.name);
+			geneCounts[*result]++;
 			break;
 		}
 	}
@@ -395,7 +373,7 @@ void LiBiCount::processBamData()
 	while (OK)
 	{
 		_DBG(string name = ba1.Name;
-		bool found = (name == "HWI-D00133:18:DTWTJACXX:4:1102:16555:57554");)
+		bool found = (name == "HWI-D00133:18:DTWTJACXX:4:1102:5557:44071");)
 
 			
 		regionLists regions;
@@ -434,19 +412,23 @@ void LiBiCount::processBamData()
 
 
 
-void LiBiCount::fileCompare()
+void LiBiCount::fileCompare(const string & mode)
 {
 	ifstream samFile;
-	samFile.open("Y:\\SysmedIBD\\CD\\test\\nonemptyTest\\nonempty_large.sam");
-	if (!samFile.is_open()) return;
+	stringEx filename("Y:\\SysmedIBD\\CD\\test\\",mode,"Test\\",mode,"_large.sam");
+	samFile.open(filename);
+	if (!samFile.is_open())
+		exitFail("Failed to open samfile ",filename);
 
 	ifstream myFile;
-	myFile.open("Y:\\SysmedIBD\\CD\\test\\nonemptyTest\\matches_2.txt");
-	if (!myFile.is_open()) return;
+	myFile.open(stringEx("Y:\\SysmedIBD\\CD\\test\\",mode,"Test\\matches_2.txt"));
+	if (!myFile.is_open())
+		exitFail("Failed to txt samfile");
+
 
 
 	TsvFile outFile;
-	outFile.open("Y:\\SysmedIBD\\CD\\test\\nonemptyTest\\comparison_2.txt");
+	outFile.open(stringEx("Y:\\SysmedIBD\\CD\\test\\",mode,"Test\\comparison_2.txt"));
 
 	string line;
 

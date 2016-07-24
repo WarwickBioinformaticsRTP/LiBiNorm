@@ -64,34 +64,9 @@ void regionList::GetRegions(const BamAlignment & ba) {
 
 	//	If we already have some regions then we need to combine them
 	bool combine = size();
-//	standardPair = true;
 
-	_DBG(
-		bool firstMate = ba.IsFirstMate();
-	bool revSt = ba.IsReverseStrand();
-	bool mateMapped = ba.IsMateMapped();
-
-	bool paired = ba.IsProperPair();
-	)
-
-/*	bool revStrand = ba.IsMateMapped()?
-		(ba.IsProperPair()?(ba.IsReverseStrand() == ba.IsFirstMate()):!ba.IsReverseStrand()):
-		ba.IsReverseStrand();
-*/
 	bool revStrand = (ba.IsReverseStrand() == ba.IsFirstMate());
 
-	if (!ba.IsMateMapped())
-	{
-		revStrand = (ba.IsReverseStrand() == ba.IsFirstMate());
-//		revStrand = ba.IsReverseStrand();
-	}
-	else if (!ba.IsProperPair())
-	{
-		revStrand = (ba.IsReverseStrand() == ba.IsFirstMate());
-//		standardPair = false;
-//		revStrand = !ba.IsReverseStrand();
-	}
-	
 	//	Dont combine if the two reads are on reverse strands
 	if (combine && (revStrand != (begin()->second.strand == '-')))
 		combine = false;
@@ -128,9 +103,10 @@ void regionList::GetRegions(const BamAlignment & ba) {
 						combineRegion(start,end-1,revStrand);
 					else
 						add(start,end-1,revStrand);
-					end = start = (end + op.Length);
-					start++;		//Not convinced that the increement should be here, but is required for
+					start = (end + op.Length);
+//					start++;		//Not convinced that the increement should be here, but is required for
 									//compatibility with htseq-count.
+					end = start;
 					break;
 				}
 

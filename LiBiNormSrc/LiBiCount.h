@@ -43,7 +43,7 @@ public:
 
 
 
-	void fileCompare();
+	void fileCompare(const std::string & maode);
 
 };
 
