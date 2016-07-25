@@ -16,6 +16,10 @@ enum mode {
 class LiBiCount
 {
 
+	size_t bamCounter;
+
+	void incBamCounter(const BamAlignment * ba = 0,size_t size = -1);
+
 public:
 	bool useStrand,reverseStrand,verbose;
 	mode countMode;
@@ -34,7 +38,6 @@ public:
 	bool processUnorderedBamData();
 	void outputGeneCounts(const std::string & filename);
 	void addRead(const regionLists & segments,const gtfFileEx & gtfData);
-
 
 
 	void fileCompare(const std::string & maode);

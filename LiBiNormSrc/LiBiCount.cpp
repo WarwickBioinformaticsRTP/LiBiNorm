@@ -24,7 +24,6 @@ int LiBiCount::main(int argc, char **argv)
 	useStrand = true;
 	verbose = true;
 	countMode = intersect_union;
-//	setEx<string> feature_type("exon","five_prime_utr","three_prime_utr");
 
 	if(argc < 1)
 	{
@@ -163,35 +162,39 @@ void LiBiCount::outputGeneCounts(const string & filename)
 }
 
 
+//	overlapCounts and chromosomeInfo would have been declared inside addRead as they are local to addRead.  However this produces a C++ warning that the
+//	decorated name is too long, which can cause problems with debugging
+
+struct overlapCounts
+{
+	size_t partial;
+	size_t strict;
+	size_t length;
+	overlapCounts(size_t partial=0,size_t strict=0,size_t length = 0):partial(partial),strict(strict),length(length){};
+};
+
+struct chromosomeGeneInfo: public map<string,map <string,overlapCounts> >
+{
+	size_t noMatch;
+	size_t nSegments;
+	chromosomeGeneInfo():noMatch(0),nSegments(0){};
+	size_t size()
+	{
+		size_t _s = 0;
+		for (auto & i : This)
+		{
+			_s += i.second.size();
+		}
+		return _s;
+	}
+};
+
+
 void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 {
 	//	The paired end read consists of a number of segments.   If the two ends were aligned to different chromosomes
 	//	then the segments will be on different chromosomes
-
-	struct overlapCounts
-	{
-		size_t partial;
-		size_t strict;
-		size_t length;
-		overlapCounts(size_t partial=0,size_t strict=0,size_t length = 0):partial(partial),strict(strict),length(length){};
-	};
-
-	struct chromosomeGeneInfo: public map<string,map <string,overlapCounts> >
-	{
-		size_t noMatch;
-		size_t nSegments;
-		chromosomeGeneInfo():noMatch(0),nSegments(0){};
-		size_t size()
-		{
-			size_t _s = 0;
-			for (auto & i : This)
-			{
-				_s += i.second.size();
-			}
-			return _s;
-		}
-
-	} genes;
+	chromosomeGeneInfo genes;
 
 	bool nonOverlappingGenes = false;
 
@@ -413,12 +416,24 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 }
 
 
+void LiBiCount::incBamCounter(const BamAlignment * ba,size_t size)
+{
+	if ((++bamCounter % 100000) == 0)
+		if (verbose)
+		{
+			cerr << bamCounter << " BAM alignment record pairs processed.";
+			if (ba)
+				cerr << " cache size = " << size << "  " << references[ba->RefID].RefName << ":" << ba ->Position << endl;
+		}
+}
+
 bool LiBiCount::processOrderedBamData()
 {
 	BamAlignment ba1;
 	BamAlignment ba2;
 
-	size_t samCounter(0),misPairs(0);
+	size_t misPairs(0);
+	bamCounter = 0;
 
 	bool OK = reader.GetNextAlignment(ba1);
 
@@ -445,13 +460,14 @@ bool LiBiCount::processOrderedBamData()
 			}
 			else
 			{
-				if (samCounter < 100)
+				if (bamCounter < 100)
 				{
 					if (ba1.IsMateMapped())
 					{
-						if (misPairs++ > 10)
+						if (misPairs++ > 5)
 						{
-							cerr << misPairs << " missing pairs found in the first 100 reads, so assuming data is not name ordered" << endl;
+							if (verbose)
+								cerr << misPairs << " missing pairs found in the first " << bamCounter << " reads, so assuming data is not name ordered" << endl;
 							return false;
 						}
 					}
@@ -460,9 +476,7 @@ bool LiBiCount::processOrderedBamData()
 			}
 		}
 
-		if ((++samCounter % 100000) == 0)
-			if (verbose)
-				cerr << samCounter << " BAM alignment record pairs processed." << endl;
+		incBamCounter();
 
 		addRead(regions,genomeDef);
 
@@ -474,11 +488,12 @@ bool LiBiCount::processOrderedBamData()
 	return true;
 }
 
+
 bool LiBiCount::processUnorderedBamData()
 {
 	BamAlignment ba;
 
-	size_t samCounter(0);
+	bamCounter = 0;
 
 	bool OK = reader.GetNextAlignment(ba);
 
@@ -508,9 +523,8 @@ bool LiBiCount::processUnorderedBamData()
 					regions.name = ba.Name;
 
 					regions.GetRegions(ba);
-					if ((++samCounter % 100000) == 0)
-						if (verbose)
-							cerr << samCounter << " BAM alignment record pairs processed. cache size = " <<readCache.size() << "  " << references[ba.RefID].RefName << ":" << ba.Position << endl;
+
+					incBamCounter(&ba,readCache.size());
 
 					addRead(regions,genomeDef);
 
@@ -522,9 +536,8 @@ bool LiBiCount::processUnorderedBamData()
 				regionLists regions;
 				regions.name = ba.Name;
 				regions.GetRegions(ba);
-				if ((++samCounter % 100000) == 0)
-					if (verbose)
-						cerr << samCounter << " BAM alignment record pairs processed. cache size = " <<readCache.size() << "  " << references[ba.RefID].RefName << ":" << ba.Position << endl;
+
+				incBamCounter(&ba,readCache.size());
 
 				addRead(regions,genomeDef);
 
@@ -536,11 +549,8 @@ bool LiBiCount::processUnorderedBamData()
 	for (auto & i : readCache)
 	{
 		i.second.name = i.first;
-
 		addRead(i.second,genomeDef);
-		if ((++samCounter % 100000) == 0)
-			if (verbose)
-				cerr << samCounter << " BAM alignment record pairs processed. cache size = " <<readCache.size()  << endl;
+		incBamCounter(&ba,readCache.size());
 	}
 	return true;
 }
