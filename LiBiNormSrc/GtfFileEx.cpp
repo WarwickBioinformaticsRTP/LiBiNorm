@@ -48,13 +48,11 @@ void gtfFileEx::index(geneCountsClass & geneCounts,const std::string & type)
 						{
 							finish = k->second.finish;
 							type.add(k->second.type);
-//							k->second.valid = false;
 							chrom.second.erase(k);
 						}
 						else if (k->second.finish <= finish)
 						{
 							type.add(k->second.type);
-//							k->second.valid = false;
 							chrom.second.erase(k);
 						}
 					}

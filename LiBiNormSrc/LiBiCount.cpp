@@ -121,7 +121,14 @@ int LiBiCount::main(int argc, char **argv)
 
 	_DBG(genomeDef.outputChromData(gtfFileName.replaceSuffix(".txt"));)
 
-	processBamData();
+	if (!processOrderedBamData())
+	{
+		reader.Rewind();
+		geneCounts.reset();
+		if (verbose)
+			cerr << "Data appears not to be ordered, processing as unordered" << endl;
+		processUnorderedBamData();
+	}
 
 	outputGeneCounts(bamFileName.replaceSuffix(".counts.txt"));
 
@@ -406,12 +413,12 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 }
 
 
-void LiBiCount::processBamData()
+bool LiBiCount::processOrderedBamData()
 {
 	BamAlignment ba1;
 	BamAlignment ba2;
 
-	size_t samCounter(0);
+	size_t samCounter(0),misPairs(0);
 
 	bool OK = reader.GetNextAlignment(ba1);
 
@@ -438,12 +445,24 @@ void LiBiCount::processBamData()
 			}
 			else
 			{
+				if (samCounter < 100)
+				{
+					if (ba1.IsMateMapped())
+					{
+						if (misPairs++ > 10)
+						{
+							cerr << misPairs << " missing pairs found in the first 100 reads, so assuming data is not name ordered" << endl;
+							return false;
+						}
+					}
+				}
 				readAlreadyRead = true;
 			}
 		}
 
 		if ((++samCounter % 100000) == 0)
-			cout << samCounter << " BAM alignment record pairs processed." << endl;
+			if (verbose)
+				cerr << samCounter << " BAM alignment record pairs processed." << endl;
 
 		addRead(regions,genomeDef);
 
@@ -452,7 +471,78 @@ void LiBiCount::processBamData()
 		else
 			OK = reader.GetNextAlignment(ba1);
 	}
+	return true;
+}
 
+bool LiBiCount::processUnorderedBamData()
+{
+	BamAlignment ba;
+
+	size_t samCounter(0);
+
+	bool OK = reader.GetNextAlignment(ba);
+
+	map<string,regionLists> readCache;
+
+	while (OK)
+	{
+		_DBG(string name = ba.Name;
+		bool found = (name == "HWI-D00133:18:DTWTJACXX:4:1102:9098:8124");)
+
+		bool readAlreadyRead = false;
+
+		if (ba.IsMapped())
+		{
+			if (ba.IsMateMapped())
+			{
+				map<string,regionLists>::iterator i = readCache.find(ba.Name);
+				if (i == readCache.end())
+				{
+					regionLists regions;
+					regions.GetRegions(ba);
+					readCache.emplace(ba.Name,move(regions));
+				}
+				else
+				{
+					regionLists & regions = i->second;
+					regions.name = ba.Name;
+
+					regions.GetRegions(ba);
+					if ((++samCounter % 100000) == 0)
+						if (verbose)
+							cerr << samCounter << " BAM alignment record pairs processed. cache size = " <<readCache.size() << "  " << references[ba.RefID].RefName << ":" << ba.Position << endl;
+
+					addRead(regions,genomeDef);
+
+					readCache.erase(i);
+				}
+			}
+			else
+			{
+				regionLists regions;
+				regions.name = ba.Name;
+				regions.GetRegions(ba);
+				if ((++samCounter % 100000) == 0)
+					if (verbose)
+						cerr << samCounter << " BAM alignment record pairs processed. cache size = " <<readCache.size() << "  " << references[ba.RefID].RefName << ":" << ba.Position << endl;
+
+				addRead(regions,genomeDef);
+
+			}
+		}
+
+		OK = reader.GetNextAlignment(ba);
+	}
+	for (auto & i : readCache)
+	{
+		i.second.name = i.first;
+
+		addRead(i.second,genomeDef);
+		if ((++samCounter % 100000) == 0)
+			if (verbose)
+				cerr << samCounter << " BAM alignment record pairs processed. cache size = " <<readCache.size()  << endl;
+	}
+	return true;
 }
 
 

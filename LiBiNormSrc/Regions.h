@@ -29,8 +29,13 @@ public:
 class regionLists : public std::map<int,regionList>
 {
 public:
+	regionLists(){};
 	std::string name;
 	void GetRegions(const BamTools::BamAlignment & ba);
+//	regionLists(regionLists & rl): std::map<int,regionList>(rl){};
+	regionLists(regionLists && rl): std::map<int,regionList>(move(rl))
+	{
+	};
 };
 
 #endif

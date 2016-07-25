@@ -17,6 +17,15 @@ public:
 			output.printEnd(index,entry.first,entry.second);
 		}
 	};
+	void reset()	{
+		for (auto & gene: This)
+		{
+			for (auto & type: gene.second)
+			{
+				type.second = 0;
+			}
+		}
+	};
 };
 
 typedef std::multimap<size_t, gtfRegion> chromosomeGtfData ;

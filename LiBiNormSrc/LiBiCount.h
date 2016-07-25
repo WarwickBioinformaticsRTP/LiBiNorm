@@ -30,7 +30,8 @@ public:
 	TsvFile outputFile;
 
 	int main(int argc, char **argv);
-	void processBamData();
+	bool processOrderedBamData();
+	bool processUnorderedBamData();
 	void outputGeneCounts(const std::string & filename);
 	void addRead(const regionLists & segments,const gtfFileEx & gtfData);
 
