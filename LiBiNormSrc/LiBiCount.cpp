@@ -9,15 +9,16 @@
 #include "containerEx.h"
 #include "LiBiCount.h"
 
+using namespace std;
 
 int LiBiCount::main(int argc, char **argv)
 {
-	string test;
+	std::string test;
 
 	stringEx bamFileName,gtfFileName,outputFilename,
 		id_attribute = "gene_name";
 
-	setEx<string> feature_type("exon");
+	setEx<string> feature_type;
 
 	reverseStrand = true;
 	useStrand = true;
@@ -40,10 +41,18 @@ int LiBiCount::main(int argc, char **argv)
 	int ni = 1;
 	while(ni < argc)
 	{
-		if(strcmp(argv[ni], "-f") == 0)
+		if(strcmp(argv[ni], "-c") == 0)
 		{
 			fileCompare(argv[++ni]);
 			exitSuccess();
+		}
+		if(strcmp(argv[ni], "-f") == 0)
+		{
+			feature_type.emplace(argv[++ni]);
+		}
+		if(strcmp(argv[ni], "-i") == 0)
+		{
+			id_attribute = argv[++ni];
 		}
 		else if(strcmp(argv[ni], "-b") == 0)
 		{
@@ -76,10 +85,13 @@ int LiBiCount::main(int argc, char **argv)
 
 		else
 		{
-			exitFail("Invalid parameter: ",argv[ni]);
+			exitFail("Invalid parameter: ",string(argv[ni]));
 		}
 		ni++;
 	}
+
+	if (feature_type.size() == 0)
+		feature_type.emplace("exon");
 
 	if (outputFilename && !outputFile.open(outputFilename))
 		exitFail("Unable to open output file: ",outputFilename);
@@ -97,7 +109,7 @@ int LiBiCount::main(int argc, char **argv)
 	if (!genomeDef.open(gtfFileName,verbose,id_attribute,feature_type))
 		exitFail("Could not open gtf file: ",gtfFileName);
 
-	genomeDef.index(geneCounts);
+	genomeDef.index(geneCounts,(feature_type.size()==1)?*feature_type.begin():"");
 
 //	_DBG(cin >> test;)
 
@@ -116,7 +128,7 @@ int LiBiCount::main(int argc, char **argv)
 	if (verbose)
 		elapsedTime();
 
-	_DBG(cin >> test;)
+	cin >> test;
 
 	return EXIT_SUCCESS;
 }
@@ -130,8 +142,11 @@ void LiBiCount::outputGeneCounts(const string & filename)
 
 	for(auto i : geneCounts)
 	{
-		if (i.first.substr(0,2) != "__")
-			output.printEnd(i.first,i.second);
+		for(auto j : i.second)
+		{
+			if (i.first.substr(0,2) != "__")
+				output.printEnd(i.first,j.first,j.second);
+		}
 	}
 	geneCounts.print("__no_feature",output);
 	geneCounts.print("__ambiguous",output);
@@ -154,11 +169,21 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 		overlapCounts(size_t partial=0,size_t strict=0,size_t length = 0):partial(partial),strict(strict),length(length){};
 	};
 
-	struct chromosomeGeneInfo: public map<string,overlapCounts>
+	struct chromosomeGeneInfo: public map<string,map <string,overlapCounts> >
 	{
 		size_t noMatch;
 		size_t nSegments;
 		chromosomeGeneInfo():noMatch(0),nSegments(0){};
+		size_t size()
+		{
+			size_t _s = 0;
+			for (auto & i : This)
+			{
+				_s += i.second.size();
+			}
+			return _s;
+		}
+
 	} genes;
 
 	bool nonOverlappingGenes = false;
@@ -215,21 +240,21 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 				else
 				{
 					size_t min = INT_MAX,max = 0;
-					set<string> geneSet;
+					set<pair<string,string> > geneSet;
 	
 					for (auto & overlap: overlaps)
 					{
-						//	Create dummy entry for every gene;
-						genes[overlap.geneName];
+						//	Create dummy entry for every region type that the read overlapped;
+						genes[overlap.geneName][overlap.type];
 
 						if (overlap.strict)
-							genes[overlap.geneName].strict++;
+							genes[overlap.geneName][overlap.type].strict++;
 
 
 						if ((overlap.start == min) && (overlap.finish == max))
 						{
 							//Identical
-							geneSet.emplace(overlap.geneName);
+							geneSet.emplace(overlap.geneName,overlap.type);
 						}
 						else if ((overlap.start >= min) && (overlap.finish <= max))
 						{
@@ -241,7 +266,7 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 							min = overlap.start;
 							max = overlap.finish;
 							geneSet.clear();
-							geneSet.emplace(overlap.geneName);
+							geneSet.emplace(overlap.geneName,overlap.type);
 						}
 						else
 						{
@@ -252,8 +277,8 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 					{
 						for (auto gene:geneSet)
 						{
-							genes[gene].partial++;
-							genes[gene].length += (max-min);
+							genes[gene.first][gene.second].partial++;
+							genes[gene.first][gene.second].length += (max-min);
 						}
 					}
 				}
@@ -264,6 +289,8 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 
 	static string ambiguousString = "__ambiguous";
 	static string noFeatureString = "__no_feature";
+	static string blankString = "";
+
 
 	switch(countMode)
 	{
@@ -272,18 +299,26 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 		{
 
 			const string * result = nullptr;
+			const string * type = &blankString;
 
 			for (auto & gene : genes)
 			{
-				if (gene.second.strict == genes.nSegments)
+				for (auto & regionType : gene.second)
 				{
-					if (result)
+					if (regionType.second.strict == genes.nSegments)
 					{
-						result = &ambiguousString;
-						break;
+						if (result)
+						{
+							result = &ambiguousString;
+							type = &blankString;
+							break;
+						}
+						else
+						{
+							result = &gene.first;
+							type = &regionType.first;
+						}
 					}
-					else
-						result = &gene.first;
 				}
 			}
 
@@ -293,9 +328,9 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 
 			if (result != nullptr)
 			{
-				geneCounts[*result]++;
+				geneCounts[*result][*type]++;
 				if (outputFile.is_open())
-					outputFile.printEnd("strict",*result,segments.name);
+					outputFile.printEnd("strict",*result,*type,segments.name);
 				break;
 			}
 
@@ -304,10 +339,12 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 		{
 			size_t Ngenes = genes.size();
 			const string * result = nullptr;
+			const string * type = &blankString;
 
 			if (Ngenes == 1)
 			{
 				result = &genes.begin()->first;
+				type = &genes.begin()->second.begin()->first;
 			}
 			else if (Ngenes > 1)
 			{
@@ -323,29 +360,35 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 
 					for (auto & gene : genes)
 					{
-						if (gene.second.partial == (genes.nSegments - genes.noMatch))
+						for (auto & regionType : gene.second)
 						{
-							if (gene.second.length > bestLength)
+							if (regionType.second.partial == (genes.nSegments - genes.noMatch))
 							{
-								result = &gene.first;
-								bestLength = gene.second.length;
-							}
-							else if (gene.second.length == bestLength)
-							{
-								result = &ambiguousString;
+								if (regionType.second.length > bestLength)
+								{
+									result = &gene.first;
+									type = &regionType.first;
+
+									bestLength = regionType.second.length;
+								}
+								else if (regionType.second.length == bestLength)
+								{
+									result = &ambiguousString;
+									type = &blankString;
+								}
 							}
 						}
 					}
-
 					if (nonOverlappingGenes && (result != &ambiguousString))
 					{
 						result = &noFeatureString;
+						type = &blankString;
 					}
 
 
 					if (outputFile.is_open())
-						outputFile.printEnd("non_empty",*result,segments.name);
-					geneCounts[*result]++;
+						outputFile.printEnd("non_empty",*result,*type,segments.name);
+					geneCounts[*result][*type]++;
 					break;
 				}
 			}
@@ -355,8 +398,8 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 			}
 
 			if (outputFile.is_open())
-				outputFile.printEnd("union",*result,segments.name);
-			geneCounts[*result]++;
+				outputFile.printEnd("union",*result,*type,segments.name);
+			geneCounts[*result][*type]++;
 			break;
 		}
 	}
@@ -375,7 +418,7 @@ void LiBiCount::processBamData()
 	while (OK)
 	{
 		_DBG(string name = ba1.Name;
-		bool found = (name == "HWI-D00133:18:DTWTJACXX:4:1102:5557:44071");)
+		bool found = (name == "HWI-D00133:18:DTWTJACXX:4:1102:9098:8124");)
 
 			
 		regionLists regions;

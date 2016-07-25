@@ -3,7 +3,6 @@
 
 #include "GtfFileEx.h"
 
-using namespace std;
 using namespace BamTools;
 
 enum mode {
@@ -21,13 +20,7 @@ public:
 	bool useStrand,reverseStrand,verbose;
 	mode countMode;
 
-	class geneCounts : public mapZeroDef<string,size_t>
-	{
-	public:
-		void print(const string index,TsvFile & output)	{
-			output.printEnd(index,This[index]);
-		};
-	} geneCounts;
+	geneCountsClass geneCounts;
 
 	gtfFileEx genomeDef;
 
@@ -38,7 +31,7 @@ public:
 
 	int main(int argc, char **argv);
 	void processBamData();
-	void outputGeneCounts(const string & filename);
+	void outputGeneCounts(const std::string & filename);
 	void addRead(const regionLists & segments,const gtfFileEx & gtfData);
 
 

@@ -6,7 +6,7 @@
     <LocalDebuggerDebuggerType>NativeOnly</LocalDebuggerDebuggerType>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LocalDebuggerCommandArguments>-m intersection-nonempty -o "nonemptyTest\matches_2.txt" -g "Y:\SysmedIBD\CD\gtfs\Homo_sapiens.GRCh38.84.gtf" -b  "Y:\SysmedIBD\CD\test\C1492.sorted.subset_large.bam"</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>-m union -o "unionTest\matches_2.txt" -g "Y:\SysmedIBD\CD\gtfs\Homo_sapiens.GRCh38.84.gtf" -b  "Y:\SysmedIBD\CD\test\C1492.sorted.subset_large.bam"</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
     <LocalDebuggerWorkingDirectory>Y:\SysmedIBD\CD\test</LocalDebuggerWorkingDirectory>
   </PropertyGroup>

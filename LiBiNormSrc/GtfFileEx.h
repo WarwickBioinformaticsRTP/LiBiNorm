@@ -8,6 +8,17 @@
 
 class gtfRegion;
 
+class geneCountsClass : public std::map<std::string, mapZeroDef<std::string,size_t> >
+{
+public:
+	void print(const std::string index,TsvFile & output)	{
+		for (auto & entry: This[index])
+		{
+			output.printEnd(index,entry.first,entry.second);
+		}
+	};
+};
+
 typedef std::multimap<size_t, gtfRegion> chromosomeGtfData ;
 
 struct gtfOverlap
@@ -15,7 +26,9 @@ struct gtfOverlap
 	size_t start,finish;
 	bool strict;
 	const std::string & geneName;
-	gtfOverlap(size_t start,size_t finish,bool strict,const std::string & geneName): start(start),finish(finish),strict(strict),geneName(geneName){};
+	const std::string & type;
+	gtfOverlap(size_t start,size_t finish,bool strict,const std::string & geneName,const std::string & type): 
+		start(start),finish(finish),strict(strict),geneName(geneName),type(type){};
 };
 
 class gtfRegion
@@ -23,10 +36,10 @@ class gtfRegion
 public:
 	size_t start,finish;
 	stringEx name;
-	setEx<std::string> type;
+	std::string type;
 	char strand;
 	chromosomeGtfData::iterator overlaps;
-	gtfRegion(	size_t start, size_t finish,const std::string & name,char strand,setEx<std::string> && type ):start(start),finish(finish),name(name),strand(strand),type(type){};
+	gtfRegion(	size_t start, size_t finish,const std::string & name,char strand,const std::string & type ):start(start),finish(finish),name(name),strand(strand),type(type){};
 	void checkOverlap(const region & segment,std::vector<gtfOverlap> & overlaps) const;
 };
 
@@ -43,7 +56,7 @@ public:
 
 	genomeEndIndexMap genomeEndIndex;
 
-	void index(mapZeroDef<std::string,size_t> & geneCounts);
+	void index(geneCountsClass & geneCounts,const std::string & type);
 	void outputChromData(const std::string & filename);
 
 };

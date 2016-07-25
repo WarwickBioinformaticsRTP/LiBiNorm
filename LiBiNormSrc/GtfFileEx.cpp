@@ -7,26 +7,26 @@ void gtfRegion::checkOverlap(const region & segment,vector<gtfOverlap> & overlap
 	//	strict fit
 	if ((segment.start >= start) && (segment.end <= finish))
 	{
-		overlaps.emplace_back(segment.start,segment.end,true,name);
+		overlaps.emplace_back(segment.start,segment.end,true,name,type);
 	}
 	//	non-strict fits
 	else if ((segment.start <= finish) && (segment.start >= start)) 
 	{
-		overlaps.emplace_back(segment.start,finish,false,name);
+		overlaps.emplace_back(segment.start,finish,false,name,type);
 	}
 	else if ((segment.end <= finish) && (segment.end >= start))
 	{
-		overlaps.emplace_back(start,segment.end,false,name);
+		overlaps.emplace_back(start,segment.end,false,name,type);
 	}
 	else if ((segment.start <= start) && (segment.end >= finish))
 	{
-		overlaps.emplace_back(start,finish,false,name);
+		overlaps.emplace_back(start,finish,false,name,type);
 	}
 }
 
 
 
-void gtfFileEx::index(mapZeroDef<string,size_t> & geneCounts)
+void gtfFileEx::index(geneCountsClass & geneCounts,const std::string & type)
 {
 
 	for (auto & chrom : entryMap)
@@ -40,25 +40,30 @@ void gtfFileEx::index(mapZeroDef<string,size_t> & geneCounts)
 			for (auto j = next(i,1);(j != chrom.second.end()) && (j->first <= (finish + 1));)
 			{
 				auto k = j++;
-				if (i->second.tags[0].val == k->second.tags[0].val)
+				if (k != chrom.second.end())
 				{
-					if (k->second.finish > finish)
+					if ((i->second.type == k->second.type) && (i->second.tags[0].val == k->second.tags[0].val))
 					{
-						finish = k->second.finish;
-						type.add(k->second.type);
-						chrom.second.erase(k);
-					}
-					else if (k->second.finish <= finish)
-					{
-						type.add(k->second.type);
-						chrom.second.erase(k);
+						if (k->second.finish > finish)
+						{
+							finish = k->second.finish;
+							type.add(k->second.type);
+//							k->second.valid = false;
+							chrom.second.erase(k);
+						}
+						else if (k->second.finish <= finish)
+						{
+							type.add(k->second.type);
+//							k->second.valid = false;
+							chrom.second.erase(k);
+						}
 					}
 				}
 			}
 
 
 //			string & attName = i->second.tags[0].val;
-			thisChromData.emplace(i->first,gtfRegion(i->second.start,finish,i->second.tags[0].val,i->second.strand,move(type)));
+			thisChromData.emplace(i->first,gtfRegion(i->second.start,finish,i->second.tags[0].val,i->second.strand,i->second.type));
 
 		}
 		
@@ -75,7 +80,9 @@ void gtfFileEx::index(mapZeroDef<string,size_t> & geneCounts)
 		for (chromosomeGtfData::iterator i = thisChromData.begin(); i != thisChromData.end();i++)
 		{
 			//	Take the opportunity to produce a map of all the genes for holding counts
-			geneCounts[i->second.name];
+
+			if (!type.empty())
+				geneCounts[i->second.name][type];
 
 			//	And a parallel map of the ends of all of the gtfRegions/
 			thisChromEndMap.emplace(i->second.finish,i);
@@ -95,11 +102,11 @@ void gtfFileEx::index(mapZeroDef<string,size_t> & geneCounts)
 
 	}
 
-	geneCounts["__no_feature"];
-	geneCounts["__ambiguous"];
-	geneCounts["__too_low_aQual"];
-	geneCounts["__not_aligned"];
-	geneCounts["__alignment_not_unique"];
+	geneCounts["__no_feature"][""];
+	geneCounts["__ambiguous"][""];
+	geneCounts["__too_low_aQual"][""];
+	geneCounts["__not_aligned"][""];
+	geneCounts["__alignment_not_unique"][""];
 
 }
 
