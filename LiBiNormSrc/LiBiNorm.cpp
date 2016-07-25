@@ -8,7 +8,7 @@
 #include "libCommon.h"
 #include "containerEx.h"
 #include "mcmc.h"
-#include "logLiklihoods.h"
+#include "LogLiklihoods.h"
 #include "LiBiNorm.h"
 #include "LiBiCount.h"
 

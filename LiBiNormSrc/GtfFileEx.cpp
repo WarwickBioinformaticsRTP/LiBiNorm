@@ -57,7 +57,7 @@ void gtfFileEx::index(mapZeroDef<string,size_t> & geneCounts)
 			}
 
 
-			string & attName = i->second.tags[0].val;
+//			string & attName = i->second.tags[0].val;
 			thisChromData.emplace(i->first,gtfRegion(i->second.start,finish,i->second.tags[0].val,i->second.strand,move(type)));
 
 		}
