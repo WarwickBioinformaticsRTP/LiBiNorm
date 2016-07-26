@@ -5,9 +5,10 @@
 #endif
 
 #include "libCommon.h"
-#include "stringEx.h"
-#include "containerEx.h"
 #include "LiBiCount.h"
+#include "parser.h"
+
+#define READ_CACHE_SIZE 1000000
 
 using namespace std;
 
@@ -106,8 +107,6 @@ int LiBiCount::main(int argc, char **argv)
 	references = reader.GetReferenceData();
 
 	initClock();
-
-//	clock_t begin = clock();
 
 	if (!genomeDef.open(gtfFileName,verbose,id_attribute,feature_type))
 		exitFail("Could not open gtf file: ",gtfFileName);
@@ -493,11 +492,6 @@ bool LiBiCount::processOrderedBamData()
 	return true;
 }
 
-#ifdef _DEBUG
-#define DO_FIRST_PART
-#else
-#define DO_FIRST_PART
-#endif
 
 bool LiBiCount::processUnorderedBamData()
 {
@@ -507,14 +501,13 @@ bool LiBiCount::processUnorderedBamData()
 	int cacheCounter = 0;
 	map<string,regionLists> readCache;
 
-#ifdef DO_FIRST_PART
 	bool OK = reader.GetNextAlignment(ba);
 
 
 	while (OK)
 	{
 		_DBG(string name = ba.Name;
-		bool found = (name == "HWI-D00133:18:DTWTJACXX:4:1101:16604:33866");)
+		bool found = (name == "HWI-D00133:18:DTWTJACXX:4:1103:6352:25943");)
 
 		bool readAlreadyRead = false;
 
@@ -555,22 +548,19 @@ bool LiBiCount::processUnorderedBamData()
 
 			}
 		}
-		if (readCache.size() > 100000)
+		if (readCache.size() > READ_CACHE_SIZE)
 		{
 			if (verbose)
 				cerr << "Outputting cache data " << cacheCounter+1 << endl;
 			TsvFile outFile;
 			outFile.open(resultsFilename.replaceSuffix(".temp.",cacheCounter++));
-			for (const auto i : readCache)
+			for (auto & i : readCache)
 				outFile.print(i.first,i.second);
 			readCache.clear();
 		}
 
 		OK = reader.GetNextAlignment(ba);
 	}
-#else
-	cacheCounter = 7;
-#endif
 
 	if (cacheCounter == 0)
 	{
@@ -583,13 +573,14 @@ bool LiBiCount::processUnorderedBamData()
 	}
 	else
 	{
-#ifdef DO_FIRST_PART
-		TsvFile outFile;
-		outFile.open(resultsFilename.replaceSuffix(".temp.",cacheCounter++));
-		for (const auto i : readCache)
-			outFile.print(i.first,i.second);
-		readCache.clear();
-#endif
+		{
+			TsvFile outFile;
+			outFile.open(resultsFilename.replaceSuffix(".temp.",cacheCounter++));
+			for (auto & i : readCache)
+				outFile.print(i.first,i.second);
+			readCache.clear();
+		}
+
 		vector<cacheRead> cacheReads(cacheCounter);
 		multimap<std::string,int> readIndex;
 
@@ -602,7 +593,7 @@ bool LiBiCount::processUnorderedBamData()
 		int cacheReadCounter = 0;
 		while (readIndex.size())
 		{
-			_DBG( bool found = (readIndex.begin()->first == "HWI-D00133:18:DTWTJACXX:4:1101:16604:33866");)
+			_DBG( bool found = (readIndex.begin()->first == "HWI-D00133:18:DTWTJACXX:4:1103:6352:25943");)
 
 			auto i1 = readIndex.begin();
 			auto i2 = next(i1,1);
@@ -611,7 +602,8 @@ bool LiBiCount::processUnorderedBamData()
 				int index1 = i1->second;
 				int index2 = i2->second;
 				cacheReads[index1].combine(cacheReads[index2]);
-				addRead(cacheReads[index1],genomeDef);
+				if (i1->first.size())
+					addRead(cacheReads[index1],genomeDef);
 				readIndex.erase(i2);
 				readIndex.erase(i1);
 				if(cacheReads[index1].readNext())
@@ -622,7 +614,8 @@ bool LiBiCount::processUnorderedBamData()
 			else
 			{
 				int index = i1->second;
-				addRead(cacheReads[index],genomeDef);
+				if (i1->first.size())
+					addRead(cacheReads[index],genomeDef);
 				readIndex.erase(i1);
 				if(cacheReads[index].readNext())
 					readIndex.emplace(cacheReads[index].name,index);
@@ -631,7 +624,15 @@ bool LiBiCount::processUnorderedBamData()
 			if ((++cacheReadCounter %100000) == 0)
 				if (verbose)
 					cerr << cacheReadCounter << " cached read processed." << endl;
+
 		}
+		cacheReads.empty();
+
+		for (int i = 0;i < cacheCounter;i++)
+		{
+			remove(resultsFilename.replaceSuffix(".temp.",i).c_str());
+		}
+
 	}
 
 	return true;
@@ -692,9 +693,9 @@ void LiBiCount::fileCompare(const string & mode)
 		{
 			if (samParams[0][i].startsWith("XF:Z:"))
 			{
-				outFile.printMiddle(samParams[0][i].substr(5));
+					outFile.printMiddle(samParams[0][i].substr(5));
+				}
 			}
-		}
 		outFile.printEnd();
 
 		if (samParams[1][0] != myParams[2])
@@ -710,4 +711,40 @@ void LiBiCount::fileCompare(const string & mode)
 
 	};
 
+}
+
+
+
+cacheRead::~cacheRead() 
+{
+	close();
+};
+
+
+bool cacheRead::open(const std::string filename)
+{
+	file = new std::ifstream();
+	file ->open(filename);
+	if (!file ->is_open()) return false;
+	readNext();
+	return true;
+}
+bool cacheRead::readNext()
+{
+	if (file->eof())
+		return false;
+	data.clear();
+	std::string line;
+	getline(*file,line);
+	parseTsv(line,name,data);
+	return true;
+}
+void cacheRead::close()
+{
+	if (file)
+	{
+		file->close();
+		delete (file);
+		file = 0;
+	}
 }
