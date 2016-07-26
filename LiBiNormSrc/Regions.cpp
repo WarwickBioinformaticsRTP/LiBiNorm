@@ -1,75 +1,79 @@
 #include <vector>
 #include "Regions.h"
+#include "parser.h"
 
 using namespace std;
 using namespace BamTools;
 
-bool regionList::combineRegion(size_t start,size_t finish,bool revStrand)
+void regionList::combineRegion(const region & r1)
 {
 	bool combined = false;
 
-	for (iterator i = begin();i != end();i++)
+	for (auto i = data.begin();i != data.end();i++)
 	{
-		if (start <= i->second.end)
+		if ((r1.start <= i->second.end) && (r1.strand == i->second.strand))
 		{
-			if ((start <= i->second.start) && (finish >= i->second.start)) 
+			if ((r1.start <= i->second.start) && (r1.end >= i->second.start)) 
 			{
 				region r = i->second;
-				r.start = start;
-				if (finish >= i->second.end)
-					r.end = finish;
+				r.start = r1.start;
+				if (r1.end >= i->second.end)
+					r.end = r1.end;
 
-				if (i == begin())
+				if (i == data.begin())
 				{
-					erase(i);
-					emplace(start,r);
-					i = begin();
+					data.erase(i);
+					data.emplace(r1.start,r);
+					i = data.begin();
 				}
 				else
 				{
-					iterator j = next(i,-1);
-					erase(i);
-					emplace(start,r);
+					auto j = next(i,-1);
+					data.erase(i);
+					data.emplace(r1.start,r);
 					i = next(j,1);
 				}
 				combined = true;
 				break;	
 			}
-			if (finish >= i->second.end)
+			if (r1.end >= i->second.end)
 			{
-				i->second.end = finish;
+				i->second.end = r1.end;
 				combined = true;
 				break;	
 			}
 		}
 	}
 	if (!combined)
-	{
-		emplace(start,region(start,finish,revStrand));
-		return false;
-	}
-	return true;
+		data.emplace(r1.start,r1);
 }
 
-void regionList::add(size_t start,size_t end,bool revStrand)
+void regionList::combine(const regionList & rl)
 {
-	emplace(start,region(start,end,revStrand));
+	for (const auto r : rl.data)
+		combineRegion(r.second);
 }
 
-void regionLists::GetRegions(const BamAlignment & ba) { 	This[ba.RefID].GetRegions(ba);
+
+void regionList::add(int start,int end,bool revStrand)
+{
+	data.emplace(start,region(start,end,revStrand));
 }
 
+void regionLists::GetRegions(const BamAlignment & ba) 
+{ 	
+	data[ba.RefID].GetRegions(ba);
+}
+
+void regionLists::combine(const regionLists & rl)
+{
+	for (auto i : rl.data)
+		data[i.first].combine(i.second);
+}
 
 void regionList::GetRegions(const BamAlignment & ba) {
 
-	//	If we already have some regions then we need to combine them
-	bool combine = size();
-
 	bool revStrand = (ba.IsReverseStrand() == ba.IsFirstMate());
-
-	//	Dont combine if the two reads are on reverse strands
-	if (combine && (revStrand != (begin()->second.strand == '-')))
-		combine = false;
 
 	auto & CigarData = ba.CigarData;
 
@@ -99,10 +103,7 @@ void regionList::GetRegions(const BamAlignment & ba) {
 
 			case Constants::BAM_CIGAR_REFSKIP_CHAR  :
 				{
-					if (combine)
-						combineRegion(start,end-1,revStrand);
-					else
-						add(start,end-1,revStrand);
+					combineRegion(region(start,end-1,revStrand));
 					start = (end + op.Length);
 					end = start;
 					break;
@@ -112,9 +113,34 @@ void regionList::GetRegions(const BamAlignment & ba) {
 				break;
 		}
 	}
-	if (combine)
-		combineRegion(start,end-1,revStrand);
-	else
-		add(start,end-1,revStrand);
+
+	combineRegion(region(start,end-1,revStrand));
+}
+
+
+
+void regionLists::print(TsvFile & file)
+{
+	file.printStart(name);
+	for (auto i : data)
+	{
+		file.print(i.first);
+		for (auto j: i.second.data)
+			file.print(j.first,j.second.start,j.second.end,j.second.strand);
+	};
+}
+
+regionLists::regionLists(const string & line)
+{
+	parseTsv(line,name,data);
+}
+
+void parserInternal::parseval(const char *& start,regionList & rl,size_t & len)
+{
+	parseTsv(start,rl.data);
+}
+void parserInternal::parseval(const char *& start,region & r,size_t & len)
+{
+	parseTsv(start,r.start,r.end,r.strand);
 }
 

@@ -23,6 +23,7 @@ class LiBiCount
 public:
 	bool useStrand,reverseStrand,verbose;
 	mode countMode;
+	stringEx resultsFilename;
 
 	geneCountsClass geneCounts;
 
@@ -43,5 +44,35 @@ public:
 	void fileCompare(const std::string & maode);
 
 };
+
+
+class cacheRead : public regionLists
+{
+public:
+	cacheRead() : file (0) {};
+	~cacheRead() {delete(file);};
+
+	std::ifstream * file;
+
+	bool open(const std::string filename)
+	{
+		file = new std::ifstream();
+		file ->open(filename);
+		if (!file ->is_open()) return false;
+		readNext();
+		return true;
+	}
+	bool readNext()
+	{
+		if (file->eof())
+			return false;
+		data.clear();
+		std::string line;
+		getline(*file,line);
+		parseTsv(line,name,data);
+		return true;
+	}
+};
+
 
 #endif

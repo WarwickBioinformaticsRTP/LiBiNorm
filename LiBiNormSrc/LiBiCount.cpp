@@ -81,6 +81,10 @@ int LiBiCount::main(int argc, char **argv)
 		{
 			outputFilename = argv[++ni];
 		}
+		else if((strcmp(argv[ni], "-r") == 0) || (strcmp(argv[ni], "--results") == 0))
+		{
+			resultsFilename = argv[++ni];
+		}
 
 		else
 		{
@@ -199,7 +203,7 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 	bool nonOverlappingGenes = false;
 
 	size_t pairNo = 0;
-	for (auto & chromSegments : segments)
+	for (auto & chromSegments : segments.data)
 	{
 		//	For teh segments on each of the chromosomes (normally only one chromosome) get the gtfRegions for the chromosome
 		genomeGtfRegions::const_iterator thisChromGtfRegions = gtfData.genomeGtfData.find(references[chromSegments.first].RefName);
@@ -211,7 +215,7 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 			const chromosomeEndIndexMap & thisChromEndMap = gtfData.genomeEndIndex.at(references[chromSegments.first].RefName);
 
 			//	And find the first one that finishes at or beyond the start of the first segment
-			chromosomeEndIndexMap::const_iterator indirectIteratorStart = thisChromEndMap.lower_bound(chromSegments.second.begin()->second.start);
+			chromosomeEndIndexMap::const_iterator indirectIteratorStart = thisChromEndMap.lower_bound(chromSegments.second.data.begin()->second.start);
 
 			//	And move back one to ensure we have the region that covers segment
 			if (indirectIteratorStart != thisChromEndMap.begin())
@@ -225,7 +229,7 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 
 
 			//And now go through each of the segments
-			for (auto & segment : chromSegments.second)
+			for (auto & segment : chromSegments.second.data)
 			{
 
 				genes.nSegments++;
@@ -423,7 +427,8 @@ void LiBiCount::incBamCounter(const BamAlignment * ba,size_t size)
 		{
 			cerr << bamCounter << " BAM alignment record pairs processed.";
 			if (ba)
-				cerr << " cache size = " << size << "  " << references[ba->RefID].RefName << ":" << ba ->Position << endl;
+				cerr << " cache size = " << size << "  " << references[ba->RefID].RefName << ":" << ba ->Position;
+			cerr << endl;
 		}
 }
 
@@ -464,7 +469,7 @@ bool LiBiCount::processOrderedBamData()
 				{
 					if (ba1.IsMateMapped())
 					{
-						if (misPairs++ > 5)
+						if (misPairs++ > 20)
 						{
 							if (verbose)
 								cerr << misPairs << " missing pairs found in the first " << bamCounter << " reads, so assuming data is not name ordered" << endl;
@@ -494,11 +499,22 @@ bool LiBiCount::processUnorderedBamData()
 	BamAlignment ba;
 
 	bamCounter = 0;
+	int cacheCounter = 0;
 
 	bool OK = reader.GetNextAlignment(ba);
 
 	map<string,regionLists> readCache;
 
+/*	ifstream file;
+	file.open(resultsFilename.replaceSuffix(".temp.1"));
+	if (!file.is_open()) return false;
+
+	string line;
+	getline(file,line);
+	regionLists  rl(line);
+	getline(file,line);
+	regionLists  r2(line);
+*/
 	while (OK)
 	{
 		_DBG(string name = ba.Name;
@@ -543,15 +559,78 @@ bool LiBiCount::processUnorderedBamData()
 
 			}
 		}
+		if (readCache.size() > 100000)
+		{
+			if (verbose)
+				cerr << "Outputting cache data " << cacheCounter+1 << endl;
+			TsvFile outFile;
+			outFile.open(resultsFilename.replaceSuffix(".temp.",cacheCounter++));
+			for (const auto i : readCache)
+				outFile.print(i.first,i.second);
+			readCache.clear();
+		}
 
 		OK = reader.GetNextAlignment(ba);
 	}
-	for (auto & i : readCache)
+	if (cacheCounter == 0)
 	{
-		i.second.name = i.first;
-		addRead(i.second,genomeDef);
-		incBamCounter(&ba,readCache.size());
+		for (auto & i : readCache)
+		{
+			i.second.name = i.first;
+			addRead(i.second,genomeDef);
+			incBamCounter(&ba,readCache.size());
+		}
 	}
+	else
+	{
+		TsvFile outFile;
+		outFile.open(resultsFilename.replaceSuffix(".temp.",cacheCounter++));
+		for (const auto i : readCache)
+			outFile.print(i.first,i.second);
+		readCache.clear();
+
+		vector<cacheRead> cacheReads(cacheCounter);
+		multimap<std::string,int> readIndex;
+
+		for (int i = 0;i < cacheCounter;i++)
+		{
+			cacheReads[i].open(resultsFilename.replaceSuffix(".temp.",i));
+			readIndex.emplace(cacheReads[i].name,i);
+		}
+
+		int cacheReadCounter = 0;
+		while (readIndex.size())
+		{
+			auto i1 = readIndex.begin();
+			auto i2 = next(i1,1);
+			if ((i2 != readIndex.end()) && (i1->first == i2->first))
+			{
+				int index1 = i1->second;
+				int index2 = i2->second;
+				cacheReads[index1].combine(cacheReads[index2]);
+				addRead(cacheReads[index1],genomeDef);
+				readIndex.erase(i2);
+				readIndex.erase(i1);
+				if(cacheReads[index1].readNext())
+					readIndex.emplace(cacheReads[index1].name,index1);
+				if(cacheReads[index2].readNext())
+					readIndex.emplace(cacheReads[index2].name,index2);
+			}
+			else
+			{
+				int index = i1->second;
+				addRead(cacheReads[index],genomeDef);
+				readIndex.erase(i1);
+				if(cacheReads[index].readNext())
+					readIndex.emplace(cacheReads[index].name,index);
+			}
+
+			if ((++cacheReadCounter %100000) == 0)
+				if (verbose)
+					cerr << cacheReadCounter << " cached read processed." << endl;
+		}
+	}
+
 	return true;
 }
 
