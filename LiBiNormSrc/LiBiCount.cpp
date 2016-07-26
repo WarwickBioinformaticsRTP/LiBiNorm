@@ -611,8 +611,15 @@ bool LiBiCount::processUnorderedBamData()
 
 void LiBiCount::processCachedReads(size_t cacheFileCount)
 {
+/*	Go through the reads in the file caches.  The read pairs associated with the same fragment will be in different files
+	and the files are ordered by read name so we only need to look at the next reads in each file to spot pairs that can be processed
+	as a pair
+	*/
+
 	vector<cacheRead> cacheReads(cacheFileCount);
-	multimap<std::string,int> readIndex;
+
+	//	readIndex has a lits of the current reads, ordered by name.
+	multimap<stringEx,int> readIndex;
 
 	for (int i = 0;i < cacheFileCount;i++)
 	{
@@ -625,24 +632,26 @@ void LiBiCount::processCachedReads(size_t cacheFileCount)
 	{
 		_DBG( bool found = (readIndex.begin()->first == "HWI-D00133:18:DTWTJACXX:4:1103:6352:25943");)
 
-			auto i1 = readIndex.begin();
+		auto i1 = readIndex.begin();
 		auto i2 = next(i1,1);
 
 		int index1 = i1->second;
 
 		if ((i2 != readIndex.end()) && (i1->first == i2->first))
 		{
+			//	We have the two ends of a paired end read.  Combine them and calculate counts
 			int index2 = i2->second;
 			cacheReads[index1].combine(cacheReads[index2]);
-			if (i1->first.size())
+			if (i1->first)								//Avoid adding null entries with no read name
 				addRead(cacheReads[index1],genomeDef);
+			//	Erase the read and get the next one from the associated cache files
 			readIndex.erase(i2);
 			if(cacheReads[index2].readNext())
 				readIndex.emplace(cacheReads[index2].name,index2);
 		}
 		else
 		{
-			if (i1->first.size())
+			if (i1->first)
 				addRead(cacheReads[index1],genomeDef);
 		}
 
