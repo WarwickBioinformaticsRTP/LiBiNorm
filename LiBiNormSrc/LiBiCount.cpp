@@ -138,7 +138,7 @@ int LiBiCount::main(int argc, char **argv)
 	if (verbose)
 		elapsedTime();
 
-	cin >> test;
+//	cin >> test;
 
 	return EXIT_SUCCESS;
 }
@@ -493,6 +493,11 @@ bool LiBiCount::processOrderedBamData()
 	return true;
 }
 
+#ifdef _DEBUG
+#define DO_FIRST_PART
+#else
+#define DO_FIRST_PART
+#endif
 
 bool LiBiCount::processUnorderedBamData()
 {
@@ -500,25 +505,16 @@ bool LiBiCount::processUnorderedBamData()
 
 	bamCounter = 0;
 	int cacheCounter = 0;
-
-	bool OK = reader.GetNextAlignment(ba);
-
 	map<string,regionLists> readCache;
 
-/*	ifstream file;
-	file.open(resultsFilename.replaceSuffix(".temp.1"));
-	if (!file.is_open()) return false;
+#ifdef DO_FIRST_PART
+	bool OK = reader.GetNextAlignment(ba);
 
-	string line;
-	getline(file,line);
-	regionLists  rl(line);
-	getline(file,line);
-	regionLists  r2(line);
-*/
+
 	while (OK)
 	{
 		_DBG(string name = ba.Name;
-		bool found = (name == "HWI-D00133:18:DTWTJACXX:4:1102:9098:8124");)
+		bool found = (name == "HWI-D00133:18:DTWTJACXX:4:1101:16604:33866");)
 
 		bool readAlreadyRead = false;
 
@@ -572,6 +568,10 @@ bool LiBiCount::processUnorderedBamData()
 
 		OK = reader.GetNextAlignment(ba);
 	}
+#else
+	cacheCounter = 7;
+#endif
+
 	if (cacheCounter == 0)
 	{
 		for (auto & i : readCache)
@@ -583,12 +583,13 @@ bool LiBiCount::processUnorderedBamData()
 	}
 	else
 	{
+#ifdef DO_FIRST_PART
 		TsvFile outFile;
 		outFile.open(resultsFilename.replaceSuffix(".temp.",cacheCounter++));
 		for (const auto i : readCache)
 			outFile.print(i.first,i.second);
 		readCache.clear();
-
+#endif
 		vector<cacheRead> cacheReads(cacheCounter);
 		multimap<std::string,int> readIndex;
 
@@ -601,6 +602,8 @@ bool LiBiCount::processUnorderedBamData()
 		int cacheReadCounter = 0;
 		while (readIndex.size())
 		{
+			_DBG( bool found = (readIndex.begin()->first == "HWI-D00133:18:DTWTJACXX:4:1101:16604:33866");)
+
 			auto i1 = readIndex.begin();
 			auto i2 = next(i1,1);
 			if ((i2 != readIndex.end()) && (i1->first == i2->first))

@@ -118,18 +118,6 @@ void regionList::GetRegions(const BamAlignment & ba) {
 }
 
 
-
-void regionLists::print(TsvFile & file)
-{
-	file.printStart(name);
-	for (auto i : data)
-	{
-		file.print(i.first);
-		for (auto j: i.second.data)
-			file.print(j.first,j.second.start,j.second.end,j.second.strand);
-	};
-}
-
 regionLists::regionLists(const string & line)
 {
 	parseTsv(line,name,data);

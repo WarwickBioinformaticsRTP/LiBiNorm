@@ -7,7 +7,7 @@
 #include "api/BamReader.h"
 #include "libCommon.h"
 
-#define _DEBUG 1
+//#define _DEBUG 1
 
 class region 
 {
@@ -45,8 +45,6 @@ public:
 	void GetRegions(const BamTools::BamAlignment & ba);
 
 	void combine(const regionLists & rl);
-	void print(TsvFile & file);
-
 };
 
 namespace parserInternal
@@ -58,25 +56,31 @@ namespace parserInternal
 inline bool printVal(outputDataFile * f,const region & value)
 {
 	f->printStart(value.start,value.end,value.strand);
-	return false;
+	return true;
 };
 
 
 inline bool printVal(outputDataFile * f,const regionList & value)
 {
-	f->printStart(value.data.size());
-	for (auto i: value.data) 
-		f->printMiddle(i.first,i.second);
-	return false;
+	f->printStart(value.data);
+	return true;
 };
 
 inline bool printVal(outputDataFile * f,const regionLists & value)
 {
-	f->printStart(value.data.size());
-	for (auto i: value.data) 
+	f->printStart(value.data);
+	return true;
+};
+
+template<class _Kty,class _Ty>
+inline bool printVal(outputDataFile * f,const std::map<_Kty,_Ty> & data)
+{
+	f->printStart(data.size());
+	for (auto i: data) 
 		f->printMiddle(printZero(i.first),i.second);
 	return true;
 };
+
 
 
 #endif
