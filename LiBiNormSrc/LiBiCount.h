@@ -37,7 +37,9 @@ public:
 	int main(int argc, char **argv);
 	bool processOrderedBamData();
 	bool processUnorderedBamData();
-	void outputGeneCounts(const std::string & filename);
+	void processCachedReads(size_t cacheFileCount);
+
+	bool outputGeneCounts(const std::string & filename);
 	void addRead(const regionLists & segments,const gtfFileEx & gtfData);
 
 
