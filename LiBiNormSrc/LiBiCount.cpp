@@ -11,7 +11,7 @@
 #ifdef _DEBUG
 #define READ_CACHE_SIZE 100000
 #else
-#define READ_CACHE_SIZE 2000000
+#define READ_CACHE_SIZE 1000000
 #endif
 
 using namespace std;
@@ -140,7 +140,7 @@ int LiBiCount::main(int argc, char **argv)
 		reader.Rewind();
 		geneCounts.reset();
 		if (verbose)
-			cerr << "Data appears not to be ordered, processing as unordered" << endl;
+			cerr << "Processing data assuming that it is not ordered by read name." << endl;
 		processUnorderedBamData();
 	}
 
@@ -177,6 +177,7 @@ bool LiBiCount::outputGeneCounts(const string & filename)
 	geneCounts.print("__too_low_aQual",output);
 	geneCounts.print("__not_aligned",output);
 	geneCounts.print("__alignment_not_unique",output);
+	return true;
 }
 
 
@@ -526,7 +527,7 @@ bool LiBiCount::processUnorderedBamData()
 				outFile.print(i.first,i.second);
 			clear();
 		}
-	} readCache;
+	} readCache[2];
 
 	bool OK = reader.GetNextAlignment(ba);
 
@@ -542,12 +543,24 @@ bool LiBiCount::processUnorderedBamData()
 		{
 			if (ba.IsMateMapped())
 			{
-				map<string,regionLists>::iterator i = readCache.find(ba.Name);
-				if (i == readCache.end())
+				map<string,regionLists>::iterator i = readCache[0].find(ba.Name);
+				int cache = -1;
+
+				if (i != readCache[0].end())
+				{
+					cache = 0;
+				}
+				else
+				{
+					i = readCache[1].find(ba.Name);
+					if (i != readCache[1].end())
+						cache = 1;
+				}
+				if (cache == -1)
 				{
 					regionLists regions;
 					regions.GetRegions(ba);
-					readCache.emplace(ba.Name,move(regions));
+					readCache[0].emplace(ba.Name,move(regions));
 				}
 				else
 				{
@@ -556,11 +569,11 @@ bool LiBiCount::processUnorderedBamData()
 
 					regions.GetRegions(ba);
 
-					incBamCounter(&ba,readCache.size());
+					incBamCounter(&ba,readCache[0].size()+readCache[1].size());
 
 					addRead(regions,genomeDef);
 
-					readCache.erase(i);
+					readCache[cache].erase(i);
 				}
 			}
 			else
@@ -569,7 +582,7 @@ bool LiBiCount::processUnorderedBamData()
 				regions.name = ba.Name;
 				regions.GetRegions(ba);
 
-				incBamCounter(&ba,readCache.size());
+				incBamCounter(&ba,readCache[0].size() +readCache[1].size());
 
 				addRead(regions,genomeDef);
 
@@ -577,13 +590,15 @@ bool LiBiCount::processUnorderedBamData()
 		}
 		else if (!ba.IsPaired() || (!ba.IsMateMapped() && ba.IsFirstMate()))
 		{
-			incBamCounter(&ba,readCache.size());
+			incBamCounter(&ba,readCache[0].size() +readCache[1].size());
 		}
-		if (readCache.size() > cacheSize)
+		if (readCache[0].size() > cacheSize)
 		{
 			if (verbose)
 				cerr << "Outputting cache data " << cacheCounter+1 << endl;
-			readCache.save(resultsFilename.replaceSuffix(".temp.",cacheCounter++));
+			if (readCache[1].size() > 0)
+				readCache[1].save(resultsFilename.replaceSuffix(".temp.",cacheCounter++));
+			swap(readCache[0],readCache[1]);
 		}
 
 		OK = reader.GetNextAlignment(ba);
@@ -592,16 +607,20 @@ bool LiBiCount::processUnorderedBamData()
 	if (cacheCounter == 0)
 	{
 		size_t cacheReadCounts = 0;
-		for (auto & i : readCache)
+		for (int i = 0;i < 2;i++)
 		{
-			i.second.name = i.first;
-			addRead(i.second,genomeDef);
-			incBamCounter(0,cacheReadCounts++);
+			for (auto & j : readCache[i])
+			{
+				j.second.name = j.first;
+				addRead(j.second,genomeDef);
+				incBamCounter(0,cacheReadCounts++);
+			}
 		}
 	}
 	else
 	{
-		readCache.save(resultsFilename.replaceSuffix(".temp.",cacheCounter++));
+		readCache[0].save(resultsFilename.replaceSuffix(".temp.",cacheCounter++));
+		readCache[1].save(resultsFilename.replaceSuffix(".temp.",cacheCounter++));
 		processCachedReads(cacheCounter);
 	}
 
