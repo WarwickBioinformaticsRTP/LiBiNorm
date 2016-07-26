@@ -8,7 +8,11 @@
 #include "LiBiCount.h"
 #include "parser.h"
 
-#define READ_CACHE_SIZE 1000000
+#ifdef _DEBUG
+#define READ_CACHE_SIZE 100000
+#else
+#define READ_CACHE_SIZE 5000000
+#endif
 
 using namespace std;
 
@@ -25,6 +29,7 @@ int LiBiCount::main(int argc, char **argv)
 	useStrand = true;
 	verbose = true;
 	countMode = intersect_union;
+	cacheSize = READ_CACHE_SIZE;
 
 	if(argc < 1)
 	{
@@ -41,16 +46,20 @@ int LiBiCount::main(int argc, char **argv)
 	int ni = 1;
 	while(ni < argc)
 	{
-		if(strcmp(argv[ni], "-c") == 0)
+		if(strcmp(argv[ni], "-t") == 0)
 		{
 			fileCompare(argv[++ni]);
 			exitSuccess();
 		}
-		if(strcmp(argv[ni], "-f") == 0)
+		else if(strcmp(argv[ni], "-c") == 0)
+		{
+			cacheSize = atoi(argv[++ni]);
+		}
+		else if(strcmp(argv[ni], "-f") == 0)
 		{
 			feature_type.emplace(argv[++ni]);
 		}
-		if(strcmp(argv[ni], "-i") == 0)
+		else if(strcmp(argv[ni], "-i") == 0)
 		{
 			id_attribute = argv[++ni];
 		}
@@ -499,7 +508,18 @@ bool LiBiCount::processUnorderedBamData()
 
 	bamCounter = 0;
 	int cacheCounter = 0;
-	map<string,regionLists> readCache;
+	class readCache : public map<string,regionLists>
+	{
+	public:
+		void save(const string & filename)
+		{
+			TsvFile outFile;
+			outFile.open(filename);
+			for (auto & i : This)
+				outFile.print(i.first,i.second);
+			clear();
+		}
+	} readCache;
 
 	bool OK = reader.GetNextAlignment(ba);
 
@@ -548,15 +568,16 @@ bool LiBiCount::processUnorderedBamData()
 
 			}
 		}
-		if (readCache.size() > READ_CACHE_SIZE)
+		else if (!ba.IsPaired() || (!ba.IsMateMapped() && ba.IsFirstMate()))
+		{
+			//make sure we count unmapped read pairs
+			bamCounter++;
+		}
+		if (readCache.size() > cacheSize)
 		{
 			if (verbose)
 				cerr << "Outputting cache data " << cacheCounter+1 << endl;
-			TsvFile outFile;
-			outFile.open(resultsFilename.replaceSuffix(".temp.",cacheCounter++));
-			for (auto & i : readCache)
-				outFile.print(i.first,i.second);
-			readCache.clear();
+			readCache.save(resultsFilename.replaceSuffix(".temp.",cacheCounter++));
 		}
 
 		OK = reader.GetNextAlignment(ba);
@@ -573,13 +594,7 @@ bool LiBiCount::processUnorderedBamData()
 	}
 	else
 	{
-		{
-			TsvFile outFile;
-			outFile.open(resultsFilename.replaceSuffix(".temp.",cacheCounter++));
-			for (auto & i : readCache)
-				outFile.print(i.first,i.second);
-			readCache.clear();
-		}
+		readCache.save(resultsFilename.replaceSuffix(".temp.",cacheCounter++));
 
 		vector<cacheRead> cacheReads(cacheCounter);
 		multimap<std::string,int> readIndex;
@@ -626,7 +641,7 @@ bool LiBiCount::processUnorderedBamData()
 					cerr << cacheReadCounter << " cached read processed." << endl;
 
 		}
-		cacheReads.empty();
+		cacheReads.clear();
 
 		for (int i = 0;i < cacheCounter;i++)
 		{
