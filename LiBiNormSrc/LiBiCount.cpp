@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <thread>
 
 #ifdef _WIN32
 #include <crtdbg.h>
@@ -11,7 +12,7 @@
 #ifdef _DEBUG
 #define READ_CACHE_SIZE 100000
 #else
-#define READ_CACHE_SIZE 2000000
+#define READ_CACHE_SIZE 1000000
 #endif
 
 using namespace std;
@@ -30,6 +31,7 @@ int LiBiCount::main(int argc, char **argv)
 	verbose = true;
 	countMode = intersect_union;
 	cacheSize = READ_CACHE_SIZE;
+	int nThreads = 2;
 
 	if(argc < 1)
 	{
@@ -54,6 +56,10 @@ int LiBiCount::main(int argc, char **argv)
 		else if(strcmp(argv[ni], "-c") == 0)
 		{
 			cacheSize = atoi(argv[++ni]);
+		}
+		else if(strcmp(argv[ni], "-p") == 0)
+		{
+			nThreads = atoi(argv[++ni]);
 		}
 		else if(strcmp(argv[ni], "-f") == 0)
 		{
@@ -141,7 +147,7 @@ int LiBiCount::main(int argc, char **argv)
 		geneCounts.reset();
 		if (verbose)
 			cerr << "Processing data assuming that it is not ordered by read name." << endl;
-		processUnorderedBamData();
+		processUnorderedBamData(nThreads);
 	}
 
 	if(!outputGeneCounts(resultsFilename))
@@ -209,7 +215,7 @@ struct chromosomeGeneInfo: public map<string,map <string,overlapCounts> >
 };
 
 
-void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
+void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData,threadData & threadData)
 {
 	//	The paired end read consists of a number of segments.   If the two ends were aligned to different chromosomes
 	//	then the segments will be on different chromosomes
@@ -259,6 +265,7 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 						j->second.checkOverlap(segment.second,overlaps);
 					}
 
+					// Check to see if we can start the search for the next segment using a later gtfRegion
 					gtfRegion = j->second.overlaps;
 				}
 
@@ -357,9 +364,9 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 
 			if (result != nullptr)
 			{
-				geneCounts[*result][*type]++;
+				threadData.geneCounts[*result][*type]++;
 				if (outputFile.is_open())
-					outputFile.printEnd("strict",*result,*type,segments.name);
+					threadData.samOutput.emplace_back("strict",*result,*type,segments.name);
 				break;
 			}
 
@@ -416,8 +423,8 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 
 
 					if (outputFile.is_open())
-						outputFile.printEnd("non_empty",*result,*type,segments.name);
-					geneCounts[*result][*type]++;
+						threadData.samOutput.emplace_back("non_empty",*result,*type,segments.name);
+					threadData.geneCounts[*result][*type]++;
 					break;
 				}
 			}
@@ -427,8 +434,8 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 			}
 
 			if (outputFile.is_open())
-				outputFile.printEnd("union",*result,*type,segments.name);
-			geneCounts[*result][*type]++;
+				threadData.samOutput.emplace_back("union",*result,*type,segments.name);
+			threadData.geneCounts[*result][*type]++;
 			break;
 		}
 	}
@@ -437,9 +444,12 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 
 void LiBiCount::incBamCounter(const BamAlignment * ba,size_t size)
 {
+static std::mutex cerrMutex;
+
 	if ((++bamCounter % 100000) == 0)
 		if (verbose)
 		{
+			std::lock_guard<std::mutex> guard(cerrMutex);
 			cerr << bamCounter << " BAM alignment record pairs processed.";
 			if (ba)
 				cerr << " cache size = " << size << "  " << references[ba->RefID].RefName << ":" << ba ->Position << endl;
@@ -452,6 +462,7 @@ bool LiBiCount::processOrderedBamData()
 {
 	BamAlignment ba1;
 	BamAlignment ba2;
+	threadData threadData(geneCounts);
 
 	size_t misPairs(0);
 	bamCounter = 0;
@@ -499,7 +510,7 @@ bool LiBiCount::processOrderedBamData()
 
 		incBamCounter();
 
-		addRead(regions,genomeDef);
+		addRead(regions,genomeDef,threadData);
 
 		if (readAlreadyRead)
 			swap(ba1,ba2);
@@ -509,107 +520,173 @@ bool LiBiCount::processOrderedBamData()
 	return true;
 }
 
+#define BAMCACHESIZE 100000
 
-bool LiBiCount::processUnorderedBamData()
+class bamCache : public vector<BamAlignment> 
 {
-	BamAlignment ba;
+public:
+	bamCache():vector<BamAlignment>(BAMCACHESIZE){};
+};
 
-	bamCounter = 0;
-	int cacheCounter = 0;
-	class readCache : public map<string,regionLists>
+class readCache : public map<string,regionLists>
+{
+public:
+	void save(const string & filename)
 	{
-	public:
-		void save(const string & filename)
-		{
-			TsvFile outFile;
-			outFile.open(filename);
-			for (auto & i : This)
-				outFile.print(i.first,i.second);
-			clear();
-		}
-	} readCache;
-
-	bool OK = reader.GetNextAlignment(ba);
-
-
-	while (OK)
-	{
-		_DBG(string name = ba.Name;
-		bool found = (name == "HWI-D00133:18:DTWTJACXX:4:1103:6352:25943");)
-
-		bool readAlreadyRead = false;
-
-		if (ba.IsMapped())
-		{
-			if (ba.IsMateMapped())
-			{
-				map<string,regionLists>::iterator i = readCache.find(ba.Name);
-				if (i == readCache.end())
-				{
-					regionLists regions;
-					regions.GetRegions(ba);
-					readCache.emplace(ba.Name,move(regions));
-				}
-				else
-				{
-					regionLists & regions = i->second;
-					regions.name = ba.Name;
-
-					regions.GetRegions(ba);
-
-					incBamCounter(&ba,readCache.size());
-
-					addRead(regions,genomeDef);
-
-					readCache.erase(i);
-				}
-			}
-			else
-			{
-				regionLists regions;
-				regions.name = ba.Name;
-				regions.GetRegions(ba);
-
-				incBamCounter(&ba,readCache.size());
-
-				addRead(regions,genomeDef);
-
-			}
-		}
-		else if (!ba.IsPaired() || (!ba.IsMateMapped() && ba.IsFirstMate()))
-		{
-			incBamCounter(&ba,readCache.size());
-		}
-		if (readCache.size() > cacheSize)
-		{
-			if (verbose)
-				cerr << "Outputting cache data " << cacheCounter+1 << endl;
-			readCache.save(resultsFilename.replaceSuffix(".temp.",cacheCounter++));
-		}
-
-		OK = reader.GetNextAlignment(ba);
+		TsvFile outFile;
+		outFile.open(filename);
+		for (auto & i : This)
+			outFile.print(i.first,i.second);
+		clear();
 	}
+};
 
-	if (cacheCounter == 0)
+
+void LiBiCountProcessUnorderedBamDataThread(LiBiCount * root)
+{
+	root ->processUnorderedBamDataThread(); 
+}
+
+
+bool LiBiCount::processUnorderedBamData(int nThreads)
+{
+	vector<thread> readThreads;
+	cacheFileCount = 0;
+
+	for (int i = 0;i < nThreads;i++)
+		readThreads.push_back(thread(&LiBiCountProcessUnorderedBamDataThread,this));
+
+	for (int i = 0;i < nThreads;i++)
+		readThreads[i].join();
+
+
+	processCachedReads();
+
+	for (int i = 0;i < cacheFileCount;i++)
 	{
-		size_t cacheReadCounts = 0;
-		for (auto & i : readCache)
-		{
-			i.second.name = i.first;
-			addRead(i.second,genomeDef);
-			incBamCounter(0,cacheReadCounts++);
-		}
-	}
-	else
-	{
-		readCache.save(resultsFilename.replaceSuffix(".temp.",cacheCounter++));
-		processCachedReads(cacheCounter);
+		remove(resultsFilename.replaceSuffix(".temp.",i).c_str());
 	}
 
 	return true;
 }
 
-void LiBiCount::processCachedReads(size_t cacheFileCount)
+
+
+bool LiBiCount::processUnorderedBamDataThread()
+{
+	static mutex cacheWrite;
+
+	BamAlignment ba;
+
+	threadData threadData(geneCounts);
+
+	int bamCounter = 0;
+
+	readCache readCache;
+
+	bamCache bamCache;
+
+	bool OK = true;
+
+	while (OK)
+	{
+		int bamCounter = 0;
+
+		
+		static mutex readMutex;
+		{
+			lock_guard<mutex> guard(readMutex);
+			while (OK && (bamCounter < BAMCACHESIZE))
+			{
+				if (bamCache[bamCounter].AlignedBases.capacity() > 200)
+				{
+					string X;
+					swap(bamCache[bamCounter].AlignedBases,X);
+				}
+				OK = reader.GetNextAlignment(bamCache[bamCounter],false);
+				if (OK)
+					bamCounter++;
+			}
+		}
+
+		for (int read = 0;read < bamCounter;read++)
+		{
+			BamAlignment & ba(bamCache[read]);
+
+			_DBG(string name = ba.Name;
+			bool found = (name == "HWI-D00133:18:DTWTJACXX:4:1103:6352:25943");)
+
+			bool readAlreadyRead = false;
+
+			if (ba.IsMapped())
+			{
+				if (ba.IsMateMapped())
+				{
+					map<string,regionLists>::iterator i = readCache.find(ba.Name);
+					if (i == readCache.end())
+					{
+						regionLists regions;
+						regions.GetRegions(ba);
+						readCache.emplace(ba.Name,move(regions));
+					}
+					else
+					{
+						regionLists & regions = i->second;
+						regions.name = ba.Name;
+
+						regions.GetRegions(ba);
+
+						incBamCounter(&ba,readCache.size());
+
+						addRead(regions,genomeDef,threadData);
+
+						readCache.erase(i);
+					}
+				}
+				else
+				{
+					regionLists regions;
+					regions.name = ba.Name;
+					regions.GetRegions(ba);
+
+					incBamCounter(&ba,readCache.size());
+
+					addRead(regions,genomeDef,threadData);
+
+				}
+			}
+			else if (!ba.IsPaired() || (!ba.IsMateMapped() && ba.IsFirstMate()))
+			{
+				incBamCounter(&ba,readCache.size());
+			}
+			if (readCache.size() > cacheSize)
+			{
+				lock_guard<mutex> guard(cacheWrite);
+
+				if (verbose)
+					cerr << "Outputting cache data " << cacheFileCount+1 << endl;
+				readCache.save(resultsFilename.replaceSuffix(".temp.",cacheFileCount++));
+			}
+		}
+
+		static mutex outputMutex;
+		lock_guard<mutex> guard(outputMutex);
+		for (size_t i = 0;i < threadData.samOutput.size();i++)
+			outputFile.print(threadData.samOutput[i]);
+		threadData.samOutput.clear();
+
+	}
+
+	lock_guard<mutex> guard(cacheWrite);
+
+	if (verbose)
+		cerr << "Outputting remaining cache data for this thread " << cacheFileCount+1 << endl;
+	readCache.save(resultsFilename.replaceSuffix(".temp.",cacheFileCount++));
+
+	return true;
+}
+
+void LiBiCount::processCachedReads()
 {
 /*	Go through the reads in the file caches.  The read pairs associated with the same fragment will be in different files
 	and the files are ordered by read name so we only need to look at the next reads in each file to spot pairs that can be processed
@@ -617,6 +694,8 @@ void LiBiCount::processCachedReads(size_t cacheFileCount)
 	*/
 
 	vector<cacheRead> cacheReads(cacheFileCount);
+	threadData threadData(geneCounts);
+
 
 	//	readIndex has a lits of the current reads, ordered by name.
 	multimap<stringEx,int> readIndex;
@@ -643,7 +722,7 @@ void LiBiCount::processCachedReads(size_t cacheFileCount)
 			int index2 = i2->second;
 			cacheReads[index1].combine(cacheReads[index2]);
 			if (i1->first)								//Avoid adding null entries with no read name
-				addRead(cacheReads[index1],genomeDef);
+				addRead(cacheReads[index1],genomeDef,threadData);
 			//	Erase the read and get the next one from the associated cache files
 			readIndex.erase(i2);
 			if(cacheReads[index2].readNext())
@@ -652,7 +731,7 @@ void LiBiCount::processCachedReads(size_t cacheFileCount)
 		else
 		{
 			if (i1->first)
-				addRead(cacheReads[index1],genomeDef);
+				addRead(cacheReads[index1],genomeDef,threadData);
 		}
 
 		readIndex.erase(i1);
@@ -660,6 +739,15 @@ void LiBiCount::processCachedReads(size_t cacheFileCount)
 			readIndex.emplace(cacheReads[index1].name,index1);
 		incBamCounter(0,++cacheReadCounter);
 
+
+		static mutex outputMutex;
+		if (threadData.samOutput.size() > 100)
+		{
+			lock_guard<mutex> guard(outputMutex);
+			for (size_t i = 0;i < threadData.samOutput.size();i++)
+				outputFile.print(threadData.samOutput[i]);
+			threadData.samOutput.clear();
+		}
 	}
 	cacheReads.clear();
 
@@ -765,8 +853,8 @@ bool cacheRead::readNext()
 	if (file->eof())
 		return false;
 	data.clear();
-	std::string line;
-	getline(*file,line);
+		std::string line;
+			getline(*file,line);
 	parseTsv(line,name,data);
 	return true;
 }
