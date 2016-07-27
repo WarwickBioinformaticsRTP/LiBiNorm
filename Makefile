@@ -59,7 +59,7 @@ TARGS =  $(LIBINORMEXE)
 ################################################################################
 # Libraries to be linked.   Assumes that there is a RElease and Debug version of Bamtools
 
-LIBS        = -lbamtools -lz 
+LIBS        = -lbamtools -lz -pthread
 LIBPATH     = -L$(BAMTOOLSDIR)$(BUILD)
 
 ################################################################################
@@ -103,7 +103,7 @@ debug : all
 release : all    
 
 all:  $(DIRMARKERS) $(TARGS)
-	@echo "%% $(BUILD) sysmedibd code built"
+	@echo "%% $(BUILD) LiBiNorm code built"
 
 #	This is the format for a manual final make rule
 $(LIBINORMEXE) :$(BUILD)/$(LIBINORMSRC:%.cpp=%.o) $(COREOBJS)
