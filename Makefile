@@ -103,7 +103,7 @@ debug : all
 release : all    
 
 all:  $(DIRMARKERS) $(TARGS)
-	@echo "%% $(BUILD) LiBiNorm code built"
+	@echo "%% $(BUILD) sysmedibd code built"
 
 #	This is the format for a manual final make rule
 $(LIBINORMEXE) :$(BUILD)/$(LIBINORMSRC:%.cpp=%.o) $(COREOBJS)
