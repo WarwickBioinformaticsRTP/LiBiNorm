@@ -287,11 +287,13 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 						}
 						else if ((overlap.start >= min) && (overlap.finish <= max))
 						{
-							//	smaller ignore
+							//	smaller ignore.  It must be smaller in that we have already excluded the case
+							//	where it is idewntical
 						}
 						else if ((overlap.start <= min) && (overlap.finish >= max))
 						{
-							//	bigger replace
+							//	It is bigger so replace.  Again we have excluded the option that it is identical
+							//	which would have been otherwise included in the case
 							min = overlap.start;
 							max = overlap.finish;
 							geneSet.clear();
@@ -316,6 +318,7 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 		pairNo++;
 	}
 
+
 	static string blankString = "";
 
 	//	Result options
@@ -327,9 +330,11 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 	static string nonemptyString = "nonempty";
 	static string unionString = "union";
 
+	//	Use pointers to strings rather than the strings themselves for efficiency as the it avoids
+	// creating and deleting copies of strings
 	const string * result = nullptr;
-	const string * type = &blankString;
-	const string * mode = &blankString;
+	const string * type = &blankString;		//
+	const string * mode = &blankString;		//The mode that selected the region
 
 	switch(countMode)
 	{
@@ -362,17 +367,27 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 			}
 
 			//  If this is strict mode then the only option is a strict match
-			if ((countMode == intersect_strict) && (result == nullptr))
-				result = &noFeatureString;
 
-			if (result != nullptr)
+			if (result == nullptr)
+			{
+				if (countMode == intersect_strict)
+				{
+					mode = &strictString;
+					result = &noFeatureString;
+					break;
+				}
+				//	otherwise it is nonempty mode, go on to see if there is a union style match
+			}
+			else
 			{
 				mode = &strictString;
 				break;
 			}
 
-			//	Note that if the mode is intersection_nonempty we purposly move through to the
+			//   ***************   BEWARE******************
+			//	If the mode is intersection_nonempty we purposly move through to the
 			// intersection union case to see whether the read is a 'union' type of match
+			//	so, no break between case statements
 		}
 	case intersect_union:
 		{
