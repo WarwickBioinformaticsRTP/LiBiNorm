@@ -8,7 +8,8 @@ using namespace BamTools;
 enum mode {
 	intersect_union,
 	intersect_strict,
-	intersect_nonempty
+	intersect_nonempty,
+	intersect_all
 };
 
 

@@ -26,7 +26,7 @@ void gtfRegion::checkOverlap(const region & segment,vector<gtfOverlap> & overlap
 
 
 
-void gtfFileEx::index(geneCountsClass & geneCounts,const std::string & type)
+void gtfFileEx::index(geneCountsClass & geneCounts)
 {
 
 	for (auto & chrom : entryMap)
@@ -79,8 +79,7 @@ void gtfFileEx::index(geneCountsClass & geneCounts,const std::string & type)
 		{
 			//	Take the opportunity to produce a map of all the genes for holding counts
 
-			if (!type.empty())
-				geneCounts[i->second.name][type];
+			geneCounts[i->second.name][i->second.type];
 
 			//	And a parallel map of the ends of all of the gtfRegions/
 			thisChromEndMap.emplace(i->second.finish,i);

@@ -80,6 +80,8 @@ int LiBiCount::main(int argc, char **argv)
 				countMode = intersect_strict;
 			else if (mode == "intersection-nonempty")
 				countMode = intersect_nonempty;
+			else if (mode == "intersection-all")
+				countMode = intersect_all;
 			else
 				exitFail("Invalid mode: ",mode);
 		}
@@ -123,7 +125,7 @@ int LiBiCount::main(int argc, char **argv)
 	if (!genomeDef.open(gtfFileName,verbose,id_attribute,feature_type))
 		exitFail("Could not open gtf file: ",gtfFileName);
 
-	genomeDef.index(geneCounts,(feature_type.size()==1)?*feature_type.begin():"");
+	genomeDef.index(geneCounts);
 
 //	_DBG(cin >> test;)
 
@@ -340,7 +342,9 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 	{
 	case intersect_strict:
 	case intersect_nonempty:		
+	case intersect_all:		
 		{
+			mode = &strictString;
 
 			//	For a strict match, all of the read segments must lie inside an annotated region of the same gene
 			for (auto & gene : genes)
@@ -351,10 +355,23 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 					{
 						if (result)
 						{
-							//	If we have two strict matches then the result is ambigous, no need to look any further
-							result = &ambiguousString;
-							type = &blankString;
-							break;
+							if (countMode == intersect_all)
+							{
+								//	In intersect all we include all of the options
+								if (outputFile.is_open())
+									outputFile.printEnd(*mode,*result,*type,segments.name);
+								geneCounts[*result][*type]++;
+
+								result = &gene.first;
+								type = &regionType.first;
+							}
+							else
+							{
+								//	If we have two strict matches then the result is ambigous, no need to look any further
+								result = &ambiguousString;
+								type = &blankString;
+								break;
+							}
 						}
 						else
 						{
@@ -370,9 +387,8 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 
 			if (result == nullptr)
 			{
-				if (countMode == intersect_strict)
+				if ((countMode == intersect_strict) || (countMode == intersect_all))
 				{
-					mode = &strictString;
 					result = &noFeatureString;
 					break;
 				}
@@ -380,7 +396,6 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 			}
 			else
 			{
-				mode = &strictString;
 				break;
 			}
 

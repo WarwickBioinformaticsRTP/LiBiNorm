@@ -65,7 +65,7 @@ public:
 
 	genomeEndIndexMap genomeEndIndex;
 
-	void index(geneCountsClass & geneCounts,const std::string & type);
+	void index(geneCountsClass & geneCounts);
 	void outputChromData(const std::string & filename);
 
 };
