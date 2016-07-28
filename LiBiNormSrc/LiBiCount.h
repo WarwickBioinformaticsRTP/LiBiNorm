@@ -16,7 +16,7 @@ enum mode {
 class LiBiCount
 {
 
-	size_t bamCounter,cacheSize;
+	size_t bamCounter,maxCacheSize;
 
 	void incBamCounter(const BamAlignment * ba = 0,size_t size = -1);
 

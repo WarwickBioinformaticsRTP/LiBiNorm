@@ -29,7 +29,7 @@ int LiBiCount::main(int argc, char **argv)
 	useStrand = true;
 	verbose = true;
 	countMode = intersect_union;
-	cacheSize = READ_CACHE_SIZE;
+	maxCacheSize = READ_CACHE_SIZE;
 
 	if(argc < 1)
 	{
@@ -53,7 +53,7 @@ int LiBiCount::main(int argc, char **argv)
 		}
 		else if(strcmp(argv[ni], "-c") == 0)
 		{
-			cacheSize = atoi(argv[++ni]);
+			maxCacheSize = atoi(argv[++ni]);
 		}
 		else if(strcmp(argv[ni], "-f") == 0)
 		{
@@ -316,10 +316,20 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 		pairNo++;
 	}
 
-	static string ambiguousString = "__ambiguous";
-	static string noFeatureString = "__no_feature";
 	static string blankString = "";
 
+	//	Result options
+	static string ambiguousString = "__ambiguous";
+	static string noFeatureString = "__no_feature";
+
+	//	Result mode options
+	static string strictString = "strict";
+	static string nonemptyString = "nonempty";
+	static string unionString = "union";
+
+	const string * result = nullptr;
+	const string * type = &blankString;
+	const string * mode = &blankString;
 
 	switch(countMode)
 	{
@@ -327,9 +337,7 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 	case intersect_nonempty:		
 		{
 
-			const string * result = nullptr;
-			const string * type = &blankString;
-
+			//	For a strict match, all of the read segments must lie inside an annotated region of the same gene
 			for (auto & gene : genes)
 			{
 				for (auto & regionType : gene.second)
@@ -338,12 +346,14 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 					{
 						if (result)
 						{
+							//	If we have two strict matches then the result is ambigous, no need to look any further
 							result = &ambiguousString;
 							type = &blankString;
 							break;
 						}
 						else
 						{
+							//	A strict match, keep looking as there may be more
 							result = &gene.first;
 							type = &regionType.first;
 						}
@@ -351,27 +361,26 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 				}
 			}
 
-
+			//  If this is strict mode then the only option is a strict match
 			if ((countMode == intersect_strict) && (result == nullptr))
 				result = &noFeatureString;
 
 			if (result != nullptr)
 			{
-				geneCounts[*result][*type]++;
-				if (outputFile.is_open())
-					outputFile.printEnd("strict",*result,*type,segments.name);
+				mode = &strictString;
 				break;
 			}
 
+			//	Note that if the mode is intersection_nonempty we purposly move through to the
+			// intersection union case to see whether the read is a 'union' type of match
 		}
 	case intersect_union:
 		{
 			size_t Ngenes = genes.size();
-			const string * result = nullptr;
-			const string * type = &blankString;
 
 			if (Ngenes == 1)
 			{
+				//	If we only match to one gene then the answer is simple
 				result = &genes.begin()->first;
 				type = &genes.begin()->second.begin()->first;
 			}
@@ -379,10 +388,14 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 			{
 				if (countMode == intersect_union)
 				{
+					//	For union mode, matching to multiple genes is classed as amiguous
 					result = &ambiguousString;
 				}
 				else 
 				{
+					//  but for intersection nonempty we can ignore the segments that match nothing and look at all the genes
+					//	which match all of the rest of the remaining segments.  We select the gene where the 
+					//	length of the match is longest
 					size_t bestLength = 0;
 
 					result = &noFeatureString;
@@ -402,22 +415,22 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 								}
 								else if (regionType.second.length == bestLength)
 								{
+									//	Two genes with the same match length
 									result = &ambiguousString;
 									type = &blankString;
 								}
 							}
 						}
 					}
+					//	Spcial case where one of the segments overlap two genes, but the overlaps do not 
+					//	fully overlap each other.  This is treated as no feature, and not ambiguous
 					if (nonOverlappingGenes && (result != &ambiguousString))
 					{
 						result = &noFeatureString;
 						type = &blankString;
 					}
 
-
-					if (outputFile.is_open())
-						outputFile.printEnd("non_empty",*result,*type,segments.name);
-					geneCounts[*result][*type]++;
+					mode = &nonemptyString;
 					break;
 				}
 			}
@@ -426,12 +439,15 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 				result = &noFeatureString;
 			}
 
-			if (outputFile.is_open())
-				outputFile.printEnd("union",*result,*type,segments.name);
-			geneCounts[*result][*type]++;
+			mode = &unionString;
 			break;
 		}
 	}
+
+	if (outputFile.is_open())
+			outputFile.printEnd(*mode,*result,*type,segments.name);
+	geneCounts[*result][*type]++;
+
 }
 
 
@@ -580,7 +596,7 @@ bool LiBiCount::processUnorderedBamData()
 		{
 			incBamCounter(&ba,readCache.size());
 		}
-		if (readCache.size() > cacheSize)
+		if (readCache.size() > maxCacheSize)
 		{
 			if (verbose)
 				cerr << "Outputting cache data " << cacheCounter+1 << endl;
