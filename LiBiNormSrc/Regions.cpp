@@ -55,12 +55,6 @@ void regionList::combine(const regionList & rl)
 }
 
 
-void regionList::add(int start,int end,char strand)
-{
-	data.emplace(start,region(start,end,strand));
-}
-
-
 regionList::regionList(const cacheEntry & read)
 {
 	// initialize alignment end to starting position

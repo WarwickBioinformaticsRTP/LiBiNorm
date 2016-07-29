@@ -53,7 +53,6 @@ class region
 public:
 	int start,end;
 	char strand;
-	region(){};
 	region(int start,int end,char strand) : start(start),end(end),strand(strand) {};
 };
 
@@ -69,7 +68,7 @@ public:
 
 	void combine(const regionList & rl);
 	void combineRegion(const region & r);
-	void add(int start,int end,char strand);
+
 };
 
 
@@ -77,13 +76,12 @@ class regionLists
 {
 public:
 	std::map<int,regionList> data;
-	std::string name;
+	const std::string & name;
 
 	regionLists(const cacheEntry & read,std::string name) :name(name) {
 		data[read.refId].combine(regionList(read));
 	};
 
-	void combine(const regionLists & rl);
 	void combine(const cacheEntry & read){
 			data[read.refId].combine(regionList(read));
 	};
