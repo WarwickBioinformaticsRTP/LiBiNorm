@@ -1,12 +1,12 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LocalDebuggerCommandArguments>-f exon -f transcript -m intersection-all -g "Y:\SysmedIBD\CD\gtfs\Homo_sapiens.GRCh38.84.NOD2.gtf" -b  "Y:\SysmedIBD\CD\aligned\C1492_NOD2.bam" -r  "Y:\SysmedIBD\CD\test\NOD2_regions.txt"</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>-f exon  -m intersection-strict -g "Y:\SysmedIBD\CD\gtfs\Homo_sapiens.GRCh38.84.subset2.gtf" -b  "Y:\SysmedIBD\CD\test\C1492.subset_large.bam" -r  "Y:\SysmedIBD\CD\test\regions.txt"</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
     <LocalDebuggerDebuggerType>NativeOnly</LocalDebuggerDebuggerType>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LocalDebuggerCommandArguments>-m union -c 100000 -g "Y:\SysmedIBD\CD\gtfs\Homo_sapiens.GRCh38.84.gtf" -b  "Y:\SysmedIBD\CD\test\C1492.subset_large.bam" -r  "regions.txt"</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>-m intersection-nonempty -c 100000 -g "Y:\SysmedIBD\CD\gtfs\Homo_sapiens.GRCh38.84.gtf" -b  "Y:\SysmedIBD\CD\test\C1492.subset_large.bam" -r  "regions.txt"</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
     <LocalDebuggerWorkingDirectory>Y:\SysmedIBD\CD\test</LocalDebuggerWorkingDirectory>
     <LocalDebuggerDebuggerType>NativeOnly</LocalDebuggerDebuggerType>

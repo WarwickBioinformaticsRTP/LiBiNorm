@@ -14,6 +14,7 @@ enum mode {
 
 
 
+
 class LiBiCount
 {
 
@@ -43,23 +44,11 @@ public:
 	bool outputGeneCounts(const std::string & filename);
 	void addRead(const regionLists & segments,const gtfFileEx & gtfData);
 
+	void addRead(const cacheRead & read,const gtfFileEx & gtfData){};
+
 
 	void fileCompare(const std::string & maode);
 
-};
-
-
-class cacheRead : public regionLists
-{
-public:
-	cacheRead() : file (0) {};
-	~cacheRead(); 
-
-	std::ifstream * file;
-
-	bool open(const std::string filename);
-	bool readNext();
-	void close();
 };
 
 

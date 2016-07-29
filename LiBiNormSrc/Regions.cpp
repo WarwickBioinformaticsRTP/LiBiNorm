@@ -55,9 +55,9 @@ void regionList::combine(const regionList & rl)
 }
 
 
-void regionList::add(int start,int end,bool revStrand)
+void regionList::add(int start,int end,char strand)
 {
-	data.emplace(start,region(start,end,revStrand));
+	data.emplace(start,region(start,end,strand));
 }
 
 void regionLists::GetRegions(const BamAlignment & ba) 
@@ -71,15 +71,31 @@ void regionLists::combine(const regionLists & rl)
 		data[i.first].combine(i.second);
 }
 
+/*
+regionList::regionList(const cacheEntry & read): regionList::regionList(read.start,
+{
+
+}
+*/
+
+
 void regionList::GetRegions(const BamAlignment & ba) {
 
-	bool revStrand = (ba.IsReverseStrand() == ba.IsFirstMate());
+//	bool revStrand = (ba.IsReverseStrand() == ba.IsFirstMate());
 
-	auto & CigarData = ba.CigarData;
+//	auto & CigarData = ba.CigarData;
+//	size_t start = ba.Position +1;
 
+	cacheEntry  cr(ba);
+//	regionList rl(cr);
+
+	combine(regionList(cr));
+}
+
+regionList::regionList(size_t start,char strand,const std::vector<BamTools::CigarOp> & CigarData)
+{
 	// initialize alignment end to starting position
 
-	size_t start = ba.Position +1;
 	size_t end = start;
 
 	// iterate over cigar operations
@@ -103,7 +119,7 @@ void regionList::GetRegions(const BamAlignment & ba) {
 
 			case Constants::BAM_CIGAR_REFSKIP_CHAR  :
 				{
-					combineRegion(region(start,end-1,revStrand));
+					combineRegion(region(start,end-1,strand));
 					start = (end + op.Length);
 					end = start;
 					break;
@@ -114,15 +130,30 @@ void regionList::GetRegions(const BamAlignment & ba) {
 		}
 	}
 
-	combineRegion(region(start,end-1,revStrand));
+	combineRegion(region(start,end-1,strand));
 }
 
-
+/*
 regionLists::regionLists(const string & line)
 {
 	parseTsv(line,name,data);
 }
+*/
+void parserInternal::parseval(const char *& start,Cigar & co,size_t & len)
+{
+	int i = 0;
+	while (i < len)
+	{
+		char c = start[i++];
+		int val = 0;
+		while ((start[i] >= '0') && (start[i] <= '9') && (i < len))
+			val = (val *10)+ (start[i++]-'0');
+		co.emplace_back(CigarOp(c,val));
+	}
+//	parseTsv(start,rl.data);
+}
 
+/*
 void parserInternal::parseval(const char *& start,regionList & rl,size_t & len)
 {
 	parseTsv(start,rl.data);
@@ -131,5 +162,5 @@ void parserInternal::parseval(const char *& start,region & r,size_t & len)
 {
 	parseTsv(start,r.start,r.end,r.strand);
 }
-
+*/
 

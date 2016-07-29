@@ -135,7 +135,7 @@ int LiBiCount::main(int argc, char **argv)
 		elapsedTime();
 	}
 
-	_DBG(genomeDef.outputChromData(gtfFileName.replaceSuffix(".txt"));)
+//	_DBG(genomeDef.outputChromData(gtfFileName.replaceSuffix(".txt"));)
 
 	if (!processOrderedBamData())
 	{
@@ -562,7 +562,8 @@ bool LiBiCount::processUnorderedBamData()
 
 	bamCounter = 0;
 	int cacheCounter = 0;
-	class readCache : public map<string,regionLists>
+	
+	class readCache : public map<string,cacheEntry>
 	{
 	public:
 		void save(const string & filename)
@@ -581,7 +582,7 @@ bool LiBiCount::processUnorderedBamData()
 	while (OK)
 	{
 		_DBG(string name = ba.Name;
-		bool found = (name == "HWI-D00133:18:DTWTJACXX:4:1103:6352:25943");)
+		bool found = (name == "HWI-D00133:18:DTWTJACXX:4:1103:2638:11139");)
 
 		bool readAlreadyRead = false;
 
@@ -589,16 +590,15 @@ bool LiBiCount::processUnorderedBamData()
 		{
 			if (ba.IsMateMapped())
 			{
-				map<string,regionLists>::iterator i = readCache.find(ba.Name);
+				map<string,cacheEntry>::iterator i = readCache.find(ba.Name);
 				if (i == readCache.end())
 				{
-					regionLists regions;
-					regions.GetRegions(ba);
-					readCache.emplace(ba.Name,move(regions));
+					cacheEntry read(ba);
+					readCache.emplace(ba.Name,read);
 				}
 				else
 				{
-					regionLists & regions = i->second;
+					regionLists regions(i->second);
 					regions.name = ba.Name;
 
 					regions.GetRegions(ba);
@@ -641,7 +641,7 @@ bool LiBiCount::processUnorderedBamData()
 		size_t cacheReadCounts = 0;
 		for (auto & i : readCache)
 		{
-			i.second.name = i.first;
+//			i.second.name = i.first;
 			addRead(i.second,genomeDef);
 			incBamCounter(0,cacheReadCounts++);
 		}
@@ -676,7 +676,7 @@ void LiBiCount::processCachedReads(size_t cacheFileCount)
 	int cacheReadCounter = 0;
 	while (readIndex.size())
 	{
-		_DBG( bool found = (readIndex.begin()->first == "HWI-D00133:18:DTWTJACXX:4:1103:6352:25943");)
+		_DBG( bool found = (readIndex.begin()->first == "HWI-D00133:18:DTWTJACXX:4:1103:2638:11139");)
 
 		auto i1 = readIndex.begin();
 		auto i2 = next(i1,1);
@@ -687,9 +687,10 @@ void LiBiCount::processCachedReads(size_t cacheFileCount)
 		{
 			//	We have the two ends of a paired end read.  Combine them and calculate counts
 			int index2 = i2->second;
-			cacheReads[index1].combine(cacheReads[index2]);
+			regionLists rl(cacheReads[index1]);
+			rl.combine(cacheReads[index2]);
 			if (i1->first)								//Avoid adding null entries with no read name
-				addRead(cacheReads[index1],genomeDef);
+				addRead(rl,genomeDef);
 			//	Erase the read and get the next one from the associated cache files
 			readIndex.erase(i2);
 			if(cacheReads[index2].readNext())
@@ -810,10 +811,10 @@ bool cacheRead::readNext()
 {
 	if (file->eof())
 		return false;
-	data.clear();
+	cigar.clear();
 	std::string line;
 	getline(*file,line);
-	parseTsv(line,name,data);
+	parseTsv(line,name,refId,position,strand,cigar);
 	return true;
 }
 void cacheRead::close()
