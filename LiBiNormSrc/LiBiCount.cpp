@@ -510,12 +510,10 @@ bool LiBiCount::processOrderedBamData()
 		bool found = (name == "HWI-D00133:18:DTWTJACXX:4:1102:9098:8124");)
 
 			
-		regionLists regions;
-		regions.name = ba1.Name;
+		regionLists regions(ba1,ba1.Name);
 
 		bool readAlreadyRead = false;
 		
-		regions.GetRegions(ba1);
 
 		if (ba1.IsFirstMate())
 		{
@@ -523,7 +521,7 @@ bool LiBiCount::processOrderedBamData()
 
 			if (ba2.Name == ba1.Name)
 			{
-				regions.GetRegions(ba2);
+				regions.combine(ba2);
 			}
 			else
 			{
@@ -568,14 +566,14 @@ bool LiBiCount::processUnorderedBamData()
 	class readCache : public map<string,cacheEntry>
 	{
 	public:
-		void save(const string & filename,size_t tempTruncate)
+/*		void save(const string & filename,size_t tempTruncate)
 		{
 			TsvFile outFile;
 			outFile.open(filename);
 			for (auto & i : This)
-				outFile.print(i.first.substr(tempTruncate),i.second);
+				outFile.print(i.first.c_str()+tempTruncate,i.second);
 			clear();
-		}
+		}*/
 		void save(const string & filename)
 		{
 			TsvFile outFile;
@@ -600,20 +598,17 @@ bool LiBiCount::processUnorderedBamData()
 		{
 			if (ba.IsMateMapped())
 			{
-				string shortName = ba.Name.substr(namePrefixTruncate);
 
-				map<string,cacheEntry>::iterator i = readCache.find(shortName);
+				map<string,cacheEntry>::iterator i = readCache.find(ba.Name);
 				if (i == readCache.end())
 				{
-					cacheEntry read(ba);
-					readCache.emplace(shortName,read);
+					readCache.emplace(ba.Name,cacheEntry(ba));
 				}
 				else
 				{
-					regionLists regions(i->second);
-					regions.name = ba.Name;
+					regionLists regions(i->second,ba.Name);
 
-					regions.GetRegions(ba);
+					regions.combine(ba);
 
 					incBamCounter(&ba,readCache.size());
 
@@ -624,9 +619,7 @@ bool LiBiCount::processUnorderedBamData()
 			}
 			else
 			{
-				regionLists regions;
-				regions.name = ba.Name;
-				regions.GetRegions(ba);
+				regionLists regions(ba,ba.Name);
 
 				incBamCounter(&ba,readCache.size());
 
@@ -642,7 +635,7 @@ bool LiBiCount::processUnorderedBamData()
 		{
 			if (verbose)
 				cerr << "Outputting cache data " << cacheCounter+1 << endl;
-			if (namePrefixTruncate == 0)
+/*			if (namePrefixTruncate == 0)
 			{
 				const string & firstName(readCache.begin()->first);
 				const string & lastName(readCache.rbegin()->first);
@@ -653,7 +646,7 @@ bool LiBiCount::processUnorderedBamData()
 						break;
 				readCache.save(resultsFilename.replaceSuffix(".temp.",cacheCounter++),namePrefixTruncate);
 			}
-			else
+			else*/
 				readCache.save(resultsFilename.replaceSuffix(".temp.",cacheCounter++));
 
 
@@ -668,7 +661,8 @@ bool LiBiCount::processUnorderedBamData()
 		for (auto & i : readCache)
 		{
 //			i.second.name = i.first;
-			addRead(i.second,genomeDef);
+			regionLists rl(i.second,i.first);
+			addRead(rl,genomeDef);
 			incBamCounter(0,cacheReadCounts++);
 		}
 	}
@@ -713,7 +707,7 @@ void LiBiCount::processCachedReads(size_t cacheFileCount)
 		{
 			//	We have the two ends of a paired end read.  Combine them and calculate counts
 			int index2 = i2->second;
-			regionLists rl(cacheReads[index1]);
+			regionLists rl(cacheReads[index1],i1->first);
 			rl.combine(cacheReads[index2]);
 			if (i1->first)								//Avoid adding null entries with no read name
 				addRead(rl,genomeDef);

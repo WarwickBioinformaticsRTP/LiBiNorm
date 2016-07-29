@@ -79,17 +79,12 @@ public:
 	std::map<int,regionList> data;
 	std::string name;
 
-	regionLists(){};
-	regionLists(const cacheEntry & read){
+	regionLists(const cacheEntry & read,std::string name) :name(name) {
 		data[read.refId].combine(regionList(read));
 	};
 
-	regionLists(regionLists && rl): data(move(rl.data)) {};
-
-	void GetRegions(const cacheEntry & read);
-
 	void combine(const regionLists & rl);
-	void combine(const cacheRead & read){
+	void combine(const cacheEntry & read){
 			data[read.refId].combine(regionList(read));
 	};
 };

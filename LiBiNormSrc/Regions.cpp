@@ -60,17 +60,6 @@ void regionList::add(int start,int end,char strand)
 	data.emplace(start,region(start,end,strand));
 }
 
-void regionLists::GetRegions(const cacheEntry & read) 
-{ 	
-	data[read.refId].combine(regionList(read));
-}
-
-void regionLists::combine(const regionLists & rl)
-{
-	for (auto i : rl.data)
-		data[i.first].combine(i.second);
-}
-
 
 regionList::regionList(const cacheEntry & read)
 {

@@ -80,6 +80,7 @@
       <AdditionalIncludeDirectories>..\..\bamtools;../../bioinformaticsLib;../mcmcLib</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>STATIC_LINK;WIN32</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <MinimalRebuild>false</MinimalRebuild>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
