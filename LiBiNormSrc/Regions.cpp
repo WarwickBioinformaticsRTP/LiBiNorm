@@ -60,9 +60,9 @@ void regionList::add(int start,int end,char strand)
 	data.emplace(start,region(start,end,strand));
 }
 
-void regionLists::GetRegions(const BamAlignment & ba) 
+void regionLists::GetRegions(const cacheEntry & read) 
 { 	
-	data[ba.RefID].GetRegions(ba);
+	data[read.refId].combine(regionList(read));
 }
 
 void regionLists::combine(const regionLists & rl)
@@ -71,36 +71,17 @@ void regionLists::combine(const regionLists & rl)
 		data[i.first].combine(i.second);
 }
 
-/*
-regionList::regionList(const cacheEntry & read): regionList::regionList(read.start,
-{
 
-}
-*/
-
-
-void regionList::GetRegions(const BamAlignment & ba) {
-
-//	bool revStrand = (ba.IsReverseStrand() == ba.IsFirstMate());
-
-//	auto & CigarData = ba.CigarData;
-//	size_t start = ba.Position +1;
-
-	cacheEntry  cr(ba);
-//	regionList rl(cr);
-
-	combine(regionList(cr));
-}
-
-regionList::regionList(size_t start,char strand,const std::vector<BamTools::CigarOp> & CigarData)
+regionList::regionList(const cacheEntry & read)
 {
 	// initialize alignment end to starting position
 
+	size_t start = read.position;
 	size_t end = start;
 
 	// iterate over cigar operations
-	vector<CigarOp>::const_iterator cigarIter = CigarData.begin();
-	vector<CigarOp>::const_iterator cigarEnd  = CigarData.end();
+	vector<CigarOp>::const_iterator cigarIter = read.cigar.begin();
+	vector<CigarOp>::const_iterator cigarEnd  = read.cigar.end();
 	for ( ; cigarIter != cigarEnd; ++cigarIter) {
 		const CigarOp& op = (*cigarIter);
 
@@ -119,7 +100,7 @@ regionList::regionList(size_t start,char strand,const std::vector<BamTools::Ciga
 
 			case Constants::BAM_CIGAR_REFSKIP_CHAR  :
 				{
-					combineRegion(region(start,end-1,strand));
+					combineRegion(region(start,end-1,read.strand));
 					start = (end + op.Length);
 					end = start;
 					break;
@@ -130,15 +111,9 @@ regionList::regionList(size_t start,char strand,const std::vector<BamTools::Ciga
 		}
 	}
 
-	combineRegion(region(start,end-1,strand));
+	combineRegion(region(start,end-1,read.strand));
 }
 
-/*
-regionLists::regionLists(const string & line)
-{
-	parseTsv(line,name,data);
-}
-*/
 void parserInternal::parseval(const char *& start,Cigar & co,size_t & len)
 {
 	int i = 0;
@@ -150,17 +125,6 @@ void parserInternal::parseval(const char *& start,Cigar & co,size_t & len)
 			val = (val *10)+ (start[i++]-'0');
 		co.emplace_back(CigarOp(c,val));
 	}
-//	parseTsv(start,rl.data);
 }
 
-/*
-void parserInternal::parseval(const char *& start,regionList & rl,size_t & len)
-{
-	parseTsv(start,rl.data);
-}
-void parserInternal::parseval(const char *& start,region & r,size_t & len)
-{
-	parseTsv(start,r.start,r.end,r.strand);
-}
-*/
 
