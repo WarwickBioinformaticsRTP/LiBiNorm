@@ -22,6 +22,8 @@ class LiBiCount
 
 	void incBamCounter(const BamAlignment * ba = 0,size_t size = -1);
 
+	int namePrefixTruncate;
+
 public:
 	bool useStrand,reverseStrand,verbose;
 	mode countMode;

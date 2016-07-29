@@ -562,10 +562,20 @@ bool LiBiCount::processUnorderedBamData()
 
 	bamCounter = 0;
 	int cacheCounter = 0;
+
+	namePrefixTruncate = 0;
 	
 	class readCache : public map<string,cacheEntry>
 	{
 	public:
+		void save(const string & filename,size_t tempTruncate)
+		{
+			TsvFile outFile;
+			outFile.open(filename);
+			for (auto & i : This)
+				outFile.print(i.first.substr(tempTruncate),i.second);
+			clear();
+		}
 		void save(const string & filename)
 		{
 			TsvFile outFile;
@@ -590,11 +600,13 @@ bool LiBiCount::processUnorderedBamData()
 		{
 			if (ba.IsMateMapped())
 			{
-				map<string,cacheEntry>::iterator i = readCache.find(ba.Name);
+				string shortName = ba.Name.substr(namePrefixTruncate);
+
+				map<string,cacheEntry>::iterator i = readCache.find(shortName);
 				if (i == readCache.end())
 				{
 					cacheEntry read(ba);
-					readCache.emplace(ba.Name,read);
+					readCache.emplace(shortName,read);
 				}
 				else
 				{
@@ -630,7 +642,21 @@ bool LiBiCount::processUnorderedBamData()
 		{
 			if (verbose)
 				cerr << "Outputting cache data " << cacheCounter+1 << endl;
-			readCache.save(resultsFilename.replaceSuffix(".temp.",cacheCounter++));
+			if (namePrefixTruncate == 0)
+			{
+				const string & firstName(readCache.begin()->first);
+				const string & lastName(readCache.rbegin()->first);
+				for (size_t i = 0;i < min(firstName.size(),lastName.size());i++)
+					if (firstName[i] == lastName[i])
+						namePrefixTruncate = i+1;
+					else
+						break;
+				readCache.save(resultsFilename.replaceSuffix(".temp.",cacheCounter++),namePrefixTruncate);
+			}
+			else
+				readCache.save(resultsFilename.replaceSuffix(".temp.",cacheCounter++));
+
+
 		}
 
 		OK = reader.GetNextAlignment(ba,false);
