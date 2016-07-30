@@ -135,7 +135,7 @@ int LiBiCount::main(int argc, char **argv)
 		elapsedTime();
 	}
 
-//	_DBG(genomeDef.outputChromData(gtfFileName.replaceSuffix(".txt"));)
+	_DBG(genomeDef.outputChromData(gtfFileName.replaceSuffix(".txt"));)
 
 	if (!processOrderedBamData())
 	{
@@ -168,11 +168,13 @@ bool LiBiCount::outputGeneCounts(const string & filename)
 
 	for(auto i : geneCounts)
 	{
-		for(auto j : i.second)
+		if (i.first.substr(0,2) != "__")
+			geneCounts.print(i.first,output);
+/*		for(auto j : i.second)
 		{
 			if (i.first.substr(0,2) != "__")
 				output.printEnd(i.first,j.first,j.second);
-		}
+		}*/
 	}
 	geneCounts.print("__no_feature",output);
 	geneCounts.print("__ambiguous",output);
@@ -509,8 +511,8 @@ bool LiBiCount::processOrderedBamData()
 		_DBG(string name = ba1.Name;
 		bool found = (name == "HWI-D00133:18:DTWTJACXX:4:1102:9098:8124");)
 
-			
-		regionLists regions(ba1,ba1.Name);
+
+		regionLists regions(readData(move(ba1)),move(ba1.Name));
 
 		bool readAlreadyRead = false;
 		
@@ -521,7 +523,7 @@ bool LiBiCount::processOrderedBamData()
 
 			if (ba2.Name == ba1.Name)
 			{
-				regions.combine(ba2);
+				regions.combine(move(ba2));
 			}
 			else
 			{
@@ -561,19 +563,10 @@ bool LiBiCount::processUnorderedBamData()
 	bamCounter = 0;
 	int cacheCounter = 0;
 
-	namePrefixTruncate = 0;
-	
-	class readCache : public map<string,cacheEntry>
+
+	class readCache : public map<string,readData>
 	{
 	public:
-/*		void save(const string & filename,size_t tempTruncate)
-		{
-			TsvFile outFile;
-			outFile.open(filename);
-			for (auto & i : This)
-				outFile.print(i.first.c_str()+tempTruncate,i.second);
-			clear();
-		}*/
 		void save(const string & filename)
 		{
 			TsvFile outFile;
@@ -599,16 +592,16 @@ bool LiBiCount::processUnorderedBamData()
 			if (ba.IsMateMapped())
 			{
 
-				map<string,cacheEntry>::iterator i = readCache.find(ba.Name);
+				map<string,readData>::iterator i = readCache.find(ba.Name);
 				if (i == readCache.end())
 				{
-					readCache.emplace(ba.Name,cacheEntry(ba));
+					readCache.emplace(ba.Name,readData(move(ba)));
 				}
 				else
 				{
 					regionLists regions(i->second,ba.Name);
 
-					regions.combine(ba);
+					regions.combine(move(ba));
 
 					incBamCounter(&ba,readCache.size());
 
@@ -619,7 +612,7 @@ bool LiBiCount::processUnorderedBamData()
 			}
 			else
 			{
-				regionLists regions(ba,ba.Name);
+				regionLists regions(move(ba),ba.Name);
 
 				incBamCounter(&ba,readCache.size());
 
@@ -635,21 +628,7 @@ bool LiBiCount::processUnorderedBamData()
 		{
 			if (verbose)
 				cerr << "Outputting cache data " << cacheCounter+1 << endl;
-/*			if (namePrefixTruncate == 0)
-			{
-				const string & firstName(readCache.begin()->first);
-				const string & lastName(readCache.rbegin()->first);
-				for (size_t i = 0;i < min(firstName.size(),lastName.size());i++)
-					if (firstName[i] == lastName[i])
-						namePrefixTruncate = i+1;
-					else
-						break;
-				readCache.save(resultsFilename.replaceSuffix(".temp.",cacheCounter++),namePrefixTruncate);
-			}
-			else*/
-				readCache.save(resultsFilename.replaceSuffix(".temp.",cacheCounter++));
-
-
+			readCache.save(resultsFilename.replaceSuffix(".temp.",cacheCounter++));
 		}
 
 		OK = reader.GetNextAlignment(ba,false);
@@ -660,7 +639,6 @@ bool LiBiCount::processUnorderedBamData()
 		size_t cacheReadCounts = 0;
 		for (auto & i : readCache)
 		{
-//			i.second.name = i.first;
 			regionLists rl(i.second,i.first);
 			addRead(rl,genomeDef);
 			incBamCounter(0,cacheReadCounts++);
@@ -682,7 +660,7 @@ void LiBiCount::processCachedReads(size_t cacheFileCount)
 	as a pair
 	*/
 
-	vector<cacheRead> cacheReads(cacheFileCount);
+	vector<cacheEntry> cacheReads(cacheFileCount);
 
 	//	readIndex has a lits of the current reads, ordered by name.
 	multimap<stringEx,int> readIndex;
@@ -719,7 +697,10 @@ void LiBiCount::processCachedReads(size_t cacheFileCount)
 		else
 		{
 			if (i1->first)
-				addRead(cacheReads[index1],genomeDef);
+			{
+				regionLists rl(cacheReads[index1],i1->first);
+				addRead(rl,genomeDef);
+			}
 		}
 
 		readIndex.erase(i1);
@@ -728,8 +709,7 @@ void LiBiCount::processCachedReads(size_t cacheFileCount)
 		incBamCounter(0,++cacheReadCounter);
 
 	}
-	cacheReads.clear();
-
+	
 	for (int i = 0;i < cacheFileCount;i++)
 	{
 		remove(resultsFilename.replaceSuffix(".temp.",i).c_str());
@@ -813,13 +793,13 @@ void LiBiCount::fileCompare(const string & mode)
 
 
 
-cacheRead::~cacheRead() 
+cacheEntry::~cacheEntry() 
 {
 	close();
 };
 
 
-bool cacheRead::open(const std::string filename)
+bool cacheEntry::open(const std::string filename)
 {
 	file = new std::ifstream();
 	file ->open(filename);
@@ -827,7 +807,7 @@ bool cacheRead::open(const std::string filename)
 	readNext();
 	return true;
 }
-bool cacheRead::readNext()
+bool cacheEntry::readNext()
 {
 	if (file->eof())
 		return false;
@@ -837,7 +817,7 @@ bool cacheRead::readNext()
 	parseTsv(line,name,refId,position,strand,cigar);
 	return true;
 }
-void cacheRead::close()
+void cacheEntry::close()
 {
 	if (file)
 	{

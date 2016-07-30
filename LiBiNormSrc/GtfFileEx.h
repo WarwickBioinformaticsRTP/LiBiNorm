@@ -3,28 +3,44 @@
 #define GTFFILEEX_H
 
 #include "containerEx.h"
+#include "libCommon.h"
 #include "gtfFile.h"
 #include "Regions.h"
 
 class gtfRegion;
 
-class geneCountsClass : public std::map<std::string, mapZeroDef<std::string,size_t> >
+
+class gtfGeneAttribute : public mapZeroDef<std::string,size_t> 
 {
 public:
-	void print(const std::string index,TsvFile & output)	{
-		for (auto & entry: This[index])
-		{
-			output.printEnd(index,entry.first,entry.second);
-		}
+	void print(const std::string & index,TsvFile & output)	
+	{
+		for (auto & entry: This)
+			output.print(index,entry.first,entry.second);
+	};
+	void reset()	
+	{
+		for (auto & entry: This)
+			entry.second = 0;
+	};
+
+};
+
+
+
+
+//	A nested string map for holding counts for each identifier for each gene  
+class geneCountsClass : public std::map<std::string,gtfGeneAttribute >
+{
+public:
+	//	For printing out the list of counts.  entry.second is the counts
+	void print(const std::string & index,TsvFile & output)	
+	{
+		at(index).print(index,output);
 	};
 	void reset()	{
 		for (auto & gene: This)
-		{
-			for (auto & type: gene.second)
-			{
-				type.second = 0;
-			}
-		}
+			gene.second.reset();
 	};
 };
 
@@ -55,6 +71,7 @@ public:
 
 typedef std::map<std::string,chromosomeGtfData> genomeGtfRegions;
 typedef std::multimap<size_t,chromosomeGtfData::iterator> chromosomeEndIndexMap;
+
 typedef std::map<std::string,chromosomeEndIndexMap > genomeEndIndexMap;
 
 
@@ -62,7 +79,6 @@ class gtfFileEx : public gtfFile
 {
 public: 
 	genomeGtfRegions genomeGtfData; 
-
 	genomeEndIndexMap genomeEndIndex;
 
 	void index(geneCountsClass & geneCounts);

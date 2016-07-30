@@ -1,9 +1,10 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LocalDebuggerCommandArguments>-f exon  -m intersection-strict -g "Y:\SysmedIBD\CD\gtfs\Homo_sapiens.GRCh38.84.subset2.gtf" -b  "Y:\SysmedIBD\CD\test\C1492.subset_large.bam" -r  "Y:\SysmedIBD\CD\test\regions.txt"</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>-g "Y:\SysmedIBD\GRCm38\Mus_musculus.GRCm38.83.gtf" -b "aligned\5_CAGATC.bam" -r "counts\5_CAGATC.txt</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
     <LocalDebuggerDebuggerType>NativeOnly</LocalDebuggerDebuggerType>
+    <LocalDebuggerWorkingDirectory>Y:\Shan\ChromoCentre reads</LocalDebuggerWorkingDirectory>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LocalDebuggerCommandArguments>-m intersection-nonempty -c 100000 -g "Y:\SysmedIBD\CD\gtfs\Homo_sapiens.GRCh38.84.gtf" -b  "Y:\SysmedIBD\CD\test\C1492.subset_large.bam" -r  "regions.txt"</LocalDebuggerCommandArguments>

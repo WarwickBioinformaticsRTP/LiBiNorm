@@ -22,8 +22,6 @@ class LiBiCount
 
 	void incBamCounter(const BamAlignment * ba = 0,size_t size = -1);
 
-	int namePrefixTruncate;
-
 public:
 	bool useStrand,reverseStrand,verbose;
 	mode countMode;
@@ -44,10 +42,8 @@ public:
 	void processCachedReads(size_t cacheFileCount);
 
 	bool outputGeneCounts(const std::string & filename);
+
 	void addRead(const regionLists & segments,const gtfFileEx & gtfData);
-
-	void addRead(const cacheRead & read,const gtfFileEx & gtfData){};
-
 
 	void fileCompare(const std::string & maode);
 

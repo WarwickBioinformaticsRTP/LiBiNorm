@@ -5,38 +5,38 @@
 using namespace std;
 using namespace BamTools;
 
+//	Combines a region with an existing set of regions
 void regionList::combineRegion(const region & r1)
 {
 	bool combined = false;
 
 	for (auto i = data.begin();i != data.end();i++)
 	{
+		//	Does the new region start before the end of the existinng region, and is it on the same strand?
 		if ((r1.start <= i->second.end) && (r1.strand == i->second.strand))
 		{
+			//	If it starts before the existing start and ends after it then there is an overlap 
+			//	and we are going to have to replace the existing region as regions are indexed by
+			//  the start
 			if ((r1.start <= i->second.start) && (r1.end >= i->second.start)) 
 			{
+				// The new region, based on the existing one
 				region r = i->second;
+				// but with an earlier start
 				r.start = r1.start;
+				//	and possibly an earlier end.
 				if (r1.end >= i->second.end)
 					r.end = r1.end;
 
-				if (i == data.begin())
-				{
-					data.erase(i);
-					data.emplace(r1.start,r);
-					i = data.begin();
-				}
-				else
-				{
-					auto j = next(i,-1);
-					data.erase(i);
-					data.emplace(r1.start,r);
-					i = next(j,1);
-				}
+				//	replace the existing entry with the new one, taking care not to saw off the
+				//	branch you are sitting on and 
+				data.erase(i);
+				i = data.emplace(r1.start,r).first;
 				combined = true;
 				break;	
 			}
-			if (r1.end >= i->second.end)
+			//	The new region just estends the end of the existing region
+			else if (r1.end >= i->second.end)
 			{
 				i->second.end = r1.end;
 				combined = true;
@@ -48,14 +48,15 @@ void regionList::combineRegion(const region & r1)
 		data.emplace(r1.start,r1);
 }
 
+//	Combine this region list with another (they are on the same chromosome
 void regionList::combine(const regionList & rl)
 {
-	for (const auto r : rl.data)
+	for (auto r : rl.data)
 		combineRegion(r.second);
 }
 
 
-regionList::regionList(const cacheEntry & read)
+regionList::regionList(const readData & read)
 {
 	// initialize alignment end to starting position
 
@@ -97,6 +98,7 @@ regionList::regionList(const cacheEntry & read)
 	combineRegion(region(start,end-1,read.strand));
 }
 
+//	Parse a text string and convert it into a cigar value.  Used when retreiving entries from cache files
 void parserInternal::parseval(const char *& start,Cigar & co,size_t & len)
 {
 	int i = 0;
@@ -109,5 +111,21 @@ void parserInternal::parseval(const char *& start,Cigar & co,size_t & len)
 		co.emplace_back(CigarOp(c,val));
 	}
 }
+
+//	Prints out cigar information
+bool printVal(outputDataFile * f,const Cigar & cigar)
+{
+	for (auto & i: cigar)
+		fprintf(f->fout,"%c%i",i.Type,i.Length);
+	return true;
+};
+
+//	Prints the value of a readData instance.  Note that printing read.cigar will have the effect of calling the 
+//	printVal associated with the cigar above
+bool printVal(outputDataFile * f,const readData & read)
+{
+	f->printStart(printZero(read.refId),read.position,read.strand,read.cigar);
+	return true;
+};
 
 

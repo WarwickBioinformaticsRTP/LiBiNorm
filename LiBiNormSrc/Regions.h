@@ -5,10 +5,8 @@
 #include<string>
 #include "printEx.h"
 #include "api/BamReader.h"
-#include "libCommon.h"
 
-//#define _DEBUG 1
-
+//	Wrap the cigar data so that the parser and printVal methods will recognise it
 class Cigar : public std::vector<BamTools::CigarOp>
 {
 public:
@@ -16,30 +14,37 @@ public:
 	Cigar(const std::vector<BamTools::CigarOp> & co): std::vector<BamTools::CigarOp>(co) {};
 };
 
-class cacheEntry
+//	This holds the data from a bam entry that we are actually interested in.  It is the basis
+//	of 'in program' persisted data and also data that is persisted to cache files.  Does not include the
+//	 read name as thjis is stored elesewhere (e.g as the index of a map of readData
+class readData
 {
 	public:
 		int refId;
 		int position;
 		char strand;
 		Cigar cigar;
-		cacheEntry(void){}
-		cacheEntry(const BamTools::BamAlignment & ba):
+		readData(void){}
+
+		//	This constructor creates the readData from the bam file entry.  This means that methos expecting 
+		//	readData can be passed a bamAlignment.  Use an rValue constructor so that we can 'swallow up' the cigar data 
+		//	rather than making a copy of it as once the readData has been created we will have no further use
+		//	for the cigar data
+		readData(BamTools::BamAlignment && ba):
 			refId(ba.RefID),
 			position(ba.Position+1),
 			strand((ba.IsReverseStrand() == ba.IsFirstMate())?'-':'+'),
-			cigar(ba.CigarData)
+			cigar(move(ba.CigarData))
 		{};
 };
 
-
-
-class cacheRead : public cacheEntry
+//	Used for reading back cached read information from cache files
+class cacheEntry : public readData
 {
 public:
 	std::string name;
-	cacheRead() : file (0) {};
-	~cacheRead(); 
+	cacheEntry() : file (0) {};
+	~cacheEntry(); 
 
 	std::ifstream * file;
 
@@ -48,6 +53,7 @@ public:
 	void close();
 };
 
+//	A reagion within a chromosome
 class region 
 {
 public:
@@ -57,53 +63,57 @@ public:
 };
 
 
-
+//	A set of regions on one chromosome
 class regionList 
 {
 public:
 	std::map<int,region> data;
 
-	regionList(const cacheEntry & read);
+	//	Which is normally created from a read
+	regionList(const readData & read);
 	regionList(){};
 
+	//	For combining data from a second read
 	void combine(const regionList & rl);
+
+private:
+		//	For combining each individual read within a regionList
 	void combineRegion(const region & r);
 
 };
 
-
+//	The list of regions associated with a read pair
 class regionLists
 {
 public:
+	//	Contains the regions themselves in a map indexed by chromosome (indicated by refId, the chromosome identifier
+	//	in the bam file.  Done this way to cater for a read pair where the reads are on difference chromosomes
 	std::map<int,regionList> data;
+	//	The name of the read
 	const std::string & name;
 
-	regionLists(const cacheEntry & read,std::string name) :name(name) {
-		data[read.refId].combine(regionList(read));
+	//	Creates a regionList from one of the reads, either from a bam entry or from cachedData.  Use emplace so that the
+	//	regionList can be efficiently placed straight into the map.
+	regionLists(const readData & read,std::string name) :name(name) {
+		data.emplace(read.refId,regionList(read));
 	};
 
-	void combine(const cacheEntry & read){
+	//	Adds the information associated with the scond read
+	void combine(const readData & read){
 			data[read.refId].combine(regionList(read));
 	};
 };
 
+//	Declare the availability of methods that are used by parser for parser cigar strings
+//	and also the methods used for printing a cacheentry and the cigar data
+//	These are both used for the temporary cache data that is placed on disk
 namespace parserInternal
 {
 	void parseval(const char *& start, Cigar & cigar,size_t & len);
 }
 
-inline bool printVal(outputDataFile * f,const Cigar & cigar)
-{
-	for (auto & i: cigar)
-		fprintf(f->fout,"%c%i",i.Type,i.Length);
-	return true;
-};
-
-inline bool printVal(outputDataFile * f,const cacheEntry & read)
-{
-	f->printStart(printZero(read.refId),read.position,read.strand,read.cigar);
-	return true;
-};
+bool printVal(outputDataFile * f,const Cigar & cigar);
+bool printVal(outputDataFile * f,const readData & read);
 
 #endif
 
