@@ -19,13 +19,14 @@ class LiBiCount
 {
 
 	size_t bamCounter,maxCacheSize;
+	int minqual;
 
 	void incBamCounter(const BamAlignment * ba = 0,size_t size = -1);
 
 public:
 	bool useStrand,reverseStrand,verbose;
 	mode countMode;
-	stringEx resultsFilename;
+	stringEx outputFilename,resultsFilename;
 
 	geneCountsClass geneCounts;
 

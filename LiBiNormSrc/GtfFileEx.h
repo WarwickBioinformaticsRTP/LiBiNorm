@@ -9,6 +9,15 @@
 
 class gtfRegion;
 
+static std::string blankString = "";
+
+//	Result options
+static std::string ambiguousString = "__ambiguous";
+static std::string noFeatureString = "__no_feature";
+static std::string lowQualString = "__too_low_aQual";
+static std::string notAlignedString = "__not_aligned";
+static std::string notUnique = "__alignment_not_unique";
+
 
 class gtfGeneAttribute : public mapZeroDef<std::string,size_t> 
 {
@@ -23,6 +32,12 @@ public:
 		for (auto & entry: This)
 			entry.second = 0;
 	};
+
+	const size_t operator++(int){
+		size_t _R = at(blankString);
+		at(blankString)++;
+		return _R;
+	}
 
 };
 
@@ -42,6 +57,7 @@ public:
 		for (auto & gene: This)
 			gene.second.reset();
 	};
+
 };
 
 typedef std::multimap<size_t, gtfRegion> chromosomeGtfData ;

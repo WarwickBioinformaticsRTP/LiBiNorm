@@ -16,6 +16,9 @@
 
 using namespace std;
 
+
+#define BAMNAME "D4B3B9P1:276:C7CDRACXX:1:2210:16261:17551"
+
 int LiBiCount::main(int argc, char **argv)
 {
 	std::string test;
@@ -28,6 +31,7 @@ int LiBiCount::main(int argc, char **argv)
 	reverseStrand = true;
 	useStrand = true;
 	verbose = true;
+	minqual = 10;
 	countMode = intersect_union;
 	maxCacheSize = READ_CACHE_SIZE;
 
@@ -54,6 +58,10 @@ int LiBiCount::main(int argc, char **argv)
 		else if(strcmp(argv[ni], "-c") == 0)
 		{
 			maxCacheSize = atoi(argv[++ni]);
+		}
+		else if(strcmp(argv[ni], "-a") == 0)
+		{
+			minqual = atoi(argv[++ni]);
 		}
 		else if(strcmp(argv[ni], "-f") == 0)
 		{
@@ -253,8 +261,8 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 
 				genes.nSegments++;
 				vector<gtfOverlap> overlaps;
-				//	Trying out each of the gtfRegions in turn to see if there is an overlap
-
+				//	Trying out each of the gtfRegions in turn to see if there is an overlap. 
+				//	If there is then it gets added to the list of ovberlaps
 				for (auto j = gtfRegion; (j != thisChromGtfRegions->second.end()) && (j->first <= segment.second.end); j++)
 				{
 					//	Check for strand match
@@ -305,7 +313,14 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 						}
 						else
 						{
+							//	The regions do not overlap.  This is OK if this is the same 
+							//	as one of the existing gene/type combinations
 							nonOverlappingGenes = true;
+							for (auto gene: geneSet)
+								if ((gene.first == overlap.geneName) && (gene.second == overlap.type))
+								{
+									nonOverlappingGenes = false;
+								}
 						}
 					}
 					if (geneSet.size())
@@ -322,12 +337,6 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 		pairNo++;
 	}
 
-
-	static string blankString = "";
-
-	//	Result options
-	static string ambiguousString = "__ambiguous";
-	static string noFeatureString = "__no_feature";
 
 	//	Result mode options
 	static string strictString = "strict";
@@ -503,43 +512,44 @@ bool LiBiCount::processOrderedBamData()
 
 	size_t misPairs(0);
 	bamCounter = 0;
+	set<string> previousNames;
 
 	bool OK = reader.GetNextAlignment(ba1,false);
 
 	while (OK)
 	{
 		_DBG(string name = ba1.Name;
-		bool found = (name == "HWI-D00133:18:DTWTJACXX:4:1102:9098:8124");)
-
+		bool found = (name == BAMNAME);)
 
 		regionLists regions(readData(move(ba1)),move(ba1.Name));
 
 		bool readAlreadyRead = false;
 		
+		reader.GetNextAlignment(ba2,false);
 
-		if (ba1.IsFirstMate())
+		if (ba2.Name == regions.name)
 		{
-			reader.GetNextAlignment(ba2,false);
-
-			if (ba2.Name == ba1.Name)
-			{
-				regions.combine(move(ba2));
-			}
+			regions.combine(move(ba2));
+		}
+		else
+		{
+			readAlreadyRead = true;
+		}
+		if (bamCounter < 200)
+		{
+			auto i = previousNames.find(regions.name);
+			if (i == previousNames.end())
+				previousNames.emplace(regions.name);
 			else
 			{
-				if (bamCounter < 100)
+				if (verbose)
+					cerr << "Names not in order so assuming data is not name ordered" << endl;
+				if (outputFile.is_open())
 				{
-					if (ba1.IsMateMapped())
-					{
-						if (misPairs++ > 20)
-						{
-							if (verbose)
-								cerr << misPairs << " missing pairs found in the first " << bamCounter << " reads, so assuming data is not name ordered" << endl;
-							return false;
-						}
-					}
+					outputFile.close();
+					outputFile.open(outputFilename);
 				}
-				readAlreadyRead = true;
+				return false;
 			}
 		}
 
@@ -583,11 +593,15 @@ bool LiBiCount::processUnorderedBamData()
 	while (OK)
 	{
 		_DBG(string name = ba.Name;
-		bool found = (name == "HWI-D00133:18:DTWTJACXX:4:1103:2638:11139");)
+		bool found = (name == BAMNAME);)
 
 		bool readAlreadyRead = false;
 
-		if (ba.IsMapped())
+		if (ba.MapQuality < minqual)
+		{
+			geneCounts[lowQualString]++;
+		}
+		else if (ba.IsMapped())
 		{
 			if (ba.IsMateMapped())
 			{
@@ -599,7 +613,7 @@ bool LiBiCount::processUnorderedBamData()
 				}
 				else
 				{
-					regionLists regions(i->second,ba.Name);
+					regionLists regions(i->second,move(ba.Name));
 
 					regions.combine(move(ba));
 
@@ -622,6 +636,7 @@ bool LiBiCount::processUnorderedBamData()
 		}
 		else if (!ba.IsPaired() || (!ba.IsMateMapped() && ba.IsFirstMate()))
 		{
+			geneCounts[notAlignedString]++;
 			incBamCounter(&ba,readCache.size());
 		}
 		if (readCache.size() > maxCacheSize)
@@ -674,7 +689,7 @@ void LiBiCount::processCachedReads(size_t cacheFileCount)
 	int cacheReadCounter = 0;
 	while (readIndex.size())
 	{
-		_DBG( bool found = (readIndex.begin()->first == "HWI-D00133:18:DTWTJACXX:4:1103:2638:11139");)
+		_DBG( bool found = (readIndex.begin()->first == BAMNAME);)
 
 		auto i1 = readIndex.begin();
 		auto i2 = next(i1,1);
@@ -721,20 +736,20 @@ void LiBiCount::processCachedReads(size_t cacheFileCount)
 void LiBiCount::fileCompare(const string & mode)
 {
 	ifstream samFile;
-	stringEx filename("Y:\\SysmedIBD\\CD\\test\\",mode,"Test\\",mode,"_large.sam");
+	stringEx filename("Y:\\Shan\\ChromoCentre reads\\test\\strict\\matches.sam");
 	samFile.open(filename);
 	if (!samFile.is_open())
 		exitFail("Failed to open samfile ",filename);
 
 	ifstream myFile;
-	myFile.open(stringEx("Y:\\SysmedIBD\\CD\\test\\",mode,"Test\\matches_2.txt"));
+	myFile.open(stringEx("Y:\\Shan\\ChromoCentre reads\\mymatches.txt"));
 	if (!myFile.is_open())
 		exitFail("Failed to txt samfile");
 
 
 
 	TsvFile outFile;
-	outFile.open(stringEx("Y:\\SysmedIBD\\CD\\test\\",mode,"Test\\comparison_2.txt"));
+	outFile.open(stringEx("Y:\\Shan\\ChromoCentre reads\\comparison.txt"));
 
 	string line;
 
@@ -759,10 +774,10 @@ void LiBiCount::fileCompare(const string & mode)
 		samParams[1].clear();
 		parseTsv(line,samParams[1]);
 
-		if (samParams[0][0] != myParams[2])
-			exitFail("Mismatch ",samParams[0][0],myParams[2]);
+		if (samParams[0][0] != myParams[3])
+			exitFail("Mismatch ",samParams[0][0],myParams[3]);
 
-		outFile.printMiddle(myParams[2],myParams[0],myParams[1]);
+		outFile.printStart(myParams[3],myParams[0],myParams[1],myParams[2]);
 		for (size_t i : cols)
 		{
 				outFile.printMiddle(samParams[0][i]);

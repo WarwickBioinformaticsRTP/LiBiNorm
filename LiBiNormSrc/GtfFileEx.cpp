@@ -1,5 +1,7 @@
 #include "GtfFileEx.h"
 
+
+
 using namespace std;
 
 void gtfRegion::checkOverlap(const region & segment,vector<gtfOverlap> & overlaps) const
@@ -42,7 +44,8 @@ void gtfFileEx::index(geneCountsClass & geneCounts)
 				auto k = j++;
 				if (k != chrom.second.end())
 				{
-					if ((i->second.type == k->second.type) && (i->second.tags[0].val == k->second.tags[0].val))
+					//	It turns out that the Yam1 gene is defined on both strands!
+					if ((i->second.type == k->second.type) && (i->second.tags[0].val == k->second.tags[0].val) && (i->second.strand == k->second.strand))
 					{
 						if (k->second.finish > finish)
 						{
@@ -59,8 +62,6 @@ void gtfFileEx::index(geneCountsClass & geneCounts)
 				}
 			}
 
-
-//			string & attName = i->second.tags[0].val;
 			thisChromData.emplace(i->first,gtfRegion(i->second.start,finish,i->second.tags[0].val,i->second.strand,i->second.type));
 
 		}
@@ -99,11 +100,11 @@ void gtfFileEx::index(geneCountsClass & geneCounts)
 
 	}
 
-	geneCounts["__no_feature"][""];
-	geneCounts["__ambiguous"][""];
-	geneCounts["__too_low_aQual"][""];
-	geneCounts["__not_aligned"][""];
-	geneCounts["__alignment_not_unique"][""];
+	geneCounts[noFeatureString][blankString];
+	geneCounts[ambiguousString][blankString];
+	geneCounts[lowQualString][blankString];
+	geneCounts[notAlignedString][blankString];
+	geneCounts[notUnique][blankString];
 
 }
 
@@ -111,6 +112,9 @@ void gtfFileEx::outputChromData(const string & filename)
 {
 	TsvFile output;
 	output.open(filename);
+
+	if (!output.is_open())
+		exitFail("Unable to open output file",filename);
 
 	for(auto i : genomeGtfData)
 	{
