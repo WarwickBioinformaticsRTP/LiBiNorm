@@ -285,7 +285,8 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 					{
 						string name,type;
 						gtfId(){};
-						gtfId(string name,string type):name(name),type(type){};
+						gtfId(gtfOverlap && region):name(move(region.geneName)),type(move(region.type)){};
+
 					};
 
 					class segRegion
@@ -294,82 +295,99 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 						size_t min,max;
 						vectorEx<gtfId> geneSet;
 						segRegion():min(INT_MAX),max(0){};
-						segRegion(size_t min,size_t max,const string & name,const string & type):min(min),max(max) 
+						segRegion(gtfOverlap && region):min(region.start),max(region.finish) 
 						{
-							geneSet.emplace_back(name,type);
+							geneSet.emplace_back(move(region));
 						};
+
 					};
 
-					vector<segRegion> segRegions(1);
+					gtfOverlap & overlap = overlaps[0];
+					genes[overlap.geneName][overlap.type];
+					if (overlap.strict)
+						genes[overlap.geneName][overlap.type].strict++;
 
-					for (auto & overlap: overlaps)
+					if (overlaps.size() == 1)
 					{
-						//	Create dummy entry for every region type that the read overlapped;
-						genes[overlap.geneName][overlap.type];
-
-						if (overlap.strict)
-							genes[overlap.geneName][overlap.type].strict++;
-						bool newRegion = false;
-
-						for (auto & region : segRegions)
-						{
-							if ((overlap.start == region.min) && (overlap.finish == region.max))
-							{
-								//Identical
-								region.geneSet.emplace_back(overlap.geneName,overlap.type);
-								newRegion = false;
-							}
-							else if ((overlap.start >= region.min) && (overlap.finish <= region.max))
-							{
-								//	smaller ignore.  It must be smaller in that we have already excluded the case
-								//	where it is idewntical
-								newRegion = false;
-							}
-							else if ((overlap.start <= region.min) && (overlap.finish >= region.max))
-							{
-								//	It is bigger so replace.  Again we have excluded the option that it is identical
-								//	which would have been otherwise included in the case
-								region.min = overlap.start;
-								region.max = overlap.finish;
-								region.geneSet.resize(1);
-								region.geneSet.at(0) = gtfId(overlap.geneName,overlap.type);
-								newRegion = false;
-							}
-							else
-							{
-								newRegion = true;
-							}
-						}
-						if (newRegion)
-						{
-							segRegions.emplace_back(overlap.start,overlap.finish,overlap.geneName,overlap.type);
-//							nonOverlappingGenes = true;
-						}
+						genes[overlap.geneName][overlap.type].length += (overlap.finish - overlap.start);
+						genes[overlap.geneName][overlap.type].partial++;
 					}
-
-					for (gtfId & g : segRegions.at(0).geneSet)
+					else
 					{
-						bool matchesInAllRegions = true;
-						int size = segRegions.at(0).max - segRegions.at(0).min;
-						for (size_t i = 1; i < segRegions.size();i++)
+						vector<segRegion> segRegions;
+						segRegions.emplace_back(move(overlap));
+
+						for (int i = 1; i < overlaps.size(); i++)
 						{
-							bool found = false;
-							for (auto & j: segRegions.at(i).geneSet)
+							gtfOverlap & overlap = overlaps[i];
+
+							//	Create dummy entry for every region type that the read overlapped;
+							genes[overlap.geneName][overlap.type];
+
+							if (overlap.strict)
+								genes[overlap.geneName][overlap.type].strict++;
+							bool newRegion = false;
+
+							for (auto & region : segRegions)
 							{
-								if ((g.name == j.name) && (g.type == j.type))
+								if ((overlap.start == region.min) && (overlap.finish == region.max))
 								{
-									size += (segRegions.at(i).max - segRegions.at(i).min);
-									found = true;
-									break;
+									//Identical
+									region.geneSet.emplace_back(move(overlap));
+									newRegion = false;
+								}
+								else if ((overlap.start >= region.min) && (overlap.finish <= region.max))
+								{
+									//	smaller ignore.  It must be smaller in that we have already excluded the case
+									//	where it is idewntical
+									newRegion = false;
+								}
+								else if ((overlap.start <= region.min) && (overlap.finish >= region.max))
+								{
+									//	It is bigger so replace.  Again we have excluded the option that it is identical
+									//	which would have been otherwise included in the case
+									region.min = overlap.start;
+									region.max = overlap.finish;
+									region.geneSet.clear();
+									region.geneSet.emplace_back(move(overlap));
+									newRegion = false;
+								}
+								else
+								{
+									newRegion = true;
 								}
 							}
-							if (!found)
-								matchesInAllRegions = false;
+							if (newRegion)
+							{
+								segRegions.emplace_back(move(overlap));
+								//							nonOverlappingGenes = true;
+							}
 						}
-						if (matchesInAllRegions)
+
+						for (gtfId & g : segRegions.at(0).geneSet)
 						{
-							genes[g.name][g.type].partial++;
-							genes[g.name][g.type].length += size;
+							bool matchesInAllRegions = true;
+							int size = segRegions.at(0).max - segRegions.at(0).min;
+							for (size_t i = 1; i < segRegions.size();i++)
+							{
+								bool found = false;
+								for (auto & j: segRegions.at(i).geneSet)
+								{
+									if ((g.name == j.name) && (g.type == j.type))
+									{
+										size += (segRegions.at(i).max - segRegions.at(i).min);
+										found = true;
+										break;
+									}
+								}
+								if (!found)
+									matchesInAllRegions = false;
+							}
+							if (matchesInAllRegions)
+							{
+								genes[g.name][g.type].partial++;
+								genes[g.name][g.type].length += size;
+							}
 						}
 					}
 				}
