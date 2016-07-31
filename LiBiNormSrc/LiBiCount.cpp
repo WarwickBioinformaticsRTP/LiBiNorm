@@ -17,7 +17,7 @@
 using namespace std;
 
 
-#define BAMNAME "D4B3B9P1:276:C7CDRACXX:1:2210:16261:17551"
+#define BAMNAME "D4B3B9P1:276:C7CDRACXX:1:1103:12709:100703"
 
 int LiBiCount::main(int argc, char **argv)
 {
@@ -280,9 +280,28 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 				}
 				else
 				{
-					size_t min = INT_MAX,max = 0;
-					set<pair<string,string> > geneSet;
-	
+
+					struct gtfId
+					{
+						string name,type;
+						gtfId(){};
+						gtfId(string name,string type):name(name),type(type){};
+					};
+
+					class segRegion
+					{
+					public:
+						size_t min,max;
+						vectorEx<gtfId> geneSet;
+						segRegion():min(INT_MAX),max(0){};
+						segRegion(size_t min,size_t max,const string & name,const string & type):min(min),max(max) 
+						{
+							geneSet.emplace_back(name,type);
+						};
+					};
+
+					vector<segRegion> segRegions(1);
+
 					for (auto & overlap: overlaps)
 					{
 						//	Create dummy entry for every region type that the read overlapped;
@@ -290,45 +309,67 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 
 						if (overlap.strict)
 							genes[overlap.geneName][overlap.type].strict++;
+						bool newRegion = false;
 
-
-						if ((overlap.start == min) && (overlap.finish == max))
+						for (auto & region : segRegions)
 						{
-							//Identical
-							geneSet.emplace(overlap.geneName,overlap.type);
+							if ((overlap.start == region.min) && (overlap.finish == region.max))
+							{
+								//Identical
+								region.geneSet.emplace_back(overlap.geneName,overlap.type);
+								newRegion = false;
+							}
+							else if ((overlap.start >= region.min) && (overlap.finish <= region.max))
+							{
+								//	smaller ignore.  It must be smaller in that we have already excluded the case
+								//	where it is idewntical
+								newRegion = false;
+							}
+							else if ((overlap.start <= region.min) && (overlap.finish >= region.max))
+							{
+								//	It is bigger so replace.  Again we have excluded the option that it is identical
+								//	which would have been otherwise included in the case
+								region.min = overlap.start;
+								region.max = overlap.finish;
+								region.geneSet.resize(1);
+								region.geneSet.at(0) = gtfId(overlap.geneName,overlap.type);
+								newRegion = false;
+							}
+							else
+							{
+								newRegion = true;
+							}
 						}
-						else if ((overlap.start >= min) && (overlap.finish <= max))
+						if (newRegion)
 						{
-							//	smaller ignore.  It must be smaller in that we have already excluded the case
-							//	where it is idewntical
-						}
-						else if ((overlap.start <= min) && (overlap.finish >= max))
-						{
-							//	It is bigger so replace.  Again we have excluded the option that it is identical
-							//	which would have been otherwise included in the case
-							min = overlap.start;
-							max = overlap.finish;
-							geneSet.clear();
-							geneSet.emplace(overlap.geneName,overlap.type);
-						}
-						else
-						{
-							//	The regions do not overlap.  This is OK if this is the same 
-							//	as one of the existing gene/type combinations
-							nonOverlappingGenes = true;
-							for (auto gene: geneSet)
-								if ((gene.first == overlap.geneName) && (gene.second == overlap.type))
-								{
-									nonOverlappingGenes = false;
-								}
+							segRegions.emplace_back(overlap.start,overlap.finish,overlap.geneName,overlap.type);
+//							nonOverlappingGenes = true;
 						}
 					}
-					if (geneSet.size())
+
+					for (gtfId & g : segRegions.at(0).geneSet)
 					{
-						for (auto gene:geneSet)
+						bool matchesInAllRegions = true;
+						int size = segRegions.at(0).max - segRegions.at(0).min;
+						for (size_t i = 1; i < segRegions.size();i++)
 						{
-							genes[gene.first][gene.second].partial++;
-							genes[gene.first][gene.second].length += (max-min);
+							bool found = false;
+							for (auto & j: segRegions.at(i).geneSet)
+							{
+								if ((g.name == j.name) && (g.type == j.type))
+								{
+									size += (segRegions.at(i).max - segRegions.at(i).min);
+									found = true;
+									break;
+								}
+							}
+							if (!found)
+								matchesInAllRegions = false;
+						}
+						if (matchesInAllRegions)
+						{
+							genes[g.name][g.type].partial++;
+							genes[g.name][g.type].length += size;
 						}
 					}
 				}
@@ -736,20 +777,20 @@ void LiBiCount::processCachedReads(size_t cacheFileCount)
 void LiBiCount::fileCompare(const string & mode)
 {
 	ifstream samFile;
-	stringEx filename("Y:\\Shan\\ChromoCentre reads\\test\\strict\\matches.sam");
+	stringEx filename("Y:\\Shan\\ChromoCentre reads\\test\\matches.sam");
 	samFile.open(filename);
 	if (!samFile.is_open())
 		exitFail("Failed to open samfile ",filename);
 
 	ifstream myFile;
-	myFile.open(stringEx("Y:\\Shan\\ChromoCentre reads\\mymatches.txt"));
+	myFile.open(stringEx("Y:\\Shan\\ChromoCentre reads\\test\\mymatches.txt"));
 	if (!myFile.is_open())
 		exitFail("Failed to txt samfile");
 
 
 
 	TsvFile outFile;
-	outFile.open(stringEx("Y:\\Shan\\ChromoCentre reads\\comparison.txt"));
+	outFile.open(stringEx("Y:\\Shan\\ChromoCentre reads\\test\\comparison.txt"));
 
 	string line;
 
@@ -762,9 +803,11 @@ void LiBiCount::fileCompare(const string & mode)
 	bool OK = getline(samFile,line).good();
 
 	parseTsv(line,samParams[0]);
+	int Entry = 0;
 
 	while (OK) {
 
+		Entry++;
 		getline(myFile,line);
 		myParams.clear();
 		parseTsv(line,myParams);
@@ -775,7 +818,7 @@ void LiBiCount::fileCompare(const string & mode)
 		parseTsv(line,samParams[1]);
 
 		if (samParams[0][0] != myParams[3])
-			exitFail("Mismatch ",samParams[0][0],myParams[3]);
+			exitFail("Mismatch entry ",Entry,"  ",samParams[0][0],"\n",myParams[3]);
 
 		outFile.printStart(myParams[3],myParams[0],myParams[1],myParams[2]);
 		for (size_t i : cols)
@@ -791,7 +834,7 @@ void LiBiCount::fileCompare(const string & mode)
 			}
 		outFile.printEnd();
 
-		if (samParams[1][0] != myParams[2])
+		if (samParams[1][0] != myParams[3])
 		{
 			swap(samParams[0],samParams[1]);
 		}
