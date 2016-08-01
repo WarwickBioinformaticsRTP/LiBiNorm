@@ -285,7 +285,7 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 					{
 						string name,type;
 						gtfId(){};
-						gtfId(gtfOverlap && region):name(move(region.geneName)),type(move(region.type)){};
+						gtfId(const gtfOverlap & region):name(region.geneName),type(region.type){};
 
 					};
 
@@ -295,9 +295,9 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 						size_t min,max;
 						vectorEx<gtfId> geneSet;
 						segRegion():min(INT_MAX),max(0){};
-						segRegion(gtfOverlap && region):min(region.start),max(region.finish) 
+						segRegion(const gtfOverlap & region):min(region.start),max(region.finish) 
 						{
-							geneSet.emplace_back(move(region));
+							geneSet.emplace_back(region);
 						};
 
 					};
@@ -315,7 +315,7 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 					else
 					{
 						vector<segRegion> segRegions;
-						segRegions.emplace_back(move(overlap));
+						segRegions.emplace_back(overlap);
 
 						for (int i = 1; i < overlaps.size(); i++)
 						{
@@ -333,7 +333,7 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 								if ((overlap.start == region.min) && (overlap.finish == region.max))
 								{
 									//Identical
-									region.geneSet.emplace_back(move(overlap));
+									region.geneSet.emplace_back(overlap);
 									newRegion = false;
 								}
 								else if ((overlap.start >= region.min) && (overlap.finish <= region.max))
@@ -349,7 +349,7 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 									region.min = overlap.start;
 									region.max = overlap.finish;
 									region.geneSet.clear();
-									region.geneSet.emplace_back(move(overlap));
+									region.geneSet.emplace_back(overlap);
 									newRegion = false;
 								}
 								else
@@ -359,7 +359,7 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 							}
 							if (newRegion)
 							{
-								segRegions.emplace_back(move(overlap));
+								segRegions.emplace_back(overlap);
 								//							nonOverlappingGenes = true;
 							}
 						}
