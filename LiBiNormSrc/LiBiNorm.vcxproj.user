@@ -1,15 +1,15 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LocalDebuggerCommandArguments>-m intersection-nonempty -a 0 -g "Y:\Shan\ChromoCentre reads\gtfs\Mus_musculus.GRCm38.80.subset.gtf" -b "Y:\Shan\ChromoCentre reads\aligned\2_CGATGT.subset.nsort.bam" -r "Y:\Shan\ChromoCentre reads\test\debug_counts.txt"</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>-m intersection-nonempty  -o test\partial_output.txt -a 0 -g "gtfs\Homo_sapiens.GRCh38.84.gtf" -b "alignedPartial\C1492.partial.bam" -r "test\partial-nonempty.txt"</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
     <LocalDebuggerDebuggerType>NativeOnly</LocalDebuggerDebuggerType>
-    <LocalDebuggerWorkingDirectory>Y:\Shan\ChromoCentre reads</LocalDebuggerWorkingDirectory>
+    <LocalDebuggerWorkingDirectory>Y:\SysmedIBD\CD</LocalDebuggerWorkingDirectory>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LocalDebuggerCommandArguments>-m intersection-nonempty -o test\mymatches.txt -a 0 -g "Y:\SysmedIBD\GRCm38\Mus_musculus.GRCm38.80.gtf" -b "aligned\2_CGATGT.bam" -r "test\2_CGATGT.txt"</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>-m intersection-nonempty  -o test\output.txt -a 0 -g "gtfs\Homo_sapiens.GRCh38.84.gtf" -b "aligned\C1492.bam" -r "test\nonempty.txt"</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerWorkingDirectory>Y:\Shan\ChromoCentre reads\</LocalDebuggerWorkingDirectory>
+    <LocalDebuggerWorkingDirectory>Y:\SysmedIBD\CD</LocalDebuggerWorkingDirectory>
     <LocalDebuggerDebuggerType>NativeOnly</LocalDebuggerDebuggerType>
   </PropertyGroup>
 </Project>

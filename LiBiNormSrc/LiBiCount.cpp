@@ -17,7 +17,7 @@
 using namespace std;
 
 
-#define BAMNAME "D4B3B9P1:276:C7CDRACXX:1:1103:12709:100703"
+#define BAMNAME "HWI-D00133:18:DTWTJACXX:4:1201:8226:98730"
 
 int LiBiCount::main(int argc, char **argv)
 {
@@ -31,6 +31,7 @@ int LiBiCount::main(int argc, char **argv)
 	reverseStrand = true;
 	useStrand = true;
 	verbose = true;
+	htSeqCompatible = true;
 	minqual = 10;
 	countMode = intersect_union;
 	maxCacheSize = READ_CACHE_SIZE;
@@ -229,6 +230,9 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 
 	bool nonOverlappingGenes = false;
 
+	const string * chromosome = &blankString;
+	size_t location = 0;
+
 	size_t pairNo = 0;
 	for (auto & chromSegments : segments.data)
 	{
@@ -237,7 +241,7 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 
 		if (thisChromGtfRegions != gtfData.genomeGtfData.end())
 		{
-
+			chromosome = &references[chromSegments.first].RefName;
 			//	Get the map of neds of gtfRegions associated with the chromosome
 			const chromosomeEndIndexMap & thisChromEndMap = gtfData.genomeEndIndex.at(references[chromSegments.first].RefName);
 
@@ -280,6 +284,7 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 				}
 				else
 				{
+					location = overlaps.at(0).start;
 
 					struct gtfId
 					{
@@ -391,6 +396,19 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 						}
 					}
 				}
+			}
+		}
+		else
+		{
+			//	There were no genes identified on this 'chromosome' of the reference sequence
+			if (htSeqCompatible)
+			{
+				genes.clear();
+			}
+			else
+			{
+				genes.nSegments++;
+				genes.noMatch++;
 			}
 		}
 		pairNo++;
@@ -545,7 +563,7 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 	}
 
 	if (outputFile.is_open())
-			outputFile.printEnd(*mode,*result,*type,segments.name);
+			outputFile.printEnd(*mode,*result,*type,stringEx(*chromosome,":",location),segments.name);
 	geneCounts[*result][*type]++;
 
 }
@@ -605,8 +623,8 @@ bool LiBiCount::processOrderedBamData()
 					cerr << "Names not in order so assuming data is not name ordered" << endl;
 				if (outputFile.is_open())
 				{
-					outputFile.close();
-					outputFile.open(outputFilename);
+//					outputFile.close();
+//					outputFile.open(outputFilename);
 				}
 				return false;
 			}
@@ -795,20 +813,20 @@ void LiBiCount::processCachedReads(size_t cacheFileCount)
 void LiBiCount::fileCompare(const string & mode)
 {
 	ifstream samFile;
-	stringEx filename("Y:\\Shan\\ChromoCentre reads\\test\\matches.sam");
+	stringEx filename("Y:\\SysmedIBD\\CD\\test\\matches.sam");
 	samFile.open(filename);
 	if (!samFile.is_open())
 		exitFail("Failed to open samfile ",filename);
 
 	ifstream myFile;
-	myFile.open(stringEx("Y:\\Shan\\ChromoCentre reads\\test\\mymatches.txt"));
+	myFile.open(stringEx("Y:\\SysmedIBD\\CD\\test\\mymatches.txt"));
 	if (!myFile.is_open())
 		exitFail("Failed to txt samfile");
 
 
 
 	TsvFile outFile;
-	outFile.open(stringEx("Y:\\Shan\\ChromoCentre reads\\test\\comparison.txt"));
+	outFile.open(stringEx("Y:\\SysmedIBD\\CD\\test\\comparison.txt"));
 
 	string line;
 

@@ -3,6 +3,7 @@
 
 #include<map>
 #include<string>
+#include "libCommon.h"
 #include "printEx.h"
 #include "api/BamReader.h"
 
@@ -33,9 +34,26 @@ class readData
 		readData(BamTools::BamAlignment && ba):
 			refId(ba.RefID),
 			position(ba.Position+1),
-			strand((ba.IsReverseStrand() == ba.IsFirstMate())?'-':'+'),
 			cigar(move(ba.CigarData))
-		{};
+		{
+			_DBG(
+			bool properPair = ba.IsProperPair();
+			bool paired = ba.IsPaired();
+			bool IsMateReverseStrand = ba.IsMateReverseStrand();
+			bool reverseStrand = ba.IsReverseStrand();
+			bool IsFirstMate = ba.IsFirstMate();)
+//			if (ba.IsReverseStrand() != ba.IsMateReverseStrand())
+			{
+				if (ba.IsReverseStrand() == ba.IsFirstMate())
+					strand = '-';
+				else
+					strand = '+';
+			}
+/*			else
+			{
+				strand = '+';
+			}*/
+		};
 };
 
 //	Used for reading back cached read information from cache files
