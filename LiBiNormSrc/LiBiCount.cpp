@@ -604,7 +604,7 @@ bool LiBiCount::processOrderedBamData()
 
 		bool readAlreadyRead = false;
 		
-		reader.GetNextAlignment(ba2,false);
+		OK = reader.GetNextAlignment(ba2,false);
 
 		if (ba2.Name == ba1.Name)
 		{
@@ -639,7 +639,7 @@ bool LiBiCount::processOrderedBamData()
 		if (readAlreadyRead)
 			swap(ba1,ba2);
 		else
-			OK = reader.GetNextAlignment(ba1);
+			OK = reader.GetNextAlignment(ba1,false);
 	}
 	return true;
 }
