@@ -42,17 +42,21 @@ class readData
 			bool IsMateReverseStrand = ba.IsMateReverseStrand();
 			bool reverseStrand = ba.IsReverseStrand();
 			bool IsFirstMate = ba.IsFirstMate();)
-//			if (ba.IsReverseStrand() != ba.IsMateReverseStrand())
+
+			if (ba.IsPaired() && !ba.IsProperPair() && ba.IsMateMapped() && 
+				(ba.IsReverseStrand() == ba.IsMateReverseStrand()) &&
+				(ba.RefID == ba.MateRefID) && (abs(ba.InsertSize) <= abs(ba.Length)))
+			{
+				//				strand = ba.IsReverseStrand()?'-':'+';
+				strand = '+';
+			}
+			else
 			{
 				if (ba.IsReverseStrand() == ba.IsFirstMate())
 					strand = '-';
 				else
 					strand = '+';
 			}
-/*			else
-			{
-				strand = '+';
-			}*/
 		};
 };
 

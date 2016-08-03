@@ -53,7 +53,7 @@ int LiBiCount::main(int argc, char **argv)
 	{
 		if(strcmp(argv[ni], "-t") == 0)
 		{
-			fileCompare(argv[++ni]);
+			fileCompare(argc - 1,&argv[1]);
 			exitSuccess();
 		}
 		else if(strcmp(argv[ni], "-c") == 0)
@@ -577,7 +577,7 @@ void LiBiCount::incBamCounter(const BamAlignment * ba,size_t size)
 			cerr << bamCounter << " BAM alignment record pairs processed.";
 			if (ba)
 				cerr << " cache size = " << size << "  " << references[ba->RefID].RefName << ":" << ba ->Position << endl;
-			else
+			else if (size != -1)
 				cerr << " cache reads processed = " << size << endl;
 		}
 }
@@ -598,7 +598,7 @@ bool LiBiCount::processOrderedBamData()
 		_DBG(string name = ba1.Name;
 		bool found = (name == BAMNAME);)
 
-		regionLists regions(readData(move(ba1)),move(ba1.Name));
+		regionLists regions(readData(move(ba1)),ba1.Name);
 
 		bool readAlreadyRead = false;
 		
@@ -690,7 +690,7 @@ bool LiBiCount::processUnorderedBamData()
 				}
 				else
 				{
-					regionLists regions(i->second,move(ba.Name));
+					regionLists regions(i->second,ba.Name);
 
 					regions.combine(move(ba));
 
@@ -781,27 +781,31 @@ void LiBiCount::processCachedReads(size_t cacheFileCount)
 			rl.combine(cacheReads[index2]);
 			if (i1->first)								//Avoid adding null entries with no read name
 				addRead(rl,genomeDef);
-			//	Erase the read and get the next one from the associated cache files
+			//	Erase the second read and get the next one from the associated cache files
 			readIndex.erase(i2);
 			if(cacheReads[index2].readNext())
 				readIndex.emplace(cacheReads[index2].name,index2);
 		}
 		else
 		{
-			if (i1->first)
+			if (i1->first)	//Need this check to avoid processing spurious entries
 			{
 				regionLists rl(cacheReads[index1],i1->first);
 				addRead(rl,genomeDef);
 			}
 		}
 
+		//	Erase the first read and get the next one from the associated cache files
 		readIndex.erase(i1);
 		if(cacheReads[index1].readNext())
 			readIndex.emplace(cacheReads[index1].name,index1);
-		incBamCounter(0,++cacheReadCounter);
 
+		incBamCounter(0,++cacheReadCounter);
 	}
 	
+	//	Closes all of the files so that they can be deleted
+	cacheReads.clear();
+
 	for (int i = 0;i < cacheFileCount;i++)
 	{
 		remove(resultsFilename.replaceSuffix(".temp.",i).c_str());
@@ -810,23 +814,40 @@ void LiBiCount::processCachedReads(size_t cacheFileCount)
 }
 
 
-void LiBiCount::fileCompare(const string & mode)
+void LiBiCount::fileCompare(int argc, char **argv)
 {
+	string matches("Y:\\SysmedIBD\\CD\\test\\matches.sam"),
+		myMatches("Y:\\SysmedIBD\\CD\\test\\mymatches.txt"),
+		comparison("Y:\\SysmedIBD\\CD\\test\\comparison.txt");
+
+	int ni = 1;
+	while(ni < argc)
+	{
+		switch (ni)
+		{
+		case 1: matches = argv[ni++]; break;
+		case 2: myMatches = argv[ni++]; break;
+		case 3: comparison = argv[ni++]; break;
+		}
+	}
+
+
+
 	ifstream samFile;
-	stringEx filename("Y:\\SysmedIBD\\CD\\test\\matches.sam");
-	samFile.open(filename);
+	samFile.open(matches);
 	if (!samFile.is_open())
-		exitFail("Failed to open samfile ",filename);
+		exitFail("Failed to open samfile: ",matches);
 
 	ifstream myFile;
-	myFile.open(stringEx("Y:\\SysmedIBD\\CD\\test\\mymatches.txt"));
+	myFile.open(myMatches);
 	if (!myFile.is_open())
-		exitFail("Failed to txt samfile");
+		exitFail("Failed to open LiBiNorm output file: ",myMatches);
 
 
 
 	TsvFile outFile;
-	outFile.open(stringEx("Y:\\SysmedIBD\\CD\\test\\comparison.txt"));
+	if (!outFile.open(comparison))
+		exitFail("Failed to open output file: ",comparison);
 
 	string line;
 
@@ -853,24 +874,37 @@ void LiBiCount::fileCompare(const string & mode)
 		samParams[1].clear();
 		parseTsv(line,samParams[1]);
 
-		if (samParams[0][0] != myParams[3])
-			exitFail("Mismatch entry ",Entry,"  ",samParams[0][0],"\n",myParams[3]);
+		if (samParams[0][0] != myParams[4])
+			exitFail("Mismatch entry ",Entry,"  ",samParams[0][0],"\n",myParams[4]);
 
-		outFile.printStart(myParams[3],myParams[0],myParams[1],myParams[2]);
-		for (size_t i : cols)
-		{
-				outFile.printMiddle(samParams[0][i]);
-		}
+		string match;
 		for (size_t i = 8;i < samParams[0].size();i++)
 		{
 			if (samParams[0][i].startsWith("XF:Z:"))
 			{
+				match = samParams[0][i].substr(5);
+			}
+		}
+
+
+		if (!(((match.substr(0,2) == "__") && (myParams[1].substr(0,2) == "__")) || (match == myParams[1])))
+		{
+			outFile.printStart(myParams[4],myParams[0],myParams[1],myParams[2]);
+			for (size_t i : cols)
+			{
+				outFile.printMiddle(samParams[0][i]);
+			}
+			for (size_t i = 8;i < samParams[0].size();i++)
+			{
+				if (samParams[0][i].startsWith("XF:Z:"))
+				{
 					outFile.printMiddle(samParams[0][i].substr(5));
 				}
 			}
-		outFile.printEnd();
+			outFile.printEnd();
+		}
 
-		if (samParams[1][0] != myParams[3])
+		if (samParams[1][0] != myParams[4])
 		{
 			swap(samParams[0],samParams[1]);
 		}

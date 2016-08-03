@@ -46,7 +46,7 @@ public:
 
 	void addRead(const regionLists & segments,const gtfFileEx & gtfData);
 
-	void fileCompare(const std::string & maode);
+	void fileCompare(int argc, char **argv);
 
 };
 
