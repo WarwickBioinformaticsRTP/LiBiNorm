@@ -579,6 +579,8 @@ void LiBiCount::incBamCounter(const BamAlignment * ba,size_t size)
 				cerr << " cache size = " << size << "  " << references[ba->RefID].RefName << ":" << ba ->Position << endl;
 			else if (size != -1)
 				cerr << " cache reads processed = " << size << endl;
+			else
+				cerr << endl;
 		}
 }
 
@@ -604,7 +606,7 @@ bool LiBiCount::processOrderedBamData()
 		
 		reader.GetNextAlignment(ba2,false);
 
-		if (ba2.Name == regions.name)
+		if (ba2.Name == ba1.Name)
 		{
 			regions.combine(move(ba2));
 		}
