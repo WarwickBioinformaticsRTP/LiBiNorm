@@ -36,27 +36,10 @@ class readData
 			position(ba.Position+1),
 			cigar(move(ba.CigarData))
 		{
-			_DBG(
-			bool properPair = ba.IsProperPair();
-			bool paired = ba.IsPaired();
-			bool IsMateReverseStrand = ba.IsMateReverseStrand();
-			bool reverseStrand = ba.IsReverseStrand();
-			bool IsFirstMate = ba.IsFirstMate();)
-
-/*			if (ba.IsPaired() && !ba.IsProperPair() && ba.IsMateMapped() && 
-				(ba.IsReverseStrand() == ba.IsMateReverseStrand()) &&
-				(ba.RefID == ba.MateRefID) && (abs(ba.InsertSize) <= abs(ba.Length)))
-			{
-				//				strand = ba.IsReverseStrand()?'-':'+';
+			if (ba.IsReverseStrand() == ba.IsFirstMate())
+				strand = '-';
+			else
 				strand = '+';
-			}
-			else*/
-			{
-				if (ba.IsReverseStrand() == ba.IsFirstMate())
-					strand = '-';
-				else
-					strand = '+';
-			}
 		};
 };
 
@@ -92,11 +75,16 @@ public:
 class regionList 
 {
 public:
-	std::multimap<int,region> data;
+	regionList(){};
 
 	//	Which is normally created from a read
 	regionList(const readData & read);
-	regionList(){};
+
+	//	Map of the regions, indexed by the location on teh chromosome
+	//	Separate entries for and -ve strands so needs to be a multimap to cater 
+	//	for + and - entries starting at the same location (usually an artefact)
+	std::multimap<int,region> data;
+
 
 	//	For combining data from a second read
 	void combine(const regionList & rl);
@@ -123,7 +111,8 @@ public:
 		data.emplace(read.refId,regionList(read));
 	};
 
-	//	Adds the information associated with the scond read
+	//	Adds the information associated with the second read, which will be placed in the existing chromosome
+	//  or added to a new.
 	void combine(const readData & read){
 			data[read.refId].combine(regionList(read));
 	};

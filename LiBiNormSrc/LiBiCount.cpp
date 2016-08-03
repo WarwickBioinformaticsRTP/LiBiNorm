@@ -625,8 +625,8 @@ bool LiBiCount::processOrderedBamData()
 					cerr << "Names not in order so assuming data is not name ordered" << endl;
 				if (outputFile.is_open())
 				{
-//					outputFile.close();
-//					outputFile.open(outputFilename);
+					outputFile.close();
+					outputFile.open(outputFilename);
 				}
 				return false;
 			}
@@ -705,11 +705,9 @@ bool LiBiCount::processUnorderedBamData()
 			}
 			else
 			{
-				regionLists regions(move(ba),ba.Name);
+				addRead(regionLists(move(ba),ba.Name),genomeDef);
 
 				incBamCounter(&ba,readCache.size());
-
-				addRead(regions,genomeDef);
 			}
 		}
 		else if (!ba.IsPaired() || (!ba.IsMateMapped() && ba.IsFirstMate()))

@@ -7,7 +7,7 @@
     <LocalDebuggerWorkingDirectory>Y:\SysmedIBD\CD</LocalDebuggerWorkingDirectory>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LocalDebuggerCommandArguments>-m intersection-nonempty  -a 0 -g "gtfs\Homo_sapiens.GRCh38.84.gtf" -b "aligned\C1492.bam" -r "test\nonempty.txt"</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>-m intersection-nonempty -a 0 -g "gtfs\Homo_sapiens.GRCh38.84.gtf" -b "alignedPartial\C1492.partial.bam" -r "test\partial-nonempty.txt"</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
     <LocalDebuggerWorkingDirectory>Y:\SysmedIBD\CD</LocalDebuggerWorkingDirectory>
     <LocalDebuggerDebuggerType>NativeOnly</LocalDebuggerDebuggerType>
