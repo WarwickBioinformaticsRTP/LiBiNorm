@@ -17,7 +17,7 @@
 using namespace std;
 
 
-#define BAMNAME "HWI-D00133:18:DTWTJACXX:4:1201:8226:98730"
+#define BAMNAME "HWI-D00133:32:C26V9ACXX:3:1207:15902:46040"
 
 int LiBiCount::main(int argc, char **argv)
 {
@@ -710,7 +710,6 @@ bool LiBiCount::processUnorderedBamData()
 				incBamCounter(&ba,readCache.size());
 
 				addRead(regions,genomeDef);
-
 			}
 		}
 		else if (!ba.IsPaired() || (!ba.IsMateMapped() && ba.IsFirstMate()))
@@ -718,6 +717,7 @@ bool LiBiCount::processUnorderedBamData()
 			geneCounts[notAlignedString]++;
 			incBamCounter(&ba,readCache.size());
 		}
+
 		if (readCache.size() > maxCacheSize)
 		{
 			if (verbose)
@@ -730,6 +730,8 @@ bool LiBiCount::processUnorderedBamData()
 
 	if (cacheCounter == 0)
 	{
+		//	There are no records cached to disk, so the internal cache simply contains unpaired reads that can be processed
+		//	immediatly
 		size_t cacheReadCounts = 0;
 		for (auto & i : readCache)
 		{
@@ -740,6 +742,8 @@ bool LiBiCount::processUnorderedBamData()
 	}
 	else
 	{
+		//	We have cached some records to disk, so the internal cache must be flushed as well so that all of the cached records can be
+		//	processed as an ensemble
 		readCache.save(resultsFilename.replaceSuffix(".temp.",cacheCounter++));
 		processCachedReads(cacheCounter);
 	}
@@ -805,14 +809,8 @@ void LiBiCount::processCachedReads(size_t cacheFileCount)
 		incBamCounter(0,++cacheReadCounter);
 	}
 	
-	//	Closes all of the files so that they can be deleted
+	//	Closes all of the files and then deletes them
 	cacheReads.clear();
-
-	for (int i = 0;i < cacheFileCount;i++)
-	{
-		remove(resultsFilename.replaceSuffix(".temp.",i).c_str());
-	}
-
 }
 
 
@@ -934,6 +932,7 @@ bool cacheEntry::open(const std::string filename)
 	file = new std::ifstream();
 	file ->open(filename);
 	if (!file ->is_open()) return false;
+	fname = filename;
 	readNext();
 	return true;
 }
@@ -954,5 +953,6 @@ void cacheEntry::close()
 		file->close();
 		delete (file);
 		file = 0;
+		remove(fname.c_str());
 	}
 }

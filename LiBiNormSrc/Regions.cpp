@@ -31,7 +31,7 @@ void regionList::combineRegion(const region & r1)
 				//	replace the existing entry with the new one, taking care not to saw off the
 				//	branch you are sitting on and 
 				data.erase(i);
-				i = data.emplace(r1.start,r).first;
+				i = data.emplace(r1.start,r);
 				combined = true;
 				break;	
 			}

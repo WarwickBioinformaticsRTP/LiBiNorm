@@ -63,12 +63,15 @@ class readData
 //	Used for reading back cached read information from cache files
 class cacheEntry : public readData
 {
+	std::string fname;
+	std::ifstream * file;
 public:
+	//	Holds the name of the read, which is not in the readData class
 	std::string name;
+
 	cacheEntry() : file (0) {};
 	~cacheEntry(); 
 
-	std::ifstream * file;
 
 	bool open(const std::string filename);
 	bool readNext();
@@ -89,7 +92,7 @@ public:
 class regionList 
 {
 public:
-	std::map<int,region> data;
+	std::multimap<int,region> data;
 
 	//	Which is normally created from a read
 	regionList(const readData & read);
