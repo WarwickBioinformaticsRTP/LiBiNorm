@@ -228,7 +228,7 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 	//	then the segments will be on different chromosomes
 	chromosomeGeneInfo genes;
 
-	bool nonOverlappingGenes = false;
+//	bool nonOverlappingGenes = false;
 
 	const string * chromosome = &blankString;
 	size_t location = 0;
@@ -278,8 +278,11 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 					gtfRegion = j->second.overlaps;
 				}
 
+
+				//	Now go through all the overlaps between the read and the regions identified in the gtf file
 				if (overlaps.size() == 0)
 				{
+					//	There were none
 					genes.noMatch++;
 				}
 				else
@@ -290,7 +293,7 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 					{
 						string name,type;
 						gtfId(){};
-						gtfId(const gtfOverlap & region):name(region.geneName),type(region.type){};
+						gtfId(const gtfOverlap & region):name(region.geneName),type(region.geneAttribute){};
 
 					};
 
@@ -307,30 +310,40 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 
 					};
 
+					//	
 					gtfOverlap & overlap = overlaps[0];
-					genes[overlap.geneName][overlap.type];
+
+					//	This will create an entry for the combination if it does not exist before, which is needed later on
+					overlapCounts & GeneAttributeCombo1 = genes[overlap.geneName][overlap.geneAttribute];
+
+					//	Need to register all strict overlaps, because overlaps-strict require them to be unique
 					if (overlap.strict)
-						genes[overlap.geneName][overlap.type].strict++;
+						GeneAttributeCombo1.strict++;
 
 					if (overlaps.size() == 1)
 					{
-						genes[overlap.geneName][overlap.type].length += (overlap.finish - overlap.start);
-						genes[overlap.geneName][overlap.type].partial++;
+						GeneAttributeCombo1.length += (overlap.finish - overlap.start);
+						GeneAttributeCombo1.partial++;
 					}
 					else
 					{
 						vector<segRegion> segRegions;
 						segRegions.emplace_back(overlap);
 
+						// More than one region.  If the gtf regions identify separate sections of the read then keep both, 
+						//	If they overlap then only keep the largest if it fully overlaps the other.  If they are identical then keep both
+						//	
+
 						for (int i = 1; i < overlaps.size(); i++)
 						{
 							gtfOverlap & overlap = overlaps[i];
 
 							//	Create dummy entry for every region type that the read overlapped;
-							genes[overlap.geneName][overlap.type];
+		
+							overlapCounts & GeneAttributeCombo2 = genes[overlap.geneName][overlap.geneAttribute];
 
 							if (overlap.strict)
-								genes[overlap.geneName][overlap.type].strict++;
+								GeneAttributeCombo2.strict++;
 							bool newRegion = false;
 
 							for (auto & region : segRegions)
@@ -365,7 +378,6 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 							if (newRegion)
 							{
 								segRegions.emplace_back(overlap);
-								//							nonOverlappingGenes = true;
 							}
 						}
 
@@ -542,12 +554,12 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 					}
 					//	Spcial case where one of the segments overlap two genes, but the overlaps do not 
 					//	fully overlap each other.  This is treated as no feature, and not ambiguous
-					if (nonOverlappingGenes && (result != &ambiguousString))
+/*					if (nonOverlappingGenes && (result != &ambiguousString))
 					{
 						result = &noFeatureString;
 						type = &blankString;
 					}
-
+*/
 					mode = &nonemptyString;
 					break;
 				}
@@ -678,7 +690,8 @@ bool LiBiCount::processUnorderedBamData()
 
 		if (ba.MapQuality < minqual)
 		{
-			geneCounts[lowQualString]++;
+			if ((ba.IsPaired() && ba.IsFirstMate()) || !ba.IsPaired())
+				geneCounts[lowQualString]++;
 		}
 		else if (ba.IsMapped())
 		{

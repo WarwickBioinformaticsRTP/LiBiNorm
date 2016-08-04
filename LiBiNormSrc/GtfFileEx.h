@@ -57,7 +57,6 @@ public:
 		for (auto & gene: This)
 			gene.second.reset();
 	};
-
 };
 
 typedef std::multimap<size_t, gtfRegion> chromosomeGtfData ;
@@ -67,9 +66,9 @@ struct gtfOverlap
 	size_t start,finish;
 	bool strict;
 	const std::string & geneName;
-	const std::string & type;
-	gtfOverlap(size_t start,size_t finish,bool strict,const std::string & geneName,const std::string & type): 
-		start(start),finish(finish),strict(strict),geneName(geneName),type(type){};
+	const std::string & geneAttribute;
+	gtfOverlap(size_t start,size_t finish,bool strict,const std::string & geneName,const std::string & geneAttribute): 
+		start(start),finish(finish),strict(strict),geneName(geneName),geneAttribute(geneAttribute){};
 };
 
 class gtfRegion
