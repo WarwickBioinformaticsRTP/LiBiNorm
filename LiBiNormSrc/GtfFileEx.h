@@ -24,6 +24,7 @@ class gtfGeneAttribute : public mapZeroDef<std::string,size_t>
 public:
 	void print(const std::string & index,TsvFile & output)	
 	{
+		//Print entries for all of the attributes being considered
 		for (auto & entry: This)
 			output.print(index,entry.first,entry.second);
 	};
@@ -34,6 +35,10 @@ public:
 	};
 
 	const size_t operator++(int){
+	//	Increments the count for the 'totals' counts for which there is no 'type' information so 
+	//	we use a dummy 'blank' entry 
+
+		//	For consistency with definition of post operator, return velu before increment
 		size_t _R = at(blankString);
 		at(blankString)++;
 		return _R;
@@ -48,11 +53,13 @@ public:
 class geneCountsClass : public std::map<std::string,gtfGeneAttribute >
 {
 public:
-	//	For printing out the list of counts.  entry.second is the counts
+	//	For printing out the list of counts.  entry.second is the count data one entry per attribute being investigated
 	void print(const std::string & index,TsvFile & output)	
 	{
 		at(index).print(index,output);
 	};
+
+	//	Needed if we decide the data is not name ordered and have to restart
 	void reset()	{
 		for (auto & gene: This)
 			gene.second.reset();
@@ -66,9 +73,9 @@ struct gtfOverlap
 	size_t start,finish;
 	bool strict;
 	const std::string & geneName;
-	const std::string & geneAttribute;
-	gtfOverlap(size_t start,size_t finish,bool strict,const std::string & geneName,const std::string & geneAttribute): 
-		start(start),finish(finish),strict(strict),geneName(geneName),geneAttribute(geneAttribute){};
+	const std::string & featType;
+	gtfOverlap(size_t start,size_t finish,bool strict,const std::string & geneName,const std::string & featType): 
+		start(start),finish(finish),strict(strict),geneName(geneName),featType(featType){};
 };
 
 class gtfRegion
