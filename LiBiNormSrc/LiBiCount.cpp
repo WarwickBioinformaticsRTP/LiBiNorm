@@ -247,7 +247,8 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 			chromosomeEndIndexMap::const_iterator indirectIteratorStart = thisChromEndMap.lower_bound(chromSegments.second.data.begin()->second.start);
 
 			//	And move back one to ensure we have the region that covers segment
-			if (indirectIteratorStart != thisChromEndMap.begin())
+//			if (indirectIteratorStart != thisChromEndMap.begin())
+			if (indirectIteratorStart == thisChromEndMap.end())
 				indirectIteratorStart--;
 
 			chromosomeGtfData::iterator gtfRegion = indirectIteratorStart->second;
@@ -355,7 +356,7 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 								else if ((overlap.start >= region.min) && (overlap.finish <= region.max))
 								{
 									//	smaller ignore.  It must be smaller in that we have already excluded the case
-									//	where it is idewntical
+									//	where it is identical
 									newRegion = false;
 								}
 								else if ((overlap.start <= region.min) && (overlap.finish >= region.max))
@@ -364,8 +365,9 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 									//	which would have been otherwise included in the case
 									region.min = overlap.start;
 									region.max = overlap.finish;
-									region.geneSet.clear();
-									region.geneSet.emplace_back(overlap);
+									region.geneSet.resize(1);
+									region.geneSet.at(0).name = overlap.geneName;
+									region.geneSet.at(0).type = overlap.featType;
 									newRegion = false;
 								}
 								else
@@ -379,6 +381,8 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 							}
 						}
 
+						//	We now have one or more regions within the read, each one of which matches regions in the gtf file
+						//	
 						for (gtfId & g : segRegions.at(0).geneSet)
 						{
 							bool matchesInAllRegions = true;
