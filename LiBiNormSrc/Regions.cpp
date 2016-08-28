@@ -35,7 +35,7 @@ void regionList::combineRegion(const region & r1)
 				combined = true;
 				break;	
 			}
-			//	The new region just estends the end of the existing region
+			//	The new region just extends the end of the existing region
 			else if (r1.end >= i->second.end)
 			{
 				i->second.end = r1.end;
@@ -64,19 +64,19 @@ regionList::regionList(const readData & read)
 	size_t end = start;
 
 	// iterate over cigar operations
-	vector<CigarOp>::const_iterator cigarIter = read.cigar.begin();
+//	vector<CigarOp>::const_iterator cigarIter = read.cigar.begin();
 	vector<CigarOp>::const_iterator cigarEnd  = read.cigar.end();
-	for ( ; cigarIter != cigarEnd; ++cigarIter) {
-		const CigarOp& op = (*cigarIter);
+	for (vector<CigarOp>::const_iterator cigarIter = read.cigar.begin() ; cigarIter != cigarEnd; ++cigarIter) {
+//		const CigarOp& op = (*cigarIter);
 
-		switch ( op.Type ) {
+		switch ( cigarIter->Type ) {
 
 			// increase end position on CIGAR chars [DMXN=]
 			case Constants::BAM_CIGAR_DEL_CHAR      :
 			case Constants::BAM_CIGAR_MATCH_CHAR    :
 			case Constants::BAM_CIGAR_MISMATCH_CHAR :
 			case Constants::BAM_CIGAR_SEQMATCH_CHAR :
-				end += op.Length;
+				end += cigarIter->Length;
 				break;
 
 			case Constants::BAM_CIGAR_INS_CHAR :
@@ -85,7 +85,7 @@ regionList::regionList(const readData & read)
 			case Constants::BAM_CIGAR_REFSKIP_CHAR  :
 				{
 					combineRegion(region(start,end-1,read.strand));
-					start = (end + op.Length);
+					start = (end + cigarIter->Length);
 					end = start;
 					break;
 				}

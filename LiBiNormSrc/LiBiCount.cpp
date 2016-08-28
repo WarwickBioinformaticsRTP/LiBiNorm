@@ -17,7 +17,7 @@
 using namespace std;
 
 
-#define BAMNAME "HWI-D00133:32:C26V9ACXX:3:1207:15902:46040"
+#define BAMNAME "D4B3B9P1:276:C7CDRACXX:1:1101:1239:3641"
 
 int LiBiCount::main(int argc, char **argv)
 {
@@ -161,7 +161,7 @@ int LiBiCount::main(int argc, char **argv)
 	if (verbose)
 		elapsedTime();
 
-	cin >> test;
+	_DBG(cin >> test);
 
 	return EXIT_SUCCESS;
 }
@@ -229,7 +229,7 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 	chromosomeGeneInfo genes;
 
 	const string * chromosome = &blankString;
-	size_t location = 0;
+	string location;
 
 	size_t pairNo = 0;
 	for (auto & chromSegments : segments.data)
@@ -240,6 +240,12 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 		if (thisChromGtfRegions != gtfData.genomeGtfData.end())
 		{
 			chromosome = &references[chromSegments.first].RefName;
+
+			if (outputFile.is_open() && location.empty())
+			{
+				location = stringEx(*chromosome,":",chromSegments.second.data.begin()->first);
+			}
+
 			//	Get the map of neds of gtfRegions associated with the chromosome
 			const chromosomeEndIndexMap & thisChromEndMap = gtfData.genomeEndIndex.at(references[chromSegments.first].RefName);
 
@@ -286,8 +292,6 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 				}
 				else
 				{
-					location = overlaps.at(0).start;
-
 					struct gtfId
 					{
 						string name,type;
@@ -462,7 +466,7 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 								//	In intersect all we include all of the options, ie there will be multiple counts associated with
 								//	a single fragment
 								if (outputFile.is_open())
-									outputFile.printEnd(*mode,*result,*type,segments.name);
+									outputFile.printEnd(*mode,*result,*type,location,segments.name);
 								geneCounts.at(*result).at(*type)++;
 
 								result = &gene.first;
@@ -571,7 +575,8 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 	}
 
 	if (outputFile.is_open())
-			outputFile.printEnd(*mode,*result,*type,stringEx(*chromosome,":",location),segments.name);
+		outputFile.printEnd(*mode,*result,*type,location,segments.name);
+
 	geneCounts.at(*result).at(*type)++;
 
 }
@@ -584,12 +589,43 @@ void LiBiCount::incBamCounter(const BamAlignment * ba,size_t size)
 		{
 			cerr << bamCounter << " BAM alignment record pairs processed.";
 			if (ba)
-				cerr << " cache size = " << size << "  " << references[ba->RefID].RefName << ":" << ba ->Position << endl;
+			{
+				if(ba->RefID >= 0)
+					cerr << " cache size = " << size << "  " << references[ba->RefID].RefName << ":" << ba ->Position << endl;
+				else
+					cerr << " cache size = " << size << "  unmapped read" << endl;
+			}
 			else if (size != -1)
 				cerr << " cache reads processed = " << size << endl;
 			else
 				cerr << endl;
 		}
+}
+
+bool LiBiCount::isValidAlignment(const BamAlignment & ba)
+{
+
+	int NHval;
+	ba.GetTag("NH",NHval);
+	if (NHval > 1)
+	{
+		if ((ba.IsPaired() && ba.IsFirstMate()) || !ba.IsPaired())
+			geneCounts[notUnique]++;
+		return false;
+	}
+	if (ba.MapQuality < minqual)
+	{
+		if ((ba.IsPaired() && ba.IsFirstMate()) || !ba.IsPaired())
+			geneCounts[lowQualString]++;
+		return false;
+	}
+	if (!ba.IsMapped())
+	{
+		if ((ba.IsPaired() && ba.IsFirstMate()) || !ba.IsPaired())
+			geneCounts[notAlignedString]++;
+		return false;
+	}
+	return true;
 }
 
 bool LiBiCount::processOrderedBamData()
@@ -608,41 +644,50 @@ bool LiBiCount::processOrderedBamData()
 		_DBG(string name = ba1.Name;
 		bool found = (name == BAMNAME);)
 
-		regionLists regions(readData(move(ba1)),ba1.Name);
-
 		bool readAlreadyRead = false;
-		
-		OK = reader.GetNextAlignment(ba2,false);
 
-		if (ba2.Name == ba1.Name)
+		if(!ba1.IsPrimaryAlignment())
 		{
-			regions.combine(move(ba2));
+			//	Dont use secondaru alignments, so we dont use the same read more than once
 		}
 		else
 		{
-			readAlreadyRead = true;
-		}
-		if (bamCounter < 200)
-		{
-			auto i = previousNames.find(regions.name);
-			if (i == previousNames.end())
-				previousNames.emplace(regions.name);
-			else
+			if (isValidAlignment(ba1))
 			{
-				if (verbose)
-					cerr << "Names not in order so assuming data is not name ordered" << endl;
-				if (outputFile.is_open())
+				regionLists regions(readData(move(ba1)),ba1.Name);
+
+				OK = reader.GetNextAlignment(ba2,false);
+
+				if (ba2.Name == ba1.Name)
 				{
-					outputFile.close();
-					outputFile.open(outputFilename);
+					regions.combine(move(ba2));
 				}
-				return false;
+				else
+				{
+					readAlreadyRead = true;
+				}
+				if (bamCounter < 200)
+				{
+					auto i = previousNames.find(regions.name);
+					if (i == previousNames.end())
+						previousNames.emplace(regions.name);
+					else
+					{
+						if (verbose)
+							cerr << "Names not in order so assuming data is not name ordered" << endl;
+						if (outputFile.is_open())
+						{
+							outputFile.close();
+							outputFile.open(outputFilename);
+						}
+						return false;
+					}
+				}
+				addRead(regions,genomeDef);
 			}
+			incBamCounter();
 		}
 
-		incBamCounter();
-
-		addRead(regions,genomeDef);
 
 		if (readAlreadyRead)
 			swap(ba1,ba2);
@@ -676,52 +721,49 @@ bool LiBiCount::processUnorderedBamData()
 
 	bool OK = reader.GetNextAlignment(ba,false);
 
-
 	while (OK)
 	{
 		_DBG(string name = ba.Name;
 		bool found = (name == BAMNAME);)
 
-		bool readAlreadyRead = false;
+//		bool readAlreadyRead = false;
 
-		if (ba.MapQuality < minqual)
+		if(!ba.IsPrimaryAlignment())
 		{
-			if ((ba.IsPaired() && ba.IsFirstMate()) || !ba.IsPaired())
-				geneCounts[lowQualString]++;
+			//	Dont use secondaru alignments, so we dont use the same read more than once
 		}
-		else if (ba.IsMapped())
+		else
 		{
-			if (ba.IsMateMapped())
+			if (isValidAlignment(ba))
 			{
-
-				map<string,readData>::iterator i = readCache.find(ba.Name);
-				if (i == readCache.end())
+				if (ba.IsMateMapped())
 				{
-					readCache.emplace(ba.Name,readData(move(ba)));
+
+					map<string,readData>::iterator i = readCache.find(ba.Name);
+					if (i == readCache.end())
+					{
+						readCache.emplace(ba.Name,readData(move(ba)));
+					}
+					else
+					{
+						regionLists regions(i->second,ba.Name);
+
+						regions.combine(move(ba));
+
+						incBamCounter(&ba,readCache.size());
+
+						addRead(regions,genomeDef);
+
+						readCache.erase(i);
+					}
 				}
 				else
 				{
-					regionLists regions(i->second,ba.Name);
-
-					regions.combine(move(ba));
+					addRead(regionLists(move(ba),ba.Name),genomeDef);
 
 					incBamCounter(&ba,readCache.size());
-
-					addRead(regions,genomeDef);
-
-					readCache.erase(i);
 				}
 			}
-			else
-			{
-				addRead(regionLists(move(ba),ba.Name),genomeDef);
-
-				incBamCounter(&ba,readCache.size());
-			}
-		}
-		else if (!ba.IsPaired() || (!ba.IsMateMapped() && ba.IsFirstMate()))
-		{
-			geneCounts[notAlignedString]++;
 			incBamCounter(&ba,readCache.size());
 		}
 

@@ -19,14 +19,18 @@ static std::string notAlignedString = "__not_aligned";
 static std::string notUnique = "__alignment_not_unique";
 
 
-class gtfGeneAttribute : public mapZeroDef<std::string,size_t> 
+class gtfGeneAttribute : public mapZeroDef<const std::string,size_t> 
 {
 public:
 	void print(const std::string & index,TsvFile & output)	
 	{
 		//Print entries for all of the attributes being considered
-		for (auto & entry: This)
-			output.print(index,entry.first,entry.second);
+		if (size() > 1)
+			for (auto & entry: This)
+				output.print(index,entry.first,_Z(entry.second));
+		else
+			for (auto & entry: This)
+				output.print(index,_Z(entry.second));
 	};
 	void reset()	
 	{
@@ -50,7 +54,7 @@ public:
 
 
 //	A nested string map for holding counts for each identifier for each gene  
-class geneCountsClass : public std::map<std::string,gtfGeneAttribute >
+class geneCountsClass : public std::map<const std::string,gtfGeneAttribute >
 {
 public:
 	//	For printing out the list of counts.  entry.second is the count data one entry per attribute being investigated
@@ -72,6 +76,8 @@ struct gtfOverlap
 {
 	size_t start,finish;
 	bool strict;
+	//	Store references here as these are created and deleted lots and these removes the need to allocate and
+	//	deallocate on the heap.
 	const std::string & geneName;
 	const std::string & featType;
 	gtfOverlap(size_t start,size_t finish,bool strict,const std::string & geneName,const std::string & featType): 
@@ -82,8 +88,9 @@ class gtfRegion
 {
 public:
 	size_t start,finish;
-	stringEx name;
-	std::string type;
+	//	Store actual values here as these are only created once and then referenced lots, so this is more efficient
+	const std::string name;
+	const std::string type;
 	char strand;
 	chromosomeGtfData::iterator overlaps;
 	gtfRegion(	size_t start, size_t finish,const std::string & name,char strand,const std::string & type ):start(start),finish(finish),name(name),strand(strand),type(type){};

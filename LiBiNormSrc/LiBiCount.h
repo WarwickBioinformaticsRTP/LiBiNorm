@@ -38,6 +38,8 @@ public:
 	TsvFile outputFile;
 
 	int main(int argc, char **argv);
+	bool isValidAlignment(const BamAlignment & ba);
+
 	bool processOrderedBamData();
 	bool processUnorderedBamData();
 	void processCachedReads(size_t cacheFileCount);

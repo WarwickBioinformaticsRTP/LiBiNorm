@@ -1,15 +1,15 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LocalDebuggerCommandArguments>-m intersection-nonempty  -a 0 -g "gtfs\Homo_sapiens.GRCh38.84.TRPC3.gtf" -b "aligned\C1492.TRPC3.bam" -r "test\nonempty.txt"</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>-m union -a 0 -g "Y:\SysmedIBD\GRCm38\Mus_musculus.GRCm38.83.subset.gtf" -b "Y:\Shan\ChromoCentre reads\HISAT2_FR\2_CGATGT_chr1_2.sort.bam" -r "htseq\subset.txt"</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
     <LocalDebuggerDebuggerType>NativeOnly</LocalDebuggerDebuggerType>
-    <LocalDebuggerWorkingDirectory>Y:\SysmedIBD\CD</LocalDebuggerWorkingDirectory>
+    <LocalDebuggerWorkingDirectory>Y:\Shan\ChromoCentre reads</LocalDebuggerWorkingDirectory>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LocalDebuggerCommandArguments>-m union -a 0 -g "gtfs\Homo_sapiens.GRCh38.84.gtf" -b "aligned\C1492.bam" -r "test\union.txt"</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>-a 0 -m intersection-nonempty -g gtfs\Homo_sapiens.GRCh38.84.gtf -b aligned\C1492.bam -r test\all_nonempty.counts.txt</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerWorkingDirectory>Y:\SysmedIBD\CD</LocalDebuggerWorkingDirectory>
+    <LocalDebuggerWorkingDirectory>Y:\LiBiNorm\TestRegions\C1492</LocalDebuggerWorkingDirectory>
     <LocalDebuggerDebuggerType>NativeOnly</LocalDebuggerDebuggerType>
   </PropertyGroup>
 </Project>
