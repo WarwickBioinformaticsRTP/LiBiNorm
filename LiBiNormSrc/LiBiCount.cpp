@@ -17,7 +17,7 @@
 using namespace std;
 
 
-#define BAMNAME "D4B3B9P1:276:C7CDRACXX:1:1101:1239:3641"
+#define BAMNAME "HISEQ2000-05:531:C7LLMACXX:2:1101:18292:2348"
 
 int LiBiCount::main(int argc, char **argv)
 {
@@ -162,6 +162,7 @@ int LiBiCount::main(int argc, char **argv)
 		elapsedTime();
 
 	_DBG(cin >> test);
+//	cin >> test;
 
 	return EXIT_SUCCESS;
 }
@@ -606,25 +607,37 @@ bool LiBiCount::isValidAlignment(const BamAlignment & ba)
 {
 
 	int NHval;
-	ba.GetTag("NH",NHval);
-	if (NHval > 1)
-	{
-		if ((ba.IsPaired() && ba.IsFirstMate()) || !ba.IsPaired())
-			geneCounts[notUnique]++;
-		return false;
-	}
-	if (ba.MapQuality < minqual)
-	{
-		if ((ba.IsPaired() && ba.IsFirstMate()) || !ba.IsPaired())
-			geneCounts[lowQualString]++;
-		return false;
-	}
-	if (!ba.IsMapped())
+	if(!ba.GetTag("NH",NHval))
+		NHval = -1;
+
+	bool retVal = true;
+	if (!ba.IsMapped() && !ba.IsMateMapped())
 	{
 		if ((ba.IsPaired() && ba.IsFirstMate()) || !ba.IsPaired())
 			geneCounts[notAlignedString]++;
 		return false;
 	}
+	if (NHval > 1)
+	{
+//		if ((ba.IsPaired() && ba.IsFirstMate()) || !ba.IsPaired())
+		if (ba.IsPaired() && ba.IsFirstMate()) 
+			geneCounts[notUnique]++;
+		return false;
+	}
+
+
+	if (!ba.IsMapped() || !ba.IsMateMapped())
+	{
+		if ((ba.IsPaired() && ba.IsFirstMate()) || !ba.IsPaired())
+			geneCounts[lowQualString]++;
+		return false;
+	}
+/*	if (ba.MapQuality < minqual)
+	{
+		if ((ba.IsPaired() && ba.IsFirstMate()))// || !ba.IsPaired())
+			geneCounts[notUnique]++;
+		return false;
+	}*/
 	return true;
 }
 
@@ -639,6 +652,8 @@ bool LiBiCount::processOrderedBamData()
 
 	bool OK = reader.GetNextAlignment(ba1,false);
 
+	int N = 0;
+
 	while (OK)
 	{
 		_DBG(string name = ba1.Name;
@@ -646,11 +661,11 @@ bool LiBiCount::processOrderedBamData()
 
 		bool readAlreadyRead = false;
 
-		if(!ba1.IsPrimaryAlignment())
+/*		if(!ba1.IsPrimaryAlignment())
 		{
 			//	Dont use secondaru alignments, so we dont use the same read more than once
 		}
-		else
+//		else*/
 		{
 			if (isValidAlignment(ba1))
 			{
@@ -658,12 +673,13 @@ bool LiBiCount::processOrderedBamData()
 
 				OK = reader.GetNextAlignment(ba2,false);
 
-				if (ba2.Name == ba1.Name)
+				if ((ba2.Name == ba1.Name) && ((ba1.IsFirstMate() && ba2.IsSecondMate()) || (ba1.IsSecondMate() && (ba2.IsFirstMate()))))
 				{
 					regions.combine(move(ba2));
 				}
 				else
 				{
+					cout << "mismatch " << N++ << endl;
 					readAlreadyRead = true;
 				}
 				if (bamCounter < 200)
@@ -683,7 +699,8 @@ bool LiBiCount::processOrderedBamData()
 						return false;
 					}
 				}
-				addRead(regions,genomeDef);
+				if (isValidAlignment(ba2))
+					addRead(regions,genomeDef);
 			}
 			incBamCounter();
 		}
@@ -728,11 +745,11 @@ bool LiBiCount::processUnorderedBamData()
 
 //		bool readAlreadyRead = false;
 
-		if(!ba.IsPrimaryAlignment())
+/*		if(!ba.IsPrimaryAlignment())
 		{
 			//	Dont use secondaru alignments, so we dont use the same read more than once
 		}
-		else
+		else*/
 		{
 			if (isValidAlignment(ba))
 			{
@@ -759,7 +776,7 @@ bool LiBiCount::processUnorderedBamData()
 				}
 				else
 				{
-					addRead(regionLists(move(ba),ba.Name),genomeDef);
+//					addRead(regionLists(move(ba),ba.Name),genomeDef);
 
 					incBamCounter(&ba,readCache.size());
 				}

@@ -1,15 +1,15 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LocalDebuggerCommandArguments>-m union -a 0 -g "Y:\SysmedIBD\GRCm38\Mus_musculus.GRCm38.83.subset.gtf" -b "Y:\Shan\ChromoCentre reads\HISAT2_FR\2_CGATGT_chr1_2.sort.bam" -r "htseq\subset.txt"</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>-a 10 -m intersection-nonempty -g gtfs\Homo_sapiens.GRCh37.75.cut.gtf -b aligned\WTCHG_203748_01_short.bam -r counts\libinorm_nonempty.counts.txt</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
     <LocalDebuggerDebuggerType>NativeOnly</LocalDebuggerDebuggerType>
-    <LocalDebuggerWorkingDirectory>Y:\Shan\ChromoCentre reads</LocalDebuggerWorkingDirectory>
+    <LocalDebuggerWorkingDirectory>Y:\LiBiNorm\TestRegions\WTCHG_203748_01_short</LocalDebuggerWorkingDirectory>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LocalDebuggerCommandArguments>-a 0 -m intersection-nonempty -g gtfs\Homo_sapiens.GRCh38.84.gtf -b aligned\C1492.bam -r test\all_nonempty.counts.txt</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>-a 10 -m intersection-nonempty -g gtfs\Homo_sapiens.GRCh37.75.cut.gtf -b aligned\WTCHG_203748_01_short.bam -r counts\libinorm_nonempty.counts.txt</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerWorkingDirectory>Y:\LiBiNorm\TestRegions\C1492</LocalDebuggerWorkingDirectory>
+    <LocalDebuggerWorkingDirectory>Y:\LiBiNorm\TestRegions\WTCHG_203748_01_short</LocalDebuggerWorkingDirectory>
     <LocalDebuggerDebuggerType>NativeOnly</LocalDebuggerDebuggerType>
   </PropertyGroup>
 </Project>

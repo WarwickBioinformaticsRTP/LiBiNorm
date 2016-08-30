@@ -38,6 +38,7 @@ public:
 	TsvFile outputFile;
 
 	int main(int argc, char **argv);
+	bool isValidAlignment(const BamAlignment & ba1,const BamAlignment & ba2);
 	bool isValidAlignment(const BamAlignment & ba);
 
 	bool processOrderedBamData();
