@@ -7,7 +7,7 @@
     <LocalDebuggerWorkingDirectory>Y:\LiBiNorm\TestRegions\WTCHG_203748_01_short</LocalDebuggerWorkingDirectory>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LocalDebuggerCommandArguments>-a 10 -m intersection-nonempty -g gtfs\Homo_sapiens.GRCh37.75.cut.gtf -b aligned\WTCHG_203748_01_short.bam -r counts\libinorm_nonempty.counts.txt</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>-a 10 -m intersection-nonempty -g gtfs\Homo_sapiens.GRCh37.75.gtf -b aligned\WTCHG_203748_01_short.sort.bam -r counts\libinorm_nonempty.counts.txt</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
     <LocalDebuggerWorkingDirectory>Y:\LiBiNorm\TestRegions\WTCHG_203748_01_short</LocalDebuggerWorkingDirectory>
     <LocalDebuggerDebuggerType>NativeOnly</LocalDebuggerDebuggerType>

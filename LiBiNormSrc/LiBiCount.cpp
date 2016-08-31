@@ -146,7 +146,7 @@ int LiBiCount::main(int argc, char **argv)
 
 	_DBG(genomeDef.outputChromData(gtfFileName.replaceSuffix(".txt"));)
 
-	if (!processOrderedBamData())
+//	if (!processOrderedBamData())
 	{
 		reader.Rewind();
 		geneCounts.reset();
@@ -755,11 +755,16 @@ bool LiBiCount::processUnorderedBamData()
 			{
 				if (ba.IsMateMapped())
 				{
-
-					map<string,readData>::iterator i = readCache.find(ba.Name);
+					stringEx index(ba.Name,
+						ba.IsMateMapped()?stringEx(ba.MateRefID,ba.MatePosition):(ba.IsMapped()?stringEx(ba.RefID,ba.Position):""),
+							(ba.IsMapped() && ba.IsMateMapped())?-ba.InsertSize:0,
+							ba.IsFirstMate()?"S":"F");
+					map<string,readData>::iterator i = readCache.find(index);
 					if (i == readCache.end())
 					{
-						readCache.emplace(ba.Name,readData(move(ba)));
+						readCache.emplace(stringEx(ba.Name,ba.IsMapped()?stringEx(ba.RefID,ba.Position):"",
+							(ba.IsMapped() && ba.IsMateMapped())?ba.InsertSize:0,
+							ba.IsFirstMate()?"F":"S"),readData(move(ba)));
 					}
 					else
 					{
@@ -776,7 +781,7 @@ bool LiBiCount::processUnorderedBamData()
 				}
 				else
 				{
-//					addRead(regionLists(move(ba),ba.Name),genomeDef);
+					addRead(regionLists(move(ba),ba.Name),genomeDef);
 
 					incBamCounter(&ba,readCache.size());
 				}
