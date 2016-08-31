@@ -26,6 +26,7 @@ class readData
 		char strand;
 		Cigar cigar;
 		int NH;
+		int qual;
 		readData(void){}
 
 		//	This constructor creates the readData from the bam file entry.  This means that methos expecting 
@@ -35,6 +36,7 @@ class readData
 		readData(BamTools::BamAlignment && ba):
 			refId(ba.RefID),
 			position(ba.Position+1),
+			qual(ba.MapQuality),
 			cigar(move(ba.CigarData))
 		{
 			if (!ba.GetTag("NH",NH))
@@ -108,10 +110,11 @@ public:
 	//	The name of the read
 	const std::string name;
 	int NH;
+	int qual;
 
 	//	Creates a regionList from one of the reads, either from a bam entry or from cachedData.  Use emplace so that the
 	//	regionList can be efficiently placed straight into the map.
-	regionLists(const readData & read,std::string name) :name(name),NH(read.NH) {
+	regionLists(const readData & read,std::string name) :name(name),NH(read.NH),qual(read.qual) {
 		data.emplace(read.refId,regionList(read));
 	};
 
@@ -121,6 +124,8 @@ public:
 			data[read.refId].combine(regionList(read));
 			if (read.NH > NH)
 				NH = read.NH;
+			if (read.qual < qual)
+				qual = read.qual;
 	};
 };
 
