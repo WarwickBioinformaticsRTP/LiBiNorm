@@ -17,7 +17,7 @@
 using namespace std;
 
 
-#define BAMNAME "HISEQ2000-05:531:C7LLMACXX:2:1101:18292:2348"
+#define BAMNAME "HISEQ2000-05:531:C7LLMACXX:2:1101:17089:65734"
 
 int LiBiCount::main(int argc, char **argv)
 {
@@ -606,10 +606,13 @@ void LiBiCount::incBamCounter(const BamAlignment * ba,size_t size)
 bool LiBiCount::isValidAlignment(const BamAlignment & ba)
 {
 
+
+/*	Cant do NH here because we need NH from both reads (which may be different in order 
+	to determine the status
 	int NHval;
 	if(!ba.GetTag("NH",NHval))
 		NHval = -1;
-
+*/
 	bool retVal = true;
 	if (!ba.IsMapped() && !ba.IsMateMapped())
 	{
@@ -617,6 +620,7 @@ bool LiBiCount::isValidAlignment(const BamAlignment & ba)
 			geneCounts[notAlignedString]++;
 		return false;
 	}
+/*
 	if (NHval > 1)
 	{
 //		if ((ba.IsPaired() && ba.IsFirstMate()) || !ba.IsPaired())
@@ -624,7 +628,7 @@ bool LiBiCount::isValidAlignment(const BamAlignment & ba)
 			geneCounts[notUnique]++;
 		return false;
 	}
-
+*/
 
 	if (!ba.IsMapped() || !ba.IsMateMapped())
 	{
@@ -743,6 +747,9 @@ bool LiBiCount::processUnorderedBamData()
 		_DBG(string name = ba.Name;
 		bool found = (name == BAMNAME);)
 
+		//	The NH handling is complex is that there may be one NH (with NH = 1) at one end, and multiple NHs (with NH > 1) at the other
+		//	The NH > 1 samples have to be used to either pair with the other, or to remove the NH = 1 sample 
+
 //		bool readAlreadyRead = false;
 
 /*		if(!ba.IsPrimaryAlignment())
@@ -753,6 +760,11 @@ bool LiBiCount::processUnorderedBamData()
 		{
 			if (isValidAlignment(ba))
 			{
+				int NH;
+				ba.GetTag("NH",NH);
+//				if (NH > 1)
+//					geneCounts[notUnique]++;
+
 				if (ba.IsMateMapped())
 				{
 					stringEx index(ba.Name,
@@ -772,11 +784,22 @@ bool LiBiCount::processUnorderedBamData()
 
 						regions.combine(move(ba));
 
+						if (regions.NH > 1)
+						{
+							geneCounts[notUnique]++;
+							if (i->second.NH == 1)
+								i->second.NH = -1;
+							else
+								readCache.erase(i);
+						}
+						else
+						{
+							addRead(regions,genomeDef);
+							readCache.erase(i);
+						}
+
 						incBamCounter(&ba,readCache.size());
 
-						addRead(regions,genomeDef);
-
-						readCache.erase(i);
 					}
 				}
 				else
@@ -802,12 +825,16 @@ bool LiBiCount::processUnorderedBamData()
 	if (cacheCounter == 0)
 	{
 		//	There are no records cached to disk, so the internal cache simply contains unpaired reads that can be processed
-		//	immediatly
+		//	immediately
 		size_t cacheReadCounts = 0;
 		for (auto & i : readCache)
 		{
 			regionLists rl(i.second,i.first);
-			addRead(rl,genomeDef);
+			if (i.second.NH == 1)
+				addRead(rl,genomeDef);
+			else if (i.second.NH > 1)
+				geneCounts[notUnique]++;
+
 			incBamCounter(0,cacheReadCounts++);
 		}
 	}
@@ -1014,7 +1041,7 @@ bool cacheEntry::readNext()
 	cigar.clear();
 	std::string line;
 	getline(*file,line);
-	parseTsv(line,name,refId,position,strand,cigar);
+	parseTsv(line,name,refId,position,strand,cigar,NH);
 	return true;
 }
 void cacheEntry::close()

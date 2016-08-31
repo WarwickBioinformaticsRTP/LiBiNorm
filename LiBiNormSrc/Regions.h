@@ -17,7 +17,7 @@ public:
 
 //	This holds the data from a bam entry that we are actually interested in.  It is the basis
 //	of 'in program' persisted data and also data that is persisted to cache files.  Does not include the
-//	 read name as thjis is stored elesewhere (e.g as the index of a map of readData
+//	 read name as this is stored elesewhere (e.g as the index of a map of readData
 class readData
 {
 	public:
@@ -25,6 +25,7 @@ class readData
 		int position;
 		char strand;
 		Cigar cigar;
+		int NH;
 		readData(void){}
 
 		//	This constructor creates the readData from the bam file entry.  This means that methos expecting 
@@ -36,6 +37,8 @@ class readData
 			position(ba.Position+1),
 			cigar(move(ba.CigarData))
 		{
+			if (!ba.GetTag("NH",NH))
+				NH = -1;
 			if (ba.IsReverseStrand() == ba.IsFirstMate())
 				strand = '-';
 			else
@@ -104,10 +107,11 @@ public:
 	std::map<int,regionList> data;
 	//	The name of the read
 	const std::string name;
+	int NH;
 
 	//	Creates a regionList from one of the reads, either from a bam entry or from cachedData.  Use emplace so that the
 	//	regionList can be efficiently placed straight into the map.
-	regionLists(const readData & read,std::string name) :name(name) {
+	regionLists(const readData & read,std::string name) :name(name),NH(read.NH) {
 		data.emplace(read.refId,regionList(read));
 	};
 
@@ -115,6 +119,8 @@ public:
 	//  or added to a new.
 	void combine(const readData & read){
 			data[read.refId].combine(regionList(read));
+			if (read.NH > NH)
+				NH = read.NH;
 	};
 };
 
