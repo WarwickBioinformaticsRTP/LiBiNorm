@@ -9,9 +9,12 @@
 #include "parser.h"
 
 #ifdef _DEBUG
-#define READ_CACHE_SIZE 100000
+#define READ_CACHE_SIZE 30
+#define REP_LEN 100
 #else
-#define READ_CACHE_SIZE 2000000
+//#define READ_CACHE_SIZE 2000000
+#define READ_CACHE_SIZE 10000
+#define REP_LEN 100000
 #endif
 
 using namespace std;
@@ -585,7 +588,7 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 
 void LiBiCount::incBamCounter(const BamAlignment * ba,size_t size)
 {
-	if ((++bamCounter % 100000) == 0)
+	if ((++bamCounter % REP_LEN) == 0)
 		if (verbose)
 		{
 			cerr << bamCounter << " BAM alignment record pairs processed.";
@@ -750,19 +753,15 @@ bool LiBiCount::processUnorderedBamData()
 		}
 		else
 		{
-			_DBG(stringEx name(ba.Name,"_",ba.IsMapped()?stringEx(ba.RefID,ba.Position):(ba.IsMateMapped()?stringEx(ba.MateRefID,ba.MatePosition):""),"_",
-				(ba.IsMapped() && ba.IsMateMapped())?ba.InsertSize:0,
-				ba.IsFirstMate()?"F":"S");)
-
-				stringEx index(ba.Name,"_",
+			stringEx index(ba.Name,"_",
 				ba.IsMateMapped()?stringEx(ba.MateRefID,ba.MatePosition):(ba.IsMapped()?stringEx(ba.RefID,ba.Position):""),"_",
-				(ba.IsMapped() && ba.IsMateMapped())?-ba.InsertSize:0,
+				(ba.IsMapped() && ba.IsMateMapped())?-ba.InsertSize:0,"_",
 				ba.IsFirstMate()?"S":"F");
 			map<string,readData>::iterator i = readCache.find(index);
 			if (i == readCache.end())
 			{
 				readCache.emplace(stringEx(ba.Name,"_",ba.IsMapped()?stringEx(ba.RefID,ba.Position):(ba.IsMateMapped()?stringEx(ba.MateRefID,ba.MatePosition):""),"_",
-					(ba.IsMapped() && ba.IsMateMapped())?ba.InsertSize:0,
+					(ba.IsMapped() && ba.IsMateMapped())?ba.InsertSize:0,"_",
 					ba.IsFirstMate()?"F":"S"),readData(move(ba)));
 			}
 			else
@@ -863,39 +862,115 @@ void LiBiCount::processCachedReads(size_t cacheFileCount)
 	{
 		_DBG( bool found = (readIndex.begin()->first == BAMNAME);)
 
-		auto i1 = readIndex.begin();
-		auto i2 = next(i1,1);
+		multimap<stringEx,int>::iterator i1 = readIndex.begin();
 
-		int index1 = i1->second;
-
-		if ((i2 != readIndex.end()) && (i1->first == i2->first))
+		size_t nameLen = i1->first.length();
+		if (nameLen == 0)
 		{
-			//	We have the two ends of a paired end read.  Combine them and calculate counts
-			int index2 = i2->second;
-			regionLists rl(cacheReads[index1],i1->first);
-			rl.combine(cacheReads[index2]);
-			if (i1->first)								//Avoid adding null entries with no read name
-				addRead(rl,genomeDef);
-			//	Erase the second read and get the next one from the associated cache files
-			readIndex.erase(i2);
-			if(cacheReads[index2].readNext())
-				readIndex.emplace(cacheReads[index2].name,index2);
+			readIndex.erase(i1);
 		}
 		else
 		{
-			if (i1->first)	//Need this check to avoid processing spurious entries
+			string name = i1->first;
+			vector<string> nameParts;
+
+			parser(name,"_",nameParts);
+
+			if (nameParts.size() != 4)
 			{
-				regionLists rl(cacheReads[index1],i1->first);
-				addRead(rl,genomeDef);
+				cout << name << endl;
+				string a;
+				cin >> a;
 			}
+
+			name = stringEx(nameParts[0],"_",nameParts[1],"_",-atoi(nameParts[2].c_str()),"_",(nameParts[3] == "F")?"S":"F");
+
+			multimap<stringEx,int>::iterator i2 = readIndex.find(name);
+
+			if (i2 == readIndex.end())
+			{
+				//	This is a singleton
+				regionLists rl(cacheReads[i1->second],name);
+				if (rl.NH > 1)
+					geneCounts[notUnique]++;
+				else if (rl.qual < minqual)
+					geneCounts[lowQualString]++;
+				else if (rl.NH == -1)
+				{
+					//It was paired with some higher NH reads, which have been accounted for
+				}
+				else
+					addRead(rl,genomeDef);
+
+				int index = i1->second;
+				readIndex.erase(i1);
+				if(cacheReads[index].readNext())
+					readIndex.emplace(cacheReads[index].name,index);
+			}
+			else
+			{
+				//	We have the two ends of a paired end read.  Combine them and calculate counts
+				regionLists rl(cacheReads[i1->second],name);
+				rl.combine(cacheReads[i2->second]);
+
+				if (rl.NH > 1)
+				{
+					geneCounts[notUnique]++;
+				}
+				else if (rl.qual < minqual)
+				{
+					geneCounts[lowQualString]++;
+				}
+				else 
+					addRead(rl,genomeDef);
+
+				if (rl.NH > 1)
+				{
+					if ((cacheReads[i1->second].NH < 2) && (cacheReads[i2->second].NH > 1))
+					{
+						cacheReads[i1->second].NH = -1;
+						int index = i2->second;
+						readIndex.erase(i2);
+						if(cacheReads[index].readNext())
+							readIndex.emplace(cacheReads[index].name,index);
+					}
+					else if ((cacheReads[i2->second].NH < 2)&& (cacheReads[i1->second].NH > 1))
+					{
+						cacheReads[i2->second].NH = -1;
+						int index = i1->second;
+						readIndex.erase(i1);
+						if(cacheReads[index].readNext())
+							readIndex.emplace(cacheReads[index].name,index);
+					}
+					else
+					{
+						int index = i1->second;
+						readIndex.erase(i1);
+						if(cacheReads[index].readNext())
+							readIndex.emplace(cacheReads[index].name,index);
+						index = i2->second;
+						readIndex.erase(i2);
+						if(cacheReads[index].readNext())
+							readIndex.emplace(cacheReads[index].name,index);
+					}
+				}
+				else
+				{
+					int index = i1->second;
+					readIndex.erase(i1);
+					if(cacheReads[index].readNext())
+						readIndex.emplace(cacheReads[index].name,index);
+					index = i2->second;
+					readIndex.erase(i2);
+					if(cacheReads[index].readNext())
+						readIndex.emplace(cacheReads[index].name,index);
+				}
+			}
+
+			//	Erase the first read and get the next one from the associated cache files
+
+			incBamCounter(0,++cacheReadCounter);
 		}
-
-		//	Erase the first read and get the next one from the associated cache files
-		readIndex.erase(i1);
-		if(cacheReads[index1].readNext())
-			readIndex.emplace(cacheReads[index1].name,index1);
-
-		incBamCounter(0,++cacheReadCounter);
 	}
 	
 	//	Closes all of the files and then deletes them
@@ -1042,6 +1117,6 @@ void cacheEntry::close()
 		file->close();
 		delete (file);
 		file = 0;
-		remove(fname.c_str());
+//		remove(fname.c_str());
 	}
 }
