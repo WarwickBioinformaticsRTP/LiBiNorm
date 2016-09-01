@@ -12,15 +12,15 @@
 #define READ_CACHE_SIZE 30
 #define REP_LEN 100
 #else
-//#define READ_CACHE_SIZE 2000000
-#define READ_CACHE_SIZE 10000
+#define READ_CACHE_SIZE 2000000
+//#define READ_CACHE_SIZE 10000
 #define REP_LEN 100000
 #endif
 
 using namespace std;
 
 
-#define BAMNAME "HISEQ2000-05:531:C7LLMACXX:2:1102:17828:86470"
+#define BAMNAME "HISEQ2000-05:531:C7LLMACXX:2:1101:9438:2146"
 
 int LiBiCount::main(int argc, char **argv)
 {
@@ -36,6 +36,7 @@ int LiBiCount::main(int argc, char **argv)
 	verbose = true;
 	htSeqCompatible = true;
 	minqual = 10;
+	nameOrder = true;
 	countMode = intersect_union;
 	maxCacheSize = READ_CACHE_SIZE;
 
@@ -59,7 +60,7 @@ int LiBiCount::main(int argc, char **argv)
 			fileCompare(argc - 1,&argv[1]);
 			exitSuccess();
 		}
-		else if(strcmp(argv[ni], "-c") == 0)
+		else if((strcmp(argv[ni], "-h") == 0) || (strcmp(argv[ni], "--cache") == 0))
 		{
 			maxCacheSize = atoi(argv[++ni]);
 		}
@@ -83,6 +84,16 @@ int LiBiCount::main(int argc, char **argv)
 		{
 			gtfFileName = argv[++ni];
 		}
+		else if(strcmp(argv[ni], "-r") == 0)
+		{
+			string mode(argv[++ni]);
+			if (mode == "pos")
+				nameOrder = false;
+			else if (mode == "name")
+				nameOrder = true;
+			else
+				exitFail("Unknown 'order':",mode,".  Should be pos or name");
+		}
 		else if((strcmp(argv[ni], "-m") == 0) || (strcmp(argv[ni], "--mode") == 0))
 		{
 			string mode = argv[++ni];
@@ -105,11 +116,10 @@ int LiBiCount::main(int argc, char **argv)
 		{
 			outputFilename = argv[++ni];
 		}
-		else if((strcmp(argv[ni], "-r") == 0) || (strcmp(argv[ni], "--results") == 0))
+		else if((strcmp(argv[ni], "-c") == 0) || (strcmp(argv[ni], "--counts") == 0))
 		{
-			resultsFilename = argv[++ni];
+			countsFilename = argv[++ni];
 		}
-
 		else
 		{
 			exitFail("Invalid parameter: ",string(argv[ni]));
@@ -120,8 +130,8 @@ int LiBiCount::main(int argc, char **argv)
 	if (feature_type.size() == 0)
 		feature_type.emplace("exon");
 
-	if (!resultsFilename)
-		exitFail("No results filename specified.");
+	if (!countsFilename)
+		exitFail("No count filename specified.");
 
 	if (outputFilename && !outputFile.open(outputFilename))
 		exitFail("Unable to open output file: ",outputFilename);
@@ -149,17 +159,22 @@ int LiBiCount::main(int argc, char **argv)
 
 	_DBG(genomeDef.outputChromData(gtfFileName.replaceSuffix(".txt"));)
 
-	if (!processOrderedBamData())
+	if (nameOrder)
 	{
-		reader.Rewind();
-		geneCounts.reset();
-		if (verbose)
-			cerr << "Processing data assuming that it is not ordered by read name." << endl;
-		processUnorderedBamData();
+		if (!processNameOrderedBamData())
+		{
+			reader.Rewind();
+			geneCounts.reset();
+			if (verbose)
+				cerr << "Processing data assuming that it is not ordered by read name." << endl;
+			processUnorderedBamData();
+		}
 	}
+	else
+		processUnorderedBamData();
 
-	if(!outputGeneCounts(resultsFilename))
-		exitFail("Unable to output counts to :",resultsFilename);
+	if(!outputGeneCounts(countsFilename))
+		exitFail("Unable to output counts to :",countsFilename);
 
 	if (verbose)
 		elapsedTime();
@@ -648,7 +663,7 @@ bool LiBiCount::isValidAlignment(const BamAlignment & ba)
 	return true;
 }
 
-bool LiBiCount::processOrderedBamData()
+bool LiBiCount::processNameOrderedBamData()
 {
 	BamAlignment ba1;
 	BamAlignment ba2;
@@ -753,14 +768,20 @@ bool LiBiCount::processUnorderedBamData()
 		}
 		else
 		{
+			//	Store reads in a cache so they can be paired up.
 			stringEx index(ba.Name,"_",
+#ifdef MATCH_USING_POSITION
 				ba.IsMateMapped()?stringEx(ba.MateRefID,ba.MatePosition):(ba.IsMapped()?stringEx(ba.RefID,ba.Position):""),"_",
+#endif
 				(ba.IsMapped() && ba.IsMateMapped())?-ba.InsertSize:0,"_",
 				ba.IsFirstMate()?"S":"F");
 			map<string,readData>::iterator i = readCache.find(index);
 			if (i == readCache.end())
 			{
-				readCache.emplace(stringEx(ba.Name,"_",ba.IsMapped()?stringEx(ba.RefID,ba.Position):(ba.IsMateMapped()?stringEx(ba.MateRefID,ba.MatePosition):""),"_",
+				readCache.emplace(stringEx(ba.Name,"_",
+#ifdef MATCH_USING_POSITION
+					ba.IsMapped()?stringEx(ba.RefID,ba.Position):(ba.IsMateMapped()?stringEx(ba.MateRefID,ba.MatePosition):""),"_",
+#endif
 					(ba.IsMapped() && ba.IsMateMapped())?ba.InsertSize:0,"_",
 					ba.IsFirstMate()?"F":"S"),readData(move(ba)));
 			}
@@ -773,10 +794,26 @@ bool LiBiCount::processUnorderedBamData()
 				if (regions.NH > 1)
 				{
 					geneCounts[notUnique]++;
-					if (i->second.NH == 1)
+					if (i->second.NH == -1)
+					{
+					}
+					else if (i->second.NH == 1)
 						i->second.NH = -1;
 					else
+					{
 						readCache.erase(i);
+						int NH;
+						if(ba.GetTag("NH",NH) && (NH == 1))
+						{
+							auto j = readCache.emplace(stringEx(ba.Name,"_",
+#ifdef MATCH_USING_POSITION
+								ba.IsMapped()?stringEx(ba.RefID,ba.Position):(ba.IsMateMapped()?stringEx(ba.MateRefID,ba.MatePosition):""),"_",
+#endif
+								(ba.IsMapped() && ba.IsMateMapped())?ba.InsertSize:0,"_",
+								ba.IsFirstMate()?"F":"S"),readData(move(ba)));
+							j.first->second.NH = -1;
+						}
+					}
 				}
 				else if (regions.qual < minqual)
 				{
@@ -799,7 +836,7 @@ bool LiBiCount::processUnorderedBamData()
 		{
 			if (verbose)
 				cerr << "Outputting cache data " << cacheCounter+1 << endl;
-			readCache.save(resultsFilename.replaceSuffix(".temp.",cacheCounter++));
+			readCache.save(countsFilename.replaceSuffix(".temp.",cacheCounter++));
 		}
 
 		OK = reader.GetNextAlignment(ba,false);
@@ -832,7 +869,7 @@ bool LiBiCount::processUnorderedBamData()
 	{
 		//	We have cached some records to disk, so the internal cache must be flushed as well so that all of the cached records can be
 		//	processed as an ensemble
-		readCache.save(resultsFilename.replaceSuffix(".temp.",cacheCounter++));
+		readCache.save(countsFilename.replaceSuffix(".temp.",cacheCounter++));
 		processCachedReads(cacheCounter);
 	}
 
@@ -853,7 +890,7 @@ void LiBiCount::processCachedReads(size_t cacheFileCount)
 
 	for (int i = 0;i < cacheFileCount;i++)
 	{
-		cacheReads[i].open(resultsFilename.replaceSuffix(".temp.",i));
+		cacheReads[i].open(countsFilename.replaceSuffix(".temp.",i));
 		readIndex.emplace(cacheReads[i].name,i);
 	}
 
@@ -876,14 +913,12 @@ void LiBiCount::processCachedReads(size_t cacheFileCount)
 
 			parser(name,"_",nameParts);
 
-			if (nameParts.size() != 4)
-			{
-				cout << name << endl;
-				string a;
-				cin >> a;
-			}
-
-			name = stringEx(nameParts[0],"_",nameParts[1],"_",-atoi(nameParts[2].c_str()),"_",(nameParts[3] == "F")?"S":"F");
+			name = stringEx(nameParts[0],
+#ifdef MATCH_USING_POSITION
+				"_",nameParts[1],"_",-atoi(nameParts[2].c_str()),"_",(nameParts[3] == "F")?"S":"F");
+#else
+				"_",-atoi(nameParts[1].c_str()),"_",(nameParts[2] == "F")?"S":"F");
+#endif
 
 			multimap<stringEx,int>::iterator i2 = readIndex.find(name);
 

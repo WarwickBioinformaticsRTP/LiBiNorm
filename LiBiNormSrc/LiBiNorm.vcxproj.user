@@ -1,13 +1,13 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LocalDebuggerCommandArguments>-a 10 -m intersection-nonempty -g gtfs\Homo_sapiens.GRCh37.75.cut.gtf -b aligned\WTCHG_203748_01_short.sort.bam -r counts\libinorm_sort_nonempty.counts.txt</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>-a 10 -r pos -m intersection-nonempty -g gtfs\Homo_sapiens.GRCh37.75.cut.gtf -b aligned\WTCHG_203748_01_short.sort.bam -r pos  -c  counts\nonempty_short.counts.txt</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
     <LocalDebuggerDebuggerType>NativeOnly</LocalDebuggerDebuggerType>
     <LocalDebuggerWorkingDirectory>Y:\LiBiNorm\TestRegions\WTCHG_203748_01_short</LocalDebuggerWorkingDirectory>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LocalDebuggerCommandArguments>-a 10 -m intersection-nonempty -g gtfs\Homo_sapiens.GRCh37.75.gtf -b aligned\WTCHG_203748_01_short.sort.bam -r counts\libinorm_nonempty.counts.txt</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>-a 10 -r pos -m intersection-nonempty -g gtfs\Homo_sapiens.GRCh37.75.cut.gtf -b aligned\WTCHG_203748_01_short.sort.bam -r pos  -c  counts\nonempty_short.counts.txt</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
     <LocalDebuggerWorkingDirectory>Y:\LiBiNorm\TestRegions\WTCHG_203748_01_short</LocalDebuggerWorkingDirectory>
     <LocalDebuggerDebuggerType>NativeOnly</LocalDebuggerDebuggerType>

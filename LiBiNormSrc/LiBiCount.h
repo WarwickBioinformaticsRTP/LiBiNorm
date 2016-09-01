@@ -1,6 +1,8 @@
 #ifndef LIBICOUNT_H
 #define LIBICOUNT_H
 
+//#define MATCH_USING_POSITION
+
 #include "GtfFileEx.h"
 
 using namespace BamTools;
@@ -24,9 +26,9 @@ class LiBiCount
 	void incBamCounter(const BamAlignment * ba = 0,size_t size = -1);
 
 public:
-	bool useStrand,reverseStrand,verbose,htSeqCompatible;
+	bool useStrand,reverseStrand,verbose,htSeqCompatible,nameOrder;
 	mode countMode;
-	stringEx outputFilename,resultsFilename;
+	stringEx outputFilename,countsFilename;
 
 	geneCountsClass geneCounts;
 
@@ -41,7 +43,7 @@ public:
 	bool isValidAlignment(const BamAlignment & ba1,const BamAlignment & ba2);
 	bool isValidAlignment(const BamAlignment & ba);
 
-	bool processOrderedBamData();
+	bool processNameOrderedBamData();
 	bool processUnorderedBamData();
 	void processCachedReads(size_t cacheFileCount);
 
