@@ -8,19 +8,20 @@
 #include "LiBiCount.h"
 #include "parser.h"
 
+#define MATCH_USING_POSITION
+
 #ifdef _DEBUG
 #define READ_CACHE_SIZE 50
 #define REP_LEN 100
 #else
-//#define READ_CACHE_SIZE 2000000
-#define READ_CACHE_SIZE 10000
+#define READ_CACHE_SIZE 2000000
+//#define READ_CACHE_SIZE 10000
 #define REP_LEN 100000
 #endif
 
 using namespace std;
 
-
-#define BAMNAME "HISEQ2000-05:531:C7LLMACXX:2:1101:18292:2348"
+#define BAMNAME "HISEQ2000-05:531:C7LLMACXX:2:1101:16672:4313"
 
 int LiBiCount::main(int argc, char **argv)
 {
@@ -31,7 +32,7 @@ int LiBiCount::main(int argc, char **argv)
 
 	setEx<string> feature_type;
 
-	reverseStrand = true;
+	reverseStrand = false;
 	useStrand = true;
 	verbose = true;
 	htSeqCompatible = true;
@@ -63,6 +64,18 @@ int LiBiCount::main(int argc, char **argv)
 		else if((strcmp(argv[ni], "-h") == 0) || (strcmp(argv[ni], "--cache") == 0))
 		{
 			maxCacheSize = atoi(argv[++ni]);
+		}
+		else if ((strcmp(argv[ni], "-s") == 0) || (strcmp(argv[ni], "--stranded") == 0))
+		{
+			string strand(argv[++ni]);
+			if (strand == "yes")
+			{}
+			else if (strand == "reverse")
+				reverseStrand = true;
+			else if (strand == "no")
+				useStrand = false;
+			else
+				exitFail("Invalid strand option: ",strand);
 		}
 		else if(strcmp(argv[ni], "-a") == 0)
 		{
@@ -160,18 +173,9 @@ int LiBiCount::main(int argc, char **argv)
 	_DBG(genomeDef.outputChromData(gtfFileName.replaceSuffix(".txt"));)
 
 	if (nameOrder)
-	{
-		if (!processNameOrderedBamData())
-		{
-			reader.Rewind();
-			geneCounts.reset();
-			if (verbose)
-				cerr << "Processing data assuming that it is not ordered by read name." << endl;
-			processUnorderedBamData();
-		}
-	}
+		processNameOrderedBamData();
 	else
-		processUnorderedBamData();
+		processPositionOrderedBamData();
 
 	if(!outputGeneCounts(countsFilename))
 		exitFail("Unable to output counts to :",countsFilename);
@@ -633,17 +637,9 @@ void LiBiCount::incBamCounter(const BamAlignment * ba,size_t size)
 		}
 }
 
-bool LiBiCount::isValidAlignment(const BamAlignment & ba)
+bool LiBiCount::AReadIsMapped(const BamAlignment & ba)
 {
 
-
-//	Cant do NH here because we need NH from both reads (which may be different in order 
-//	to determine the status
-	int NHval;
-	if(!ba.GetTag("NH",NHval))
-		NHval = -1;
-
-	bool retVal = true;
 	if (!ba.IsMapped() && !ba.IsMateMapped())
 	{
 		if ((ba.IsPaired() && ba.IsFirstMate()) || !ba.IsPaired())
@@ -651,111 +647,91 @@ bool LiBiCount::isValidAlignment(const BamAlignment & ba)
 		return false;
 	}
 
-	if (NHval > 1)
-	{
-//		if ((ba.IsPaired() && ba.IsFirstMate()) || !ba.IsPaired())
-		if (ba.IsPaired() && ba.IsFirstMate()) 
-			geneCounts[notUnique]++;
-		return false;
-	}
-
-
-	if (!ba.IsMapped() || !ba.IsMateMapped())
-	{
-		if ((ba.IsPaired() && ba.IsFirstMate()) || !ba.IsPaired())
-			geneCounts[lowQualString]++;
-		return false;
-	}
-	if (ba.MapQuality < minqual)
-	{
-		if ((ba.IsPaired() && ba.IsFirstMate()))// || !ba.IsPaired())
-			geneCounts[notUnique]++;
-		return false;
-	}
 	return true;
 }
 
+#define READ_BUFFER_SIZE 100
+
 bool LiBiCount::processNameOrderedBamData()
 {
-	BamAlignment ba1;
-	BamAlignment ba2;
+	BamAlignment ba[READ_BUFFER_SIZE];
+	bool used[READ_BUFFER_SIZE];
 
 	size_t misPairs(0);
 	bamCounter = 0;
 	set<string> previousNames;
 
-	bool OK = reader.GetNextAlignment(ba1,false);
+	bool OK = reader.GetNextAlignment(ba[0],false);
 
 	int N = 0;
 
 	while (OK)
 	{
-		_DBG(string name = ba1.Name;
-		bool found = (name == BAMNAME);)
+		string & name = ba[0].Name;
+		_DBG(bool found = (name == BAMNAME);)
 
-		bool readAlreadyRead = false;
+		int Nreads = 0;
 
-//		if (isValidAlignment(ba1))
-		{
-			regionLists regions(readData(move(ba1)),ba1.Name);
-
-			OK = reader.GetNextAlignment(ba2,false);
-
-			//	If the reads are in name order htseq does not do checking of RefId, position or insert size
-			//	This is part of the reason for the discrepancy between the results when the reads
-			//	are in name or position order
-			if ((ba2.Name == ba1.Name) && 
-				(ba1.IsFirstMate() == !ba2.IsFirstMate())/* &&
-				(ba1.RefID == ba2.MateRefID) &&
-				(ba2.RefID == ba1.MateRefID) && 
-				(ba1.Position == ba2.MatePosition) && 
-				(ba2.Position == ba1.MatePosition) &&
-				(ba1.InsertSize == -ba2.InsertSize)*/)
-			{
-				regions.combine(move(ba2));
-			}
-			else
-			{
-				readAlreadyRead = true;
-			}
-/*			if (bamCounter < 200)
-			{
-				auto i = previousNames.find(regions.name);
-				if (i == previousNames.end())
-					previousNames.emplace(regions.name);
-				else
-				{
-					if (verbose)
-						cerr << "Names not in order so assuming data is not name ordered" << endl;
-					if (outputFile.is_open())
-					{
-						outputFile.close();
-						outputFile.open(outputFilename);
-					}
-					return false;
-				}
-			}*/
-			if (!ba1.IsMapped() && !ba1.IsMateMapped())
-			{
-				if ((ba1.IsPaired() && ba1.IsFirstMate()) || !ba1.IsPaired())
-				geneCounts[notAlignedString]++;
-			}
-			else
-				addRead(regions,genomeDef);
+		do {
+			used[Nreads] = false;
+			OK = reader.GetNextAlignment(ba[++Nreads],false);
 		}
-		incBamCounter();
+		while ((ba[Nreads].Name == name) && (OK) && (Nreads < READ_BUFFER_SIZE));
 
+		//	This is a fairly direct implementation of the htseq logic in __init_.py line 570 onwards
+		//	There are potential issues with the ability of teh code to cope with datasets where there are multiple
+		//	alignments
 
-		if (readAlreadyRead)
-			swap(ba1,ba2);
-		else
-			OK = reader.GetNextAlignment(ba1,false);
+		if (AReadIsMapped(ba[0]))
+		{
+			for (size_t i = 0;i < Nreads;i++)
+			{
+				if (!used[i])
+				{
+					regionLists regions(readData(move(ba[i])),name);
+					for (size_t j = i+1;j < Nreads;j++)
+					{
+						if (!used[j])
+						{
+							if ((ba[i].IsFirstMate() == ba[j].IsFirstMate())
+								|| (ba[i].IsMapped() != ba[j].IsMateMapped())
+								|| (ba[i].IsMateMapped() != ba[j].IsMapped()))
+								continue;
+
+							if (!(ba[i].IsMapped() && ba[j].IsMapped())  ||
+									
+								((ba[i].RefID == ba[j].MateRefID)
+								&& (ba[i].MateRefID == ba[j].RefID)
+								&& (ba[i].Position == ba[j].MatePosition)
+								&& (ba[i].MatePosition == ba[j].Position)
+								))
+							{
+								used[i] = true;
+								used[j] = true;		
+								regions.combine(move(ba[j]));
+								addRead(regions,genomeDef);
+								incBamCounter();
+								break;
+							}
+						}
+					}
+					if (!used[i])
+					{
+						addRead(regions,genomeDef);
+						incBamCounter();
+					}
+				}
+			}
+		}
+
+		swap(ba[0],ba[Nreads]);
+
 	}
 	return true;
 }
 
 
-bool LiBiCount::processUnorderedBamData()
+bool LiBiCount::processPositionOrderedBamData()
 {
 	BamAlignment ba;
 
@@ -787,12 +763,7 @@ bool LiBiCount::processUnorderedBamData()
 		//	The NH handling is complex is that there may be one NH (with NH = 1) at one end, and multiple NHs (with NH > 1) at the other
 		//	The NH > 1 samples have to be used to either pair with the other, or to remove the NH = 1 sample 
 
-		if (!ba.IsMapped() && !ba.IsMateMapped())
-		{
-			if ((ba.IsPaired() && ba.IsFirstMate()) || !ba.IsPaired())
-				geneCounts[notAlignedString]++;
-		}
-		else
+		if (AReadIsMapped(ba))
 		{
 			//	Store reads in a cache so they can be paired up.
 			stringEx mateIndex(ba.Name,"_",

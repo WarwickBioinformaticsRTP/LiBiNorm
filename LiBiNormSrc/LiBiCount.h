@@ -1,8 +1,6 @@
 #ifndef LIBICOUNT_H
 #define LIBICOUNT_H
 
-#define MATCH_USING_POSITION
-
 #include "GtfFileEx.h"
 
 using namespace BamTools;
@@ -40,11 +38,10 @@ public:
 	TsvFile outputFile;
 
 	int main(int argc, char **argv);
-	bool isValidAlignment(const BamAlignment & ba1,const BamAlignment & ba2);
-	bool isValidAlignment(const BamAlignment & ba);
+	bool AReadIsMapped(const BamAlignment & ba);
 
 	bool processNameOrderedBamData();
-	bool processUnorderedBamData();
+	bool processPositionOrderedBamData();
 	void processCachedReads(size_t cacheFileCount);
 
 	bool outputGeneCounts(const std::string & filename);
