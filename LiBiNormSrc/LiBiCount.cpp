@@ -9,7 +9,7 @@
 #include "parser.h"
 
 #ifdef _DEBUG
-#define READ_CACHE_SIZE 30000
+#define READ_CACHE_SIZE 50
 #define REP_LEN 100
 #else
 //#define READ_CACHE_SIZE 2000000
@@ -772,8 +772,8 @@ bool LiBiCount::processUnorderedBamData()
 			//	Store reads in a cache so they can be paired up.
 			stringEx mateIndex(ba.Name,"_",
 #ifdef MATCH_USING_POSITION
-				ba.IsMateMapped()?stringEx(ba.MateRefID,ba.MatePosition):"","_",
-				ba.IsMapped()?stringEx(ba.RefID,ba.Position):"","_",
+				ba.IsMateMapped()?stringEx(ba.MateRefID,ba.MatePosition):"0","_",
+				ba.IsMapped()?stringEx(ba.RefID,ba.Position):"0","_",
 #endif
 				(ba.IsMapped() && ba.IsMateMapped())?-ba.InsertSize:0,"_",
 				ba.IsFirstMate()?"S":"F");
@@ -782,8 +782,8 @@ bool LiBiCount::processUnorderedBamData()
 			{
 				stringEx thisIndex(ba.Name,"_",
 #ifdef MATCH_USING_POSITION
-					ba.IsMapped()?stringEx(ba.RefID,ba.Position):"","_",
-					ba.IsMateMapped()?stringEx(ba.MateRefID,ba.MatePosition):"","_",
+					ba.IsMapped()?stringEx(ba.RefID,ba.Position):"0","_",
+					ba.IsMateMapped()?stringEx(ba.MateRefID,ba.MatePosition):"0","_",
 #endif
 					(ba.IsMapped() && ba.IsMateMapped())?ba.InsertSize:0,"_",
 					ba.IsFirstMate()?"F":"S");
@@ -898,25 +898,31 @@ void LiBiCount::processCachedReads(size_t cacheFileCount)
 	vector<cacheEntry> cacheReads(cacheFileCount);
 
 	//	readIndex has a lits of the current reads, ordered by name.
-	multimap<stringEx,int> readIndex;
+
+	typedef map<string,map<int,vector<readData> > > readCache;
+	readCache reads;
 
 	for (int i = 0;i < cacheFileCount;i++)
 	{
 		cacheReads[i].open(countsFilename.replaceSuffix(".temp.",i));
-		readIndex.emplace(cacheReads[i].name,i);
+		reads[cacheReads[i].name][i].emplace_back(cacheReads[i]);
+		for (int j = 0;(j < 10) && (cacheReads[i].readNext());j++)
+		{
+			reads[cacheReads[i].name][i].emplace_back(cacheReads[i]);
+		}
 	}
 
 	int cacheReadCounter = 0;
-	while (readIndex.size())
+	while (reads.size())
 	{
-		_DBG( bool found = (readIndex.begin()->first == BAMNAME);)
+		_DBG( bool found = (reads.begin()->first == BAMNAME);)
 
-		multimap<stringEx,int>::iterator i1 = readIndex.begin();
+		readCache::iterator i1 = reads.begin();
 
 		size_t nameLen = i1->first.length();
 		if (nameLen == 0)
 		{
-			readIndex.erase(i1);
+			reads.erase(i1);
 		}
 		else
 		{
@@ -932,12 +938,12 @@ void LiBiCount::processCachedReads(size_t cacheFileCount)
 				"_",-atoi(nameParts[1].c_str()),"_",(nameParts[2] == "F")?"S":"F");
 #endif
 
-			multimap<stringEx,int>::iterator i2 = readIndex.find(name);
+			readCache::iterator i2 = reads.find(name);
 
-			if (i2 == readIndex.end())
+			if (i2 == reads.end())
 			{
 				//	This is a singleton
-				regionLists rl(cacheReads[i1->second],name);
+				regionLists rl(i1->second.begin()->second[0],name);
 				if (rl.NH > 1)
 					geneCounts[notUnique]++;
 				else if (rl.qual < minqual)
@@ -945,16 +951,24 @@ void LiBiCount::processCachedReads(size_t cacheFileCount)
 				else
 					addRead(rl,genomeDef);
 
-				int index = i1->second;
-				readIndex.erase(i1);
+				int index = i1->second.begin()->first;
+				if (i1->second.begin()->second.size() > 1)
+					i1->second.begin()->second.erase(i1->second.begin()->second.begin());
+				else
+				{
+					if (i1->second.size() > 1)
+						i1->second.erase(i1->second.begin());
+					else
+						reads.erase(i1);
+				}
 				if(cacheReads[index].readNext())
-					readIndex.emplace(cacheReads[index].name,index);
+					reads[cacheReads[index].name][index].emplace_back(cacheReads[index]);
 			}
 			else
 			{
 				//	We have the two ends of a paired end read.  Combine them and calculate counts
-				regionLists rl(cacheReads[i1->second],name);
-				rl.combine(cacheReads[i2->second]);
+				regionLists rl(i1->second.begin()->second[0],name);
+				rl.combine(i2->second.begin()->second[0]);
 
 				if (rl.NH > 1)
 				{
@@ -967,46 +981,32 @@ void LiBiCount::processCachedReads(size_t cacheFileCount)
 				else 
 					addRead(rl,genomeDef);
 
-/*				if (rl.NH > 1)
 				{
-					if ((cacheReads[i1->second].NH < 2) && (cacheReads[i2->second].NH > 1))
-					{
-						cacheReads[i1->second].NH = -1;
-						int index = i2->second;
-						readIndex.erase(i2);
-						if(cacheReads[index].readNext())
-							readIndex.emplace(cacheReads[index].name,index);
-					}
-					else if ((cacheReads[i2->second].NH < 2)&& (cacheReads[i1->second].NH > 1))
-					{
-						cacheReads[i2->second].NH = -1;
-						int index = i1->second;
-						readIndex.erase(i1);
-						if(cacheReads[index].readNext())
-							readIndex.emplace(cacheReads[index].name,index);
-					}
+					int index = i1->second.begin()->first;
+					if (i1->second.begin()->second.size() > 1)
+						i1->second.begin()->second.erase(i1->second.begin()->second.begin());
 					else
 					{
-						int index = i1->second;
-						readIndex.erase(i1);
-						if(cacheReads[index].readNext())
-							readIndex.emplace(cacheReads[index].name,index);
-						index = i2->second;
-						readIndex.erase(i2);
-						if(cacheReads[index].readNext())
-							readIndex.emplace(cacheReads[index].name,index);
+						if (i1->second.size() > 1)
+							i1->second.erase(i1->second.begin());
+						else
+							reads.erase(i1);
 					}
-				}
-				else*/
-				{
-					int index = i1->second;
-					readIndex.erase(i1);
 					if(cacheReads[index].readNext())
-						readIndex.emplace(cacheReads[index].name,index);
-					index = i2->second;
-					readIndex.erase(i2);
+						reads[cacheReads[index].name][index].emplace_back(cacheReads[index]);
+
+					index = i2->second.begin()->first;
+					if (i2->second.begin()->second.size() > 1)
+						i2->second.begin()->second.erase(i2->second.begin()->second.begin());
+					else
+					{
+						if (i2->second.size() > 1)
+							i2->second.erase(i2->second.begin());
+						else
+							reads.erase(i2);
+					}
 					if(cacheReads[index].readNext())
-						readIndex.emplace(cacheReads[index].name,index);
+						reads[cacheReads[index].name][index].emplace_back(cacheReads[index]);
 				}
 			}
 
