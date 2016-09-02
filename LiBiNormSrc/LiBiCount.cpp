@@ -243,6 +243,18 @@ struct chromosomeGeneInfo: public map<string,map <string,overlapCounts> >
 
 void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 {
+	if (segments.NH > 1)
+	{
+		geneCounts[notUnique]++;
+		return;
+	}
+	else if (segments.qual < minqual)
+	{
+		geneCounts[lowQualString]++;
+		return;
+	}
+
+
 	//	The paired end read consists of a number of segments.   If the two ends were aligned to different chromosomes
 	//	then the segments will be on different chromosomes
 	chromosomeGeneInfo genes;
@@ -805,24 +817,12 @@ bool LiBiCount::processUnorderedBamData()
 
 				regions.combine(move(ba));
 
-				if (regions.NH > 1)
-				{
-					geneCounts[notUnique]++;
-				}
-				else if (regions.qual < minqual)
-				{
-					geneCounts[lowQualString]++;
-				}
-				else
-				{
-					addRead(regions,genomeDef);
-				}
+				addRead(regions,genomeDef);
 
 				if (i->second.size() > 1)
 					i->second.erase(i->second.begin());
 				else
 					readCache.erase(i);
-
 
 				incBamCounter(&ba,readCache.size());
 
@@ -857,21 +857,7 @@ bool LiBiCount::processUnorderedBamData()
 			{
 
 				regionLists rl(j,i.first);
-				if (j.NH > 1)
-				{
-					geneCounts[notUnique]++;
-				}
-				else if (j.NH == 1)
-				{
-					if (j.qual < minqual)
-					{
-						geneCounts[lowQualString]++;
-					}
-					else
-					{
-						addRead(rl,genomeDef);
-					}
-				}
+				addRead(rl,genomeDef);
 
 				incBamCounter(0,cacheReadCounts++);
 			}
@@ -899,8 +885,29 @@ void LiBiCount::processCachedReads(size_t cacheFileCount)
 
 	//	readIndex has a lits of the current reads, ordered by name.
 
-	typedef map<string,map<int,vector<readData> > > readCache;
-	readCache reads;
+	class readCache : public map<string,map<int,vector<readData> > > 
+	{
+	public:
+		void replace(iterator & i,vector<cacheEntry> & cacheReads)
+		{
+			int index = i->second.begin()->first;
+			vector<readData> & r = i->second.begin()->second;
+			if (r.size() > 1)
+				r.erase(r.begin());
+			else
+			{
+				map<int,vector<readData> > & s = i->second;
+				if (s.size() > 1)
+					s.erase(s.begin());
+				else
+					erase(i);
+			}
+
+			if(cacheReads[index].readNext())
+				This[cacheReads[index].name][index].emplace_back(cacheReads[index]);
+
+		}
+	} reads;
 
 	for (int i = 0;i < cacheFileCount;i++)
 	{
@@ -943,26 +950,9 @@ void LiBiCount::processCachedReads(size_t cacheFileCount)
 			if (i2 == reads.end())
 			{
 				//	This is a singleton
-				regionLists rl(i1->second.begin()->second[0],name);
-				if (rl.NH > 1)
-					geneCounts[notUnique]++;
-				else if (rl.qual < minqual)
-					geneCounts[lowQualString]++;
-				else
-					addRead(rl,genomeDef);
+				addRead(regionLists(i1->second.begin()->second[0],name),genomeDef);
 
-				int index = i1->second.begin()->first;
-				if (i1->second.begin()->second.size() > 1)
-					i1->second.begin()->second.erase(i1->second.begin()->second.begin());
-				else
-				{
-					if (i1->second.size() > 1)
-						i1->second.erase(i1->second.begin());
-					else
-						reads.erase(i1);
-				}
-				if(cacheReads[index].readNext())
-					reads[cacheReads[index].name][index].emplace_back(cacheReads[index]);
+				reads.replace(i1,cacheReads);
 			}
 			else
 			{
@@ -970,44 +960,10 @@ void LiBiCount::processCachedReads(size_t cacheFileCount)
 				regionLists rl(i1->second.begin()->second[0],name);
 				rl.combine(i2->second.begin()->second[0]);
 
-				if (rl.NH > 1)
-				{
-					geneCounts[notUnique]++;
-				}
-				else if (rl.qual < minqual)
-				{
-					geneCounts[lowQualString]++;
-				}
-				else 
-					addRead(rl,genomeDef);
+				addRead(rl,genomeDef);
 
-				{
-					int index = i1->second.begin()->first;
-					if (i1->second.begin()->second.size() > 1)
-						i1->second.begin()->second.erase(i1->second.begin()->second.begin());
-					else
-					{
-						if (i1->second.size() > 1)
-							i1->second.erase(i1->second.begin());
-						else
-							reads.erase(i1);
-					}
-					if(cacheReads[index].readNext())
-						reads[cacheReads[index].name][index].emplace_back(cacheReads[index]);
-
-					index = i2->second.begin()->first;
-					if (i2->second.begin()->second.size() > 1)
-						i2->second.begin()->second.erase(i2->second.begin()->second.begin());
-					else
-					{
-						if (i2->second.size() > 1)
-							i2->second.erase(i2->second.begin());
-						else
-							reads.erase(i2);
-					}
-					if(cacheReads[index].readNext())
-						reads[cacheReads[index].name][index].emplace_back(cacheReads[index]);
-				}
+				reads.replace(i1,cacheReads);
+				reads.replace(i2,cacheReads);
 			}
 
 			//	Erase the first read and get the next one from the associated cache files
@@ -1160,6 +1116,6 @@ void cacheEntry::close()
 		file->close();
 		delete (file);
 		file = 0;
-//		remove(fname.c_str());
+		remove(fname.c_str());
 	}
 }
