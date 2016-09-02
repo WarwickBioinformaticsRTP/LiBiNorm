@@ -110,13 +110,13 @@ public:
 	//	in the bam file.  Done this way to cater for a read pair where the reads are on difference chromosomes
 	std::map<int,regionList> data;
 	//	The name of the read
-	const std::string name;
+	const std::string & name;
 	int NH;
 	int qual;
 
 	//	Creates a regionList from one of the reads, either from a bam entry or from cachedData.  Use emplace so that the
 	//	regionList can be efficiently placed straight into the map.
-	regionLists(const readData & read,std::string name) :name(name),NH(read.NH),qual(read.qual) {
+	regionLists(const readData & read,const std::string & name) :name(name),NH(read.NH),qual(read.qual) {
 		data.emplace(read.refId,regionList(read));
 	};
 

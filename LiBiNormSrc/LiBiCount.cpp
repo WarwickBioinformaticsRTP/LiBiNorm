@@ -20,7 +20,7 @@
 using namespace std;
 
 
-#define BAMNAME "HISEQ2000-05:531:C7LLMACXX:2:1101:12735:14964"
+#define BAMNAME "HISEQ2000-05:531:C7LLMACXX:2:1101:18292:2348"
 
 int LiBiCount::main(int argc, char **argv)
 {
@@ -695,22 +695,30 @@ bool LiBiCount::processNameOrderedBamData()
 
 		bool readAlreadyRead = false;
 
-		if (isValidAlignment(ba1))
+//		if (isValidAlignment(ba1))
 		{
 			regionLists regions(readData(move(ba1)),ba1.Name);
 
 			OK = reader.GetNextAlignment(ba2,false);
 
-			if ((ba2.Name == ba1.Name) && ((ba1.IsFirstMate() && ba2.IsSecondMate()) || (ba1.IsSecondMate() && (ba2.IsFirstMate()))))
+			//	If the reads are in name order htseq does not do checking of RefId, position or insert size
+			//	This is part of the reason for the discrepancy between the results when the reads
+			//	are in name or position order
+			if ((ba2.Name == ba1.Name) && 
+				(ba1.IsFirstMate() == !ba2.IsFirstMate())/* &&
+				(ba1.RefID == ba2.MateRefID) &&
+				(ba2.RefID == ba1.MateRefID) && 
+				(ba1.Position == ba2.MatePosition) && 
+				(ba2.Position == ba1.MatePosition) &&
+				(ba1.InsertSize == -ba2.InsertSize)*/)
 			{
 				regions.combine(move(ba2));
 			}
 			else
 			{
-				cout << "mismatch " << N++ << endl;
 				readAlreadyRead = true;
 			}
-			if (bamCounter < 200)
+/*			if (bamCounter < 200)
 			{
 				auto i = previousNames.find(regions.name);
 				if (i == previousNames.end())
@@ -726,8 +734,13 @@ bool LiBiCount::processNameOrderedBamData()
 					}
 					return false;
 				}
+			}*/
+			if (!ba1.IsMapped() && !ba1.IsMateMapped())
+			{
+				if ((ba1.IsPaired() && ba1.IsFirstMate()) || !ba1.IsPaired())
+				geneCounts[notAlignedString]++;
 			}
-			if (isValidAlignment(ba2))
+			else
 				addRead(regions,genomeDef);
 		}
 		incBamCounter();
@@ -811,9 +824,7 @@ bool LiBiCount::processUnorderedBamData()
 			}
 			else
 			{
-				readData & foundData = i->second.front();
-
-				regionLists regions(foundData,ba.Name);
+				regionLists regions(i->second.front(),ba.Name);
 
 				regions.combine(move(ba));
 
@@ -950,14 +961,14 @@ void LiBiCount::processCachedReads(size_t cacheFileCount)
 			if (i2 == reads.end())
 			{
 				//	This is a singleton
-				addRead(regionLists(i1->second.begin()->second[0],name),genomeDef);
+				addRead(regionLists(i1->second.begin()->second[0],nameParts[0]),genomeDef);
 
 				reads.replace(i1,cacheReads);
 			}
 			else
 			{
 				//	We have the two ends of a paired end read.  Combine them and calculate counts
-				regionLists rl(i1->second.begin()->second[0],name);
+				regionLists rl(i1->second.begin()->second[0],nameParts[0]);
 				rl.combine(i2->second.begin()->second[0]);
 
 				addRead(rl,genomeDef);
