@@ -39,8 +39,10 @@ class readData
 			qual(ba.MapQuality),
 			cigar(move(ba.CigarData))
 		{
+			//	This simulates line 155 in count py.  If there is no optional NH field in the first read
+			//	then the pythin throws an error, which we simulate by setting NH to zero
 			if (!ba.GetTag("NH",NH))
-				NH = -1;
+				NH = ba.IsFirstMate()?0:-1;
 			if (ba.IsReverseStrand() == ba.IsFirstMate())
 				strand = '-';
 			else
@@ -122,7 +124,9 @@ public:
 	//  or added to a new.
 	void combine(const readData & read){
 			data[read.refId].combine(regionList(read));
-			if (read.NH > NH)
+			if ((read.NH == 0) || (NH == 0))
+				NH = 0;
+			else if (read.NH > NH)
 				NH = read.NH;
 			if (read.qual < qual)
 				qual = read.qual;

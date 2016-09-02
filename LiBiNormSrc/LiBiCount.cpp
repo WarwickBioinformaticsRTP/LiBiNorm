@@ -9,7 +9,7 @@
 #include "parser.h"
 
 #ifdef _DEBUG
-#define READ_CACHE_SIZE 30
+#define READ_CACHE_SIZE 30000
 #define REP_LEN 100
 #else
 #define READ_CACHE_SIZE 2000000
@@ -20,7 +20,7 @@
 using namespace std;
 
 
-#define BAMNAME "HISEQ2000-05:531:C7LLMACXX:2:1101:9438:2146"
+#define BAMNAME "HISEQ2000-05:531:C7LLMACXX:2:1101:12735:14964"
 
 int LiBiCount::main(int argc, char **argv)
 {
@@ -738,7 +738,7 @@ bool LiBiCount::processUnorderedBamData()
 	int cacheCounter = 0;
 
 
-	class readCache : public map<string,readData>
+	class readCacheClass : public map<string,vector<readData> >
 	{
 	public:
 		void save(const string & filename)
@@ -769,62 +769,57 @@ bool LiBiCount::processUnorderedBamData()
 		else
 		{
 			//	Store reads in a cache so they can be paired up.
-			stringEx index(ba.Name,"_",
+			stringEx mateIndex(ba.Name,"_",
 #ifdef MATCH_USING_POSITION
 				ba.IsMateMapped()?stringEx(ba.MateRefID,ba.MatePosition):(ba.IsMapped()?stringEx(ba.RefID,ba.Position):""),"_",
 #endif
 				(ba.IsMapped() && ba.IsMateMapped())?-ba.InsertSize:0,"_",
 				ba.IsFirstMate()?"S":"F");
-			map<string,readData>::iterator i = readCache.find(index);
+			readCacheClass::iterator i = readCache.find(mateIndex);
 			if (i == readCache.end())
 			{
-				readCache.emplace(stringEx(ba.Name,"_",
+				stringEx thisIndex(ba.Name,"_",
 #ifdef MATCH_USING_POSITION
 					ba.IsMapped()?stringEx(ba.RefID,ba.Position):(ba.IsMateMapped()?stringEx(ba.MateRefID,ba.MatePosition):""),"_",
 #endif
 					(ba.IsMapped() && ba.IsMateMapped())?ba.InsertSize:0,"_",
-					ba.IsFirstMate()?"F":"S"),readData(move(ba)));
+					ba.IsFirstMate()?"F":"S");
+
+				i = readCache.find(thisIndex);
+				if (i == readCache.end())
+				{
+					auto i = readCache.emplace(thisIndex,vector<readData>());
+					i.first->second.emplace_back(move(ba));
+				}
+				else
+					i->second.emplace_back(move(ba));
 			}
 			else
 			{
-				regionLists regions(i->second,ba.Name);
+				readData & foundData = i->second.front();
+
+				regionLists regions(foundData,ba.Name);
 
 				regions.combine(move(ba));
 
 				if (regions.NH > 1)
 				{
 					geneCounts[notUnique]++;
-					if (i->second.NH == -1)
-					{
-					}
-					else if (i->second.NH == 1)
-						i->second.NH = -1;
-					else
-					{
-						readCache.erase(i);
-						int NH;
-						if(ba.GetTag("NH",NH) && (NH == 1))
-						{
-							auto j = readCache.emplace(stringEx(ba.Name,"_",
-#ifdef MATCH_USING_POSITION
-								ba.IsMapped()?stringEx(ba.RefID,ba.Position):(ba.IsMateMapped()?stringEx(ba.MateRefID,ba.MatePosition):""),"_",
-#endif
-								(ba.IsMapped() && ba.IsMateMapped())?ba.InsertSize:0,"_",
-								ba.IsFirstMate()?"F":"S"),readData(move(ba)));
-							j.first->second.NH = -1;
-						}
-					}
 				}
 				else if (regions.qual < minqual)
 				{
 					geneCounts[lowQualString]++;
-					readCache.erase(i);
 				}
 				else
 				{
 					addRead(regions,genomeDef);
-					readCache.erase(i);
 				}
+
+				if (i->second.size() > 1)
+					i->second.erase(i->second.begin());
+				else
+					readCache.erase(i);
+
 
 				incBamCounter(&ba,readCache.size());
 
@@ -849,20 +844,34 @@ bool LiBiCount::processUnorderedBamData()
 		size_t cacheReadCounts = 0;
 		for (auto & i : readCache)
 		{
-			regionLists rl(i.second,i.first);
-			if (i.second.NH == 1)
-			{
-				if (i.second.qual < minqual)
-					geneCounts[lowQualString]++;
-				else
-				{
-					addRead(rl,genomeDef);
-				}
-			}
-			else if (i.second.NH > 1)
-				geneCounts[notUnique]++;
+			_DBG(
+				vector<string> tags;
+				parser(i.first,"_",tags);
+				bool found = (tags[0] == BAMNAME);
+				)
 
-			incBamCounter(0,cacheReadCounts++);
+			for (auto & j: i.second)
+			{
+
+				regionLists rl(j,i.first);
+				if (j.NH > 1)
+				{
+					geneCounts[notUnique]++;
+				}
+				else if (j.NH == 1)
+				{
+					if (j.qual < minqual)
+					{
+//						geneCounts[lowQualString]++;
+					}
+					else
+					{
+						addRead(rl,genomeDef);
+					}
+				}
+
+				incBamCounter(0,cacheReadCounts++);
+			}
 		}
 	}
 	else

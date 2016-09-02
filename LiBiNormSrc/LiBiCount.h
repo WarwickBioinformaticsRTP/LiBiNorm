@@ -1,7 +1,7 @@
 #ifndef LIBICOUNT_H
 #define LIBICOUNT_H
 
-//#define MATCH_USING_POSITION
+#define MATCH_USING_POSITION
 
 #include "GtfFileEx.h"
 
