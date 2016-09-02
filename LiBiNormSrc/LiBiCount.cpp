@@ -12,8 +12,8 @@
 #define READ_CACHE_SIZE 30000
 #define REP_LEN 100
 #else
-#define READ_CACHE_SIZE 2000000
-//#define READ_CACHE_SIZE 10000
+//#define READ_CACHE_SIZE 2000000
+#define READ_CACHE_SIZE 10000
 #define REP_LEN 100000
 #endif
 
@@ -746,7 +746,8 @@ bool LiBiCount::processUnorderedBamData()
 			TsvFile outFile;
 			outFile.open(filename);
 			for (auto & i : This)
-				outFile.print(i.first,i.second);
+				for (auto & j : i.second)
+					outFile.print(i.first,j);
 			clear();
 		}
 	} readCache;
@@ -771,7 +772,8 @@ bool LiBiCount::processUnorderedBamData()
 			//	Store reads in a cache so they can be paired up.
 			stringEx mateIndex(ba.Name,"_",
 #ifdef MATCH_USING_POSITION
-				ba.IsMateMapped()?stringEx(ba.MateRefID,ba.MatePosition):(ba.IsMapped()?stringEx(ba.RefID,ba.Position):""),"_",
+				ba.IsMateMapped()?stringEx(ba.MateRefID,ba.MatePosition):"","_",
+				ba.IsMapped()?stringEx(ba.RefID,ba.Position):"","_",
 #endif
 				(ba.IsMapped() && ba.IsMateMapped())?-ba.InsertSize:0,"_",
 				ba.IsFirstMate()?"S":"F");
@@ -780,7 +782,8 @@ bool LiBiCount::processUnorderedBamData()
 			{
 				stringEx thisIndex(ba.Name,"_",
 #ifdef MATCH_USING_POSITION
-					ba.IsMapped()?stringEx(ba.RefID,ba.Position):(ba.IsMateMapped()?stringEx(ba.MateRefID,ba.MatePosition):""),"_",
+					ba.IsMapped()?stringEx(ba.RefID,ba.Position):"","_",
+					ba.IsMateMapped()?stringEx(ba.MateRefID,ba.MatePosition):"","_",
 #endif
 					(ba.IsMapped() && ba.IsMateMapped())?ba.InsertSize:0,"_",
 					ba.IsFirstMate()?"F":"S");
@@ -862,7 +865,7 @@ bool LiBiCount::processUnorderedBamData()
 				{
 					if (j.qual < minqual)
 					{
-//						geneCounts[lowQualString]++;
+						geneCounts[lowQualString]++;
 					}
 					else
 					{
@@ -924,7 +927,7 @@ void LiBiCount::processCachedReads(size_t cacheFileCount)
 
 			name = stringEx(nameParts[0],
 #ifdef MATCH_USING_POSITION
-				"_",nameParts[1],"_",-atoi(nameParts[2].c_str()),"_",(nameParts[3] == "F")?"S":"F");
+				"_",nameParts[2],"_",nameParts[1],"_",-atoi(nameParts[3].c_str()),"_",(nameParts[4] == "F")?"S":"F");
 #else
 				"_",-atoi(nameParts[1].c_str()),"_",(nameParts[2] == "F")?"S":"F");
 #endif
@@ -939,10 +942,6 @@ void LiBiCount::processCachedReads(size_t cacheFileCount)
 					geneCounts[notUnique]++;
 				else if (rl.qual < minqual)
 					geneCounts[lowQualString]++;
-				else if (rl.NH == -1)
-				{
-					//It was paired with some higher NH reads, which have been accounted for
-				}
 				else
 					addRead(rl,genomeDef);
 
@@ -968,7 +967,7 @@ void LiBiCount::processCachedReads(size_t cacheFileCount)
 				else 
 					addRead(rl,genomeDef);
 
-				if (rl.NH > 1)
+/*				if (rl.NH > 1)
 				{
 					if ((cacheReads[i1->second].NH < 2) && (cacheReads[i2->second].NH > 1))
 					{
@@ -998,7 +997,7 @@ void LiBiCount::processCachedReads(size_t cacheFileCount)
 							readIndex.emplace(cacheReads[index].name,index);
 					}
 				}
-				else
+				else*/
 				{
 					int index = i1->second;
 					readIndex.erase(i1);
