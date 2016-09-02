@@ -296,7 +296,7 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 
 			//	If this region overlaps any other regions then go to the one that starts the earliest.
 			//	If there were no overlaps then default is the overlaps points to self
-			gtfRegion = gtfRegion->second.overlaps;
+			gtfRegion = *gtfRegion->second.overlaps;
 
 
 			//And now go through each of the segments
@@ -315,7 +315,7 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 						j->second.checkOverlap(segment.second,overlaps);
 					}
 
-					gtfRegion = j->second.overlaps;
+					gtfRegion = *j->second.overlaps;
 				}
 
 

@@ -92,8 +92,15 @@ public:
 	const std::string name;
 	const std::string type;
 	char strand;
-	chromosomeGtfData::iterator overlaps;
-	gtfRegion(	size_t start, size_t finish,const std::string & name,char strand,const std::string & type ):start(start),finish(finish),name(name),strand(strand),type(type){};
+	chromosomeGtfData::iterator * overlaps;
+
+	gtfRegion(gtfRegion && gtf) : start(gtf.start),finish(gtf.finish),name(move(gtf.name)),type(move(gtf.type)),strand(gtf.strand),overlaps(gtf.overlaps)
+	{
+		gtf.overlaps = 0;
+	}
+
+	gtfRegion(	size_t start, size_t finish,const std::string & name,char strand,const std::string & type );
+	~gtfRegion();
 	void checkOverlap(const region & segment,std::vector<gtfOverlap> & overlaps) const;
 };
 

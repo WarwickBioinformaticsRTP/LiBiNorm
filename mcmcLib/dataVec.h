@@ -1,6 +1,7 @@
 #ifndef DATAVEC_H
 #define DATAVEC_H
 
+#include <stdlib.h>
 #include <vector>
 #include <string>
 #include <valarray>

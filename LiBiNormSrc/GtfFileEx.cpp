@@ -26,6 +26,18 @@ void gtfRegion::checkOverlap(const region & segment,vector<gtfOverlap> & overlap
 	}
 }
 
+gtfRegion::gtfRegion(	size_t start, size_t finish,const std::string & name,char strand,const std::string & type ):
+		start(start),finish(finish),name(name),strand(strand),type(type)
+{
+	overlaps = new chromosomeGtfData::iterator();
+};
+gtfRegion::~gtfRegion() {
+	delete (overlaps);
+};
+
+
+
+
 
 
 void gtfFileEx::index(geneCountsClass & geneCounts)
@@ -93,9 +105,9 @@ void gtfFileEx::index(geneCountsClass & geneCounts)
 			map<size_t,map<size_t,chromosomeGtfData::iterator> >::iterator j = tempMap.find((size_t)&i->second);
 
 			if (j == tempMap.end())
-				i->second.overlaps = i;
+				*i->second.overlaps = i;
 			else
-				i->second.overlaps = j->second.begin()->second;
+				*i->second.overlaps = j->second.begin()->second;
 		}
 
 	}
@@ -116,9 +128,9 @@ void gtfFileEx::outputChromData(const string & filename)
 	if (!output.is_open())
 		exitFail("Unable to open output file",filename);
 
-	for(auto i : genomeGtfData)
+	for(auto & i : genomeGtfData)
 	{
-		for (auto j : i.second)
+		for (auto & j : i.second)
 			output.printEnd(i.first,j.first,j.second.finish,j.second.strand,j.second.name,j.second.type);
 	}
 }
