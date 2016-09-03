@@ -29,7 +29,7 @@
 
 using namespace std;
 
-#define BAMNAME "HISEQ2000-05:531:C7LLMACXX:2:1101:16672:4313"
+#define BAMNAME "FCC7KR5ACXX:2:2303:10982:64672#/1"
 
 int LiBiCount::main(int argc, char **argv)
 {
@@ -217,6 +217,11 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 
 	// retrieve 'metadata' from BAM files.
 	references = reader.GetReferenceData();
+	for(auto & i : references)
+	{
+		if (strnicmp(i.RefName.c_str(),"chr",3) == 0)
+			i.RefName = i.RefName.substr(3);
+	}
 
 	initClock();
 
@@ -758,41 +763,49 @@ bool LiBiCount::processNameOrderedBamData()
 
 		if (AReadIsMapped(ba[0]))
 		{
-			for (size_t i = 0;i < Nreads;i++)
+			if ((Nreads == 1) && (!ba[0].IsPaired()))
 			{
-				if (!used[i])
+				addRead(regionLists(readData(move(ba[0])),name),genomeDef);
+				incBamCounter();
+			}
+			else
+			{
+				for (size_t i = 0;i < Nreads;i++)
 				{
-					regionLists regions(readData(move(ba[i])),name);
-					for (size_t j = i+1;j < Nreads;j++)
-					{
-						if (!used[j])
-						{
-							if ((ba[i].IsFirstMate() == ba[j].IsFirstMate())
-								|| (ba[i].IsMapped() != ba[j].IsMateMapped())
-								|| (ba[i].IsMateMapped() != ba[j].IsMapped()))
-								continue;
-
-							if (!(ba[i].IsMapped() && ba[j].IsMapped())  ||
-									
-								((ba[i].RefID == ba[j].MateRefID)
-								&& (ba[i].MateRefID == ba[j].RefID)
-								&& (ba[i].Position == ba[j].MatePosition)
-								&& (ba[i].MatePosition == ba[j].Position)
-								))
-							{
-								used[i] = true;
-								used[j] = true;		
-								regions.combine(move(ba[j]));
-								addRead(regions,genomeDef);
-								incBamCounter();
-								break;
-							}
-						}
-					}
 					if (!used[i])
 					{
-						addRead(regions,genomeDef);
-						incBamCounter();
+						regionLists regions(readData(move(ba[i])),name);
+						for (size_t j = i+1;j < Nreads;j++)
+						{
+							if (!used[j])
+							{
+								if ((ba[i].IsFirstMate() == ba[j].IsFirstMate())
+									|| (ba[i].IsMapped() != ba[j].IsMateMapped())
+									|| (ba[i].IsMateMapped() != ba[j].IsMapped()))
+									continue;
+
+								if (!(ba[i].IsMapped() && ba[j].IsMapped())  ||
+
+									((ba[i].RefID == ba[j].MateRefID)
+									&& (ba[i].MateRefID == ba[j].RefID)
+									&& (ba[i].Position == ba[j].MatePosition)
+									&& (ba[i].MatePosition == ba[j].Position)
+									))
+								{
+									used[i] = true;
+									used[j] = true;		
+									regions.combine(move(ba[j]));
+									addRead(regions,genomeDef);
+									incBamCounter();
+									break;
+								}
+							}
+						}
+						if (!used[i])
+						{
+							addRead(regions,genomeDef);
+							incBamCounter();
+						}
 					}
 				}
 			}
