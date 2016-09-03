@@ -2,9 +2,12 @@
 
 #ifdef _WIN32
 #include <crtdbg.h>
+#include <direct.h>
+#else
+#include <sys/stat.h>
+#define mkdir(A) mkdir(A,S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH)
 #endif
 
-#include <direct.h>
 #include "libCommon.h"
 #include "LiBiCount.h"
 #include "parser.h"
