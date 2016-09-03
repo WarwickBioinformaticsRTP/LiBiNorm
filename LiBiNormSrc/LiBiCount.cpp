@@ -197,17 +197,20 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 
 	if (!tempDirectory)
 	{
-		tempDirectory = getenv("TEMP");
+		const char * p = getenv("TEMP");
+		if (p == 0) 
+		   p = getenv("TMPDIR");
 
-		if (!tempDirectory)
-			exitFail("Cannot find a location for temporary files.  Try using the -c option for the count files"); 
+		if (p == 0)
+			exitFail("Unable to identify temporary directory from environment variable, Try using the -c option for the count files instead");  	
 
+		tempDirectory = p;
+				
 		tempDirectory += stringEx("/LiBiNorm_temp_",rand(),rand());
+
+		cerr << "temp Directory = " << tempDirectory << endl;
+
 	}
-
-	mkdir(tempDirectory.c_str());
-	tempDirectory += "/";
-
 
 	// retrieve 'metadata' from BAM files.
 	references = reader.GetReferenceData();
@@ -232,7 +235,13 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 	if (nameOrder)
 		processNameOrderedBamData();
 	else
+	{
+		//Only need temporary directory for caching files
+		// if the data are position ordered
+		mkdir(tempDirectory.c_str());
+		tempDirectory += "/";
 		processPositionOrderedBamData();
+	}
 
 	if(!outputGeneCounts(countsFilename))
 		exitFail("Unable to output counts to :",countsFilename);
@@ -243,6 +252,10 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 	string test;
 	_DBG(cin >> test);
 //	cin >> test;
+
+	if (!nameOrder)
+		rmdir(tempDirectory.c_str());
+
 
 	return EXIT_SUCCESS;
 }
@@ -1004,7 +1017,6 @@ void LiBiCount::processCachedReads(size_t cacheFileCount)
 	
 	//	Closes all of the files and then deletes them
 	cacheReads.clear();
-	rmdir(tempDirectory.c_str());
 }
 
 
