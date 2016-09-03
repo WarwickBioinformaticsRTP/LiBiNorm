@@ -4,6 +4,7 @@
 #include <crtdbg.h>
 #endif
 
+#include <direct.h>
 #include "libCommon.h"
 #include "LiBiCount.h"
 #include "parser.h"
@@ -25,12 +26,12 @@ using namespace std;
 
 int LiBiCount::main(int argc, char **argv)
 {
-	std::string test;
 
 	stringEx bamFileName,gtfFileName,outputFilename,
-		id_attribute = "gene_name";
+		id_attribute = "gene_id";
 
 	setEx<string> feature_type;
+	bool featureAdded = false;
 
 	reverseStrand = false;
 	useStrand = true;
@@ -46,28 +47,73 @@ int LiBiCount::main(int argc, char **argv)
 		printf("Error: parameter wrong!\n");
 		return EXIT_FAILURE;
 	}
-	else if(argc == 1)
+	else if ((argc == 1) || ((argc == 2) && ((strcmp(argv[1],"-h") ==0) || (strcmp(argv[1],"--help")==0))))
 	{
-		printf("/* ----------------------------- */\n");
-		printf("     LiBiNorm:    RNA-seq library bias normalisation   \n");
+printf("Usage: LiBiNorm [options] alignment_file gff_file\n");
+printf(" based on htseq-count\n");
+printf("This program takes an alignment file in SAM/BAM format and a feature file in\n");
+printf("GFF format and calculates for each feature the number of reads mapping to it.\n");
+printf("See http://www-huber.embl.de/users/anders/HTSeq/doc/count.html for details.\n");
+printf("\n");
+printf("Options:\n");
+printf("  -h, --help            show this help message and exit\n");
+printf("  -r ORDER, --order=ORDER\n");
+printf("                        'pos' or 'name'. Sorting order of <alignment_file>\n");
+printf("                        (default: name). Paired-end sequencing data must be\n");
+printf("                        sorted either by position or by read name, and the\n");
+printf("                        sorting order must be specified. Ignored for single-\n");
+printf("                        end data.\n");
+printf("  -s STRANDED, --stranded=STRANDED\n");
+printf("                        whether the data is from a strand-specific assay.\n");
+printf("                        Specify 'yes', 'no', or 'reverse' (default: yes).\n");
+printf("                        'reverse' means 'yes' with reversed strand\n");
+printf("                        interpretation\n");
+printf("  -a MINAQUAL, --minaqual=MINAQUAL\n");
+printf("                        skip all reads with alignment quality lower than the\n");
+printf("                        given minimum value (default: 10)\n");
+printf("  -t FEATURETYPE, --type=FEATURETYPE\n");
+printf("                        feature type (3rd column in GFF file) to be used, all\n");
+printf("                        features of other type are ignored (default, suitable\n");
+printf("                        for Ensembl GTF files: exon)\n");
+printf("  -i IDATTR, --idattr=IDATTR\n");
+printf("                        GFF attribute to be used as feature ID (default,\n");
+printf("                        suitable for Ensembl GTF files: gene_id)\n");
+printf("  -m MODE, --mode=MODE  mode to handle reads overlapping more than one feature\n");
+printf("                        (choices: union, intersection-strict, intersection-\n");
+printf("                        nonempty; default: union)\n");
+printf("  -c COUNTS, --counts=COUNT\n");
+printf("                        Name of output file. default: writes to stdout)\n");
+//printf("  -o SAMOUT, --samout=SAMOUT\n");
+//printf("                        write out all SAM alignment records into an output SAM\n");
+//printf("                        file called SAMOUT, annotating each line with its\n");
+//printf("                        feature assignment (as an optional field with tag\n");
+//printf("                        'XF')\n");
+printf("  -q, --quiet           suppress progress report\n");
+printf("\n");
+printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 		return EXIT_SUCCESS;
 	}
 
 	int ni = 1;
-	while(ni < argc)
+
+	if (argc < 3)
+		exitFail("Insufficient arguments");
+
+	while(ni < argc-2)
 	{
-		if(strcmp(argv[ni], "-t") == 0)
+		bool opt2 = false;
+/*		if(strcmp(argv[ni], "-t") == 0)
 		{
 			fileCompare(argc - 1,&argv[1]);
 			exitSuccess();
 		}
-		else if((strcmp(argv[ni], "-h") == 0) || (strcmp(argv[ni], "--cache") == 0))
+		else*/ if((strcmp(argv[ni], "-h") == 0) || (opt2 = (strncmp(argv[ni], "--cache=",8) == 0)))
 		{
-			maxCacheSize = atoi(argv[++ni]);
+			maxCacheSize = atoi(opt2?argv[ni]+8:argv[++ni]);
 		}
-		else if ((strcmp(argv[ni], "-s") == 0) || (strcmp(argv[ni], "--stranded") == 0))
+		else if ((strcmp(argv[ni], "-s") == 0) || (opt2 = (strncmp(argv[ni], "--stranded=",11) == 0)))
 		{
-			string strand(argv[++ni]);
+			string strand(opt2?argv[ni]+11:argv[++ni]);
 			if (strand == "yes")
 			{}
 			else if (strand == "reverse")
@@ -77,29 +123,21 @@ int LiBiCount::main(int argc, char **argv)
 			else
 				exitFail("Invalid strand option: ",strand);
 		}
-		else if(strcmp(argv[ni], "-a") == 0)
+		else if ((strcmp(argv[ni], "-a") == 0) || (opt2=(strncmp(argv[ni], "--minaqual=",11) == 0)))
 		{
-			minqual = atoi(argv[++ni]);
+			minqual = atoi(opt2?argv[ni]+11:argv[++ni]);
 		}
-		else if(strcmp(argv[ni], "-f") == 0)
+		else if((strcmp(argv[ni], "-f") == 0) || (opt2=(strncmp(argv[ni], "--type=",7) == 0)))
 		{
-			feature_type.emplace(argv[++ni]);
+			feature_type.emplace(opt2?argv[ni]+7:argv[++ni]);
 		}
-		else if(strcmp(argv[ni], "-i") == 0)
+		else if((strcmp(argv[ni], "-i") == 0) || (opt2=(strncmp(argv[ni], "--idattr=",9) == 0))) 
 		{
-			id_attribute = argv[++ni];
+			id_attribute = opt2?argv[ni]+9:argv[++ni];
 		}
-		else if(strcmp(argv[ni], "-b") == 0)
+		else if((strcmp(argv[ni], "-r") == 0)|| (opt2=(strncmp(argv[ni], "--order=",8) == 0)))
 		{
-			bamFileName = argv[++ni];
-		}
-		else if(strcmp(argv[ni], "-g") == 0)
-		{
-			gtfFileName = argv[++ni];
-		}
-		else if(strcmp(argv[ni], "-r") == 0)
-		{
-			string mode(argv[++ni]);
+			string mode(opt2?argv[ni]+8:argv[++ni]);
 			if (mode == "pos")
 				nameOrder = false;
 			else if (mode == "name")
@@ -107,9 +145,9 @@ int LiBiCount::main(int argc, char **argv)
 			else
 				exitFail("Unknown 'order':",mode,".  Should be pos or name");
 		}
-		else if((strcmp(argv[ni], "-m") == 0) || (strcmp(argv[ni], "--mode") == 0))
+		else if ((strcmp(argv[ni], "-m") == 0) || (opt2 = (strncmp(argv[ni], "--mode=",7) == 0)))
 		{
-			string mode = argv[++ni];
+			string mode = opt2?argv[ni]+7:argv[++ni];
 			if (mode == "union")
 				countMode = intersect_union;
 			else if (mode == "intersection-strict")
@@ -125,13 +163,14 @@ int LiBiCount::main(int argc, char **argv)
 		{
 			verbose = false;
 		}
-		else if((strcmp(argv[ni], "-o") == 0) || (strcmp(argv[ni], "--samout") == 0))
+/*		else if((strcmp(argv[ni], "-o") == 0) || (strcmp(argv[ni], "--samout") == 0))
 		{
 			outputFilename = argv[++ni];
-		}
-		else if((strcmp(argv[ni], "-c") == 0) || (strcmp(argv[ni], "--counts") == 0))
+		}*/
+		else if((strcmp(argv[ni], "-c") == 0) || (opt2 = (strncmp(argv[ni], "--counts=",9) == 0)))
 		{
-			countsFilename = argv[++ni];
+			countsFilename = opt2?argv[++ni]+9:argv[++ni];
+			tempDirectory = countsFilename.replaceSuffix("_tempFiles");
 		}
 		else
 		{
@@ -140,17 +179,32 @@ int LiBiCount::main(int argc, char **argv)
 		ni++;
 	}
 
+	bamFileName = argv[argc-2];
+	gtfFileName = argv[argc-1];
+
+
 	if (feature_type.size() == 0)
 		feature_type.emplace("exon");
-
-	if (!countsFilename)
-		exitFail("No count filename specified.");
 
 	if (outputFilename && !outputFile.open(outputFilename))
 		exitFail("Unable to open output file: ",outputFilename);
 
 	if ( !reader.Open(bamFileName) ) 
 		exitFail("Could not open input BAM files: ",bamFileName);
+
+	if (!tempDirectory)
+	{
+		tempDirectory = getenv("TEMP");
+
+		if (!tempDirectory)
+			exitFail("Cannot find a location for temporary files.  Try using the -c option for the count files"); 
+
+		tempDirectory += stringEx("/LiBiNorm_temp_",rand(),rand());
+	}
+
+	mkdir(tempDirectory.c_str());
+	tempDirectory += "/";
+
 
 	// retrieve 'metadata' from BAM files.
 	references = reader.GetReferenceData();
@@ -183,6 +237,7 @@ int LiBiCount::main(int argc, char **argv)
 	if (verbose)
 		elapsedTime();
 
+	string test;
 	_DBG(cin >> test);
 //	cin >> test;
 
@@ -816,7 +871,7 @@ bool LiBiCount::processPositionOrderedBamData()
 		{
 			if (verbose)
 				cerr << "Outputting cache data " << cacheCounter+1 << endl;
-			readCache.save(countsFilename.replaceSuffix(".temp.",cacheCounter++));
+			readCache.save(stringEx(tempDirectory,"file",cacheCounter++));
 		}
 
 		OK = reader.GetNextAlignment(ba,false);
@@ -849,7 +904,7 @@ bool LiBiCount::processPositionOrderedBamData()
 	{
 		//	We have cached some records to disk, so the internal cache must be flushed as well so that all of the cached records can be
 		//	processed as an ensemble
-		readCache.save(countsFilename.replaceSuffix(".temp.",cacheCounter++));
+		readCache.save(stringEx(tempDirectory,"file",cacheCounter++));
 		processCachedReads(cacheCounter);
 	}
 
@@ -893,7 +948,7 @@ void LiBiCount::processCachedReads(size_t cacheFileCount)
 
 	for (int i = 0;i < cacheFileCount;i++)
 	{
-		cacheReads[i].open(countsFilename.replaceSuffix(".temp.",i));
+		cacheReads[i].open(stringEx(tempDirectory,"file",i));
 		reads[cacheReads[i].name][i].emplace_back(cacheReads[i]);
 		for (int j = 0;(j < 10) && (cacheReads[i].readNext());j++)
 		{
@@ -927,28 +982,18 @@ void LiBiCount::processCachedReads(size_t cacheFileCount)
 				"_",-atoi(nameParts[1].c_str()),"_",(nameParts[2] == "F")?"S":"F");
 #endif
 
+			regionLists rl(i1->second.begin()->second[0],nameParts[0]);
+
 			readCache::iterator i2 = reads.find(name);
-
-			if (i2 == reads.end())
-			{
-				//	This is a singleton
-				addRead(regionLists(i1->second.begin()->second[0],nameParts[0]),genomeDef);
-
-				reads.replace(i1,cacheReads);
-			}
-			else
+			if (i2 != reads.end())
 			{
 				//	We have the two ends of a paired end read.  Combine them and calculate counts
-				regionLists rl(i1->second.begin()->second[0],nameParts[0]);
 				rl.combine(i2->second.begin()->second[0]);
-
-				addRead(rl,genomeDef);
-
-				reads.replace(i1,cacheReads);
 				reads.replace(i2,cacheReads);
 			}
 
-			//	Erase the first read and get the next one from the associated cache files
+			addRead(rl,genomeDef);
+			reads.replace(i1,cacheReads);
 
 			incBamCounter(0,++cacheReadCounter);
 		}
@@ -956,6 +1001,7 @@ void LiBiCount::processCachedReads(size_t cacheFileCount)
 	
 	//	Closes all of the files and then deletes them
 	cacheReads.clear();
+	rmdir(tempDirectory.c_str());
 }
 
 
