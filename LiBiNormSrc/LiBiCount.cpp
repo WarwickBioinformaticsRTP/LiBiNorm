@@ -2,8 +2,12 @@
 
 #ifdef _WIN32
 #include <crtdbg.h>
+//	for rmdir and mkdir
 #include <direct.h>
 #else
+//	For rmdir
+#include <unistd.h>	
+//	for mkdir
 #include <sys/stat.h>
 #define mkdir(A) mkdir(A,S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH)
 #endif
@@ -205,11 +209,10 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 			exitFail("Unable to identify temporary directory from environment variable, Try using the -c option for the count files instead");  	
 
 		tempDirectory = p;
-				
 		tempDirectory += stringEx("/LiBiNorm_temp_",rand(),rand());
 
-		cerr << "temp Directory = " << tempDirectory << endl;
-
+		if (verbose)
+			cerr << "temp Directory = " << tempDirectory << endl;
 	}
 
 	// retrieve 'metadata' from BAM files.
