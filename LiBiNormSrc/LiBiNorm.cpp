@@ -11,6 +11,7 @@
 #include "LogLiklihoods.h"
 #include "LiBiNorm.h"
 #include "LiBiCount.h"
+#include "LiBiDedup.h"
 
 using namespace std;
 
@@ -25,10 +26,30 @@ int main(int argc, char **argv)
 //	LiBiNorm libiN;
 //	libiN.main(argc,argv);
 
+	if (argc == 1)
+	{
+		printf("Usage: LiBiNorm <command> [options]\n");	
+		printf("Commands:\n");	
+		printf("     count            htseq-count replacement\n");
+		printf("     dedup            removes duplicates\n");
+	}
+	else if (argc > 1)
+	{
+		string command(argv[1]);
+		if (command == "count")
+		{
+			LiBiCount libiC;
+			libiC.main(argc-1,argv+1);
+		}
+		else if (command == "dedup")
+		{
+			LiBiDedup libiD;
+			libiD.main(argc-1,argv+1);
+		}
+		else
+			exitFail("Invalid commmand:",command);
+	}
 
-	LiBiCount libiC;
-
-	libiC.main(argc,argv);
 
 
 }

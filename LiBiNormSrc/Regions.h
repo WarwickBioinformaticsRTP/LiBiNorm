@@ -48,6 +48,21 @@ class readData
 			else
 				strand = '+';
 		};
+		readData(const BamTools::BamAlignment & ba):
+			refId(ba.RefID),
+			position(ba.Position+1),
+			qual(ba.MapQuality),
+			cigar(ba.CigarData)
+		{
+			//	This simulates line 155 in count py.  If there is no optional NH field in the first read
+			//	then the pythin throws an error, which we simulate by setting NH to zero
+			if (!ba.GetTag("NH",NH))
+				NH = ba.IsFirstMate()?0:-1;
+			if (ba.IsReverseStrand() == ba.IsFirstMate())
+				strand = '-';
+			else
+				strand = '+';
+		};
 };
 
 //	Used for reading back cached read information from cache files

@@ -134,7 +134,7 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 		{
 			minqual = atoi(opt2?argv[ni]+11:argv[++ni]);
 		}
-		else if((strcmp(argv[ni], "-f") == 0) || (opt2=(strncmp(argv[ni], "--type=",7) == 0)))
+		else if((strcmp(argv[ni], "-t") == 0) || (opt2=(strncmp(argv[ni], "--type=",7) == 0)))
 		{
 			feature_type.emplace(opt2?argv[ni]+7:argv[++ni]);
 		}
@@ -219,7 +219,7 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 	references = reader.GetReferenceData();
 	for(auto & i : references)
 	{
-		if (strnicmp(i.RefName.c_str(),"chr",3) == 0)
+		if (strncasecmp(i.RefName.c_str(),"chr",3) == 0)
 			i.RefName = i.RefName.substr(3);
 	}
 

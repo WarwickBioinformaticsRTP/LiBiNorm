@@ -1,13 +1,13 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LocalDebuggerCommandArguments>-s no -f transcript -c Sorafenib.single.txt Sorafenib_5uM.clean.local.sort.single.cut.bam Homo_sapiens.GRCh38.85.cut.gtf</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>dedup -r "Y:\PeterStrong\file2\Sorafenib_5uM.clean.local.sort.bam"</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
     <LocalDebuggerDebuggerType>NativeOnly</LocalDebuggerDebuggerType>
     <LocalDebuggerWorkingDirectory>Y:\PeterStrong</LocalDebuggerWorkingDirectory>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LocalDebuggerCommandArguments>-a 10 -s reverse -i gene_name -r name -m intersection-nonempty  -c  counts\nonempty_short.counts.txt aligned\WTCHG_203748_01_short.bam gtfs\Homo_sapiens.GRCh37.75.cut.gtf </LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>dedup -r "Y:\PeterStrong\file2\Sorafenib_5uM.clean.local.sort.bam"</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
     <LocalDebuggerWorkingDirectory>Y:\LiBiNorm\TestRegions\WTCHG_203748_01_short</LocalDebuggerWorkingDirectory>
     <LocalDebuggerDebuggerType>NativeOnly</LocalDebuggerDebuggerType>
