@@ -19,12 +19,9 @@ int main(int argc, char **argv)
 {
 
 #ifdef _WIN32
-	_CrtSetDbgFlag ( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );
-#endif
 
-	//	New data management 100 runs 54 secs, no datavec memory management 50.4, ie leave it to the OS to sort out
-//	LiBiNorm libiN;
-//	libiN.main(argc,argv);
+	_DBG( _CrtSetDbgFlag ( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF ));
+#endif
 
 	if (argc == 1)
 	{
@@ -39,19 +36,17 @@ int main(int argc, char **argv)
 		if (command == "count")
 		{
 			LiBiCount libiC;
-			libiC.main(argc-1,argv+1);
+			return libiC.main(argc-1,argv+1);
 		}
 		else if (command == "dedup")
 		{
 			LiBiDedup libiD;
-			libiD.main(argc-1,argv+1);
+			return libiD.main(argc-1,argv+1);
 		}
 		else
 			exitFail("Invalid commmand:",command);
 	}
-
-
-
+	return EXIT_SUCCESS;
 }
 
 //#ifdef XXXX

@@ -199,20 +199,28 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 	if ( !reader.Open(bamFileName) ) 
 		exitFail("Could not open input BAM files: ",bamFileName);
 
-	if (!tempDirectory)
+	if (!tempDirectory && !nameOrder)
 	{
 		const char * p = getenv("TEMP");
 		if (p == 0) 
 		   p = getenv("TMPDIR");
 
 		if (p == 0)
-			exitFail("Unable to identify temporary directory from environment variable, Try using the -c option for the count files instead");  	
+			tempDirectory = "/tmp";
+		else
+			tempDirectory = p;
 
-		tempDirectory = p;
 		tempDirectory += stringEx("/LiBiNorm_temp_",rand(),rand());
 
 		if (verbose)
 			cerr << "temp Directory = " << tempDirectory << endl;
+
+		//Only need temporary directory for caching files
+		// if the data are position ordered
+		if (mkdir(tempDirectory.c_str()) != 0)
+			exitFail("Unable create temporary directory ",tempDirectory,"\n Try using the -c option for the count files instead");  	
+
+		tempDirectory += "/";
 	}
 
 	// retrieve 'metadata' from BAM files.
@@ -243,13 +251,7 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 	if (nameOrder)
 		processNameOrderedBamData();
 	else
-	{
-		//Only need temporary directory for caching files
-		// if the data are position ordered
-		mkdir(tempDirectory.c_str());
-		tempDirectory += "/";
 		processPositionOrderedBamData();
-	}
 
 	if(!outputGeneCounts(countsFilename))
 		exitFail("Unable to output counts to :",countsFilename);
@@ -263,7 +265,6 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 
 	if (!nameOrder)
 		rmdir(tempDirectory.c_str());
-
 
 	return EXIT_SUCCESS;
 }
