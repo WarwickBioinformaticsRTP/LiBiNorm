@@ -9,7 +9,8 @@
 #include <unistd.h>	
 //	for mkdir
 #include <sys/stat.h>
-#define mkdir(A) mkdir(A,S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH)
+//#define mkdir(A) mkdir(A,S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH)
+#define mkdir(A) mkdir(A,S_IRWXU )
 #endif
 
 #include "libCommon.h"
@@ -206,11 +207,16 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 		   p = getenv("TMPDIR");
 
 		if (p == 0)
-			tempDirectory = "/tmp";
+			tempDirectory = "/tmp/";
 		else
 			tempDirectory = p;
 
-		tempDirectory += stringEx("/LiBiNorm_temp_",rand(),rand());
+		srand (time(NULL));
+		if ((tempDirectory[tempDirectory.size()-1] != '/') ||
+			(tempDirectory[tempDirectory.size()-1] != '\\'))
+			tempDirectory += "/";
+		
+		tempDirectory += stringEx("LiBiNorm_temp_",rand(),rand());
 
 		if (verbose)
 			cerr << "temp Directory = " << tempDirectory << endl;
