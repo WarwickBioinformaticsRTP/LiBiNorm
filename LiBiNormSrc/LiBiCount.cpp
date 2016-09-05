@@ -212,10 +212,12 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 			tempDirectory = p;
 
 		srand (time(NULL));
-		if ((tempDirectory[tempDirectory.size()-1] != '/') ||
+		if ((tempDirectory[tempDirectory.size()-1] != '/') &&
 			(tempDirectory[tempDirectory.size()-1] != '\\'))
 			tempDirectory += "/";
 		
+		srand( (unsigned)time( NULL ) );
+
 		tempDirectory += stringEx("LiBiNorm_temp_",rand(),rand());
 
 		if (verbose)
