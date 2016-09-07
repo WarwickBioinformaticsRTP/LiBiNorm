@@ -1,10 +1,21 @@
-#include "MakeFastq.h"
 
+#include "MakeFastq.h"
 #include "fastaFile.h"
 
+#ifdef _DEBUG
+#define BAMCACHESIZE 100
+#else
+#define BAMCACHESIZE 10000
+#endif
 
-bamRead::bamRead(const BamAlignment & ba) : name(ba.Name) 
+bamRead::bamRead(const BamAlignment & ba) 
 {
+	operator = (ba);
+}
+
+bamRead & bamRead::operator = (const BamAlignment & ba)
+{
+	name = ba.Name;
 	if (ba.IsMapped() && ba.IsReverseStrand())
 	{
 		readSeq = sequence(ba.QueryBases).complement();
@@ -15,11 +26,18 @@ bamRead::bamRead(const BamAlignment & ba) : name(ba.Name)
 		readSeq = ba.QueryBases;
 		qualData = ba.Qualities;
 	}
+	return This;
 }
 
 void bamRead::output(FILE * f)
 {
 	fprintf(f,"@%s\n%s\n+\n%s\n",name.c_str(),readSeq.c_str(),qualData.c_str());
+}
+
+void bamReadCache::clear()
+{
+	for (auto & i: This)
+		i.name.clear();
 }
 
 
@@ -31,7 +49,11 @@ MakeFastq::MakeFastq(void)
 int MakeFastq::main(int argc, char **argv)
 {
 
-	int size=3000000,mitoRate=1000,unmappedRate=1000,mappedRate=1000;
+	int size=1500000,
+		
+		mitoRate=1000,unmappedRate=1000,mappedRate=1000,
+
+		overamplified = -1;
 
 	stringEx bamFileName,outputFileRoot;
 
@@ -44,8 +66,9 @@ int MakeFastq::main(int argc, char **argv)
 	{
 printf("Usage: LiBiNorm makefastq [options] alignment_file\n");
 printf("Options:\n");
-printf("  -h, --help            show this help message and exit\n");
-printf("  -s N, --size=N        size of fastq file (1000)\n");
+printf("  -h, --help				show this help message and exit\n");
+printf("  -s N, --size=N			size of fastq file (1000)\n");
+printf("  -v N, --overamplified=N	degree of overamplification\n");
 printf("\n");
 printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 		return EXIT_SUCCESS;
@@ -81,6 +104,10 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 		else if((strcmp(argv[ni], "-m") == 0) || (opt2 = (strncmp(argv[ni], "--mapped=",9) == 0)))
 		{
 			mappedRate = atoi(opt2?argv[ni]+1:argv[++ni]);
+		}
+		else if((strcmp(argv[ni], "-v") == 0) || (opt2 = (strncmp(argv[ni], "--overamplified=",9) == 0)))
+		{
+			overamplified = atoi(opt2?argv[ni]+1:argv[++ni]);
 		}
 		else
 		{
@@ -122,8 +149,11 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 
 	bool OK = reader.GetNextAlignmentCore(ba);
 	
+	size_t buffIndex = 0;
 
 	int count = 0;
+
+	vector<bamReadCache> oaBuffer(2,BAMCACHESIZE);
 	while ((OK) && (count < size))
 	{
 
@@ -139,39 +169,76 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 
 		if (useThis)
 		{
-			bamRead read(move(ba));
-
-			auto r = rand();
-			auto r2 = (r * 1000)/RAND_MAX;
-
-			bool output = false;
-			if (!ba.IsMapped())
+			if (overamplified > 1)
 			{
-				if (r2 < unmappedRate)
-					output = true;
-			}
-			else if (ba.RefID == mitoRef)
-			{
-				if (r2 < mitoRate)
-					output = true;
+				ba.BuildCharData();
+				if (ba.IsFirstMate())
+					oaBuffer[0][buffIndex] = ba;
+				else
+					oaBuffer[1][buffIndex] = ba;
+
+				if (oaBuffer[0][buffIndex].name && oaBuffer[1][buffIndex].name)
+				{
+					if (oaBuffer[0][buffIndex].name == oaBuffer[1][buffIndex].name)
+						buffIndex++;
+				}
+
+				if (buffIndex >= BAMCACHESIZE)
+				{
+					size_t i = 0;
+					while ((i++ < (BAMCACHESIZE * overamplified)) && (count < size))
+					{
+						if ((++count % 10000) == 0)
+							cerr << "Record " << count << endl;
+						size_t pos = ((long)rand() * (BAMCACHESIZE-1))/RAND_MAX;
+						oaBuffer[0][pos].output(f1out);
+						oaBuffer[1][pos].output(f2out);
+					}
+					oaBuffer[0].clear();
+					oaBuffer[1].clear();
+					buffIndex = 0;
+				}
+
 			}
 			else
 			{
-				if (r2 < mappedRate)
-					output = true;
-			} 
 
-			if (output)
-			{
-				if ((++count % 10000) == 0)
-					cerr << "Record " << count << endl;
+				bamRead read(move(ba));
 
-				ba.BuildCharData();
+				auto r = rand();
+				auto r2 = (r * 1000.0)/RAND_MAX;
 
-				if (ba.IsFirstMate())
-					read.output(f1out);
+				bool output = false;
+				if (!ba.IsMapped())
+				{
+					if (r2 < unmappedRate)
+						output = true;
+				}
+				else if (ba.RefID == mitoRef)
+				{
+					if (r2 < mitoRate)
+						output = true;
+				}
 				else
-					read.output(f2out);
+				{
+					if (r2 < mappedRate)
+						output = true;
+				} 
+
+				if (output)
+				{
+
+					ba.BuildCharData();
+
+					if (ba.IsFirstMate())
+					{
+						if ((++count % 10000) == 0)
+							cerr << "Record " << count << endl;
+						read.output(f1out);
+					}
+					else
+						read.output(f2out);
+				}
 			}
 		}
 
