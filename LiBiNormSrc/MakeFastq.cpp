@@ -36,12 +36,12 @@ void bamRead::setName(const BamAlignment & ba)
 
 void bamRead::addSNP(double errorRate)
 {
-	double randVal = (double)rand()/(RAND_MAX+1);
+	double randVal = (double)rand()/((double)RAND_MAX+1);
 	if (randVal > (errorRate*readSeq.size()))
 		return;
 
 	size_t p1 = randVal * readSeq.size();
-	size_t p2 = (double)rand()/(RAND_MAX+1) * readSeq.size();
+	size_t p2 = (double)rand()/((double)RAND_MAX+1) * readSeq.size();
 
 	readSeq[p1] = readSeq[p2];
 
