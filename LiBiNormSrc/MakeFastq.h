@@ -36,6 +36,7 @@ class MakeFastq
 	BamAlignment ba;
 
 	bool getNextAlignment();
+	bool getNextAlignmentCore();
 
 public:
 	MakeFastq();

@@ -64,6 +64,18 @@ MakeFastq::MakeFastq()
 {
 }
 
+bool MakeFastq::getNextAlignmentCore()
+{
+	bool OK = reader.GetNextAlignmentCore(ba);
+	if (!OK)
+	{
+		cerr << "Rewinding" << endl;
+		reader.Rewind();
+		OK = reader.GetNextAlignmentCore(ba);
+	}
+	return OK;
+}
+
 bool MakeFastq::getNextAlignment()
 {
 	bool OK = reader.GetNextAlignment(ba);
@@ -85,6 +97,8 @@ int MakeFastq::main(int argc, char **argv)
 		mitoRate=1000,unmappedRate=1000,mappedRate=1000,
 
 		overamplified = -1;
+
+	size_t start = 0;
 
 	stringEx bamFileName,outputFileRoot;
 
@@ -116,13 +130,17 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 	{
 		bool opt2 = false;
 
-		if((strcmp(argv[ni], "-s") == 0) || (opt2 = (strncmp(argv[ni], "--size=",7) == 0)))
+		if((strcmp(argv[ni], "-l") == 0) || (opt2 = (strncmp(argv[ni], "--length=",9) == 0)))
 		{
-			size = atoi(opt2?argv[ni]+7:argv[++ni]);
+			size = atoi(opt2?argv[ni]+9:argv[++ni]);
 		}
 		else if((strcmp(argv[ni], "-o") == 0) || (opt2 = (strncmp(argv[ni], "--output=",9) == 0)))
 		{
 			outputFileRoot = opt2?argv[ni]+9:argv[++ni];
+		}
+		else if((strcmp(argv[ni], "-s") == 0) || (opt2 = (strncmp(argv[ni], "--start=",8) == 0)))
+		{
+			start = atoi(opt2?argv[ni]+8:argv[++ni]);
 		}
 		else if((strcmp(argv[ni], "-i") == 0) || (opt2 = (strncmp(argv[ni], "--mito=",7) == 0)))
 		{
@@ -174,7 +192,7 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 	if (mitoRef == -1)
 		exitFail("No mitochondrial gene found");
 
-	bool OK = reader.GetNextAlignmentCore(ba);
+	bool OK = getNextAlignment();
 	
 	size_t buffIndex = 0;
 
@@ -184,6 +202,15 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 
 	vector<bamReadCache> oaBuffer(2,BAMCACHESIZE);
 	size_t overAmplifyRounds = 0;
+
+	cerr << "Skipping reads" << endl;
+	for (size_t i = 0;i < start;i++)
+		OK = getNextAlignmentCore();
+
+	ba.BuildCharData();
+
+	cerr << "Creating fastq files" << endl;
+
 	while ((OK) && (count < size))
 	{
 
