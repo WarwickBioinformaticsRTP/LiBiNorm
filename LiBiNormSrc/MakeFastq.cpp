@@ -5,7 +5,7 @@
 #ifdef _DEBUG
 #define BAMCACHESIZE 100
 #else
-#define BAMCACHESIZE 10000
+#define BAMCACHESIZE 50000
 #endif
 
 bamRead::bamRead(const BamAlignment & ba) 
@@ -29,6 +29,25 @@ bamRead & bamRead::operator = (const BamAlignment & ba)
 	return This;
 }
 
+void bamRead::setName(const BamAlignment & ba)
+{
+	name = ba.Name;
+}
+
+void bamRead::addSNP(double errorRate)
+{
+	double randVal = (double)rand()/(RAND_MAX+1);
+	if (randVal > (errorRate*readSeq.size()))
+		return;
+
+	size_t p1 = randVal * readSeq.size();
+	size_t p2 = (double)rand()/(RAND_MAX+1) * readSeq.size();
+
+	readSeq[p1] = readSeq[p2];
+
+}
+
+
 void bamRead::output(FILE * f)
 {
 	fprintf(f,"@%s\n%s\n+\n%s\n",name.c_str(),readSeq.c_str(),qualData.c_str());
@@ -41,8 +60,20 @@ void bamReadCache::clear()
 }
 
 
-MakeFastq::MakeFastq(void)
+MakeFastq::MakeFastq()
 {
+}
+
+bool MakeFastq::getNextAlignment()
+{
+	bool OK = reader.GetNextAlignment(ba);
+	if (!OK)
+	{
+		cerr << "Rewinding" << endl;
+		reader.Rewind();
+		OK = reader.GetNextAlignment(ba);
+	}
+	return OK;
 }
 
 
@@ -124,8 +155,6 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 	f1out = fopen((outputFileRoot + "_1.fastq").c_str(),"wb");
 	f2out = fopen((outputFileRoot + "_2.fastq").c_str(),"wb");
 
-	BamReader reader;
-
 	if ( !reader.Open(bamFileName) ) 
 		exitFail("Could not open input BAM file: ",bamFileName);
 
@@ -145,15 +174,16 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 	if (mitoRef == -1)
 		exitFail("No mitochondrial gene found");
 
-	BamAlignment ba;
-
 	bool OK = reader.GetNextAlignmentCore(ba);
 	
 	size_t buffIndex = 0;
 
 	int count = 0;
 
+	srand(100);
+
 	vector<bamReadCache> oaBuffer(2,BAMCACHESIZE);
+	size_t overAmplifyRounds = 0;
 	while ((OK) && (count < size))
 	{
 
@@ -186,13 +216,45 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 				if (buffIndex >= BAMCACHESIZE)
 				{
 					size_t i = 0;
-					while ((i++ < (BAMCACHESIZE * overamplified)) && (count < size))
+
+					size_t amp = 1;
+					switch (overAmplifyRounds++ % 3)
+					{
+					case 0: amp = 2; break;
+					case 1: amp = overamplified/2; break;
+					case 2: amp = overamplified; break;
+					}
+
+
+					while ((i++ < (BAMCACHESIZE * amp)) && (count < size))
 					{
 						if ((++count % 10000) == 0)
 							cerr << "Record " << count << endl;
-						size_t pos = ((long)rand() * (BAMCACHESIZE-1))/RAND_MAX;
-						oaBuffer[0][pos].output(f1out);
-						oaBuffer[1][pos].output(f2out);
+
+						double SNPrate = 1.01/200;
+
+						size_t pos = ((double)rand() * (BAMCACHESIZE-1))/RAND_MAX;
+
+						OK = getNextAlignment();
+						NH = ba.GetTag("NH",NH);
+
+						while (!((NH <= 1) && ba.IsFirstMate()) && !((NH > 1) && ba.IsPrimaryAlignment() && ba.IsFirstMate()))
+						{
+							OK = getNextAlignment();
+							NH = ba.GetTag("NH",NH);
+						}
+
+
+						bamRead br1(oaBuffer[0][pos]);
+						br1.setName(ba);
+						br1.addSNP(SNPrate);
+						br1.output(f1out);
+
+						bamRead br2(oaBuffer[1][pos]);
+						br2.setName(ba);
+						br2.addSNP(SNPrate);
+						br2.output(f2out);
+
 					}
 					oaBuffer[0].clear();
 					oaBuffer[1].clear();
@@ -206,7 +268,7 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 				bamRead read(move(ba));
 
 				auto r = rand();
-				auto r2 = (r * 1000.0)/RAND_MAX;
+				auto r2 = ((double)r * 1000.0)/RAND_MAX;
 
 				bool output = false;
 				if (!ba.IsMapped())
@@ -242,13 +304,7 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 			}
 		}
 
-		OK = reader.GetNextAlignment(ba);
-		if (!OK)
-		{
-			cerr << "Rewinding" << endl;
-			reader.Rewind();
-			OK = reader.GetNextAlignment(ba);
-		}
+		OK = getNextAlignment();
 	}
 
 	fclose(f1out);
