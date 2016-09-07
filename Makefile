@@ -70,7 +70,7 @@ LIBPATH     = -L$(BAMTOOLSDIR)$(BUILD)
 
 LIBINORMSRC = LiBiNormSrc/LiBiNorm.cpp
 
-LIBINORMSRCEX = $(addprefix $(LIBINORMSRCDIR), LiBiDedup.cpp LiBiCount.cpp LogLiklihoods.cpp GtfFileEx.cpp transcriptData.cpp Regions.cpp) 
+LIBINORMSRCEX = $(addprefix $(LIBINORMSRCDIR), LiBiDedup.cpp LiBiCount.cpp LogLiklihoods.cpp GtfFileEx.cpp transcriptData.cpp Regions.cpp MakeFastq.cpp) 
 
 BIOLIBSRC = $(shell find $(BIOINFORMATICSLIBDIR) -name *.cpp)
 MCMCLIBSRC =  $(shell find $(MCMCLIBDIR) -name *.cpp)
@@ -153,6 +153,7 @@ $(BUILD)/LiBiNormSrc/LiBiNorm.o: ../bamtools/api/SamReadGroup.h
 $(BUILD)/LiBiNormSrc/LiBiNorm.o: ../bamtools/api/SamSequenceDictionary.h
 $(BUILD)/LiBiNormSrc/LiBiNorm.o: ../bamtools/api/SamSequence.h
 $(BUILD)/LiBiNormSrc/LiBiNorm.o: LiBiNormSrc/LiBiDedup.h
+$(BUILD)/LiBiNormSrc/LiBiNorm.o: LiBiNormSrc/MakeFastq.h
 $(BUILD)/mcmcLib/dataVec.o: mcmcLib/dataVec.h
 $(BUILD)/mcmcLib/mcmc.o: mcmcLib/mcmc.h mcmcLib/dataVec.h mcmcLib/params.h
 $(BUILD)/mcmcLib/mcmc.o: ../bioinformaticsLib/containerEx.h
@@ -257,6 +258,25 @@ $(BUILD)/LiBiNormSrc/Regions.o: ../bamtools/api/SamReadGroup.h
 $(BUILD)/LiBiNormSrc/Regions.o: ../bamtools/api/SamSequenceDictionary.h
 $(BUILD)/LiBiNormSrc/Regions.o: ../bamtools/api/SamSequence.h
 $(BUILD)/LiBiNormSrc/Regions.o: ../bioinformaticsLib/parser.h
+$(BUILD)/LiBiNormSrc/MakeFastq.o: LiBiNormSrc/MakeFastq.h
+$(BUILD)/LiBiNormSrc/MakeFastq.o: ../bamtools/api/BamReader.h
+$(BUILD)/LiBiNormSrc/MakeFastq.o: ../bamtools/api/api_global.h
+$(BUILD)/LiBiNormSrc/MakeFastq.o: ../bamtools/shared/bamtools_global.h
+$(BUILD)/LiBiNormSrc/MakeFastq.o: ../bamtools/api/BamAlignment.h
+$(BUILD)/LiBiNormSrc/MakeFastq.o: ../bamtools/api/BamAux.h
+$(BUILD)/LiBiNormSrc/MakeFastq.o: ../bamtools/api/BamConstants.h
+$(BUILD)/LiBiNormSrc/MakeFastq.o: ../bamtools/api/BamIndex.h
+$(BUILD)/LiBiNormSrc/MakeFastq.o: ../bamtools/api/SamHeader.h
+$(BUILD)/LiBiNormSrc/MakeFastq.o: ../bamtools/api/SamProgramChain.h
+$(BUILD)/LiBiNormSrc/MakeFastq.o: ../bamtools/api/SamProgram.h
+$(BUILD)/LiBiNormSrc/MakeFastq.o: ../bamtools/api/SamReadGroupDictionary.h
+$(BUILD)/LiBiNormSrc/MakeFastq.o: ../bamtools/api/SamReadGroup.h
+$(BUILD)/LiBiNormSrc/MakeFastq.o: ../bamtools/api/SamSequenceDictionary.h
+$(BUILD)/LiBiNormSrc/MakeFastq.o: ../bamtools/api/SamSequence.h
+$(BUILD)/LiBiNormSrc/MakeFastq.o: ../bioinformaticsLib/libCommon.h
+$(BUILD)/LiBiNormSrc/MakeFastq.o: ../bioinformaticsLib/stringEx.h
+$(BUILD)/LiBiNormSrc/MakeFastq.o: ../bioinformaticsLib/inQuotes.h
+$(BUILD)/LiBiNormSrc/MakeFastq.o: ../bioinformaticsLib/fastaFile.h
 
 $(BUILD)/bioinformaticsLib/../bioinformaticsLib/codFile.o: ../bioinformaticsLib/codFile.h
 $(BUILD)/bioinformaticsLib/../bioinformaticsLib/codFile.o: ../bioinformaticsLib/genomicPosition.h

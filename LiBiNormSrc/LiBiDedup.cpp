@@ -134,7 +134,10 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 				break;
 			lastPos = pos;
 
-			instances[lastPos-firstPos].push_back(i);
+			if (i >= MAXCOUNT)
+				i--;
+			else
+				instances[lastPos-firstPos].push_back(i);
 		}
 		size_t pos = ba[0].Position;
 		if (i >= minCount)

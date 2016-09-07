@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <chrono>
 
 #ifdef _WIN32
 #include <crtdbg.h>
@@ -200,36 +201,57 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 	if ( !reader.Open(bamFileName) ) 
 		exitFail("Could not open input BAM files: ",bamFileName);
 
-	if (!tempDirectory && !nameOrder)
+	if (!nameOrder)
 	{
-		const char * p = getenv("TEMP");
-		if (p == 0) 
-		   p = getenv("TMPDIR");
-
-		if (p == 0)
-			tempDirectory = "/tmp/";
+		if (tempDirectory)
+		{
+			if (mkdir(tempDirectory.c_str()) != 0)
+				exitFail("Unable create temporary directory ",tempDirectory,"\n Try using the -c option for the count files instead"); 
+		}
 		else
-			tempDirectory = p;
+		{
+			const char * p = getenv("TEMP");
+			if (p == 0) 
+				p = getenv("TMPDIR");
 
-		srand (time(NULL));
-		if ((tempDirectory[tempDirectory.size()-1] != '/') &&
-			(tempDirectory[tempDirectory.size()-1] != '\\'))
-			tempDirectory += "/";
-		
-		srand( (unsigned)time( NULL ) );
+			if (p == 0)
+				tempDirectory = "/tmp/";
+			else
+				tempDirectory = p;
 
-		tempDirectory += stringEx("LiBiNorm_temp_",rand(),rand());
+			srand (time(NULL));
+			if ((tempDirectory[tempDirectory.size()-1] != '/') &&
+				(tempDirectory[tempDirectory.size()-1] != '\\'))
+				tempDirectory += "/";
 
-		if (verbose)
-			cerr << "temp Directory = " << tempDirectory << endl;
 
-		//Only need temporary directory for caching files
-		// if the data are position ordered
-		if (mkdir(tempDirectory.c_str()) != 0)
-			exitFail("Unable create temporary directory ",tempDirectory,"\n Try using the -c option for the count files instead");  	
+			auto now_us = chrono::time_point_cast<std::chrono::microseconds>(chrono::high_resolution_clock::now());
+			unsigned randValue = chrono::duration_cast<chrono::microseconds>(now_us.time_since_epoch()).count();
 
+			string tempDirRoot = tempDirectory;
+			tempDirectory += stringEx("LiBiNorm_temp_",randValue);
+
+			if (verbose)
+				cerr << "temp Directory = " << tempDirectory << endl;
+
+			//Only need temporary directory for caching files
+			// if the data are position ordered
+			if (mkdir(tempDirectory.c_str()) != 0)
+			{
+				randValue++;
+
+				tempDirectory = stringEx(tempDirRoot,"LiBiNorm_temp_",randValue);
+
+				if (verbose)
+					cerr << "second attempt at temp Directory = " << tempDirectory << endl;
+
+				if (mkdir(tempDirectory.c_str()) != 0)
+					exitFail("Unable create temporary directory ",tempDirectory,"\n Try using the -c option for the count files instead");  	
+			}
+		}
 		tempDirectory += "/";
 	}
+
 
 	// retrieve 'metadata' from BAM files.
 	references = reader.GetReferenceData();

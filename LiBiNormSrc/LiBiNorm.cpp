@@ -12,6 +12,7 @@
 #include "LiBiNorm.h"
 #include "LiBiCount.h"
 #include "LiBiDedup.h"
+#include "MakeFastq.h"
 
 using namespace std;
 
@@ -29,6 +30,7 @@ int main(int argc, char **argv)
 		printf("Commands:\n");	
 		printf("     count            htseq-count replacement\n");
 		printf("     dedup            removes duplicates\n");
+		printf("     makefastq        makes a fastq file from the bam file\n");
 	}
 	else if (argc > 1)
 	{
@@ -42,6 +44,11 @@ int main(int argc, char **argv)
 		{
 			LiBiDedup libiD;
 			return libiD.main(argc-1,argv+1);
+		}
+		else if (command == "makefastq")
+		{
+			MakeFastq makeFastq;
+			return makeFastq.main(argc-1,argv+1);
 		}
 		else
 			exitFail("Invalid commmand:",command);

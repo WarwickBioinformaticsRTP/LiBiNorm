@@ -1,15 +1,15 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LocalDebuggerCommandArguments>dedup -r "Y:\PeterStrong\file2\Sorafenib_5uM.clean.local.sort.bam"</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>makefastq -m 2 -i 2 -o "WTCHG_203748_01" "203748_01.bam" </LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
     <LocalDebuggerDebuggerType>NativeOnly</LocalDebuggerDebuggerType>
-    <LocalDebuggerWorkingDirectory>Y:\PeterStrong</LocalDebuggerWorkingDirectory>
+    <LocalDebuggerWorkingDirectory>X:\Course\Assignment\regenFiles</LocalDebuggerWorkingDirectory>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LocalDebuggerCommandArguments>dedup -r "Y:\PeterStrong\file2\Sorafenib_5uM.clean.local.sort.bam"</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>makefastq -m 2 -i 2 -o "WTCHG_203748_01" "203748_01.bam" </LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerWorkingDirectory>Y:\LiBiNorm\TestRegions\WTCHG_203748_01_short</LocalDebuggerWorkingDirectory>
+    <LocalDebuggerWorkingDirectory>X:\Course\Assignment\regenFiles</LocalDebuggerWorkingDirectory>
     <LocalDebuggerDebuggerType>NativeOnly</LocalDebuggerDebuggerType>
   </PropertyGroup>
 </Project>
