@@ -211,6 +211,9 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 
 	cerr << "Creating fastq files" << endl;
 
+
+	bamRead readPair[2];
+
 	while ((OK) && (count < size))
 	{
 
@@ -292,41 +295,40 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 			else
 			{
 
-				bamRead read(move(ba));
-
-				auto r = rand();
-				auto r2 = ((double)r * 1000.0)/RAND_MAX;
-
-				bool output = false;
-				if (!ba.IsMapped())
+				if (ba.IsFirstMate())
 				{
-					if (r2 < unmappedRate)
-						output = true;
-				}
-				else if (ba.RefID == mitoRef)
-				{
-					if (r2 < mitoRate)
-						output = true;
-				}
-				else
-				{
-					if (r2 < mappedRate)
-						output = true;
-				} 
+					auto r = rand();
+					auto r2 = ((double)r * 1000.0)/RAND_MAX;
 
-				if (output)
-				{
-
-					ba.BuildCharData();
-
-					if (ba.IsFirstMate())
+					if (!ba.IsMapped())
 					{
-						if ((++count % 10000) == 0)
-							cerr << "Record " << count << endl;
-						read.output(f1out);
+						if (r2 < unmappedRate)
+							readPair[0] = ba;
+					}
+					else if (ba.RefID == mitoRef)
+					{
+						if (r2 < mitoRate)
+							readPair[0] = ba;
 					}
 					else
-						read.output(f2out);
+					{
+						if (r2 < mappedRate)
+							readPair[0] = ba;
+					}
+				}
+				else
+					readPair[1] = ba;
+
+
+				if (readPair[0].name == readPair[1].name)
+				{
+
+					if ((++count % 10000) == 0)
+						cerr << "Record " << count << endl;
+					readPair[0].output(f1out);
+					readPair[0].name = "X";
+					readPair[1].output(f2out);
+					readPair[1].name = "Y";
 				}
 			}
 		}
