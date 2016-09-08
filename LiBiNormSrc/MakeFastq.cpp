@@ -250,11 +250,10 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 					size_t i = 0;
 
 					size_t amp = 1;
-					switch (overAmplifyRounds++ % 3)
+					switch (overAmplifyRounds++ % 6)
 					{
 					case 0: amp = 2; break;
-					case 1: amp = overamplified/2; break;
-					case 2: amp = overamplified; break;
+					default:amp = overamplified; break;
 					}
 
 
