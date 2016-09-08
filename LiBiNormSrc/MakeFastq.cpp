@@ -213,6 +213,8 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 
 
 	bamRead readPair[2];
+	readPair[0].name = "X";
+	readPair[0].name = "Y";
 
 	while ((OK) && (count < size))
 	{
