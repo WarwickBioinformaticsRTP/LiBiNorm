@@ -235,9 +235,30 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 				useThis = false;
 		}
 
-		if (skipChromosome && (references[ba.RefID].RefName.substr(0,skipChromosome.size()) == skipChromosome))
+		if (skipChromosome && (ba.RefID != -1) && (references[ba.RefID].RefName.substr(0,skipChromosome.size()) == skipChromosome))
 		{
 			useThis = false;
+		}
+
+		if (ba.IsFirstMate())
+		{
+			double r2 = ((double)rand())/RAND_MAX;
+
+			if (!ba.IsMapped())
+			{
+				if (r2 > unmappedRate)
+					useThis = false;
+			}
+			else if (ba.RefID == mitoRef)
+			{
+				if (r2 > mitoRate)
+					useThis = false;
+			}
+			else
+			{
+				if (r2 > mappedRate)
+					useThis = false;
+			}
 		}
 
 		if (useThis)
@@ -308,25 +329,7 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 			{
 
 				if (ba.IsFirstMate())
-				{
-					double r2 = ((double)rand())/RAND_MAX;
-
-					if (!ba.IsMapped())
-					{
-						if (r2 < unmappedRate)
-							readPair[0] = ba;
-					}
-					else if (ba.RefID == mitoRef)
-					{
-						if (r2 < mitoRate)
-							readPair[0] = ba;
-					}
-					else
-					{
-						if (r2 < mappedRate)
-							readPair[0] = ba;
-					}
-				}
+					readPair[0] = ba;
 				else
 					readPair[1] = ba;
 
