@@ -92,15 +92,17 @@ bool MakeFastq::getNextAlignment()
 int MakeFastq::main(int argc, char **argv)
 {
 
-	int size=1500000,
+	int size=1500000;
 		
-		mitoRate=1000,unmappedRate=1000,mappedRate=1000,
+	double	mitoRate=1,unmappedRate=1,mappedRate=1;
 
-		overamplified = -1;
+	int	overamplified = -1;
 
 	size_t start = 0;
 
 	stringEx bamFileName,outputFileRoot;
+
+	stringEx skipChromosome;
 
 	if(argc < 1)
 	{
@@ -114,6 +116,7 @@ printf("Options:\n");
 printf("  -h, --help				show this help message and exit\n");
 printf("  -s N, --size=N			size of fastq file (1000)\n");
 printf("  -v N, --overamplified=N	degree of overamplification\n");
+printf("  -k ab, --skip=ab			skip chromosomes begining in ab\n");
 printf("\n");
 printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 		return EXIT_SUCCESS;
@@ -144,19 +147,23 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 		}
 		else if((strcmp(argv[ni], "-i") == 0) || (opt2 = (strncmp(argv[ni], "--mito=",7) == 0)))
 		{
-			mitoRate = atoi(opt2?argv[ni]+9:argv[++ni]);
+			mitoRate = atof(opt2?argv[ni]+9:argv[++ni]);
 		}
 		else if((strcmp(argv[ni], "-u") == 0) || (opt2 = (strncmp(argv[ni], "--unmapped=",11) == 0)))
 		{
-			unmappedRate = atoi(opt2?argv[ni]+1:argv[++ni]);
+			unmappedRate = atof(opt2?argv[ni]+11:argv[++ni]);
 		}
 		else if((strcmp(argv[ni], "-m") == 0) || (opt2 = (strncmp(argv[ni], "--mapped=",9) == 0)))
 		{
-			mappedRate = atoi(opt2?argv[ni]+1:argv[++ni]);
+			mappedRate = atof(opt2?argv[ni]+9:argv[++ni]);
 		}
 		else if((strcmp(argv[ni], "-v") == 0) || (opt2 = (strncmp(argv[ni], "--overamplified=",9) == 0)))
 		{
-			overamplified = atoi(opt2?argv[ni]+1:argv[++ni]);
+			overamplified = atoi(opt2?argv[ni]+9:argv[++ni]);
+		}
+		else if((strcmp(argv[ni], "-k") == 0) || (opt2 = (strncmp(argv[ni], "--skip=",6) == 0)))
+		{
+			skipChromosome = opt2?argv[ni]+7:argv[++ni];
 		}
 		else
 		{
@@ -228,6 +235,10 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 				useThis = false;
 		}
 
+		if (skipChromosome && (references[ba.RefID].RefName.substr(0,skipChromosome.size()) == skipChromosome))
+		{
+			useThis = false;
+		}
 
 		if (useThis)
 		{
@@ -298,8 +309,7 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 
 				if (ba.IsFirstMate())
 				{
-					auto r = rand();
-					auto r2 = ((double)r * 1000.0)/RAND_MAX;
+					double r2 = ((double)rand())/RAND_MAX;
 
 					if (!ba.IsMapped())
 					{
