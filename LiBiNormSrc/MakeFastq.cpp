@@ -5,7 +5,7 @@
 #ifdef _DEBUG
 #define BAMCACHESIZE 100
 #else
-#define BAMCACHESIZE 50000
+#define BAMCACHESIZE 5000
 #endif
 
 bamRead::bamRead(const BamAlignment & ba) 
@@ -294,7 +294,7 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 						if ((++count % 10000) == 0)
 							cerr << "Record " << count << endl;
 
-						double SNPrate = 1.01/200;
+						double SNPrate = 1.01/400;
 
 						size_t pos = ((double)rand() * (BAMCACHESIZE-1))/RAND_MAX;
 
