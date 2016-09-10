@@ -1,4 +1,5 @@
-
+#include <random>
+#include <chrono>
 #include "MakeFastq.h"
 #include "fastaFile.h"
 
@@ -91,6 +92,9 @@ bool MakeFastq::getNextAlignment()
 
 int MakeFastq::main(int argc, char **argv)
 {
+	unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+	std::default_random_engine generator(seed);
+    std::uniform_real_distribution<double> distribution(0.0,1.0);
 
 	int size=1500000;
 		
@@ -221,7 +225,7 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 
 	bamRead readPair[2];
 	readPair[0].name = "X";
-	readPair[0].name = "Y";
+	readPair[1].name = "Y";
 
 	while ((OK) && (count < size))
 	{
@@ -242,21 +246,21 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 
 		if (ba.IsFirstMate())
 		{
-			double r2 = ((double)rand())/RAND_MAX;
+			double r2 = distribution(generator);
 
-			if (!ba.IsMapped())
+			if (!ba.IsMapped() && !ba.IsMateMapped())
 			{
-				if (r2 > unmappedRate)
+				if (r2 >= unmappedRate)
 					useThis = false;
 			}
-			else if (ba.RefID == mitoRef)
+			else if ((ba.IsMapped() && (ba.RefID == mitoRef)) || (ba.IsMateMapped() && (ba.MateRefID == mitoRef)))
 			{
-				if (r2 > mitoRate)
+				if (r2 >= mitoRate)
 					useThis = false;
 			}
 			else
 			{
-				if (r2 > mappedRate)
+				if (r2 >= mappedRate)
 					useThis = false;
 			}
 		}
@@ -296,7 +300,8 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 
 						double SNPrate = 1.01/400;
 
-						size_t pos = ((double)rand() * (BAMCACHESIZE-1))/RAND_MAX;
+//						size_t pos = ((double)rand() * (BAMCACHESIZE-1))/RAND_MAX;
+						size_t pos = distribution(generator) * (BAMCACHESIZE-1);
 
 						OK = getNextAlignment();
 						NH = ba.GetTag("NH",NH);
