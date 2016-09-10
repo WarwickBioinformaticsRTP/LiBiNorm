@@ -64,7 +64,7 @@ void bamRead::output(FILE * f)
 void bamReadCache::clear()
 {
 	for (auto & i: This)
-		i.name.clear();
+		i.resetNames();
 }
 
 
@@ -244,7 +244,7 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 
 	srand(100);
 
-	vector<bamReadCache> oaBuffer(2,BAMCACHESIZE);
+	bamReadCache oaBuffer(BAMCACHESIZE);
 	size_t overAmplifyRounds = 0;
 
 	cerr << "Skipping reads" << endl;
@@ -256,11 +256,7 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 	cerr << "Creating fastq files" << endl;
 
 
-	bamRead readPair[2],readForeignPair[2];
-	readPair[0].name = "X";
-	readPair[1].name = "Y";
-	readForeignPair[0].name = "X";
-	readForeignPair[1].name = "Y";
+	twoBamReads  readPair,readForeignPair;
 
 	while ((OK) && (count < size))
 	{
@@ -305,16 +301,10 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 			if (overamplified > 1)
 			{
 				ba.BuildCharData();
-				if (ba.IsFirstMate())
-					oaBuffer[0][buffIndex] = ba;
-				else
-					oaBuffer[1][buffIndex] = ba;
+				oaBuffer[buffIndex].addRead(ba);
 
-				if (oaBuffer[0][buffIndex].name && oaBuffer[1][buffIndex].name)
-				{
-					if (oaBuffer[0][buffIndex].name == oaBuffer[1][buffIndex].name)
+				if (oaBuffer[buffIndex].namesMatch())
 						buffIndex++;
-				}
 
 				if (buffIndex >= BAMCACHESIZE)
 				{
@@ -333,48 +323,33 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 						if ((++count % 10000) == 0)
 							cerr << "Record " << count << endl;
 
-						double SNPrate = 1.01/400;
-
-//						size_t pos = ((double)rand() * (BAMCACHESIZE-1))/RAND_MAX;
-						size_t pos = distribution(generator) * (BAMCACHESIZE-1);
-
-						OK = getNextAlignment();
-						NH = ba.GetTag("NH",NH);
-
-						while (!((NH <= 1) && ba.IsFirstMate()) && !((NH > 1) && ba.IsPrimaryAlignment() && ba.IsFirstMate()))
-						{
+						//Find a newname for the overamplified record						
+						do {
 							OK = getNextAlignment();
 							NH = ba.GetTag("NH",NH);
 						}
+						while (!((NH <= 1) && ba.IsFirstMate()) && !((NH > 1) && ba.IsPrimaryAlignment() && ba.IsFirstMate()));
 
+						//	Pick one of the records, rename it, add some errors and output it
+						double SNPrate = 1.01/400;
+						size_t pos = distribution(generator) * (BAMCACHESIZE-1);
 
-						bamRead br1(oaBuffer[0][pos]);
-						br1.setName(ba);
-						br1.addSNP(SNPrate);
-						br1.output(f1out);
-
-						bamRead br2(oaBuffer[1][pos]);
-						br2.setName(ba);
-						br2.addSNP(SNPrate);
-						br2.output(f2out);
+						twoBamReads tbr(oaBuffer[pos]);
+						tbr.setName(ba);
+						tbr.addSNP(SNPrate);
+						tbr.output(f1out,f2out);
 
 					}
-					oaBuffer[0].clear();
-					oaBuffer[1].clear();
+					oaBuffer.clear();
 					buffIndex = 0;
 				}
 
 			}
 			else
 			{
+				readPair.addRead(ba);
 
-				if (ba.IsFirstMate())
-					readPair[0] = ba;
-				else
-					readPair[1] = ba;
-
-
-				if (readPair[0].name == readPair[1].name)
+				if (readPair.namesMatch())
 				{
 
 					if ((++count % 10000) == 0)
@@ -383,24 +358,16 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 					double r2 = distribution(generator);
 					if ((foreignBamData) && (r2 < foreignBamDataRate))
 					{
-						size_t length = readPair[0].readSeq.size();
-						while ((readForeignPair[0].name != readForeignPair[1].name) && (readForeignPair[0].readSeq.size() != length) && (readForeignPair[1].readSeq.size() != length))
+						while (!readForeignPair.namesMatch())
 						{
-							if (foreignBa.IsFirstMate())
-								readForeignPair[0] = foreignBa;
-							else
-								readForeignPair[1] = foreignBa;
+							readForeignPair.addRead(foreignBa);
 							getNextForeignAlignment();
 						}
-						readPair[0].setValues(readForeignPair[0]);
-						readPair[1].setValues(readForeignPair[1]);
-						readForeignPair[0].name = "X";
-						readForeignPair[1].name = "Y";
+						readPair.setValues(readForeignPair);
+						readForeignPair.resetNames();
 					}
-					readPair[0].output(f1out);
-					readPair[0].name = "X";
-					readPair[1].output(f2out);
-					readPair[1].name = "Y";
+					readPair.output(f1out,f2out);
+					readPair.resetNames();
 
 				}
 			}

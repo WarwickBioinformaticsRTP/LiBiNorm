@@ -23,12 +23,57 @@ public:
 	stringEx name; 
 };
 
-class bamReadCache : public vector<bamRead>
+class twoBamReads : vector<bamRead>
 {
 public:
-	bamReadCache(size_t size):vector<bamRead>(size){};
+	twoBamReads() : vector<bamRead>(2)
+	{
+		resetNames();
+	};
+
+	void resetNames()
+	{
+		at(0).name = "X";
+		at(1).name = "Y";
+	}
+	void setName(const BamAlignment & ba)
+	{
+		for (auto & i : This) i.setName(ba);
+	}
+
+	void addSNP(double errorRate)
+	{
+		for (auto & i : This) i.addSNP(errorRate);
+	}
+	void addRead(const BamAlignment & ba)
+	{
+		if (ba.IsFirstMate())
+			at(0) = ba;
+		else
+			at(1) = ba;
+	}
+	bool namesMatch()
+	{
+		return (at(0).name == at(1).name);
+	};
+	void setValues(const twoBamReads & tbr)
+	{
+		at(0).setValues(tbr[0]);
+		at(1).setValues(tbr[1]);
+	}
+	void output(FILE * f1,FILE * f2)
+	{
+		at(0).output(f1);
+		at(1).output(f2);
+	}
+};
+
+class bamReadCache : public vector<twoBamReads>
+{
+public:
+	bamReadCache(size_t size):vector<twoBamReads>(size){};
 	void clear();
-	bamRead & operator[](size_t i){ return vector<bamRead>::operator[](i);};
+	twoBamReads & operator[](size_t i){ return vector<twoBamReads>::operator[](i);};
 };
 
 class MakeFastq
