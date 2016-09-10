@@ -14,6 +14,7 @@ public:
 	bamRead(){};
 	bamRead(const BamAlignment & ba);
 	void setName(const BamAlignment & ba);
+	void setValues(const bamRead & br);
 	void addSNP(double errorRate);
 	bamRead & operator = (const BamAlignment & ba);
 	void output(FILE * f);
@@ -32,10 +33,11 @@ public:
 
 class MakeFastq
 {
-	BamReader reader;
-	BamAlignment ba;
+	BamReader reader,foreignReader;
+	BamAlignment ba,foreignBa;
 
 	bool getNextAlignment();
+	bool getNextForeignAlignment();
 	bool getNextAlignmentCore();
 
 public:

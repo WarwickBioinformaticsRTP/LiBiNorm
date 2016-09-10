@@ -35,6 +35,13 @@ void bamRead::setName(const BamAlignment & ba)
 	name = ba.Name;
 }
 
+void bamRead::setValues(const bamRead & br)
+{
+	readSeq = br.readSeq;
+	qualData= br.qualData;
+}
+
+
 void bamRead::addSNP(double errorRate)
 {
 	double randVal = (double)rand()/((double)RAND_MAX+1);
@@ -88,23 +95,34 @@ bool MakeFastq::getNextAlignment()
 	}
 	return OK;
 }
+bool MakeFastq::getNextForeignAlignment()
+{
+	bool OK = foreignReader.GetNextAlignment(foreignBa);
+	if (!OK)
+	{
+		cerr << "Rewinding foreign bam file" << endl;
+		foreignReader.Rewind();
+		OK = foreignReader.GetNextAlignment(foreignBa);
+	}
+	return OK;
+}
 
 
 int MakeFastq::main(int argc, char **argv)
 {
-	unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
-	std::default_random_engine generator(seed);
-    std::uniform_real_distribution<double> distribution(0.0,1.0);
+	unsigned seed = chrono::system_clock::now().time_since_epoch().count();
+	default_random_engine generator(seed);
+    uniform_real_distribution<double> distribution(0.0,1.0);
 
 	int size=1500000;
 		
-	double	mitoRate=1,unmappedRate=1,mappedRate=1;
+	double	mitoRate=1,unmappedRate=1,mappedRate=1,foreignBamDataRate = 0;;
 
 	int	overamplified = -1;
 
 	size_t start = 0;
 
-	stringEx bamFileName,outputFileRoot;
+	stringEx bamFileName,outputFileRoot,foreignBamData;
 
 	stringEx skipChromosome;
 
@@ -169,6 +187,11 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 		{
 			skipChromosome = opt2?argv[ni]+7:argv[++ni];
 		}
+		else if((strcmp(argv[ni], "-f") == 0) || (opt2 = (strncmp(argv[ni], "--foreign=",10) == 0)))
+		{
+			foreignBamData = opt2?argv[ni]+10:argv[++ni];
+			foreignBamDataRate = atof(opt2?argv[ni]+11+foreignBamData.size():argv[++ni]);
+		}
 		else
 		{
 			exitFail("Invalid parameter: ",string(argv[ni]));
@@ -186,6 +209,16 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 
 	if ( !reader.Open(bamFileName) ) 
 		exitFail("Could not open input BAM file: ",bamFileName);
+
+
+	if (foreignBamData)
+	{
+		if ( !foreignReader.Open(foreignBamData) ) 
+			exitFail("Could not open input BAM file: ",foreignBamData);
+		for (size_t i = 0;i < start;i++)
+			getNextForeignAlignment();
+	}
+	
 
 	// retrieve 'metadata' from BAM files.
 	RefVector references = reader.GetReferenceData();
@@ -223,9 +256,11 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 	cerr << "Creating fastq files" << endl;
 
 
-	bamRead readPair[2];
+	bamRead readPair[2],readForeignPair[2];
 	readPair[0].name = "X";
 	readPair[1].name = "Y";
+	readForeignPair[0].name = "X";
+	readForeignPair[1].name = "Y";
 
 	while ((OK) && (count < size))
 	{
@@ -344,10 +379,29 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 
 					if ((++count % 10000) == 0)
 						cerr << "Record " << count << endl;
+
+					double r2 = distribution(generator);
+					if ((foreignBamData) && (r2 < foreignBamDataRate))
+					{
+						size_t length = readPair[0].readSeq.size();
+						while ((readForeignPair[0].name != readForeignPair[1].name) && (readForeignPair[0].readSeq.size() != length) && (readForeignPair[1].readSeq.size() != length))
+						{
+							if (foreignBa.IsFirstMate())
+								readForeignPair[0] = foreignBa;
+							else
+								readForeignPair[1] = foreignBa;
+							getNextForeignAlignment();
+						}
+						readPair[0].setValues(readForeignPair[0]);
+						readPair[1].setValues(readForeignPair[1]);
+						readForeignPair[0].name = "X";
+						readForeignPair[1].name = "Y";
+					}
 					readPair[0].output(f1out);
 					readPair[0].name = "X";
 					readPair[1].output(f2out);
 					readPair[1].name = "Y";
+
 				}
 			}
 		}
