@@ -23,10 +23,10 @@ public:
 	stringEx name; 
 };
 
-class twoBamReads : vector<bamRead>
+class pairedBamReads : vector<bamRead>
 {
 public:
-	twoBamReads() : vector<bamRead>(2)
+	pairedBamReads() : vector<bamRead>(2)
 	{
 		resetNames();
 	};
@@ -56,7 +56,7 @@ public:
 	{
 		return (at(0).name == at(1).name);
 	};
-	void setValues(const twoBamReads & tbr)
+	void setValues(const pairedBamReads & tbr)
 	{
 		at(0).setValues(tbr[0]);
 		at(1).setValues(tbr[1]);
@@ -68,22 +68,26 @@ public:
 	}
 };
 
-class bamReadCache : public vector<twoBamReads>
+class bamReadCache : public vector<pairedBamReads>
 {
 public:
-	bamReadCache(size_t size):vector<twoBamReads>(size){};
+	bamReadCache(size_t size):vector<pairedBamReads>(size){};
 	void clear();
-	twoBamReads & operator[](size_t i){ return vector<twoBamReads>::operator[](i);};
+	pairedBamReads & operator[](size_t i){ return vector<pairedBamReads>::operator[](i);};
 };
 
 class MakeFastq
 {
+	int count;
+
 	BamReader reader,foreignReader;
 	BamAlignment ba,foreignBa;
 
 	bool getNextAlignment();
 	bool getNextForeignAlignment();
 	bool getNextAlignmentCore();
+
+	void incrementCount();
 
 public:
 	MakeFastq();

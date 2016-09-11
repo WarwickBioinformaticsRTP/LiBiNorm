@@ -52,7 +52,6 @@ void bamRead::addSNP(double errorRate)
 	size_t p2 = (double)rand()/((double)RAND_MAX+1) * readSeq.size();
 
 	readSeq[p1] = readSeq[p2];
-
 }
 
 
@@ -72,39 +71,43 @@ MakeFastq::MakeFastq()
 {
 }
 
+inline bool GNA(BamAlignment & ba,BamReader & br,bool core = false)
+{
+	int NH;
+	bool OK;
+	do
+	{
+		OK = core?br.GetNextAlignmentCore(ba):br.GetNextAlignment(ba);
+		if (!OK)
+		{
+			cerr << "Rewinding" << endl;
+			br.Rewind();
+			core?br.GetNextAlignmentCore(ba):br.GetNextAlignment(ba);
+		}
+	} while (!(!ba.GetTag("NH",NH)  || NH <= 1 || ba.IsPrimaryAlignment()));
+
+	return OK;
+}
+
 bool MakeFastq::getNextAlignmentCore()
 {
-	bool OK = reader.GetNextAlignmentCore(ba);
-	if (!OK)
-	{
-		cerr << "Rewinding" << endl;
-		reader.Rewind();
-		OK = reader.GetNextAlignmentCore(ba);
-	}
-	return OK;
+	return GNA(ba,reader,true);
 }
 
 bool MakeFastq::getNextAlignment()
 {
-	bool OK = reader.GetNextAlignment(ba);
-	if (!OK)
-	{
-		cerr << "Rewinding" << endl;
-		reader.Rewind();
-		OK = reader.GetNextAlignment(ba);
-	}
-	return OK;
+	return GNA(ba,reader);
 }
+
 bool MakeFastq::getNextForeignAlignment()
 {
-	bool OK = foreignReader.GetNextAlignment(foreignBa);
-	if (!OK)
-	{
-		cerr << "Rewinding foreign bam file" << endl;
-		foreignReader.Rewind();
-		OK = foreignReader.GetNextAlignment(foreignBa);
-	}
-	return OK;
+	return GNA(foreignBa,foreignReader);
+}
+
+void MakeFastq::incrementCount()
+{
+	if ((++count % 10000) == 0)
+		cerr << "Record " << count << endl;
 }
 
 
@@ -112,7 +115,7 @@ int MakeFastq::main(int argc, char **argv)
 {
 	unsigned seed = chrono::system_clock::now().time_since_epoch().count();
 	default_random_engine generator(seed);
-    uniform_real_distribution<double> distribution(0.0,1.0);
+	uniform_real_distribution<double> distribution(0.0,1.0);
 
 	int size=1500000;
 		
@@ -133,14 +136,14 @@ int MakeFastq::main(int argc, char **argv)
 	}
 	else if ((argc == 1) || ((argc == 2) && ((strcmp(argv[1],"-h") ==0) || (strcmp(argv[1],"--help")==0))))
 	{
-printf("Usage: LiBiNorm makefastq [options] alignment_file\n");
-printf("Options:\n");
-printf("  -h, --help				show this help message and exit\n");
-printf("  -s N, --size=N			size of fastq file (1000)\n");
-printf("  -v N, --overamplified=N	degree of overamplification\n");
-printf("  -k ab, --skip=ab			skip chromosomes begining in ab\n");
-printf("\n");
-printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
+		printf("Usage: LiBiNorm makefastq [options] alignment_file\n");
+		printf("Options:\n");
+		printf("  -h, --help				show this help message and exit\n");
+		printf("  -s N, --size=N			size of fastq file (1000)\n");
+		printf("  -v N, --overamplified=N	degree of overamplification\n");
+		printf("  -k ab, --skip=ab			skip chromosomes begining in ab\n");
+		printf("\n");
+		printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 		return EXIT_SUCCESS;
 	}
 
@@ -210,7 +213,6 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 	if ( !reader.Open(bamFileName) ) 
 		exitFail("Could not open input BAM file: ",bamFileName);
 
-
 	if (foreignBamData)
 	{
 		if ( !foreignReader.Open(foreignBamData) ) 
@@ -218,7 +220,6 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 		for (size_t i = 0;i < start;i++)
 			getNextForeignAlignment();
 	}
-	
 
 	// retrieve 'metadata' from BAM files.
 	RefVector references = reader.GetReferenceData();
@@ -236,11 +237,10 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 	if (mitoRef == -1)
 		exitFail("No mitochondrial gene found");
 
-	bool OK = getNextAlignment();
 	
 	size_t buffIndex = 0;
 
-	int count = 0;
+	count = 0;
 
 	srand(100);
 
@@ -249,28 +249,21 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 
 	cerr << "Skipping reads" << endl;
 	for (size_t i = 0;i < start;i++)
-		OK = getNextAlignmentCore();
+		getNextAlignmentCore();
 
-	ba.BuildCharData();
+	bool OK = getNextAlignment();
 
 	cerr << "Creating fastq files" << endl;
 
 
-	twoBamReads  readPair,readForeignPair;
+	pairedBamReads  readPair,readForeignPair;
 
-	while ((OK) && (count < size))
+	while (OK && (count < size))
 	{
 
 		bool useThis = true;
 
-		int NH;
-		if (ba.GetTag("NH",NH))
-		{
-			if ((NH > 1) && !ba.IsPrimaryAlignment())
-				useThis = false;
-		}
-
-		if (skipChromosome && (ba.RefID != -1) && (references[ba.RefID].RefName.substr(0,skipChromosome.size()) == skipChromosome))
+		if (skipChromosome && (ba.RefID != -1) && (stringEx(references[ba.RefID].RefName).startsWith(skipChromosome)))
 		{
 			useThis = false;
 		}
@@ -318,26 +311,26 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 					}
 
 
-					while ((i++ < (BAMCACHESIZE * amp)) && (count < size))
+					while ((i++ < (BAMCACHESIZE * amp)) && (count < size) && OK)
 					{
-						if ((++count % 10000) == 0)
-							cerr << "Record " << count << endl;
+						incrementCount();
 
-						//Find a newname for the overamplified record						
+						int NH = -1;
+						// Find a newname for the overamplified record.  Need a logic so that we only pick one 
+						// read with any given name	
 						do {
 							OK = getNextAlignment();
-							NH = ba.GetTag("NH",NH);
 						}
-						while (!((NH <= 1) && ba.IsFirstMate()) && !((NH > 1) && ba.IsPrimaryAlignment() && ba.IsFirstMate()));
+						while (!ba.IsFirstMate() && OK);
 
-						//	Pick one of the records, rename it, add some errors and output it
+						//	Pick one of the records, rename it with the name from another record, add some errors and output it
 						double SNPrate = 1.01/400;
 						size_t pos = distribution(generator) * (BAMCACHESIZE-1);
 
-						twoBamReads tbr(oaBuffer[pos]);
-						tbr.setName(ba);
-						tbr.addSNP(SNPrate);
-						tbr.output(f1out,f2out);
+						pairedBamReads pbr(oaBuffer[pos]);
+						pbr.setName(ba);
+						pbr.addSNP(SNPrate);
+						pbr.output(f1out,f2out);
 
 					}
 					oaBuffer.clear();
@@ -351,10 +344,9 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 
 				if (readPair.namesMatch())
 				{
+					incrementCount();
 
-					if ((++count % 10000) == 0)
-						cerr << "Record " << count << endl;
-
+					//	A fraction r2 of the records are replaced with reads from a selected foreign bamfile
 					double r2 = distribution(generator);
 					if ((foreignBamData) && (r2 < foreignBamDataRate))
 					{
