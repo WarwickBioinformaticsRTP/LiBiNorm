@@ -90,8 +90,6 @@ class MakeFastq
 	void incrementCount();
 
 public:
-	MakeFastq();
-
 	int main(int argc, char **argv);
 };
 

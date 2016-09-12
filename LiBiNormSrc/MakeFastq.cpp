@@ -76,32 +76,24 @@ void bamReadCache::clear()
 		i.resetNames();
 }
 
-
-MakeFastq::MakeFastq()
+inline bool GNA(BamAlignment & ba,BamReader & br)
 {
-}
-
-inline bool GNA(BamAlignment & ba,BamReader & br,bool core = false)
-{
+	//	Returns false if we read the end and have to rewind (oe some other fault occurs), otherwise true;
 	int NH;
 	bool OK;
 	do
 	{
-		OK = core?br.GetNextAlignmentCore(ba):br.GetNextAlignment(ba);
+		OK = br.GetNextAlignment(ba);
 		if (!OK)
 		{
 			cerr << "Rewinding" << endl;
 			br.Rewind();
-			core?br.GetNextAlignmentCore(ba):br.GetNextAlignment(ba);
+			br.GetNextAlignment(ba);
 		}
+		// While this can be rearranged, this expression states what is required most clearly 
 	} while (!(!ba.GetTag("NH",NH)  || NH <= 1 || ba.IsPrimaryAlignment()));
 
 	return OK;
-}
-
-bool MakeFastq::getNextAlignmentCore()
-{
-	return GNA(ba,reader,true);
 }
 
 bool MakeFastq::getNextAlignment()
@@ -112,6 +104,12 @@ bool MakeFastq::getNextAlignment()
 bool MakeFastq::getNextForeignAlignment()
 {
 	return GNA(foreignBa,foreignReader);
+}
+
+bool MakeFastq::getNextAlignmentCore()
+{
+	//	Cannot check for tags as these are not decoded in GetNextAlignmentCore
+	return reader.GetNextAlignmentCore(ba);
 }
 
 void MakeFastq::incrementCount()
@@ -210,11 +208,7 @@ int MakeFastq::main(int argc, char **argv)
 					overAmplifiedError = atof(comma+1);
 			}
 			else 
-			{
 				pendingOveramplifed = true;
-
-			}
-
 		}
 		else if((strcmp(argv[ni], "-k") == 0) || (opt2 = (strncmp(argv[ni], "--skip=",6) == 0)))
 		{
@@ -241,11 +235,10 @@ int MakeFastq::main(int argc, char **argv)
 	if (!outputFileRoot)
 		outputFileRoot = bamFileName.removeSuffix();
 
-	f1out = fopen((outputFileRoot + "_1.fastq").c_str(),"wb");
-	f2out = fopen((outputFileRoot + "_2.fastq").c_str(),"wb");
-
 	if ( !reader.Open(bamFileName) ) 
 		exitFail("Could not open input BAM file: ",bamFileName);
+	// retrieve 'metadata' from BAM files.
+	RefVector references = reader.GetReferenceData();
 
 	if (foreignBamData)
 	{
@@ -254,10 +247,6 @@ int MakeFastq::main(int argc, char **argv)
 		for (size_t i = 0;i < start;i++)
 			getNextForeignAlignment();
 	}
-
-	// retrieve 'metadata' from BAM files.
-	RefVector references = reader.GetReferenceData();
-	SamHeader header = reader.GetHeader();
 
 	int mitoRef = -1;
 	for (size_t i = 0;i < references.size();i++)
@@ -271,25 +260,24 @@ int MakeFastq::main(int argc, char **argv)
 	if (mitoRef == -1)
 		exitFail("No mitochondrial gene found");
 
-	
-	size_t buffIndex = 0;
-
-	count = 0;
-
-	bamReadCache oaBuffer(BAMCACHESIZE);
-	size_t overAmplifyRounds = 0;
 
 	cerr << "Skipping reads" << endl;
 	for (size_t i = 0;i < start;i++)
 		getNextAlignmentCore();
-
 	bool OK = getNextAlignment();
 
+
+	//	Use binary output format so that we get unix style/n line feeds
+	f1out = fopen((outputFileRoot + "_1.fastq").c_str(),"wb");
+	f2out = fopen((outputFileRoot + "_2.fastq").c_str(),"wb");
+
+
 	cerr << "Creating fastq files" << endl;
-
-
+	bamReadCache oaBuffer(BAMCACHESIZE);
+	size_t overAmplifyRounds = 0;
 	pairedBamReads  readPair,readForeignPair;
-
+	size_t buffIndex = 0;
+	count = 0;
 	while (OK && (count < size))
 	{
 
