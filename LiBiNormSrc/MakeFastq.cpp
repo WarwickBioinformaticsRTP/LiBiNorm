@@ -9,8 +9,14 @@
 #define BAMCACHESIZE 5000
 #endif
 
+unsigned seed()
+{
+		auto now_us = chrono::time_point_cast<std::chrono::microseconds>(chrono::high_resolution_clock::now());
+		return chrono::duration_cast<chrono::microseconds>(now_us.time_since_epoch()).count();
+};
 
-default_random_engine generator(chrono::system_clock::now().time_since_epoch().count());
+
+default_random_engine generator(seed());
 uniform_real_distribution<double> distribution(0.0,1.0);
 
 bamRead::bamRead(const BamAlignment & ba) 
