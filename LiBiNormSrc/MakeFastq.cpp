@@ -9,6 +9,10 @@
 #define BAMCACHESIZE 5000
 #endif
 
+
+default_random_engine generator(chrono::system_clock::now().time_since_epoch().count());
+uniform_real_distribution<double> distribution(0.0,1.0);
+
 bamRead::bamRead(const BamAlignment & ba) 
 {
 	operator = (ba);
@@ -44,12 +48,12 @@ void bamRead::setValues(const bamRead & br)
 
 void bamRead::addSNP(double errorRate)
 {
-	double randVal = (double)rand()/((double)RAND_MAX+1);
+	double randVal = distribution(generator);
 	if (randVal > (errorRate*readSeq.size()))
 		return;
 
-	size_t p1 = randVal * readSeq.size();
-	size_t p2 = (double)rand()/((double)RAND_MAX+1) * readSeq.size();
+	size_t p1 = ceil(distribution(generator) * readSeq.size()-1);
+	size_t p2 = ceil(distribution(generator) * readSeq.size()-1);
 
 	readSeq[p1] = readSeq[p2];
 }
@@ -113,15 +117,14 @@ void MakeFastq::incrementCount()
 
 int MakeFastq::main(int argc, char **argv)
 {
-	unsigned seed = chrono::system_clock::now().time_since_epoch().count();
-	default_random_engine generator(seed);
-	uniform_real_distribution<double> distribution(0.0,1.0);
 
 	int size=1500000;
 		
-	double	mitoRate=1,unmappedRate=1,mappedRate=1,foreignBamDataRate = 0;;
+	double	mitoRate=1,unmappedRate=1,mappedRate=1,
+		foreignBamDataRate = 0;;
 
 	int	overamplified = -1;
+	double overAmplifiedError = 0.002;
 
 	size_t start = 0;
 
@@ -139,9 +142,17 @@ int MakeFastq::main(int argc, char **argv)
 		printf("Usage: LiBiNorm makefastq [options] alignment_file\n");
 		printf("Options:\n");
 		printf("  -h, --help				show this help message and exit\n");
-		printf("  -s N, --size=N			size of fastq file (1000)\n");
-		printf("  -v N, --overamplified=N	degree of overamplification\n");
+		printf("  -o <nam>, --output=<name>	The root name for the generated fastq files\n");
+		printf("  -s N, --size=N			Number of reads in each fastq file in  (1500000)\n");
 		printf("  -k ab, --skip=ab			skip chromosomes begining in ab\n");
+		printf("  -i f, --mito=f			Proportion of mitochondrial reads from original\n");
+		printf("							that are included in output (1.0)\n");
+		printf("  -u f, --unmapped=f		Proportion of completely unmapped reads in output (1.0)\n");
+		printf("  -m f, --mapped=f			Proportion of mapped reads in output (1.0)\n");
+		printf("  -v N f, --overamplified=N,f	degree of overamplification (N) and error rate in copies (g,0.002) \n");
+		printf("  -f <filename> f g, --foreign<filename>,f,g\n");
+		printf("							f = Proportion of foreign DNA from bamfile <filename> included in output (0.0)\n");
+		printf("							g = Error rate of duplicated reads (0.002)\n");
 		printf("\n");
 		printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 		return EXIT_SUCCESS;
@@ -150,6 +161,7 @@ int MakeFastq::main(int argc, char **argv)
 	FILE * f1out,* f2out;
 
 	int ni = 1;
+	bool pendingOveramplifed = false;
 
 	if (argc < 1)
 		exitFail("Insufficient arguments");
@@ -185,6 +197,18 @@ int MakeFastq::main(int argc, char **argv)
 		else if((strcmp(argv[ni], "-v") == 0) || (opt2 = (strncmp(argv[ni], "--overamplified=",9) == 0)))
 		{
 			overamplified = atoi(opt2?argv[ni]+9:argv[++ni]);
+			if (opt2)
+			{
+				const char * comma = strchr(argv[ni]+9,',');
+				if (comma)
+					overAmplifiedError = atof(comma+1);
+			}
+			else 
+			{
+				pendingOveramplifed = true;
+
+			}
+
 		}
 		else if((strcmp(argv[ni], "-k") == 0) || (opt2 = (strncmp(argv[ni], "--skip=",6) == 0)))
 		{
@@ -194,6 +218,10 @@ int MakeFastq::main(int argc, char **argv)
 		{
 			foreignBamData = opt2?argv[ni]+10:argv[++ni];
 			foreignBamDataRate = atof(opt2?argv[ni]+11+foreignBamData.size():argv[++ni]);
+		}
+		else if (pendingOveramplifed)
+		{
+			overAmplifiedError = atof(argv[ni]);
 		}
 		else
 		{
@@ -241,8 +269,6 @@ int MakeFastq::main(int argc, char **argv)
 	size_t buffIndex = 0;
 
 	count = 0;
-
-	srand(100);
 
 	bamReadCache oaBuffer(BAMCACHESIZE);
 	size_t overAmplifyRounds = 0;
@@ -324,12 +350,11 @@ int MakeFastq::main(int argc, char **argv)
 						while (!ba.IsFirstMate() && OK);
 
 						//	Pick one of the records, rename it with the name from another record, add some errors and output it
-						double SNPrate = 1.01/400;
 						size_t pos = distribution(generator) * (BAMCACHESIZE-1);
 
 						pairedBamReads pbr(oaBuffer[pos]);
 						pbr.setName(ba);
-						pbr.addSNP(SNPrate);
+						pbr.addSNP(overAmplifiedError);
 						pbr.output(f1out,f2out);
 
 					}
