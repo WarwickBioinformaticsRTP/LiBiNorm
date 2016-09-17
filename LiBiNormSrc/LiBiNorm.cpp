@@ -123,7 +123,7 @@ int LiBiNorm::main(int argc, char **argv)
 
 	model.sigma2 = 1;
 
-	for (size_t Model = 6; Model < 7;Model++)
+	for (size_t Model = 1; Model < 2;Model++)
 	{
 		switch (Model)
 		{
