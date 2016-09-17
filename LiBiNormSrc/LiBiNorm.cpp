@@ -66,10 +66,16 @@ int main(int argc, char **argv)
 
 void LiBiNorm::mcmcThread(paramSet params, optionsType options, modelType model)
 {
-	while (threadLoopCount < options.Nruns)
+	while (true)
 	{
-		cerr << "Starting " << threadLoopCount << endl;
+		size_t loop;
+		{
+			static mutex mtx; 
+			lock_guard<mutex> lock(mtx);
+			loop = threadLoopCount++;
+			cerr << "Starting " << loop << endl;
 
+		}
 #ifdef _DEBUG
 //#define _TEST
 #endif
@@ -130,12 +136,12 @@ void LiBiNorm::mcmcThread(paramSet params, optionsType options, modelType model)
 
 		lock_guard<mutex> lock(mtx);
 
-		cerr << "Finishing " << threadLoopCount << endl;
+		cerr << "Finishing " << loop << endl;
 
 		Chain.push_back(mcmcEngine.chain().back());
 		SSChain[options.Model].push_back(mcmcEngine.sschain().back());
 		RejectionRate[options.Model] += mcmcEngine.rejected();
-		if (threadLoopCount++ >= options.Nruns)
+		if (threadLoopCount >= options.Nruns)
 			break;
 	}
 
@@ -150,6 +156,9 @@ int LiBiNorm::main(int argc, char **argv)
 {
 
 	size_t Nthreads = 1;
+	size_t minModel = 1;
+	size_t maxModel = 6;
+	size_t Nruns = 100;
 
 	if(argc < 1)
 	{
@@ -174,6 +183,15 @@ int LiBiNorm::main(int argc, char **argv)
 		{
 			Nthreads = atoi(argv[++ni]);
 		}
+		else if(strcmp(argv[ni], "-n") == 0)
+		{
+			Nruns = atoi(argv[++ni]);
+		}
+		else if(strcmp(argv[ni], "-m") == 0)
+		{
+			minModel = atoi(argv[++ni]);
+			maxModel = minModel;
+		}
 		else
 		{
 			cout << "Invalid parameter";
@@ -182,8 +200,6 @@ int LiBiNorm::main(int argc, char **argv)
 	}
 
 
-	size_t minModel = 2;
-	size_t maxModel = 2;
 
 	transData.loadData(consFileName);
 	transData.remove_invalid_values();
@@ -200,11 +216,12 @@ int LiBiNorm::main(int argc, char **argv)
 
 	options.jumpSize = 0.01;
 	options.nsimu = 2000;
+	options.Nruns = Nruns;
+
 #ifdef _DEBUG
-	size_t Nruns = 10;
+	options.Nruns = 6;
 #else
 //	size_t Nruns = 100;
-	options.Nruns = 10;
 #endif
 
 //	double drscale  = 0;
@@ -262,7 +279,7 @@ int LiBiNorm::main(int argc, char **argv)
 		{
 			for (size_t j = minModel;j < maxModel+1;j++) 
 			{
-				testResult.printMiddle(Chain[i],SSChain[i],"");
+				testResult.printMiddle(Chain[i],SSChain[j][i],"");
 			}
 			testResult.printEnd();
 		}
