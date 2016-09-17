@@ -750,11 +750,22 @@ void LiBiCount::incBamCounter(const BamAlignment * ba,size_t size)
 bool LiBiCount::AReadIsMapped(const BamAlignment & ba)
 {
 
-	if (!ba.IsMapped() && !ba.IsMateMapped())
+	if (!ba.IsMapped())
 	{
-		if ((ba.IsPaired() && ba.IsFirstMate()) || !ba.IsPaired())
+		if (ba.IsPaired())
+		{
+			if (!ba.IsMateMapped())
+			{
+				if (ba.IsFirstMate())
+					geneCounts[notAlignedString]++;
+				return false;
+			}
+		}
+		else
+		{
 			geneCounts[notAlignedString]++;
-		return false;
+			return false;
+		}
 	}
 
 	return true;

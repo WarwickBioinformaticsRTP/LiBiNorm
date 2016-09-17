@@ -43,10 +43,14 @@ class mcmc
 {
 	std::vector<dataVec> _chain;
 	dataVec _sschain;
-public:
+
 	double rej,reju,ii,rejl;
+	size_t nsimu;
+public:
 
 	const std::vector<dataVec> & chain() {return _chain;};
+	const dataVec & sschain() {return _sschain;};
+	double rejected() {return reju/nsimu;};
 	mcmc(void);
 	~mcmc(void);
 

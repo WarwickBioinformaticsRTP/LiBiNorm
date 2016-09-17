@@ -20,7 +20,8 @@ class paramSet: public vectorEx<paramType>
 public:
 	//  template constructors do not require explicit declaration of the template type when they are used, as this is taken from the types
 	//	in the constructor
-	template<typename... P>paramSet(const P & ... params) : vectorEx<paramType>(params...){};
+	paramSet() {};
+	template<typename... P>paramSet(const paramType & first,const P & ... rest) : vectorEx<paramType>(first,rest...){};
 	bool isValid(const dataVec & data) const;
 
 	dataVec getvalues() const;

@@ -5,6 +5,7 @@
 #include <vector>
 #include <string>
 #include <valarray>
+#include "printEx.h"
 
 class dataVec: public std::vector<double>
 {
@@ -293,6 +294,14 @@ inline dataVec operator / (const dataVec & a ,double b)
 	return retVal;
 }
 
+inline dataVec operator ^ (const dataVec & a,int b)
+{
+	dataVec _ret(a);
+	for (int p = 0;p < (b - 1);p++)
+		for (double & i : _ret)
+			i *= i;
+	return _ret;
+}
 
 inline dataVec operator ^ (dataVec && a,int b)
 {
@@ -330,6 +339,12 @@ dataVec operator ^ (dataVec && a,int b);
 dataVec operator > (dataVec && a,double b);
 
 */
+
+inline bool printVal(outputDataFile * f,const dataVec & value)
+{
+	printVal(f,(const std::vector<double> &) value);
+	return true;
+};
 
 class dataType 
 {

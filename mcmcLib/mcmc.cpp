@@ -46,6 +46,8 @@ void mcmc::mcmcrun(const modelType & model,const dataType & data,const paramSet 
 	dataVec thetamu = params.getMus();
 	dataVec thetasig = params.getSigmas();
 
+	nsimu = options.nsimu;
+
 /*	if (qcov.empty())
 	{
 		qcov = params.getSigmas()^2.0;
