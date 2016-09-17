@@ -11,10 +11,19 @@ class LiBiNorm
 
 	dataType consData;
 
+
+	vector<dataVec > Chain;
+	vector<dataVec> SSChain; 
+	dataVec RejectionRate;
+
+	size_t threadLoopCount;
+
 public:
+	void mcmcThread(paramSet params, optionsType options, modelType model);
 	int main(int argc, char **argv);
 	int loadData();
-	
+
+
 };
 
 #endif

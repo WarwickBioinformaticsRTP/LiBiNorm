@@ -5,6 +5,8 @@
 
 #include <stdlib.h>
 #include <vector>
+#include <mutex>
+#include <thread>
 #include "libCommon.h"
 #include "containerEx.h"
 #include "mcmc.h"
@@ -61,10 +63,93 @@ int main(int argc, char **argv)
 	return EXIT_SUCCESS;
 }
 
-//#ifdef XXXX
+
+void LiBiNorm::mcmcThread(paramSet params, optionsType options, modelType model)
+{
+	while (threadLoopCount < options.Nruns)
+	{
+		cerr << "Starting " << threadLoopCount << endl;
+
+#ifdef _DEBUG
+//#define _TEST
+#endif
+#ifdef _TEST
+		vectorEx<double> p0(1.5, 1.6,-3.1, -3.2,0.6);
+#else
+		vectorEx<double> p0(rand(3), rand(3), rand(4)-5, rand(4)-5, rand(1));
+#endif
+		switch (options.Model)
+		{
+		case 2: case 4: case 5:
+			options.qcov = vector<double>(4,options.jumpSize);
+
+			params = paramSet(paramType("d", p0[0], -1 , 2)    // average length of fragments
+				,paramType("h",  p0[1], 0 , 3)   // the minimum length of fragmenation
+				,paramType("t1", p0[2], -5 , -1)   // theta1
+				,paramType("t2", p0[3], -5, -1) // theta2
+				//				,paramType("sig", p0[4], 0, 3) // sigma
+				);
+			break;
+		case 3:
+			options.qcov = vector<double>(3,options.jumpSize);
+
+			params = paramSet(paramType("d", p0[0], -1 , 2)    // average length of fragments
+				,paramType("h",  p0[1], 0 , 3)   // the minimum length of fragmenation
+				//				,paramType("t1", p0[2], -5 , -1)   // theta1
+				,paramType("t2", p0[3], -5, -1) // theta2
+				//				,paramType("sig", p0[4], 0, 3) // sigma
+				);
+			break;
+		case 1:
+			options.qcov = vector<double>(2,options.jumpSize);
+
+			params = paramSet(paramType("d", p0[0], -1 , 2)    // average length of fragments
+				,paramType("h",  p0[1], 0 , 3)   // the minimum length of fragmenation
+				//				,paramType("t1", p0[2], -5 , -1)   // theta1
+				//				,paramType("t2", p0[3], -5, -1) // theta2
+				);
+			break;
+		case 6:
+			options.qcov = vector<double>(6,options.jumpSize);
+
+			params = paramSet(paramType("d", p0[0], -1 , 2)    // average length of fragments
+				,paramType("h",  p0[1], 0 , 3)   // the minimum length of fragmenation
+				,paramType("t1", p0[2], -5 , -1)   // theta1
+				,paramType("t2", p0[3], -5, -1) // theta2
+				,paramType("a", p0[4], 0, 1) // alpha strength of model B
+				);
+			break;
+
+		};
+
+		mcmc mcmcEngine;
+
+		mcmcEngine.mcmcrun(model,consData,params,options);
+
+		static mutex mtx; 
+
+		lock_guard<mutex> lock(mtx);
+
+		cerr << "Finishing " << threadLoopCount << endl;
+
+		Chain.push_back(mcmcEngine.chain().back());
+		SSChain[options.Model].push_back(mcmcEngine.sschain().back());
+		RejectionRate[options.Model] += mcmcEngine.rejected();
+		if (threadLoopCount++ >= options.Nruns)
+			break;
+	}
+
+}
+
+void runThread(LiBiNorm * root,	paramSet params, optionsType options, modelType model)
+{
+	root->mcmcThread(params, options,model);
+}
+
 int LiBiNorm::main(int argc, char **argv)
 {
 
+	size_t Nthreads = 1;
 
 	if(argc < 1)
 	{
@@ -85,6 +170,10 @@ int LiBiNorm::main(int argc, char **argv)
 		{
 			consFileName = argv[++ni];
 		}
+		else if(strcmp(argv[ni], "-p") == 0)
+		{
+			Nthreads = atoi(argv[++ni]);
+		}
 		else
 		{
 			cout << "Invalid parameter";
@@ -92,26 +181,30 @@ int LiBiNorm::main(int argc, char **argv)
 		ni++;
 	}
 
+
+	size_t minModel = 2;
+	size_t maxModel = 2;
+
 	transData.loadData(consFileName);
 	transData.remove_invalid_values();
 	transData.transferTo(consData,100);
+	
+	cerr << "Data loaded" << endl;
+
 
 	string method = "mh";
-
-	vector<dataVec > Chain;
-	vector<dataVec> SSChain(5); 
-	dataVec RejectionRate(5);
 
 	paramSet params;
 	optionsType options;
 	modelType model;
 
-	double JumpSize = 0.01;
+	options.jumpSize = 0.01;
 	options.nsimu = 2000;
 #ifdef _DEBUG
 	size_t Nruns = 10;
 #else
-	size_t Nruns = 100;
+//	size_t Nruns = 100;
+	options.Nruns = 10;
 #endif
 
 //	double drscale  = 0;
@@ -122,10 +215,12 @@ int LiBiNorm::main(int argc, char **argv)
 	options.method = method;
 
 	model.sigma2 = 1;
+	SSChain.resize(maxModel+1);
+	RejectionRate.resize(maxModel+1);
 
-	for (size_t Model = 1; Model < 2;Model++)
+	for (options.Model = minModel; options.Model < maxModel+1;options.Model++)
 	{
-		switch (Model)
+		switch (options.Model)
 		{
 		case 1:
 			model.ssfun = &FLL_ModelA;
@@ -147,81 +242,36 @@ int LiBiNorm::main(int argc, char **argv)
 			break;
 		}
 
-		for (size_t kk = 1; kk <= Nruns; kk++)
+
+
+		threadLoopCount = 0;
+
+
+		vector<thread> threads;
+		for (size_t i = 0;i < Nthreads;i++)
+			threads.emplace_back(thread(runThread,this,params, options,model));
+
+		for (auto & i : threads)
+			i.join();
+
+
+		TsvFile testResult;
+		testResult.open(consFileName.replaceSuffix("_tempOut.txt"));
+
+		for (size_t i = 0;i < Chain.size();i++)
 		{
-			cout << kk << endl; 
-
-#ifdef _DEBUG
-#define _TEST
-#endif
-#ifdef _TEST
-			vectorEx<double> p0(1.5, 1.6,-3.1, -3.2,0.6);
-#else
-			vectorEx<double> p0(rand(3), rand(3), rand(4)-5, rand(4)-5, rand(1));
-#endif
-			switch (Model)
+			for (size_t j = minModel;j < maxModel+1;j++) 
 			{
-			case 2: case 4: case 5:
-			options.qcov = vector<double>(4,JumpSize);
-
-			params = paramSet(paramType("d", p0[0], -1 , 2)    // average length of fragments
-				,paramType("h",  p0[1], 0 , 3)   // the minimum length of fragmenation
-				,paramType("t1", p0[2], -5 , -1)   // theta1
-				,paramType("t2", p0[3], -5, -1) // theta2
-//				,paramType("sig", p0[4], 0, 3) // sigma
-				);
-			break;
-			case 3:
-			options.qcov = vector<double>(3,JumpSize);
-
-			params = paramSet(paramType("d", p0[0], -1 , 2)    // average length of fragments
-				,paramType("h",  p0[1], 0 , 3)   // the minimum length of fragmenation
-//				,paramType("t1", p0[2], -5 , -1)   // theta1
-				,paramType("t2", p0[3], -5, -1) // theta2
-//				,paramType("sig", p0[4], 0, 3) // sigma
-				);
-			break;
-			case 1:
-			options.qcov = vector<double>(2,JumpSize);
-
-			params = paramSet(paramType("d", p0[0], -1 , 2)    // average length of fragments
-				,paramType("h",  p0[1], 0 , 3)   // the minimum length of fragmenation
-//				,paramType("t1", p0[2], -5 , -1)   // theta1
-//				,paramType("t2", p0[3], -5, -1) // theta2
-				);
-			break;
-			case 6:
-			options.qcov = vector<double>(6,JumpSize);
-
-			params = paramSet(paramType("d", p0[0], -1 , 2)    // average length of fragments
-				,paramType("h",  p0[1], 0 , 3)   // the minimum length of fragmenation
-				,paramType("t1", p0[2], -5 , -1)   // theta1
-				,paramType("t2", p0[3], -5, -1) // theta2
-				,paramType("a", p0[4], 0, 1) // alpha strength of model B
-				);
-			break;
-
-			};
-
-			mcmc mcmcEngine;
-			
-			mcmcEngine.mcmcrun(model,consData,params,options);
-
-			Chain.push_back(mcmcEngine.chain().back());
-			SSChain[Model].push_back(mcmcEngine.sschain().back());
-			RejectionRate[Model] += mcmcEngine.rejected();
-
+				testResult.printMiddle(Chain[i],SSChain[i],"");
+			}
+			testResult.printEnd();
 		}
+		
 	}
 
+	cerr << "Data modelled" << endl;
 
-	TsvFile testResult;
-	testResult.open(consFileName.replaceSuffix("_tempOut.txt"));
 
-	for (size_t i = 0;i < Chain.size();i++)
-		testResult.print(Chain[i],SSChain[3][i]);
-
-	cout << "Data loaded";
 	string x;
 	cin >> x;
 

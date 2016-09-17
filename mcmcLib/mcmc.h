@@ -31,8 +31,10 @@ class optionsType
 {
 public:
 	optionsType():nsimu(100){};
-	size_t nsimu;
+	size_t nsimu,Nruns;
 	double updatesigma;
+	double jumpSize;
+	size_t Model;
 	std::string method;
 	std::vector<double> qcov;
 };
