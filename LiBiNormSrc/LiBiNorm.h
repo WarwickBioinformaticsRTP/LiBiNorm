@@ -12,7 +12,7 @@ class LiBiNorm
 	dataType consData;
 
 
-	vector<dataVec > Chain;
+	vector<vector <dataVec > > Chain;
 	vector<dataVec> SSChain; 
 	dataVec RejectionRate;
 

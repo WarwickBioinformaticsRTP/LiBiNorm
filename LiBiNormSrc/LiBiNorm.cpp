@@ -77,7 +77,7 @@ void LiBiNorm::mcmcThread(paramSet params, optionsType options, modelType model)
 
 		}
 #ifdef _DEBUG
-#define _TEST
+//#define _TEST
 #endif
 #ifdef _TEST
 		vectorEx<double> p0(1.590355415,0.249897587,-3.760142979,-3.226093068);
@@ -147,7 +147,7 @@ void LiBiNorm::mcmcThread(paramSet params, optionsType options, modelType model)
 			testOut.print(mcmcEngine.chain()[i],mcmcEngine.sschain()[i]);
 #endif
 
-		Chain.push_back(mcmcEngine.chain().back());
+		Chain[options.Model].push_back(mcmcEngine.chain().back());
 		SSChain[options.Model].push_back(mcmcEngine.sschain().back());
 		RejectionRate[options.Model] += mcmcEngine.rejected();
 		if (threadLoopCount >= options.Nruns)
@@ -228,7 +228,8 @@ int LiBiNorm::main(int argc, char **argv)
 	options.Nruns = Nruns;
 
 #ifdef _DEBUG
-	options.Nruns = 6;
+//	options.Nruns = 6;
+	options.nsimu = 100;
 #else
 //	size_t Nruns = 100;
 #endif
@@ -242,10 +243,12 @@ int LiBiNorm::main(int argc, char **argv)
 
 	model.sigma2 = 1;
 	SSChain.resize(maxModel+1);
+	Chain.resize(maxModel+1);
 	RejectionRate.resize(maxModel+1);
 
 	for (options.Model = minModel; options.Model < maxModel+1;options.Model++)
 	{
+		cerr << "Model no " <<  options.Model << endl;
 		switch (options.Model)
 		{
 		case 1:
@@ -280,19 +283,18 @@ int LiBiNorm::main(int argc, char **argv)
 		for (auto & i : threads)
 			i.join();
 
+	}
 
-		TsvFile testResult;
-		testResult.open(consFileName.replaceSuffix("_tempOut.txt"));
+	TsvFile testResult;
+	testResult.open(consFileName.replaceSuffix("_Chain_.txt"));
 
-		for (size_t i = 0;i < Chain.size();i++)
+	for (size_t i = 0;i < Chain[minModel].size();i++)
+	{
+		for (size_t j = minModel;j < maxModel+1;j++) 
 		{
-			for (size_t j = minModel;j < maxModel+1;j++) 
-			{
-				testResult.printMiddle(Chain[i],SSChain[j][i],"");
-			}
-			testResult.printEnd();
+			testResult.printMiddle(Chain[j][i],SSChain[j][i],"");
 		}
-		
+		testResult.printEnd();
 	}
 
 	cerr << "Data modelled" << endl;
