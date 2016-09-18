@@ -72,7 +72,7 @@ void transcriptDataMap::transferTo(dataType & mcmcData,size_t maxLength)
 	vectorEx<int> bins(0,300);
 	for (size_t i = 500;i <= 10000;i+=500)
 		bins.push_back(i);
-	bins.add(11000,12000,13000,15000,30000);
+	bins.add(11000,12000,15000,30000);
 
 
 	histc(bins);
@@ -89,6 +89,8 @@ void transcriptDataMap::transferTo(dataType & mcmcData,size_t maxLength)
 	mcmcData.geneData[0].resize(size());
 	mcmcData.geneData[1].resize(size());
 
+
+	srand( (unsigned)time( NULL ) );
 
 	for (auto & gene : *this)
 	{

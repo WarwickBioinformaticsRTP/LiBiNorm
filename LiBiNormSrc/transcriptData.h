@@ -32,7 +32,7 @@ public:
 class transcriptDataMap : public vector<transcriptData>
 {
 public:
-	vector<int> freq;
+	vector<double> freq;
 
 	void remove_invalid_values();
 	int loadData(const string filename);

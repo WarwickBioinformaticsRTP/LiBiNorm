@@ -177,7 +177,7 @@ freq_l = data(3, :);
 	const dataVec & x = data.fragData;
 	const vector<int> & geneIndex = data.geneIndex;
 	const dataVec & L = data.geneData[0];
-	const dataVec & freq_l = data.geneData[1];
+	const dataVec & Freq_l = data.geneData[1];
 	dataVec l = L(geneIndex);
 
 //f_frag = (x> h).*(x < l-h)./(t1+ t2) .* (t1.*exp(-t1*(l-x) - 2*t2*h - t1*h) + t2.*exp(-t1*l-t2*(x+h))) + ...
@@ -190,6 +190,8 @@ freq_l = data(3, :);
 	dataVec f_frag = (x> h)*(x < l-h)/t1_p_t2 * (t1*exp(-t1*(l-x) - 2*t2*h - t1*h) + t2*exp(-t1*l-t2*(x+h))) + 
 	         1/t1_p_t2 * (t1*exp(-t1*(l-x)) + t2*exp(-t1*l-t2*(x)))/d;
 
+	double sum_f = sum(f_frag);
+
 	//if (isempty(find(f_frag == 0, 1)))
 	if (f_frag.does_not_contain_null())
 	{
@@ -201,8 +203,8 @@ freq_l = data(3, :);
 		dataVec norm =  (2*h<L)*(exp(-2*h*t1_p_t2) - exp_mL_t1_p_t2)/t1_p_t2 + 
 			(1-exp_mL_t1_p_t2)/t1_p_t2/d;
 
-		LogL = -2*sum(log(f_frag/norm(geneIndex))/freq_l(geneIndex));
-	}
+		LogL = -2*sum(log(f_frag/norm(geneIndex))/Freq_l(geneIndex));
+;	}
 	return LogL;
 }
 
