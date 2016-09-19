@@ -14,7 +14,6 @@ using namespace std;
 #define CACHE_MINSIZE 500
 
 map<thread::id,map<size_t,vector<vector<double> > > > cache;
-mutex assign_vector_mtx; 
 
 dataVec::dataVec(size_t s)
 {
@@ -22,7 +21,6 @@ dataVec::dataVec(size_t s)
 		return;
 
 	vector<vector<double> > & c = cache[this_thread::get_id()][s];
-//	lock_guard<mutex> lock(assign_vector_mtx);
 	if (c.size() && (s >= CACHE_MINSIZE))
 	{
 		swap(c.back());
@@ -34,7 +32,6 @@ dataVec::dataVec(size_t s)
 
 dataVec::dataVec(const std::vector<double> & a)
 {
-//	lock_guard<mutex> lock(assign_vector_mtx);
 	size_t s = a.size();
 	vector<vector<double> > & c = cache[this_thread::get_id()][s];
 	if (c.size() && (s >= CACHE_MINSIZE))
@@ -48,7 +45,6 @@ dataVec::dataVec(const std::vector<double> & a)
 };
 dataVec::dataVec(const dataVec & a)
 {
-//	lock_guard<mutex> lock(assign_vector_mtx);
 	size_t s = a.size();
 	vector<vector<double> > & c = cache[this_thread::get_id()][s];
 	if (c.size() && (s >= CACHE_MINSIZE))
@@ -68,7 +64,6 @@ dataVec::~dataVec()
 	vector<vector<double> > & c = cache[this_thread::get_id()][s];
 	if (s < CACHE_MINSIZE)
 		return;
-//	lock_guard<mutex> lock(assign_vector_mtx);
 	c.emplace_back(move(*this));
 }
 

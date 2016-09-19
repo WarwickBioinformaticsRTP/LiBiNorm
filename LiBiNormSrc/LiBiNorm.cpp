@@ -73,7 +73,7 @@ void LiBiNorm::mcmcThread(paramSet params, optionsType options, modelType model)
 		{
 			static mutex mtx; 
 			lock_guard<mutex> lock(mtx);
-			while(model_iterator->second > options.Nruns)
+			while(model_iterator->second >= options.Nruns)
 			{
 				if (++model_iterator ==threadLoopCounts.end())
 					return;
@@ -283,33 +283,6 @@ int LiBiNorm::main(int argc, char **argv)
 	{
 		threadLoopCounts[m] = 0;
 	}
-
-/*
-		cerr << "Model no " <<  options.Model << endl;
-		switch (options.Model)
-		{
-		case 1:
-			model.ssfun = &FLL_ModelA;
-			break;
-		case 2:
-			model.ssfun = &FLL_ModelB;
-			break;
-		case 3:
-			model.ssfun = &FLL_ModelC;
-			break;
-		case 4:
-			model.ssfun = &FLL_ModelD;
-			break;
-		case 5:
-			model.ssfun = &FLL_ModelE;
-			break;
-		case 6:
-			model.ssfun = &FLL_ModelBD;
-			break;
-		}
-
-*/
-
 
 	vector<thread> threads;
 	for (size_t i = 0;i < Nthreads;i++)
