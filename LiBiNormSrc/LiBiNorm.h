@@ -16,7 +16,7 @@ class LiBiNorm
 	vector<dataVec> SSChain; 
 	dataVec RejectionRate;
 
-	size_t threadLoopCount;
+	map<size_t,size_t> threadLoopCounts;
 
 public:
 	void mcmcThread(paramSet params, optionsType options, modelType model);

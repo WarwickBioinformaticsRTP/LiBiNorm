@@ -66,16 +66,49 @@ int main(int argc, char **argv)
 
 void LiBiNorm::mcmcThread(paramSet params, optionsType options, modelType model)
 {
+	map<size_t,size_t>::iterator model_iterator = threadLoopCounts.begin();
+	size_t loop;
 	while (true)
 	{
-		size_t loop;
 		{
 			static mutex mtx; 
 			lock_guard<mutex> lock(mtx);
-			loop = threadLoopCount++;
-			cerr << "Starting " << loop << endl;
+			while(model_iterator->second > options.Nruns)
+			{
+				if (++model_iterator ==threadLoopCounts.end())
+					return;
+			}
+			loop = model_iterator->second++;
+			cerr << "Starting Model:" << model_iterator->first << " iteration:" << loop << endl;
 
 		}
+
+		options.Model = model_iterator->first;
+
+		switch (options.Model)
+		{
+		case 1:
+			model.ssfun = &FLL_ModelA;
+			break;
+		case 2:
+			model.ssfun = &FLL_ModelB;
+			break;
+		case 3:
+			model.ssfun = &FLL_ModelC;
+			break;
+		case 4:
+			model.ssfun = &FLL_ModelD;
+			break;
+		case 5:
+			model.ssfun = &FLL_ModelE;
+			break;
+		case 6:
+			model.ssfun = &FLL_ModelBD;
+			break;
+		}
+
+
+
 #ifdef _DEBUG
 //#define _TEST
 #endif
@@ -137,7 +170,7 @@ void LiBiNorm::mcmcThread(paramSet params, optionsType options, modelType model)
 
 		lock_guard<mutex> lock(mtx);
 
-		cerr << "Finishing " << loop << endl;
+		cerr << "Finishing Model:" << model_iterator->first << " iteration:" << loop << endl;
 
 #ifdef XXX
 		TsvFile testOut;
@@ -150,8 +183,6 @@ void LiBiNorm::mcmcThread(paramSet params, optionsType options, modelType model)
 		Chain[options.Model].push_back(mcmcEngine.chain().back());
 		SSChain[options.Model].push_back(mcmcEngine.sschain().back());
 		RejectionRate[options.Model] += mcmcEngine.rejected();
-		if (threadLoopCount >= options.Nruns)
-			break;
 	}
 
 }
@@ -248,8 +279,12 @@ int LiBiNorm::main(int argc, char **argv)
 	Chain.resize(maxModel+1);
 	RejectionRate.resize(maxModel+1);
 
-	for (options.Model = minModel; options.Model < maxModel+1;options.Model++)
+	for (size_t m = minModel; m < maxModel+1;m++)
 	{
+		threadLoopCounts[m] = 0;
+	}
+
+/*
 		cerr << "Model no " <<  options.Model << endl;
 		switch (options.Model)
 		{
@@ -273,19 +308,15 @@ int LiBiNorm::main(int argc, char **argv)
 			break;
 		}
 
+*/
 
 
-		threadLoopCount = 0;
+	vector<thread> threads;
+	for (size_t i = 0;i < Nthreads;i++)
+		threads.emplace_back(thread(runThread,this,params, options,model));
 
-
-		vector<thread> threads;
-		for (size_t i = 0;i < Nthreads;i++)
-			threads.emplace_back(thread(runThread,this,params, options,model));
-
-		for (auto & i : threads)
-			i.join();
-
-	}
+	for (auto & i : threads)
+		i.join();
 
 	TsvFile testResult;
 	testResult.open(consFileName.replaceSuffix("_Chain_.txt"));
