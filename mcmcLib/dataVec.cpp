@@ -1,7 +1,78 @@
 #include "dataVec.h"
 #include <cmath>
+#include <mutex>
+#include <map>
 
 using namespace std;
+#define DATAVEC_CACHE
+
+
+
+#ifdef DATAVEC_CACHE
+
+#define CACHE_MINSIZE 500
+
+map<size_t,vector<vector<double> > > cache;
+mutex assign_vector_mtx; 
+
+dataVec::dataVec(size_t s)
+{
+	if (s == 0)
+		return;
+
+	lock_guard<mutex> lock(assign_vector_mtx);
+	if (cache[s].size() && (s >= CACHE_MINSIZE))
+	{
+		swap(cache[s].back());
+		cache[s].pop_back();
+	}
+	else
+		resize(s);
+};
+
+dataVec::dataVec(const std::vector<double> & a)
+{
+	lock_guard<mutex> lock(assign_vector_mtx);
+	size_t s = a.size();
+	if (cache[s].size() && (s >= CACHE_MINSIZE))
+	{
+		swap(cache[s].back());
+		cache[s].pop_back();
+		assign(a.begin(),a.end());
+	}
+	else
+		vector<double>::operator=(a);
+};
+dataVec::dataVec(const dataVec & a)
+{
+	lock_guard<mutex> lock(assign_vector_mtx);
+	size_t s = a.size();
+	if (cache[s].size() && (s >= CACHE_MINSIZE))
+	{
+		swap(cache[s].back());
+		cache[s].pop_back();
+		assign(a.begin(),a.end());
+	}
+	else
+		vector<double>::operator=(a);
+};
+
+
+dataVec::~dataVec()
+{
+	size_t s = size();
+	if (s < CACHE_MINSIZE)
+		return;
+	lock_guard<mutex> lock(assign_vector_mtx);
+	cache[s].emplace_back(move(*this));
+}
+
+#else
+dataVec::dataVec(size_t s): std::vector<double>(s){};
+dataVec::dataVec(const std::vector<double> & a): std::vector<double>(a){};
+dataVec::~dataVec(){};
+#endif
+
 
 //	Cholesky_Decomposition returns the Cholesky Decomposition Matrix. 
 dataVec dataVec::chol()
@@ -39,141 +110,3 @@ dataVec dataVec::chol()
 	return M;
 };
 
-/*
-double sum(const dataVec & a)
-{
-	double retVal = 0;
-	for (auto & i : a)
-		retVal += i;
-	return retVal;
-}
-
-dataVec exp(dataVec && a)
-{
-	for (size_t i = 0; i < a.size();i++)
-		a[i] = exp(a[i]);
-	return a;
-}
-dataVec log(dataVec && a)
-{
-	for (size_t i = 0; i < a.size();i++)
-		a[i] = log(a[i]);
-	return a;
-}
-
-dataVec operator * (double a, const dataVec & b)
-{
-	dataVec retVal(b.size());
-	for (size_t i = 0; i < b.size();i++)
-		retVal[i] = b[i] * a;
-	return retVal;
-}
-
-dataVec operator * (double a, dataVec && b)
-{
-	for (size_t i = 0; i < b.size();i++)
-		b[i] *= a;
-	return b;
-}
-
-dataVec operator < (double a, const dataVec & b)
-{
-	dataVec retVal(b.size());
-	for (size_t i = 0; i < b.size();i++)
-		retVal[i] = a < b[i]?1:0;
-	return retVal;
-}
-dataVec operator < (double a, dataVec && b)
-{
-	for (size_t i = 0; i < b.size();i++)
-		b[i] = a < b[i]?1:0;
-	return b;
-}
-
-dataVec operator - (double a, const dataVec & b)
-{
-	dataVec retVal(b.size());
-	for (size_t i = 0; i < b.size();i++)
-		retVal[i] = a - b[i];
-	return retVal;
-
-}
-dataVec operator - (double a, dataVec && b)
-{
-	for (size_t i = 0; i < b.size();i++)
-		b[i] = a - b[i];
-	return b;
-
-}
-dataVec operator + (dataVec && a,double b)
-{
-	for (size_t i = 0; i < a.size();i++)
-		a[i] += b;
-	return a;
-}
-dataVec operator + (const dataVec & a ,double b)
-{
-	dataVec retVal(a.size());
-	for (size_t i = 0; i < a.size();i++)
-		retVal[i] = a[i] + b;
-	return retVal;
-}
-
-dataVec operator - (dataVec && a,double b)
-{
-	for (size_t i = 0; i < a.size();i++)
-		a[i] -= b;
-	return a;
-}
-dataVec operator - (const dataVec & a ,double b)
-{
-	dataVec retVal(a.size());
-	for (size_t i = 0; i < a.size();i++)
-		retVal[i] = a[i] - b;
-	return retVal;
-}
-dataVec operator * (dataVec && a,double b)
-{
-	for (size_t i = 0; i < a.size();i++)
-		a[i] *= b;
-	return a;
-}
-dataVec operator * (const dataVec & a ,double b)
-{
-	dataVec retVal(a.size());
-	for (size_t i = 0; i < a.size();i++)
-		retVal[i] = a[i] * b;
-	return retVal;
-}
-
-dataVec operator / (dataVec && a,double b)
-{
-	for (size_t i = 0; i < a.size();i++)
-		a[i] /= b;
-	return a;
-}
-dataVec operator / (const dataVec & a ,double b)
-{
-	dataVec retVal(a.size());
-	for (size_t i = 0; i < a.size();i++)
-		retVal[i] = a[i] / b;
-	return retVal;
-}
-
-
-dataVec operator ^ (dataVec && a,int b)
-{
-	for (int p = 0;p < b;p++)
-		for (size_t i = 0; i < a.size();i++)
-			a[i] *= a[i];
-	return a;
-}
-
-dataVec operator > (dataVec && a,double b)
-{
-	for (size_t i = 0; i < a.size();i++)
-		a[i] = a[i]>b?1:0;
-	return a;
-}
-
-*/

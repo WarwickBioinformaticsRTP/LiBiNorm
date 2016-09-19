@@ -204,7 +204,7 @@ freq_l = data(3, :);
 			(1-exp_mL_t1_p_t2)/t1_p_t2/d;
 
 		LogL = -2*sum(log(f_frag/norm(geneIndex))/Freq_l(geneIndex));
-;	}
+	}
 	return LogL;
 }
 

@@ -169,6 +169,7 @@ int LiBiNorm::main(int argc, char **argv)
 	size_t maxModel = 6;
 	size_t Nruns = 100;
 
+	initClock();
 	if(argc < 1)
 	{
 		printf("Error: parameter wrong!\n");
@@ -215,6 +216,7 @@ int LiBiNorm::main(int argc, char **argv)
 	transData.transferTo(consData,100);
 	
 	cerr << "Data loaded" << endl;
+	elapsedTime();
 
 
 	string method = "mh";
@@ -229,7 +231,7 @@ int LiBiNorm::main(int argc, char **argv)
 
 #ifdef _DEBUG
 //	options.Nruns = 6;
-	options.nsimu = 100;
+//	options.nsimu = 100;
 #else
 //	size_t Nruns = 100;
 #endif
@@ -298,10 +300,12 @@ int LiBiNorm::main(int argc, char **argv)
 	}
 
 	cerr << "Data modelled" << endl;
+	elapsedTime();
 
-//	string x;
-//	cin >> x;
-
+#ifdef _WIN32
+	string x;
+	cin >> x;
+#endif
 	return EXIT_SUCCESS;
 }
 

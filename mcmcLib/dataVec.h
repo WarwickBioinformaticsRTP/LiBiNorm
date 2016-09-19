@@ -19,14 +19,12 @@ inline bool printVal(outputDataFile * f,long double value)
 class dataVec: public std::vector<double>
 {
 public:
-	dataVec(size_t s = 0): std::vector<double>(s){};
-	dataVec(const std::vector<double> & a): std::vector<double>(a){};
+	dataVec(size_t s = 0);
+	dataVec(const std::vector<double> & a);
+	dataVec(const dataVec & a);
 
-#ifdef _DEBUG
-	virtual ~dataVec()
-	{
-	}
-#endif
+	~dataVec();
+
 	vector<double> & values() { return *this;};
 
 	dataVec operator > (double a) const
