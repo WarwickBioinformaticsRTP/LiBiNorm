@@ -27,8 +27,29 @@ dataVec::dataVec(size_t s)
 		c.pop_back();
 	}
 	else
-		resize(s);
+		vector<VEC_DATA_TYPE>::resize(s);
 };
+
+void dataVec::resize(size_t s)
+{
+	if (s <  size())
+	{
+		vector<VEC_DATA_TYPE>::resize(s);
+	}
+	else if (s >  size())
+	{
+		vector<vector<VEC_DATA_TYPE> > & c = cache[this_thread::get_id()][s];
+		if (c.size())
+		{
+			swap(c.back());
+			assign(c.back().begin(),c.back().end());
+			c.pop_back();
+		}
+		else
+			vector<VEC_DATA_TYPE>::resize(s);
+	}
+}
+
 dataVec::dataVec(size_t s,VEC_DATA_TYPE v)
 {
 	if (s == 0)
@@ -81,10 +102,20 @@ dataVec::~dataVec()
 	c.emplace_back(move(*this));
 }
 
+void dataVec::clearCache()
+{
+	cache[this_thread::get_id()].clear();
+};
+
+
 #else
-dataVec::dataVec(size_t s): std::vector<double>(s){};
-dataVec::dataVec(const std::vector<double> & a): std::vector<double>(a){};
+dataVec::dataVec(size_t s): std::vector<VEC_DATA_TYPE>(s){};
+dataVec::dataVec(const std::vector<VEC_DATA_TYPE> & a): std::vector<VEC_DATA_TYPE>(a){};
 dataVec::~dataVec(){};
+void dataVec::resize(size_t s = 0) {
+	vector<VEC_DATA_TYPE>::resize(s);
+};
+
 #endif
 
 

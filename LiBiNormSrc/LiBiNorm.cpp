@@ -18,6 +18,12 @@
 
 using namespace std;
 
+
+//#define TEST_CODE
+#ifdef TEST_CODE
+extern map<thread::id,map<size_t,vector<vector<VEC_DATA_TYPE> > > > cache;
+#endif
+
 int main(int argc, char **argv)
 {
 
@@ -66,6 +72,11 @@ int main(int argc, char **argv)
 
 void LiBiNorm::mcmcThread(paramSet params, optionsType options, modelType model)
 {
+	#ifdef TEST_CODE
+		TsvFile testOut;
+		testOut.open("Y:\\LiBiNorm\\OptimiseReferenceData\\test.txt");
+	#endif
+
 	map<size_t,size_t>::iterator model_iterator = threadLoopCounts.begin();
 	size_t loop;
 	while (true)
@@ -75,8 +86,14 @@ void LiBiNorm::mcmcThread(paramSet params, optionsType options, modelType model)
 			lock_guard<mutex> lock(mtx);
 			while(model_iterator->second >= options.Nruns)
 			{
+				dataVec::clearCache();
 				if (++model_iterator ==threadLoopCounts.end())
+				{
+#ifdef TEST_CODE
+					testOut.flush();
+#endif
 					return;
+				}
 			}
 			loop = model_iterator->second++;
 			cerr << "Starting Model:" << model_iterator->first << " iteration:" << loop << endl;
@@ -172,12 +189,14 @@ void LiBiNorm::mcmcThread(paramSet params, optionsType options, modelType model)
 
 		cerr << "Finishing Model:" << model_iterator->first << " iteration:" << loop << endl;
 
-#ifdef XXX
-		TsvFile testOut;
-		testOut.open("Y:\\LiBiNorm\\OptimiseReferenceData\\test.txt");
-
-		for (size_t i = 0;i < mcmcEngine.chain().size();i++)
-			testOut.print(mcmcEngine.chain()[i],mcmcEngine.sschain()[i]);
+#ifdef TEST_CODE
+		for (auto & i : cache[this_thread::get_id()])
+				testOut.printMiddle(i.first);
+		testOut.printEnd();
+		for (auto & i : cache[this_thread::get_id()])
+				testOut.printMiddle(_Z(i.second.size()));
+		testOut.printEnd();
+		testOut.flush();
 #endif
 
 		Chain[options.Model].push_back(mcmcEngine.chain().back());
