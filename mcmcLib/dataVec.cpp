@@ -13,14 +13,14 @@ using namespace std;
 
 #define CACHE_MINSIZE 500
 
-map<thread::id,map<size_t,vector<vector<double> > > > cache;
+map<thread::id,map<size_t,vector<vector<VEC_DATA_TYPE> > > > cache;
 
 dataVec::dataVec(size_t s)
 {
 	if (s == 0)
 		return;
 
-	vector<vector<double> > & c = cache[this_thread::get_id()][s];
+	vector<vector<VEC_DATA_TYPE> > & c = cache[this_thread::get_id()][s];
 	if (c.size() && (s >= CACHE_MINSIZE))
 	{
 		swap(c.back());
@@ -29,11 +29,25 @@ dataVec::dataVec(size_t s)
 	else
 		resize(s);
 };
+dataVec::dataVec(size_t s,VEC_DATA_TYPE v)
+{
+	if (s == 0)
+		return;
 
-dataVec::dataVec(const std::vector<double> & a)
+	vector<vector<VEC_DATA_TYPE> > & c = cache[this_thread::get_id()][s];
+	if (c.size() && (s >= CACHE_MINSIZE))
+	{
+		swap(c.back());
+		c.pop_back();
+	}
+
+	assign(s,v);
+};
+
+dataVec::dataVec(const std::vector<VEC_DATA_TYPE> & a)
 {
 	size_t s = a.size();
-	vector<vector<double> > & c = cache[this_thread::get_id()][s];
+	vector<vector<VEC_DATA_TYPE> > & c = cache[this_thread::get_id()][s];
 	if (c.size() && (s >= CACHE_MINSIZE))
 	{
 		swap(c.back());
@@ -41,12 +55,12 @@ dataVec::dataVec(const std::vector<double> & a)
 		assign(a.begin(),a.end());
 	}
 	else
-		vector<double>::operator=(a);
+		vector<VEC_DATA_TYPE>::operator=(a);
 };
 dataVec::dataVec(const dataVec & a)
 {
 	size_t s = a.size();
-	vector<vector<double> > & c = cache[this_thread::get_id()][s];
+	vector<vector<VEC_DATA_TYPE> > & c = cache[this_thread::get_id()][s];
 	if (c.size() && (s >= CACHE_MINSIZE))
 	{
 		swap(c.back());
@@ -54,14 +68,14 @@ dataVec::dataVec(const dataVec & a)
 		assign(a.begin(),a.end());
 	}
 	else
-		vector<double>::operator=(a);
+		vector<VEC_DATA_TYPE>::operator=(a);
 };
 
 
 dataVec::~dataVec()
 {
 	size_t s = size();
-	vector<vector<double> > & c = cache[this_thread::get_id()][s];
+	vector<vector<VEC_DATA_TYPE> > & c = cache[this_thread::get_id()][s];
 	if (s < CACHE_MINSIZE)
 		return;
 	c.emplace_back(move(*this));

@@ -248,7 +248,7 @@ double FLL_ModelE(const dataVec & param, const dataType & data)
 	{
 //		   norm =  (2*h<l).*(exp(-l*t1 - 2*h*t2)*(t1 + t2)^2 - exp(-l*(t1 + t2))*t1^2 + t1*t2*exp(-2*h*(t1 + t2))*(l*t2 -2*h*t1 -2*h*t2+l*t1 - t2/t1 - 2))/(t1 + t2)^2/t1^2/t2 + ...
 //        (l-1/(t1 + t2) - 1/t1 - t1/t2/(t1+t2)*exp(-l*(t1 + t2))+(t1 + t2)/t1/t2*exp(-l*t1))/(t1 + t2)/t1/d;
-		dataVec norm =  (2*h<L)*(exp(-L*t1 - 2*h*t2)*t1_p_t2_sq - exp(-L*t1_p_t2)*t1*t1 + t1*t2*exp(-2*h*t1_p_t2)*(L*t2 -2*h*t1 -2*h*t2+L*t1 - t2/t1 - 2))/(pow(t1_p_t2*t1,2)*t2) + 
+		dataVec norm =  (2*h<L)*(exp(-L*t1 - 2*h*t2)*t1_p_t2_sq - exp(-L*t1_p_t2)*t1*t1 + t1*t2*exp(-2*h*t1_p_t2)*(L*t2 -2*h*t1 -2*h*t2+L*t1 - t2/t1 - 2))/(t1_p_t2*t1_p_t2*t1*t1*t2) + 
 	       (L-1/t1_p_t2 - 1/t1 - t1/t2/t1_p_t2*exp(-L*t1_p_t2)+t1_p_t2/t1/t2*exp(-L*t1))/t1_p_t2/t1/d;
 	
 		LogL = -2*sum(log(f_frag/norm(geneIndex))/freq_l(geneIndex));

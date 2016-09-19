@@ -7,19 +7,21 @@
 #include <valarray>
 #include "printEx.h"
 
+#define VEC_DATA_TYPE double
 
-class dataVec: public std::vector<double>
+class dataVec: public std::vector<VEC_DATA_TYPE>
 {
 public:
 	dataVec(size_t s = 0);
-	dataVec(const std::vector<double> & a);
+	dataVec(size_t s,VEC_DATA_TYPE v);
+	dataVec(const std::vector<VEC_DATA_TYPE> & a);
 	dataVec(const dataVec & a);
 
 	~dataVec();
 
-	vector<double> & values() { return *this;};
+	vector<VEC_DATA_TYPE> & values() { return *this;};
 
-	dataVec operator > (double a) const
+	dataVec operator > (VEC_DATA_TYPE a) const
 	{
 		size_t s = size();
 		dataVec retVal(s);
@@ -107,7 +109,7 @@ public:
 
 	bool does_not_contain_null()
 	{
-		for (double & i : *this)
+		for (VEC_DATA_TYPE & i : *this)
 			if (i == 0)
 				return false;
 		return true;
@@ -118,7 +120,7 @@ public:
 		insert(end(),a.begin(),a.end());
 		return *this;
 	}
-	dataVec & append(size_t N,double value)
+	dataVec & append(size_t N,VEC_DATA_TYPE value)
 	{
 		insert(end(),N,value);
 		return *this;
@@ -140,7 +142,7 @@ public:
 		resize(s);
 	}
 
-	dataVec & removeInvalidValues(double maxVal)
+	dataVec & removeInvalidValues(VEC_DATA_TYPE maxVal)
 	{
 		//	Sort in place for maximum efficiency, if we find an invalid value, replace with one from the end;
 		//	Note that if we swap with a value from the end we have to check it as well to see if it is invalid
@@ -177,9 +179,9 @@ public:
 
 
 
-inline double sum(const dataVec & a)
+inline VEC_DATA_TYPE sum(const dataVec & a)
 {
-	double retVal = 0;
+	VEC_DATA_TYPE retVal = 0;
 	for (auto & i : a)
 		retVal += i;
 	return retVal;
@@ -187,18 +189,18 @@ inline double sum(const dataVec & a)
 
 inline dataVec exp(dataVec && a)
 {
-	for (double & i : a)
+	for (VEC_DATA_TYPE & i : a)
 		i = exp(i);
 	return a;
 }
 inline dataVec log(dataVec && a)
 {
-	for (double & i : a)
+	for (VEC_DATA_TYPE & i : a)
 		i = log(i);
 	return a;
 }
 
-inline dataVec operator * (double a, const dataVec & b)
+inline dataVec operator * (VEC_DATA_TYPE a, const dataVec & b)
 {
 	size_t s(b.size());
 	dataVec retVal(s);
@@ -207,14 +209,14 @@ inline dataVec operator * (double a, const dataVec & b)
 	return retVal;
 }
 
-inline dataVec operator * (double a, dataVec && b)
+inline dataVec operator * (VEC_DATA_TYPE a, dataVec && b)
 {
-	for (double & i : b)
+	for (VEC_DATA_TYPE & i : b)
 		i *= a;
 	return b;
 }
 
-inline dataVec operator < (double a, const dataVec & b)
+inline dataVec operator < (VEC_DATA_TYPE a, const dataVec & b)
 {
 	size_t s(b.size());
 	dataVec retVal(s);
@@ -222,14 +224,14 @@ inline dataVec operator < (double a, const dataVec & b)
 		retVal.at(i) = a < b.at(i)?1:0;
 	return retVal;
 }
-inline dataVec operator < (double a, dataVec && b)
+inline dataVec operator < (VEC_DATA_TYPE a, dataVec && b)
 {
-	for (double & i : b)
+	for (VEC_DATA_TYPE & i : b)
 		i = a < i?1:0;
 	return b;
 }
 
-inline dataVec operator - (double a, const dataVec & b)
+inline dataVec operator - (VEC_DATA_TYPE a, const dataVec & b)
 {
 	size_t s(b.size());
 	dataVec retVal(s);
@@ -238,20 +240,20 @@ inline dataVec operator - (double a, const dataVec & b)
 	return retVal;
 
 }
-inline dataVec operator - (double a, dataVec && b)
+inline dataVec operator - (VEC_DATA_TYPE a, dataVec && b)
 {
-	for (double & i : b)
+	for (VEC_DATA_TYPE & i : b)
 		i = a - i;
 	return b;
 
 }
-inline dataVec operator + (dataVec && a,double b)
+inline dataVec operator + (dataVec && a,VEC_DATA_TYPE b)
 {
-	for (double & i : a)
+	for (VEC_DATA_TYPE & i : a)
 		i += b;
 	return a;
 }
-inline dataVec operator + (const dataVec & a ,double b)
+inline dataVec operator + (const dataVec & a ,VEC_DATA_TYPE b)
 {
 	size_t s(a.size());
 	dataVec retVal(s);
@@ -260,13 +262,13 @@ inline dataVec operator + (const dataVec & a ,double b)
 	return retVal;
 }
 
-inline dataVec operator - (dataVec && a,double b)
+inline dataVec operator - (dataVec && a,VEC_DATA_TYPE b)
 {
-	for (double & i : a)
+	for (VEC_DATA_TYPE & i : a)
 		i -= b;
 	return a;
 }
-inline dataVec operator - (const dataVec & a ,double b)
+inline dataVec operator - (const dataVec & a ,VEC_DATA_TYPE b)
 {
 	size_t s(a.size());
 	dataVec retVal(s);
@@ -274,13 +276,13 @@ inline dataVec operator - (const dataVec & a ,double b)
 		retVal.at(i) = a.at(i) - b;
 	return retVal;
 }
-inline dataVec operator * (dataVec && a,double b)
+inline dataVec operator * (dataVec && a,VEC_DATA_TYPE b)
 {
-	for (double &  i : a)
+	for (VEC_DATA_TYPE &  i : a)
 		i *= b;
 	return a;
 }
-inline dataVec operator * (const dataVec & a ,double b)
+inline dataVec operator * (const dataVec & a ,VEC_DATA_TYPE b)
 {
 	size_t s(a.size());
 	dataVec retVal(s);
@@ -289,13 +291,13 @@ inline dataVec operator * (const dataVec & a ,double b)
 	return retVal;
 }
 
-inline dataVec operator / (dataVec && a,double b)
+inline dataVec operator / (dataVec && a,VEC_DATA_TYPE b)
 {
-	for (double &  i : a)
+	for (VEC_DATA_TYPE &  i : a)
 		i /= b;
 	return a;
 }
-inline dataVec operator / (const dataVec & a ,double b)
+inline dataVec operator / (const dataVec & a ,VEC_DATA_TYPE b)
 {
 	size_t s(a.size());
 	dataVec retVal(s);
@@ -308,7 +310,7 @@ inline dataVec operator ^ (const dataVec & a,int b)
 {
 	dataVec _ret(a);
 	for (int p = 0;p < (b - 1);p++)
-		for (double & i : _ret)
+		for (VEC_DATA_TYPE & i : _ret)
 			i *= i;
 	return _ret;
 }
@@ -316,43 +318,43 @@ inline dataVec operator ^ (const dataVec & a,int b)
 inline dataVec operator ^ (dataVec && a,int b)
 {
 	for (int p = 0;p < (b - 1);p++)
-		for (double & i : a)
+		for (VEC_DATA_TYPE & i : a)
 			i *= i;
 	return a;
 }
 
-inline dataVec operator > (dataVec && a,double b)
+inline dataVec operator > (dataVec && a,VEC_DATA_TYPE b)
 {
-	for (double &  i : a)
+	for (VEC_DATA_TYPE &  i : a)
 		i = i>b?1:0;
 	return a;
 }
 /*
-double sum(const dataVec & a);
+VEC_DATA_TYPE sum(const dataVec & a);
 dataVec exp(dataVec && a);
 dataVec log(dataVec && a);
-dataVec operator * (double a, const dataVec & b);
-dataVec operator * (double a, dataVec && b);
-dataVec operator < (double a, const dataVec & b);
-dataVec operator < (double a, dataVec && b);
-dataVec operator - (double a, const dataVec & b);
-dataVec operator - (double a, dataVec && b);
-dataVec operator + (dataVec && a,double b);
-dataVec operator + (const dataVec & a ,double b);
-dataVec operator - (dataVec && a,double b);
-dataVec operator - (const dataVec & a ,double b);
-dataVec operator * (dataVec && a,double b);
-dataVec operator * (const dataVec & a ,double b);
-dataVec operator / (dataVec && a,double b);
-dataVec operator / (const dataVec & a ,double b);
+dataVec operator * (VEC_DATA_TYPE a, const dataVec & b);
+dataVec operator * (VEC_DATA_TYPE a, dataVec && b);
+dataVec operator < (VEC_DATA_TYPE a, const dataVec & b);
+dataVec operator < (VEC_DATA_TYPE a, dataVec && b);
+dataVec operator - (VEC_DATA_TYPE a, const dataVec & b);
+dataVec operator - (VEC_DATA_TYPE a, dataVec && b);
+dataVec operator + (dataVec && a,VEC_DATA_TYPE b);
+dataVec operator + (const dataVec & a ,VEC_DATA_TYPE b);
+dataVec operator - (dataVec && a,VEC_DATA_TYPE b);
+dataVec operator - (const dataVec & a ,VEC_DATA_TYPE b);
+dataVec operator * (dataVec && a,VEC_DATA_TYPE b);
+dataVec operator * (const dataVec & a ,VEC_DATA_TYPE b);
+dataVec operator / (dataVec && a,VEC_DATA_TYPE b);
+dataVec operator / (const dataVec & a ,VEC_DATA_TYPE b);
 dataVec operator ^ (dataVec && a,int b);
-dataVec operator > (dataVec && a,double b);
+dataVec operator > (dataVec && a,VEC_DATA_TYPE b);
 
 */
 
 inline bool printVal(outputDataFile * f,const dataVec & value)
 {
-	printVal(f,(const std::vector<double> &) value);
+	printVal(f,(const std::vector<VEC_DATA_TYPE> &) value);
 	return true;
 };
 

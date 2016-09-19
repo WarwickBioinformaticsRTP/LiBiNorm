@@ -121,7 +121,7 @@ void LiBiNorm::mcmcThread(paramSet params, optionsType options, modelType model)
 		switch (options.Model)
 		{
 		case 2: case 4: case 5:
-			options.qcov = vector<double>(4,options.jumpSize);
+			options.qcov = dataVec(4,options.jumpSize);
 
 			params = paramSet(paramType("d", p0[0], -1 , 2)    // average length of fragments
 				,paramType("h",  p0[1], 0 , 3)   // the minimum length of fragmenation
@@ -131,7 +131,7 @@ void LiBiNorm::mcmcThread(paramSet params, optionsType options, modelType model)
 				);
 			break;
 		case 3:
-			options.qcov = vector<double>(3,options.jumpSize);
+			options.qcov = dataVec(3,options.jumpSize);
 
 			params = paramSet(paramType("d", p0[0], -1 , 2)    // average length of fragments
 				,paramType("h",  p0[1], 0 , 3)   // the minimum length of fragmenation
@@ -141,7 +141,7 @@ void LiBiNorm::mcmcThread(paramSet params, optionsType options, modelType model)
 				);
 			break;
 		case 1:
-			options.qcov = vector<double>(2,options.jumpSize);
+			options.qcov = dataVec(2,options.jumpSize);
 
 			params = paramSet(paramType("d", p0[0], -1 , 2)    // average length of fragments
 				,paramType("h",  p0[1], 0 , 3)   // the minimum length of fragmenation
@@ -150,7 +150,7 @@ void LiBiNorm::mcmcThread(paramSet params, optionsType options, modelType model)
 				);
 			break;
 		case 6:
-			options.qcov = vector<double>(6,options.jumpSize);
+			options.qcov = dataVec(6,options.jumpSize);
 
 			params = paramSet(paramType("d", p0[0], -1 , 2)    // average length of fragments
 				,paramType("h",  p0[1], 0 , 3)   // the minimum length of fragmenation

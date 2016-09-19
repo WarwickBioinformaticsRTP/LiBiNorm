@@ -36,7 +36,7 @@ public:
 	double jumpSize;
 	size_t Model;
 	std::string method;
-	std::vector<double> qcov;
+	dataVec qcov;
 };
 
 
