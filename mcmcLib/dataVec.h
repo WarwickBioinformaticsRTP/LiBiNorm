@@ -15,23 +15,21 @@ inline bool printVal(outputDataFile * f,long double value)
 	return true;
 };
 
-#define DOUBLE_TYPE double
 
-class dataVec: public std::vector<DOUBLE_TYPE>
+class dataVec: public std::vector<double>
 {
 public:
-	dataVec(size_t s = 0): std::vector<DOUBLE_TYPE>(s){};
-	dataVec(const std::vector<double> & a): std::vector<DOUBLE_TYPE>((std::vector<DOUBLE_TYPE> &)a){};
-	dataVec(const std::vector<long double> & a): std::vector<DOUBLE_TYPE>((std::vector<DOUBLE_TYPE> &)a){};
+	dataVec(size_t s = 0): std::vector<double>(s){};
+	dataVec(const std::vector<double> & a): std::vector<double>(a){};
 
 #ifdef _DEBUG
 	virtual ~dataVec()
 	{
 	}
 #endif
-	vector<DOUBLE_TYPE> & values() { return *this;};
+	vector<double> & values() { return *this;};
 
-	dataVec operator > (DOUBLE_TYPE a) const
+	dataVec operator > (double a) const
 	{
 		size_t s = size();
 		dataVec retVal(s);
@@ -119,7 +117,7 @@ public:
 
 	bool does_not_contain_null()
 	{
-		for (DOUBLE_TYPE & i : *this)
+		for (double & i : *this)
 			if (i == 0)
 				return false;
 		return true;
@@ -130,7 +128,7 @@ public:
 		insert(end(),a.begin(),a.end());
 		return *this;
 	}
-	dataVec & append(size_t N,DOUBLE_TYPE value)
+	dataVec & append(size_t N,double value)
 	{
 		insert(end(),N,value);
 		return *this;
@@ -190,7 +188,7 @@ public:
 
 inline double sum(const dataVec & a)
 {
-	DOUBLE_TYPE retVal = 0;
+	double retVal = 0;
 	for (auto & i : a)
 		retVal += i;
 	return retVal;
@@ -198,13 +196,13 @@ inline double sum(const dataVec & a)
 
 inline dataVec exp(dataVec && a)
 {
-	for (DOUBLE_TYPE & i : a)
+	for (double & i : a)
 		i = exp(i);
 	return a;
 }
 inline dataVec log(dataVec && a)
 {
-	for (DOUBLE_TYPE & i : a)
+	for (double & i : a)
 		i = log(i);
 	return a;
 }
@@ -219,7 +217,7 @@ inline dataVec operator * (double a, const dataVec & b)
 
 inline dataVec operator * (double a, dataVec && b)
 {
-	for (DOUBLE_TYPE & i : b)
+	for (double & i : b)
 		i *= a;
 	return b;
 }
@@ -233,7 +231,7 @@ inline dataVec operator < (double a, const dataVec & b)
 }
 inline dataVec operator < (double a, dataVec && b)
 {
-	for (DOUBLE_TYPE & i : b)
+	for (double & i : b)
 		i = a < i?1:0;
 	return b;
 }
@@ -248,14 +246,14 @@ inline dataVec operator - (double a, const dataVec & b)
 }
 inline dataVec operator - (double a, dataVec && b)
 {
-	for (DOUBLE_TYPE & i : b)
+	for (double & i : b)
 		i = a - i;
 	return b;
 
 }
 inline dataVec operator + (dataVec && a,double b)
 {
-	for (DOUBLE_TYPE & i : a)
+	for (double & i : a)
 		i += b;
 	return a;
 }
@@ -269,7 +267,7 @@ inline dataVec operator + (const dataVec & a ,double b)
 
 inline dataVec operator - (dataVec && a,double b)
 {
-	for (DOUBLE_TYPE & i : a)
+	for (double & i : a)
 		i -= b;
 	return a;
 }
@@ -282,7 +280,7 @@ inline dataVec operator - (const dataVec & a ,double b)
 }
 inline dataVec operator * (dataVec && a,double b)
 {
-	for (DOUBLE_TYPE &  i : a)
+	for (double &  i : a)
 		i *= b;
 	return a;
 }
@@ -296,7 +294,7 @@ inline dataVec operator * (const dataVec & a ,double b)
 
 inline dataVec operator / (dataVec && a,double b)
 {
-	for (DOUBLE_TYPE &  i : a)
+	for (double &  i : a)
 		i /= b;
 	return a;
 }
@@ -312,7 +310,7 @@ inline dataVec operator ^ (const dataVec & a,int b)
 {
 	dataVec _ret(a);
 	for (int p = 0;p < (b - 1);p++)
-		for (DOUBLE_TYPE & i : _ret)
+		for (double & i : _ret)
 			i *= i;
 	return _ret;
 }
@@ -320,14 +318,14 @@ inline dataVec operator ^ (const dataVec & a,int b)
 inline dataVec operator ^ (dataVec && a,int b)
 {
 	for (int p = 0;p < (b - 1);p++)
-		for (DOUBLE_TYPE & i : a)
+		for (double & i : a)
 			i *= i;
 	return a;
 }
 
 inline dataVec operator > (dataVec && a,double b)
 {
-	for (DOUBLE_TYPE &  i : a)
+	for (double &  i : a)
 		i = i>b?1:0;
 	return a;
 }
@@ -356,7 +354,7 @@ dataVec operator > (dataVec && a,double b);
 
 inline bool printVal(outputDataFile * f,const dataVec & value)
 {
-	printVal(f,(const std::vector<DOUBLE_TYPE> &) value);
+	printVal(f,(const std::vector<double> &) value);
 	return true;
 };
 

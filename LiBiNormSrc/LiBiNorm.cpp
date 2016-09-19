@@ -299,9 +299,8 @@ int LiBiNorm::main(int argc, char **argv)
 
 	cerr << "Data modelled" << endl;
 
-
-	string x;
-	cin >> x;
+//	string x;
+//	cin >> x;
 
 	return EXIT_SUCCESS;
 }
