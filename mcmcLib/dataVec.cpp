@@ -1,5 +1,6 @@
 #include "dataVec.h"
 #include <cmath>
+#include <thread>
 #include <mutex>
 #include <map>
 
@@ -12,7 +13,7 @@ using namespace std;
 
 #define CACHE_MINSIZE 500
 
-map<size_t,vector<vector<double> > > cache;
+map<thread::id,map<size_t,vector<vector<double> > > > cache;
 mutex assign_vector_mtx; 
 
 dataVec::dataVec(size_t s)
@@ -20,11 +21,12 @@ dataVec::dataVec(size_t s)
 	if (s == 0)
 		return;
 
-	lock_guard<mutex> lock(assign_vector_mtx);
-	if (cache[s].size() && (s >= CACHE_MINSIZE))
+	vector<vector<double> > & c = cache[this_thread::get_id()][s];
+//	lock_guard<mutex> lock(assign_vector_mtx);
+	if (c.size() && (s >= CACHE_MINSIZE))
 	{
-		swap(cache[s].back());
-		cache[s].pop_back();
+		swap(c.back());
+		c.pop_back();
 	}
 	else
 		resize(s);
@@ -32,12 +34,13 @@ dataVec::dataVec(size_t s)
 
 dataVec::dataVec(const std::vector<double> & a)
 {
-	lock_guard<mutex> lock(assign_vector_mtx);
+//	lock_guard<mutex> lock(assign_vector_mtx);
 	size_t s = a.size();
-	if (cache[s].size() && (s >= CACHE_MINSIZE))
+	vector<vector<double> > & c = cache[this_thread::get_id()][s];
+	if (c.size() && (s >= CACHE_MINSIZE))
 	{
-		swap(cache[s].back());
-		cache[s].pop_back();
+		swap(c.back());
+		c.pop_back();
 		assign(a.begin(),a.end());
 	}
 	else
@@ -45,12 +48,13 @@ dataVec::dataVec(const std::vector<double> & a)
 };
 dataVec::dataVec(const dataVec & a)
 {
-	lock_guard<mutex> lock(assign_vector_mtx);
+//	lock_guard<mutex> lock(assign_vector_mtx);
 	size_t s = a.size();
-	if (cache[s].size() && (s >= CACHE_MINSIZE))
+	vector<vector<double> > & c = cache[this_thread::get_id()][s];
+	if (c.size() && (s >= CACHE_MINSIZE))
 	{
-		swap(cache[s].back());
-		cache[s].pop_back();
+		swap(c.back());
+		c.pop_back();
 		assign(a.begin(),a.end());
 	}
 	else
@@ -61,10 +65,11 @@ dataVec::dataVec(const dataVec & a)
 dataVec::~dataVec()
 {
 	size_t s = size();
+	vector<vector<double> > & c = cache[this_thread::get_id()][s];
 	if (s < CACHE_MINSIZE)
 		return;
-	lock_guard<mutex> lock(assign_vector_mtx);
-	cache[s].emplace_back(move(*this));
+//	lock_guard<mutex> lock(assign_vector_mtx);
+	c.emplace_back(move(*this));
 }
 
 #else
