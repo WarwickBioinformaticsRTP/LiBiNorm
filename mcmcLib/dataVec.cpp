@@ -42,7 +42,8 @@ void dataVec::resize(size_t s)
 		if (c.size())
 		{
 			swap(c.back());
-			assign(c.back().begin(),c.back().end());
+			for (size_t i = 0;i < c.back().size();i++)
+				at(i) = c.back().at(i);
 			c.pop_back();
 		}
 		else
@@ -73,7 +74,8 @@ dataVec::dataVec(const std::vector<VEC_DATA_TYPE> & a)
 	{
 		swap(c.back());
 		c.pop_back();
-		assign(a.begin(),a.end());
+		for (size_t i = 0;i < a.size();i++)
+			at(i) = a.at(i);
 	}
 	else
 		vector<VEC_DATA_TYPE>::operator=(a);
@@ -86,7 +88,8 @@ dataVec::dataVec(const dataVec & a)
 	{
 		swap(c.back());
 		c.pop_back();
-		assign(a.begin(),a.end());
+		for (size_t i = 0;i < a.size();i++)
+			at(i) = a.at(i);
 	}
 	else
 		vector<VEC_DATA_TYPE>::operator=(a);
