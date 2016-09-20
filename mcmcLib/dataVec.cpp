@@ -80,7 +80,7 @@ dataVec::dataVec(const std::vector<VEC_DATA_TYPE> & a)
 	{
 		swap(c.back());
 		c.pop_back();
-		*this = a;
+		std::vector<VEC_DATA_TYPE>::operator=(a);
 	}
 	else
 		vector<VEC_DATA_TYPE>::operator=(a);
@@ -94,7 +94,7 @@ dataVec::dataVec(const dataVec & a)
 		swap(c.back());
 		c.pop_back();
 
-		*this = a;
+		std::vector<VEC_DATA_TYPE>::operator=(a);
 
 	}
 	else
