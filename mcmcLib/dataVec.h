@@ -190,10 +190,22 @@ inline VEC_DATA_TYPE sum(const dataVec & a)
 	return retVal;
 }
 
+//https://codingforspeed.com/using-faster-exponential-approximation/
+
+inline
+double exp1(double x) {
+  x = 1.0 + x / 256.0;
+  x *= x; x *= x; x *= x; x *= x;
+  x *= x; x *= x; x *= x; x *= x;
+  return x;
+}
+
 inline dataVec exp(dataVec && a)
 {
 	for (VEC_DATA_TYPE & i : a)
-		i = exp(i);
+	{
+		i = exp1(i);
+	}
 	return a;
 }
 inline dataVec log(dataVec && a)

@@ -13,14 +13,20 @@ using namespace std;
 
 #define CACHE_MINSIZE 500
 
+#ifdef _WIN32
+#define THREAD_CACHE  cache[this_thread::get_id()]
 map<thread::id,map<size_t,vector<vector<VEC_DATA_TYPE> > > > cache;
+#else
+thread_local map<size_t,vector<vector<VEC_DATA_TYPE> > > cache;
+#define THREAD_CACHE  cache
+#endif
 
 dataVec::dataVec(size_t s)
 {
 	if (s == 0)
 		return;
+	vector<vector<VEC_DATA_TYPE> > & c = THREAD_CACHE[s];
 
-	vector<vector<VEC_DATA_TYPE> > & c = cache[this_thread::get_id()][s];
 	if (c.size() && (s >= CACHE_MINSIZE))
 	{
 		swap(c.back());
@@ -38,7 +44,7 @@ void dataVec::resize(size_t s)
 	}
 	else if (s >  size())
 	{
-		vector<vector<VEC_DATA_TYPE> > & c = cache[this_thread::get_id()][s];
+		vector<vector<VEC_DATA_TYPE> > & c = THREAD_CACHE[s];
 		if (c.size())
 		{
 			swap(c.back());
@@ -56,7 +62,7 @@ dataVec::dataVec(size_t s,VEC_DATA_TYPE v)
 	if (s == 0)
 		return;
 
-	vector<vector<VEC_DATA_TYPE> > & c = cache[this_thread::get_id()][s];
+	vector<vector<VEC_DATA_TYPE> > & c = THREAD_CACHE[s];
 	if (c.size() && (s >= CACHE_MINSIZE))
 	{
 		swap(c.back());
@@ -69,13 +75,12 @@ dataVec::dataVec(size_t s,VEC_DATA_TYPE v)
 dataVec::dataVec(const std::vector<VEC_DATA_TYPE> & a)
 {
 	size_t s = a.size();
-	vector<vector<VEC_DATA_TYPE> > & c = cache[this_thread::get_id()][s];
+	vector<vector<VEC_DATA_TYPE> > & c = THREAD_CACHE[s];
 	if (c.size() && (s >= CACHE_MINSIZE))
 	{
 		swap(c.back());
 		c.pop_back();
-		for (size_t i = 0;i < a.size();i++)
-			at(i) = a.at(i);
+		*this = a;
 	}
 	else
 		vector<VEC_DATA_TYPE>::operator=(a);
@@ -83,13 +88,14 @@ dataVec::dataVec(const std::vector<VEC_DATA_TYPE> & a)
 dataVec::dataVec(const dataVec & a)
 {
 	size_t s = a.size();
-	vector<vector<VEC_DATA_TYPE> > & c = cache[this_thread::get_id()][s];
+	vector<vector<VEC_DATA_TYPE> > & c = THREAD_CACHE[s];
 	if (c.size() && (s >= CACHE_MINSIZE))
 	{
 		swap(c.back());
 		c.pop_back();
-		for (size_t i = 0;i < a.size();i++)
-			at(i) = a.at(i);
+
+		*this = a;
+
 	}
 	else
 		vector<VEC_DATA_TYPE>::operator=(a);
@@ -99,7 +105,7 @@ dataVec::dataVec(const dataVec & a)
 dataVec::~dataVec()
 {
 	size_t s = size();
-	vector<vector<VEC_DATA_TYPE> > & c = cache[this_thread::get_id()][s];
+	vector<vector<VEC_DATA_TYPE> > & c = THREAD_CACHE[s];
 	if (s < CACHE_MINSIZE)
 		return;
 	c.emplace_back(move(*this));
@@ -107,7 +113,9 @@ dataVec::~dataVec()
 
 void dataVec::clearCache()
 {
+#ifdef _WIN32
 	cache[this_thread::get_id()].clear();
+#endif
 };
 
 
