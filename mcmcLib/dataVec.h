@@ -161,7 +161,7 @@ public:
 		return *this;
 	}
 
-	dataVec chol();
+	dataVec diagchol();
 
 	dataVec operator () (const vector<int> & i) const
 	{
@@ -190,6 +190,7 @@ inline VEC_DATA_TYPE sum(const dataVec & a)
 	return retVal;
 }
 
+/*
 //https://codingforspeed.com/using-faster-exponential-approximation/
 
 inline
@@ -199,12 +200,12 @@ double exp1(double x) {
   x *= x; x *= x; x *= x; x *= x;
   return x;
 }
-
+*/
 inline dataVec exp(dataVec && a)
 {
 	for (VEC_DATA_TYPE & i : a)
 	{
-		i = exp1(i);
+		i = exp(i);
 	}
 	return a;
 }

@@ -131,7 +131,7 @@ void dataVec::resize(size_t s = 0) {
 
 
 //	Cholesky_Decomposition returns the Cholesky Decomposition Matrix. 
-dataVec dataVec::chol()
+dataVec dataVec::diagchol()
 {
 
 	dataArray L(size());
@@ -153,7 +153,7 @@ dataVec dataVec::chol()
 			else if (i == j)
 			{
 				for (size_t k = 0; k < i; k++)
-					temp += pow(L[i][k], 2);
+					temp += (L[i][k] * L[i][k]);
 				L[i][j] = sqrt(at(i) - temp);
 			}
 //			else

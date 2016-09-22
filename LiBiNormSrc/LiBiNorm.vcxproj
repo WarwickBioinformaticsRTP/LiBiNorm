@@ -96,11 +96,9 @@
     </ClCompile>
     <Link>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <Text Include="readme.txt" />
-  </ItemGroup>
   <ItemGroup>
     <ClCompile Include="GtfFileEx.cpp" />
     <ClCompile Include="LiBiCount.cpp" />
