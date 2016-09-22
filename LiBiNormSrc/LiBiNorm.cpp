@@ -127,11 +127,11 @@ void LiBiNorm::mcmcThread(paramSet params, optionsType options, modelType model)
 
 
 #ifdef _DEBUG
-//#define _TEST
+#define _TEST
 #endif
 #ifdef _TEST
-		vectorEx<double> p0(1.590355415,0.249897587,-3.760142979,-3.226093068);
-//		vectorEx<double> p0(1.5, 1.6,-3.1, -3.2,0.6);
+//		vectorEx<double> p0(1.590355415,0.249897587,-3.760142979,-3.226093068);
+		vectorEx<double> p0(1.5, 1.6,-3.1, -3.2,0.6);
 #else
 		vectorEx<double> p0(rand(3)-1, rand(3), rand(4)-5, rand(4)-5, rand(1));
 #endif

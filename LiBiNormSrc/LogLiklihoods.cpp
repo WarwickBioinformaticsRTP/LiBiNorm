@@ -31,25 +31,60 @@ double FLL_ModelA(const dataVec & param, const dataType & data)
 {
 	double d = pow(10,param[0]);
 	double h = pow(10,param[1]);
+	double LogL = 1E20;
 
-	const dataVec & x = data.fragData;
 	const vector<int> & geneIndex = data.geneIndex;
-	const dataVec & L = data.geneData[0];
-	const dataVec & freq_l = data.geneData[1];
-	dataVec l = L(geneIndex);
+	const dataVec L = data.geneData[0](geneIndex);
+	const dataVec & Freq_l = data.geneData[1](geneIndex);
+
+	double last_l = 0;
+	double norm=0;
+	double temp_l = 0;
+
+	for (size_t i = 0;i < data.fragData.size(); i++)
+	{
+		const double & x = data.fragData[i];
+		const double & l = L[i];
+		const double & freq_l = Freq_l[i];
+
 
 //x = data(1, :);
 //l = data(2, :);
 //freq_l = data(3, :);
 
 //f_frag = (x> h).*(x < l-h) + 1/d;
-	dataVec f_frag = ((x> h)*(x < (l-h))) + 1/d;
+//	dataVec f_frag = ((x> h)*(x < (l-h))) + 1/d;
+		double f_frag = 1.0/d;
+		if ((x> h) && (x < (l-h)))
+			f_frag += 1.0;
+
+
+		if (f_frag == 0)
+				return 1E20;
+
+		if (l != last_l)
+		{
+
 
 //norm =  (2*h<l).*(l-2*h) + l/d;
-	dataVec norm =  (2*h<L)*(L-(2*h)) + L/d;
+//	dataVec norm =  (2*h<L)*(L-(2*h)) + L/d;
+
+			norm =  l/d;
+			if (2*h<l)
+				norm +=  (l-(2*h));
+			last_l = l;
+
+//			LogL = -2*sum(log(f_frag/norm(geneIndex))/Freq_l(geneIndex));
+		}
+
+		temp_l += log(f_frag/norm)/freq_l;
+	}
+
+	LogL = -2*temp_l;
+
 
 //LogL = -2*sum(log(f_frag./norm)./freq_l);
-	double LogL = -2*sum(log(f_frag/norm(geneIndex))/freq_l(geneIndex));
+//	double LogL = -2*sum(log(f_frag/norm(geneIndex))/freq_l(geneIndex));
 
 	return LogL;
 }
@@ -65,46 +100,69 @@ double FLL_ModelB(const dataVec & param, const dataType & data)
 //	double sig = pow(10,param[4]);
 	double LogL = 1E20;
 
-	const dataVec & x = data.fragData;
 	const vector<int> & geneIndex = data.geneIndex;
-	const dataVec & L = data.geneData[0];
-	const dataVec & freq_l = data.geneData[1];
+	const dataVec L = data.geneData[0](geneIndex);
+	const dataVec & Freq_l = data.geneData[1](geneIndex);
+
+	double last_l = 0;
+	double norm=0;
+	double temp_l = 0;
 
 	//	f_frag = (x> h).*(x < l-h)./(t1+ t2) .* (t1.*exp(-2*l*(t1+t2)+(t1+t2)*(l-h+x)) + t2*exp(-l*(t1+t2))) + ...
 	//         1./(t1+ t2) .* (t1.*exp(-2*l*(t1+t2)+(t1+t2)*(l+x)) + t2*exp(-l*(t1+t2)))/d;
 
 	double t1_p_t2 = t1+t2;
-	dataVec exp_L_t1_t2 = exp(-L * t1_p_t2);
 
-	dataVec t2_exp_l_t1_t2_full = t2*exp_L_t1_t2(geneIndex);
-	dataVec l = L(geneIndex);
-	dataVec t1_exp_c_l_t1_t2 = t1*exp((x-l)*t1_p_t2);
-
-//	dataVec f_frag = ((x> h)*(x < (l-h)) * (t1*exp((x-l-h)*(t1+t2)) + t2*exp_l_t1_t2_full) + (t1*exp((x-l)*(t1+t2)) + t2*exp_l_t1_t2_full)/d)/(t1+t2);
-	dataVec f_frag = ((x> h)*(x < (l-h)) * (t1_exp_c_l_t1_t2/exp(h*t1_p_t2) + t2_exp_l_t1_t2_full) + (t1_exp_c_l_t1_t2 + t2_exp_l_t1_t2_full)/d)/t1_p_t2;
-
-#ifdef VERIFY_SPEEDUP
-	dataVec f_frag_full = (x> h)*(x < (l-h))/(t1+ t2) * (t1*exp(-2 * l *(t1+t2)+(l-h+x)*(t1+t2)) + t2*exp(-l * (t1+t2))) + 
-			1/(t1+ t2) * (t1*exp(-2 * l *(t1+t2)+(l+x)*(t1+t2)) + t2*exp(-l * (t1+t2)))/d;
-	dataVec verify = f_frag/f_frag_full;
-#endif
-	if (f_frag.does_not_contain_null())
+	for (size_t i = 0;i < data.fragData.size(); i++)
 	{
+		const double & x = data.fragData[i];
+		const double & l = L[i];
+		const double & freq_l = Freq_l[i];
+
+
+		double exp_l_t1_t2 = exp(-l * t1_p_t2);
+
+		double t2_exp_l_t1_t2_full = t2*exp_l_t1_t2;
+
+		double t1_exp_c_l_t1_t2 = t1*exp((x-l)*t1_p_t2);
+
+	//	dataVec f_frag = ((x> h)*(x < (l-h)) * (t1*exp((x-l-h)*(t1+t2)) + t2*exp_l_t1_t2_full) + (t1*exp((x-l)*(t1+t2)) + t2*exp_l_t1_t2_full)/d)/(t1+t2);
+//		dataVec f_frag = ((x> h)*(x < (l-h)) * (t1_exp_c_l_t1_t2/exp(h*t1_p_t2) + t2_exp_l_t1_t2_full) + (t1_exp_c_l_t1_t2 + t2_exp_l_t1_t2_full)/d)/t1_p_t2;
+
+		double f_frag = (t1_exp_c_l_t1_t2 + t2_exp_l_t1_t2_full)/d;
+		if ((x> h) && (x < (l-h)))
+			f_frag += (t1_exp_c_l_t1_t2/exp(h*t1_p_t2) + t2_exp_l_t1_t2_full);
+
+		f_frag /= t1_p_t2;
+
+		if (f_frag == 0)
+			return 1E20;
+
+		if (l != last_l)
+		{
 
 		//	    norm =  (2*h<l).*(t1.*(exp(-2*h*(t1+t2))-exp(-l*(t1+t2)))+t2*(t1+t2).*(l-2*h).*exp(-l*(t1+t2)))/(t1 + t2)^2 + ...
 		//        (exp(-l*(t1+t2)).*(l.*t2^2+l.*t2*t1-t1)+t1)/(t1 + t2)^2/d;
 
-		dataVec norm =  ((((2*h)<L)*(t1*(exp(-2*h*t1_p_t2)-exp_L_t1_t2)+t2*t1_p_t2*(L-(2*h))*exp_L_t1_t2)) + 
-				  ((exp_L_t1_t2*(L*t2*t1_p_t2-t1)+t1)/d))/(t1_p_t2*t1_p_t2);
+//			dataVec norm =  ((((2*h)<L)*(t1*(exp(-2*h*t1_p_t2)-exp_L_t1_t2)+t2*t1_p_t2*(L-(2*h))*exp_L_t1_t2)) + 
+//					  ((exp_L_t1_t2*(L*t2*t1_p_t2-t1)+t1)/d))/(t1_p_t2*t1_p_t2);
 
-#ifdef VERIFY_SPEEDUP
-		dataVec norm_full =  (((2*h)<L)*(t1*(exp(-2*h*(t1+t2))-exp(-L*(t1+t2)))+t2*(t1+t2)*(L-(2*h))*exp(-L*(t1+t2)))/pow(t1 + t2,2)) + 
-				  ((exp(-L*(t1+t2))*((L*t2*t2)+(L*t2*t1)-t1)+t1)/pow(t1 + t2,2)/d);
-		verify = norm/norm_full;
+			norm = ((exp_l_t1_t2*(l*t2*t1_p_t2-t1)+t1)/d);
+			if ((2*h)<l)
+				norm += (t1*(exp(-2*h*t1_p_t2)-exp_l_t1_t2)+t2*t1_p_t2*(l-(2*h))*exp_l_t1_t2);
+			norm /= (t1_p_t2*t1_p_t2);
 
-#endif
-		LogL = -2*sum(log(f_frag/norm(geneIndex))/freq_l(geneIndex));
+//		LogL = -2*sum(log(f_frag/norm(geneIndex))/freq_l(geneIndex));
+			last_l = l;
+
+
+//			LogL = -2*sum(log(f_frag/norm(geneIndex))/Freq_l(geneIndex));
+		}
+
+		temp_l += log(f_frag/norm)/freq_l;
 	}
+
+	LogL = -2*temp_l;
 	return LogL;
 }
 
@@ -127,29 +185,60 @@ freq_l = data(3, :);
 
 	double LogL = 1E20;
 
-	const dataVec & x = data.fragData;
 	const vector<int> & geneIndex = data.geneIndex;
-	const dataVec & L = data.geneData[0];
-	const dataVec & freq_l = data.geneData[1];
-	dataVec l = L(geneIndex);
+	const dataVec L = data.geneData[0](geneIndex);
+	const dataVec & Freq_l = data.geneData[1](geneIndex);
+
+	double last_l = 0;
+	double norm=0;
+	double temp_l = 0;
 
 //    f_frag = (x> h).*(x < l-h).*exp(-t2*(x+h)) + ...
 //    exp(-t2*(x))/d;
 
-	dataVec f_frag = (x> h)*(x < l-h)*exp(-t2*(x+h)) + exp(-t2*(x))/d;
-	
-//	if (isempty(find(f_frag == 0, 1)))
-	if (f_frag.does_not_contain_null())
+//	dataVec f_frag = (x> h)*(x < l-h)*exp(-t2*(x+h)) + exp(-t2*(x))/d;
+
+
+	for (size_t i = 0;i < data.fragData.size(); i++)
 	{
+		const double & x = data.fragData[i];
+		const double & l = L[i];
+		const double & freq_l = Freq_l[i];
+
+		double f_frag = exp(-t2*(x))/d;
+		if ((x> h) && (x < l-h))
+			f_frag += exp(-t2*(x+h));
+
+		if (f_frag == 0)
+			return 1E20;
+
+
+		if (l != last_l)
+		{
+
 
 //    norm =  (2*h<l).*(exp(-2*h*t2) - exp(-l*( t2)))/t2 + ...
 //        (1-exp(-l*( t2)))/t2/d;
 
-		dataVec exp_mL_t2 = exp(-L*( t2));
-		dataVec norm =  (2*h<L)*(exp(-2*h*t2) - exp_mL_t2)/t2 + (1-exp_mL_t2)/t2/d;
+			double exp_ml_t2 = exp(-l*( t2));
+//			dataVec normX =  (2*h<L)*(exp(-2*h*t2) - exp_mL_t2)/t2 + (1-exp_mL_t2)/t2/d;
 
-		LogL = -2*sum(log(f_frag/norm(geneIndex))/freq_l(geneIndex));
+			norm = (1-exp_ml_t2)/t2/d;
+			if (2*h<l)
+				norm += (exp(-2*h*t2) - exp_ml_t2)/t2;
+
+//		LogL = -2*sum(log(f_frag/norm(geneIndex))/freq_l(geneIndex));
+
+			last_l = l;
+
+
+//			LogL = -2*sum(log(f_frag/norm(geneIndex))/Freq_l(geneIndex));
+		}
+
+		temp_l += log(f_frag/norm)/freq_l;
 	}
+
+	LogL = -2*temp_l;
 	return LogL;
 }
 
@@ -174,11 +263,13 @@ freq_l = data(3, :);
 	double t2 = pow(10,param[3]);
 	double LogL = 1E20;
 
-	const dataVec & x = data.fragData;
 	const vector<int> & geneIndex = data.geneIndex;
-	const dataVec & L = data.geneData[0];
-	const dataVec & Freq_l = data.geneData[1];
-	dataVec l = L(geneIndex);
+	const dataVec L = data.geneData[0](geneIndex);
+	const dataVec & Freq_l = data.geneData[1](geneIndex);
+
+	double last_l = 0;
+	double norm=0;
+	double temp_l = 0;
 
 //f_frag = (x> h).*(x < l-h)./(t1+ t2) .* (t1.*exp(-t1*(l-x) - 2*t2*h - t1*h) + t2.*exp(-t1*l-t2*(x+h))) + ...
 //         1./(t1+ t2) .* (t1.*exp(-t1*(l-x)) + t2.*exp(-t1*l-t2*(x)))/d;
@@ -187,24 +278,42 @@ freq_l = data(3, :);
 	double t1_p_t2_sq = t1_p_t2*t1_p_t2;
 
 
-	dataVec f_frag = (x> h)*(x < l-h)/t1_p_t2 * (t1*exp(-t1*(l-x) - 2*t2*h - t1*h) + t2*exp(-t1*l-t2*(x+h))) + 
-	         1/t1_p_t2 * (t1*exp(-t1*(l-x)) + t2*exp(-t1*l-t2*(x)))/d;
-
-	double sum_f = sum(f_frag);
-
-	//if (isempty(find(f_frag == 0, 1)))
-	if (f_frag.does_not_contain_null())
+	for (size_t i = 0;i < data.fragData.size(); i++)
 	{
+		const double & x = data.fragData[i];
+		const double & l = L[i];
+		const double & freq_l = Freq_l[i];
 
-	//    norm =  (2*h<l).*(exp(-2*h*(t1 + t2)) - exp(-l*(t1 + t2)))/(t1 + t2) + ...
-    //    (1-exp(-l*(t1 + t2)))/(t1 + t2)/d;
+		double f_frag = 1/t1_p_t2 * (t1*exp(-t1*(l-x)) + t2*exp(-t1*l-t2*(x)))/d;
 
-		dataVec exp_mL_t1_p_t2 = exp(-L*t1_p_t2);
-		dataVec norm =  (2*h<L)*(exp(-2*h*t1_p_t2) - exp_mL_t1_p_t2)/t1_p_t2 + 
-			(1-exp_mL_t1_p_t2)/t1_p_t2/d;
+		if ((x > h) && (x < l-h))
+			f_frag += (t1*exp(-t1*(l-x) - 2*t2*h - t1*h) + t2*exp(-t1*l-t2*(x+h)))/t1_p_t2;
 
-		LogL = -2*sum(log(f_frag/norm(geneIndex))/Freq_l(geneIndex));
+		//if (isempty(find(f_frag == 0, 1)))
+		if (f_frag == 0)
+			return 1E20;
+
+
+		if (l != last_l)
+		{
+
+			//    norm =  (2*h<l).*(exp(-2*h*(t1 + t2)) - exp(-l*(t1 + t2)))/(t1 + t2) + ...
+			//    (1-exp(-l*(t1 + t2)))/(t1 + t2)/d;
+
+			double exp_ml_t1_p_t2 = exp(-l*t1_p_t2);
+			norm =  (2*h<l)*(exp(-2*h*t1_p_t2) - exp_ml_t1_p_t2)/t1_p_t2 + 
+				(1-exp_ml_t1_p_t2)/t1_p_t2/d;
+
+			last_l = l;
+
+
+//			LogL = -2*sum(log(f_frag/norm(geneIndex))/Freq_l(geneIndex));
+		}
+
+		temp_l += log(f_frag/norm)/freq_l;
 	}
+
+	LogL = -2*temp_l;
 	return LogL;
 }
 
@@ -218,6 +327,15 @@ double FLL_ModelE(const dataVec & param, const dataType & data)
 	double t2 = pow(10,param[3]);
 	double LogL = 1E20;
 
+	const vector<int> & geneIndex = data.geneIndex;
+	const dataVec L = data.geneData[0](geneIndex);
+	const dataVec & Freq_l = data.geneData[1](geneIndex);
+
+	double last_l = 0;
+	double norm=0;
+	double temp_l = 0;
+
+
 /*	d = 10^(param(1));
 	h = 10^(param(2));
 	t1 = 10^(param(3));
@@ -227,12 +345,12 @@ double FLL_ModelE(const dataVec & param, const dataType & data)
 	l = data(2, :);
 	freq_l = data(3, :);*/
 
-	const dataVec & x = data.fragData;
+/*	const dataVec & x = data.fragData;
 	const vector<int> & geneIndex = data.geneIndex;
 	const dataVec & L = data.geneData[0];
 	const dataVec & freq_l = data.geneData[1];
 	dataVec l = L(geneIndex);
-
+*/
 
 //	f_frag = (x> h).*(x < l-h)./t1/(t1+ t2).*(exp(-2*h*(t1+ t2))-exp(-(h +x)*(t1+t2)) - exp(-t1*h-2*h*t2-(l-x)*t1) + exp(-h*t2-l*t1-x*t2)) + ...
 //     1./t1/(t1+ t2) .*(1 - exp(-x*(t1+t2)) - exp(-(l-x)*t1) + exp(-l*t1-x*t2))/d;
@@ -240,19 +358,50 @@ double FLL_ModelE(const dataVec & param, const dataType & data)
 	double t1_p_t2 = t1+t2;
 	double t1_p_t2_sq = t1_p_t2*t1_p_t2;
 	double exp_m2_h_t1_p_t2 = exp(-2*h*t1_p_t2);
-	dataVec	f_frag = (x> h)*(x < l-h)/t1/t1_p_t2*(exp_m2_h_t1_p_t2-exp(-(x + h)*t1_p_t2) - exp(-t1*h-2*h*t2-(l-x)*t1) + exp(-h*t2-l*t1-x*t2)) + 
-		     1/t1/t1_p_t2 *(1 - exp(-x*t1_p_t2) - exp(-(l-x)*t1) + exp(-l*t1-x*t2))/d;
 
-//	if (isempty(find(f_frag == 0, 1)))
-	if (f_frag.does_not_contain_null())
+	for (size_t i = 0;i < data.fragData.size(); i++)
 	{
+		const double & x = data.fragData[i];
+		const double & l = L[i];
+		const double & freq_l = Freq_l[i];
+
+//	dataVec	f_frag = (x> h)*(x < l-h)/t1/t1_p_t2*(exp_m2_h_t1_p_t2-exp(-(x + h)*t1_p_t2) - exp(-t1*h-2*h*t2-(l-x)*t1) + exp(-h*t2-l*t1-x*t2)) + 
+//		     1/t1/t1_p_t2 *(1 - exp(-x*t1_p_t2) - exp(-(l-x)*t1) + exp(-l*t1-x*t2))/d;
+
+		double	f_frag = 1/t1/t1_p_t2 *(1 - exp(-x*t1_p_t2) - exp(-(l-x)*t1) + exp(-l*t1-x*t2))/d;
+
+		if ((x> h) && (x < l-h))
+			f_frag += (exp_m2_h_t1_p_t2-exp(-(x + h)*t1_p_t2) - exp(-t1*h-2*h*t2-(l-x)*t1) + exp(-h*t2-l*t1-x*t2))/t1/t1_p_t2;
+
+		if (f_frag == 0)
+			return 1E20;
+
+
+
+		if (l != last_l)
+		{
+
 //		   norm =  (2*h<l).*(exp(-l*t1 - 2*h*t2)*(t1 + t2)^2 - exp(-l*(t1 + t2))*t1^2 + t1*t2*exp(-2*h*(t1 + t2))*(l*t2 -2*h*t1 -2*h*t2+l*t1 - t2/t1 - 2))/(t1 + t2)^2/t1^2/t2 + ...
 //        (l-1/(t1 + t2) - 1/t1 - t1/t2/(t1+t2)*exp(-l*(t1 + t2))+(t1 + t2)/t1/t2*exp(-l*t1))/(t1 + t2)/t1/d;
-		dataVec norm =  (2*h<L)*(exp(-L*t1 - 2*h*t2)*t1_p_t2_sq - exp(-L*t1_p_t2)*t1*t1 + t1*t2*exp(-2*h*t1_p_t2)*(L*t2 -2*h*t1 -2*h*t2+L*t1 - t2/t1 - 2))/(t1_p_t2*t1_p_t2*t1*t1*t2) + 
-	       (L-1/t1_p_t2 - 1/t1 - t1/t2/t1_p_t2*exp(-L*t1_p_t2)+t1_p_t2/t1/t2*exp(-L*t1))/t1_p_t2/t1/d;
-	
-		LogL = -2*sum(log(f_frag/norm(geneIndex))/freq_l(geneIndex));
+
+//		dataVec norm =  (2*h<L)*(exp(-L*t1 - 2*h*t2)*t1_p_t2_sq - exp(-L*t1_p_t2)*t1*t1 + t1*t2*exp(-2*h*t1_p_t2)*(L*t2 -2*h*t1 -2*h*t2+L*t1 - t2/t1 - 2))/(t1_p_t2*t1_p_t2*t1*t1*t2) + 
+//	       (L-1/t1_p_t2 - 1/t1 - t1/t2/t1_p_t2*exp(-L*t1_p_t2)+t1_p_t2/t1/t2*exp(-L*t1))/t1_p_t2/t1/d;
+
+
+			norm = 	(l-1/t1_p_t2 - 1/t1 - t1/t2/t1_p_t2*exp(-l*t1_p_t2)+t1_p_t2/t1/t2*exp(-l*t1))/t1_p_t2/t1/d;
+
+			if (2*h < l)
+				norm += (exp(-l*t1 - 2*h*t2)*t1_p_t2_sq - exp(-l*t1_p_t2)*t1*t1 + t1*t2*exp(-2*h*t1_p_t2)*(l*t2 -2*h*t1 -2*h*t2+l*t1 - t2/t1 - 2))/(t1_p_t2*t1_p_t2*t1*t1*t2);
+
+			last_l = l;
+		}
+
+//		LogL = -2*sum(log(f_frag/norm(geneIndex))/freq_l(geneIndex));
+
+		temp_l += log(f_frag/norm)/freq_l;
 	}
+
+	LogL = -2*temp_l;
 	return LogL;
 }
 
@@ -267,11 +416,13 @@ double FLL_ModelBD(const dataVec & param, const dataType & data)
 	double a = param[4];
 	double LogL = 1E20;
 
-	const dataVec & x = data.fragData;
 	const vector<int> & geneIndex = data.geneIndex;
-	const dataVec & L = data.geneData[0];
-	const dataVec & freq_l = data.geneData[1];
-	dataVec l = L(geneIndex);
+	const dataVec L = data.geneData[0](geneIndex);
+	const dataVec & Freq_l = data.geneData[1](geneIndex);
+
+	double last_l = 0;
+	double norm=0;
+	double temp_l = 0;
 
 //	f_frag = a*( (x> h).*(x < l-h)./(t1+ t2) .* (t1.*exp(-2*l*(t1+t2)+(t1+t2)*(l-h+x)) + t2*exp(-l*(t1+t2))) + ...
 //         1./(t1+ t2) .* (t1.*exp(-2*l*(t1+t2)+(t1+t2)*(l+x)) + t2*exp(-l*(t1+t2)))/d) + ...
@@ -280,29 +431,68 @@ double FLL_ModelBD(const dataVec & param, const dataType & data)
 
 	double t1_p_t2 = t1+t2;
 	double t1_p_t2_sq = t1_p_t2*t1_p_t2;
-	dataVec exp_mL_t1_p_t2 = exp(-L*t1_p_t2);
 
-	dataVec f_frag = a * ( (x > h)*(x < (l-h))/t1_p_t2 * (t1 * exp(-2*l*t1_p_t2+t1_p_t2*(l-h+x)) + t2*exp_mL_t1_p_t2(geneIndex)) +
-				1/t1_p_t2 * (t1*exp(-2*l*t1_p_t2+t1_p_t2*(l+x)) + t2*exp_mL_t1_p_t2(geneIndex))/d) +
-				(1-a)*( (x> h)*(x < l-h)/t1_p_t2 * (t1*exp(-t1*(l-x) - 2*t2*h - t1*h) + t2*exp(-t1*l-t2*(x+h))) +
-				1/t1_p_t2 * (t1*exp(-t1*(l-x)) + t2*exp(-t1*l-t2*(x)))/d);
 
-	if (f_frag.does_not_contain_null())
+	for (size_t i = 0;i < data.fragData.size(); i++)
 	{
+		const double & x = data.fragData[i];
+		const double & l = L[i];
+		const double & freq_l = Freq_l[i];
+
+
+		double exp_ml_t1_p_t2 = exp(-l*t1_p_t2);
+
+/*		dataVec f_fragX = a * ( (x > h)*(x < (l-h))/t1_p_t2 * (t1 * exp(-2*l*t1_p_t2+t1_p_t2*(l-h+x)) + t2*exp_mL_t1_p_t2(geneIndex)) +
+			1/t1_p_t2 * (t1*exp(-2*l*t1_p_t2+t1_p_t2*(l+x)) + t2*exp_mL_t1_p_t2(geneIndex))/d) +
+			(1-a)*( (x> h)*(x < l-h)/t1_p_t2 * (t1*exp(-t1*(l-x) - 2*t2*h - t1*h) + t2*exp(-t1*l-t2*(x+h))) +
+			1/t1_p_t2 * (t1*exp(-t1*(l-x)) + t2*exp(-t1*l-t2*(x)))/d);
+*/
+		double f_frag = 1/t1_p_t2 * (t1*exp(-2*l*t1_p_t2+t1_p_t2*(l+x)) + t2*exp_ml_t1_p_t2)/d;
+
+		if ((x > h) && (x < (l-h)))
+			f_frag += (t1 * exp(-2*l*t1_p_t2+t1_p_t2*(l-h+x)) + t2*exp_ml_t1_p_t2)/t1_p_t2;
+
+		double f_frag_pt2 = (t1*exp(-t1*(l-x)) + t2*exp(-t1*l-t2*(x)))/t1_p_t2/d;
+
+		if ((x > h) && (x < (l-h)))
+			f_frag_pt2 += (t1*exp(-t1*(l-x) - 2*t2*h - t1*h) + t2*exp(-t1*l-t2*(x+h)))/t1_p_t2;
+
+		f_frag = a * f_frag + (1-a)*f_frag_pt2;
+
+		if (f_frag == 0)
+			return 1E20;
+
+		if (l != last_l)
+		{
 
 //		    norm = a*( (2*h<l).*(t1.*(exp(-2*h*(t1+t2))-exp(-l*(t1+t2)))+t2*(t1+t2).*(l-2*h).*exp(-l*(t1+t2)))/(t1 + t2)^2 + ...
 //        (exp(-l.*(t1+t2)).*(l.*t2^2+l.*t2*t1-t1)+t1)/(t1 + t2)^2/d) + ...
 //        (1-a)*( (2*h<l).*(exp(-2*h*(t1 + t2)) - exp(-l*(t1 + t2)))/(t1 + t2) + ...
 //        (1-exp(-l.*(t1 + t2)))/(t1 + t2)/d);
 
-		double exp_m2_h_t1_p_t2 = exp(-2*h*t1_p_t2);
-		dataVec norm = a*( (2*h<L)*(t1*(exp_m2_h_t1_p_t2-exp_mL_t1_p_t2)+t2*t1_p_t2*(L-2*h)*exp_mL_t1_p_t2)/t1_p_t2_sq + 
-			(exp_mL_t1_p_t2*(L*t2*t2+L*t2*t1-t1)+t1)/t1_p_t2_sq/d) + 
-		(1-a)*( (2*h<L)*(exp_m2_h_t1_p_t2 - exp_mL_t1_p_t2)/t1_p_t2 + 
-		(1-exp_mL_t1_p_t2)/t1_p_t2/d);
+			double exp_m2_h_t1_p_t2 = exp(-2*h*t1_p_t2);
+/*			dataVec normX = a*( (2*h<L)*(t1*(exp_m2_h_t1_p_t2-exp_mL_t1_p_t2)+t2*t1_p_t2*(L-2*h)*exp_mL_t1_p_t2)/t1_p_t2_sq + 
+				(exp_mL_t1_p_t2*(L*t2*t2+L*t2*t1-t1)+t1)/t1_p_t2_sq/d) + 
+				(1-a)*( (2*h<L)*(exp_m2_h_t1_p_t2 - exp_mL_t1_p_t2)/t1_p_t2 + 
+				(1-exp_mL_t1_p_t2)/t1_p_t2/d);
+*/
+			norm = (exp_ml_t1_p_t2*(l*t2*t2+l*t2*t1-t1)+t1)/t1_p_t2_sq/d;
+			if (2*h<l)
+				norm += (t1*(exp_m2_h_t1_p_t2-exp_ml_t1_p_t2)+t2*t1_p_t2*(l-2*h)*exp_ml_t1_p_t2)/t1_p_t2_sq;
 
-		LogL = -2*sum(log(f_frag/norm(geneIndex))/freq_l(geneIndex));
+			double norm_pt2 = (1-exp_ml_t1_p_t2)/t1_p_t2/d;
+			if (2*h<l)
+				norm_pt2 += (exp_m2_h_t1_p_t2 - exp_ml_t1_p_t2)/t1_p_t2;
+
+			norm = a*norm +(1-a) * norm_pt2;
+
+		}
+
+//		LogL = -2*sum(log(f_frag/norm(geneIndex))/freq_l(geneIndex));
+		temp_l += log(f_frag/norm)/freq_l;
 	}
+
+	LogL = -2*temp_l;
 	return LogL;
 }
 
