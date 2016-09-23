@@ -16,6 +16,8 @@ class LiBiNorm
 	vector<dataVec> SSChain; 
 	dataVec RejectionRate;
 
+	map<size_t, vector<string> > headers;
+
 	map<size_t,size_t> threadLoopCounts;
 
 public:
