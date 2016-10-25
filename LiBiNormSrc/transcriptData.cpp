@@ -55,12 +55,15 @@ int transcriptDataMap::loadData(const string filename)
 		transcriptData tempData;
 
 		getline(f,buffer);
-		parseTsv(buffer,tempData.gene,tempData.length," ",direction,tempData.counts[0].values());
-		getline(f,buffer);
-		parseTsv(buffer,tempData.gene,tempData.length," ",direction,tempData.counts[1].values());
-		push_back(move(tempData));
+		if (buffer.size())
+		{
+			parseTsv(buffer,tempData.gene,tempData.length," ",direction,tempData.counts[0].values());
+			getline(f,buffer);
+			parseTsv(buffer,tempData.gene,tempData.length," ",direction,tempData.counts[1].values());
+			push_back(move(tempData));
 
-		a++;
+			a++;
+		}
 	}
 
 	return EXIT_SUCCESS;

@@ -18,6 +18,8 @@
 
 using namespace std;
 
+// model  -m 3 -n 1 -p 1 -c "Y:\LiBiNorm\TestData\SCII25s72_S19_L001.map.plus.minus.noERCC.txt"
+
 
 //#define TEST_CODE
 #ifdef TEST_CODE
@@ -123,7 +125,10 @@ void LiBiNorm::mcmcThread(paramSet params, optionsType options, modelType model)
 #endif
 #ifdef _TEST
 //		vectorEx<double> p0(1.590355415,0.249897587,-3.760142979,-3.226093068);
+//		vectorEx<double> p0(-0.458447029374,1.852235843328);
+
 		vectorEx<double> p0(1.5, 1.6,-3.1, -3.2,0.6);
+
 #else
 		vectorEx<double> p0(rand(3)-1, rand(3), rand(4)-5, rand(4)-5, rand(1));
 #endif

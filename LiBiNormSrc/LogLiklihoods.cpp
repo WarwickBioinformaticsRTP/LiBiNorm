@@ -74,7 +74,8 @@ double FLL_ModelA(const dataVec & param, const dataType & data)
 
 //LogL = -2*sum(log(f_frag./norm)./freq_l);
 
-	return -2*LogL;
+	LogL = -2*LogL;
+	return LogL;
 }
 
 
