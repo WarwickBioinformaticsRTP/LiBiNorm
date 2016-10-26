@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <vector>
 #include <mutex>
+#include <chrono>
 #include <thread>
 #include "libCommon.h"
 #include "containerEx.h"
@@ -94,6 +95,8 @@ void LiBiNorm::mcmcThread(paramSet params, optionsType options, modelType model)
 
 		}
 
+//		std::this_thread::sleep_for(std::chrono::milliseconds(20));
+
 		options.Model = model_iterator->first;
 
 		switch (options.Model)
@@ -132,6 +135,7 @@ void LiBiNorm::mcmcThread(paramSet params, optionsType options, modelType model)
 #else
 		vectorEx<double> p0(rand(3)-1, rand(3), rand(4)-5, rand(4)-5, rand(1));
 #endif
+		
 		switch (options.Model)
 		{
 		case 2: case 4: case 5:
@@ -176,12 +180,6 @@ void LiBiNorm::mcmcThread(paramSet params, optionsType options, modelType model)
 
 		};
 
-		if (headers[options.Model].size() == 0)
-		{
-			for (size_t i = 0;i < params.size();i++)
-				headers[options.Model].push_back(params[i].name);
-		}
-
 		mcmc mcmcEngine;
 
 		mcmcEngine.mcmcrun(model,consData,params,options);
@@ -192,6 +190,11 @@ void LiBiNorm::mcmcThread(paramSet params, optionsType options, modelType model)
 
 		cerr << "Finishing Model:" << model_iterator->first << " iteration:" << loop << endl;
 
+		if (headers[options.Model].size() == 0)
+		{
+			for (size_t i = 0;i < params.size();i++)
+				headers[options.Model].push_back(params[i].name);
+		}
 
 		Chain[options.Model].push_back(mcmcEngine.chain().back());
 		SSChain[options.Model].push_back(mcmcEngine.sschain().back());
