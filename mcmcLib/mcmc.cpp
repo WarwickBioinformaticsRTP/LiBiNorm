@@ -1,4 +1,5 @@
 #include <random>
+#include <iostream>
 #include "mcmc.h"
 
 using namespace std;
@@ -68,6 +69,9 @@ void mcmc::mcmcrun(const modelType & model,const dataType & data,const paramSet 
 
 	double ss = model.ssfun(oldpar,data);
 //	ss = sseval(ssfun,ssstyle,oldpar,parind,value,local,data,modelfun);
+
+//	printf("%12.7f",ss);
+//	cin >> ss;
 	double ss1 = ss;
 	double ss2 = ss;
 
