@@ -194,9 +194,16 @@ void LiBiNorm::mcmcThread(paramSet params, optionsType options, modelType model)
 				headers[options.Model].push_back(params[i].name);
 		}
 
+#define TEST2
+#ifdef TEST2
+		Chain[options.Model] = mcmcEngine.chain();
+		SSChain[options.Model] = mcmcEngine.sschain();
+#else
 		Chain[options.Model].push_back(mcmcEngine.chain().back());
 		SSChain[options.Model].push_back(mcmcEngine.sschain().back());
+#endif
 		RejectionRate[options.Model] += mcmcEngine.rejected();
+
 	}
 
 }
