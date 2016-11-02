@@ -268,8 +268,8 @@ int MakeFastq::main(int argc, char **argv)
 
 
 	//	Use binary output format so that we get unix style/n line feeds
-	f1out = fopen((outputFileRoot + "_1.fastq").c_str(),"wb");
-	f2out = fopen((outputFileRoot + "_2.fastq").c_str(),"wb");
+	f1out = fopen((outputFileRoot + "_R1_001.fastq").c_str(),"wb");
+	f2out = fopen((outputFileRoot + "_R2_001.fastq").c_str(),"wb");
 
 
 	cerr << "Creating fastq files" << endl;

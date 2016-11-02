@@ -87,7 +87,8 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 	RefVector references = reader.GetReferenceData();
 	SamHeader header = reader.GetHeader();
 
-	if ( !writer.Open(bamFileName.replaceSuffix(".dedup.bam"),header,references )) 
+	string filename(bamFileName.replaceSuffix(".dedup.bam"));
+	if ( !writer.Open(filename,header,references )) 
 		exitFail("Could not open output BAM file: ",bamFileName.replaceSuffix(".dedup.bam"));
 
 #define MAXCOUNT 5000
