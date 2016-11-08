@@ -194,14 +194,16 @@ void LiBiNorm::mcmcThread(paramSet params, optionsType options, modelType model)
 				headers[options.Model].push_back(params[i].name);
 		}
 
-#define TEST2
-#ifdef TEST2
-		Chain[options.Model] = mcmcEngine.chain();
-		SSChain[options.Model] = mcmcEngine.sschain();
-#else
 		Chain[options.Model].push_back(mcmcEngine.chain().back());
 		SSChain[options.Model].push_back(mcmcEngine.sschain().back());
-#endif
+
+		if (debugMode)
+		{
+			debugChain[options.Model].push_back(mcmcEngine.chain());
+			debugSSChain[options.Model].push_back(mcmcEngine.sschain());
+		}
+
+
 		RejectionRate[options.Model] += mcmcEngine.rejected();
 
 	}
@@ -220,6 +222,7 @@ int LiBiNorm::main(int argc, char **argv)
 	size_t minModel = 1;
 	size_t maxModel = 6;
 	size_t Nruns = 100;
+	debugMode = false;
 
 	initClock();
 	if(argc < 1)
@@ -253,6 +256,10 @@ int LiBiNorm::main(int argc, char **argv)
 		{
 			minModel = atoi(argv[++ni]);
 			maxModel = minModel;
+		}
+		else if (strcmp(argv[ni], "-d") == 0)
+		{
+			debugMode = true;
 		}
 		else
 		{
@@ -298,6 +305,11 @@ int LiBiNorm::main(int argc, char **argv)
 	model.sigma2 = 1;
 	SSChain.resize(maxModel+1);
 	Chain.resize(maxModel+1);
+	if (debugMode)
+	{
+		debugSSChain.resize(maxModel + 1);
+		debugChain.resize(maxModel + 1);
+	}
 	RejectionRate.resize(maxModel+1);
 
 	for (size_t m = minModel; m < maxModel+1;m++)
@@ -313,7 +325,9 @@ int LiBiNorm::main(int argc, char **argv)
 		i.join();
 
 	TsvFile testResult;
-	testResult.open(consFileName.replaceSuffix("_Chain_.txt"));
+	stringEx filename(consFileName.replaceSuffix("_Chain_.txt"));
+	if (!testResult.open(filename))
+		exitFail("Unable to open output File ", filename);
 
 	for (size_t j = minModel;j < maxModel+1;j++) 
 		testResult.printMiddle(headers[j],"chain","");
@@ -326,6 +340,31 @@ int LiBiNorm::main(int argc, char **argv)
 			testResult.printMiddle(Chain[j][i],SSChain[j][i],"");
 		}
 		testResult.printEnd();
+	}
+
+	if (debugMode)
+	{
+		for (size_t modl = minModel; modl < maxModel + 1; modl++)
+		{
+			filename = consFileName.replaceSuffix("_debug", modl, "_Chain_.txt");
+			if(!testResult.open(filename))
+				exitFail("Unable to open output File ", filename);
+
+			for (size_t i = 0;i < debugChain[modl].size();i++)
+				testResult.printMiddle(headers[modl], "chain", "");
+	
+			testResult.printEnd();
+
+			for (size_t i = 0; i < debugChain[modl][0].size(); i++)
+			{
+				for (size_t j = 0; j < debugChain[modl].size(); j++)
+				{
+					testResult.printMiddle(debugChain[modl][j][i], debugSSChain[modl][j][i], "");
+				}
+				testResult.printEnd();
+			}
+			testResult.close();
+		}
 	}
 
 	cerr << "Data modelled" << endl;

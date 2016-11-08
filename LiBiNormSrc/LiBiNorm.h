@@ -10,10 +10,15 @@ class LiBiNorm
 	transcriptDataMap transData;
 
 	dataType consData;
+	bool debugMode;
 
 
 	vector<vector <dataVec > > Chain;
 	vector<dataVec> SSChain; 
+
+	vector<vector<vector <dataVec > > >debugChain;
+	vector<vector<dataVec> >debugSSChain;
+
 	dataVec RejectionRate;
 
 	map<size_t, vector<string> > headers;
