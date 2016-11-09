@@ -5,7 +5,7 @@
 #include <map>
 
 using namespace std;
-#define DATAVEC_CACHE
+//#define DATAVEC_CACHE
 
 
 
@@ -121,11 +121,16 @@ void dataVec::clearCache()
 
 #else
 dataVec::dataVec(size_t s): std::vector<VEC_DATA_TYPE>(s){};
+dataVec::dataVec(size_t s, VEC_DATA_TYPE v):std::vector<VEC_DATA_TYPE>(s,v) {};
 dataVec::dataVec(const std::vector<VEC_DATA_TYPE> & a): std::vector<VEC_DATA_TYPE>(a){};
+dataVec::dataVec(const dataVec & a):std::vector<VEC_DATA_TYPE>(a) {};
+
 dataVec::~dataVec(){};
-void dataVec::resize(size_t s = 0) {
+void dataVec::resize(size_t s) {
 	vector<VEC_DATA_TYPE>::resize(s);
 };
+
+void dataVec::clearCache() {};
 
 #endif
 

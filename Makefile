@@ -127,16 +127,16 @@ depend :
 $(BUILD)/LiBiNormSrc/LiBiNorm.o: ../bioinformaticsLib/libCommon.h
 $(BUILD)/LiBiNormSrc/LiBiNorm.o: ../bioinformaticsLib/containerEx.h
 $(BUILD)/LiBiNormSrc/LiBiNorm.o: mcmcLib/mcmc.h mcmcLib/dataVec.h
+$(BUILD)/LiBiNormSrc/LiBiNorm.o: ../bioinformaticsLib/printEx.h
+$(BUILD)/LiBiNormSrc/LiBiNorm.o: ../bioinformaticsLib/inQuotes.h
 $(BUILD)/LiBiNormSrc/LiBiNorm.o: mcmcLib/params.h LiBiNormSrc/LogLiklihoods.h
 $(BUILD)/LiBiNormSrc/LiBiNorm.o: LiBiNormSrc/LiBiNorm.h
 $(BUILD)/LiBiNormSrc/LiBiNorm.o: ../bioinformaticsLib/stringEx.h
-$(BUILD)/LiBiNormSrc/LiBiNorm.o: ../bioinformaticsLib/inQuotes.h
 $(BUILD)/LiBiNormSrc/LiBiNorm.o: LiBiNormSrc/transcriptData.h
 $(BUILD)/LiBiNormSrc/LiBiNorm.o: LiBiNormSrc/LiBiCount.h
 $(BUILD)/LiBiNormSrc/LiBiNorm.o: LiBiNormSrc/GtfFileEx.h
 $(BUILD)/LiBiNormSrc/LiBiNorm.o: ../bioinformaticsLib/gtfFile.h
 $(BUILD)/LiBiNormSrc/LiBiNorm.o: ../bioinformaticsLib/genbankFile.h
-$(BUILD)/LiBiNormSrc/LiBiNorm.o: ../bioinformaticsLib/printEx.h
 $(BUILD)/LiBiNormSrc/LiBiNorm.o: LiBiNormSrc/Regions.h
 $(BUILD)/LiBiNormSrc/LiBiNorm.o: ../bamtools/api/BamReader.h
 $(BUILD)/LiBiNormSrc/LiBiNorm.o: ../bamtools/api/api_global.h
@@ -154,12 +154,16 @@ $(BUILD)/LiBiNormSrc/LiBiNorm.o: ../bamtools/api/SamSequenceDictionary.h
 $(BUILD)/LiBiNormSrc/LiBiNorm.o: ../bamtools/api/SamSequence.h
 $(BUILD)/LiBiNormSrc/LiBiNorm.o: LiBiNormSrc/LiBiDedup.h
 $(BUILD)/LiBiNormSrc/LiBiNorm.o: LiBiNormSrc/MakeFastq.h
-$(BUILD)/mcmcLib/dataVec.o: mcmcLib/dataVec.h
-$(BUILD)/mcmcLib/mcmc.o: mcmcLib/mcmc.h mcmcLib/dataVec.h mcmcLib/params.h
+$(BUILD)/mcmcLib/dataVec.o: mcmcLib/dataVec.h ../bioinformaticsLib/printEx.h
+$(BUILD)/mcmcLib/dataVec.o: ../bioinformaticsLib/inQuotes.h
+$(BUILD)/mcmcLib/mcmc.o: mcmcLib/mcmc.h mcmcLib/dataVec.h
+$(BUILD)/mcmcLib/mcmc.o: ../bioinformaticsLib/printEx.h
+$(BUILD)/mcmcLib/mcmc.o: ../bioinformaticsLib/inQuotes.h mcmcLib/params.h
 $(BUILD)/mcmcLib/mcmc.o: ../bioinformaticsLib/containerEx.h
 $(BUILD)/mcmcLib/params.o: mcmcLib/params.h
 $(BUILD)/mcmcLib/params.o: ../bioinformaticsLib/containerEx.h
-$(BUILD)/mcmcLib/params.o: mcmcLib/dataVec.h
+$(BUILD)/mcmcLib/params.o: mcmcLib/dataVec.h ../bioinformaticsLib/printEx.h
+$(BUILD)/mcmcLib/params.o: ../bioinformaticsLib/inQuotes.h
 $(BUILD)/LiBiNormSrc/LiBiDedup.o: LiBiNormSrc/LiBiDedup.h
 $(BUILD)/LiBiNormSrc/LiBiDedup.o: ../bamtools/api/BamReader.h
 $(BUILD)/LiBiNormSrc/LiBiDedup.o: ../bamtools/api/api_global.h
@@ -209,6 +213,8 @@ $(BUILD)/LiBiNormSrc/LiBiCount.o: ../bamtools/api/SamSequence.h
 $(BUILD)/LiBiNormSrc/LiBiCount.o: ../bioinformaticsLib/parser.h
 $(BUILD)/LiBiNormSrc/LogLiklihoods.o: LiBiNormSrc/LogLiklihoods.h
 $(BUILD)/LiBiNormSrc/LogLiklihoods.o: mcmcLib/mcmc.h mcmcLib/dataVec.h
+$(BUILD)/LiBiNormSrc/LogLiklihoods.o: ../bioinformaticsLib/printEx.h
+$(BUILD)/LiBiNormSrc/LogLiklihoods.o: ../bioinformaticsLib/inQuotes.h
 $(BUILD)/LiBiNormSrc/LogLiklihoods.o: mcmcLib/params.h
 $(BUILD)/LiBiNormSrc/LogLiklihoods.o: ../bioinformaticsLib/containerEx.h
 $(BUILD)/LiBiNormSrc/GtfFileEx.o: LiBiNormSrc/GtfFileEx.h
@@ -239,6 +245,8 @@ $(BUILD)/LiBiNormSrc/transcriptData.o: ../bioinformaticsLib/libCommon.h
 $(BUILD)/LiBiNormSrc/transcriptData.o: ../bioinformaticsLib/containerEx.h
 $(BUILD)/LiBiNormSrc/transcriptData.o: LiBiNormSrc/transcriptData.h
 $(BUILD)/LiBiNormSrc/transcriptData.o: mcmcLib/dataVec.h
+$(BUILD)/LiBiNormSrc/transcriptData.o: ../bioinformaticsLib/printEx.h
+$(BUILD)/LiBiNormSrc/transcriptData.o: ../bioinformaticsLib/inQuotes.h
 $(BUILD)/LiBiNormSrc/Regions.o: LiBiNormSrc/Regions.h
 $(BUILD)/LiBiNormSrc/Regions.o: ../bioinformaticsLib/libCommon.h
 $(BUILD)/LiBiNormSrc/Regions.o: ../bioinformaticsLib/printEx.h
