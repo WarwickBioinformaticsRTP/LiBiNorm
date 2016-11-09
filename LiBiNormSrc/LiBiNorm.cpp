@@ -82,7 +82,7 @@ void LiBiNorm::mcmcThread(paramSet params, optionsType options, modelType model)
 		{
 			static mutex mtx; 
 			lock_guard<mutex> lock(mtx);
-			while(model_iterator->second >= options.Nruns)
+			while(model_iterator->second == 0)
 			{
 				dataVec::clearCache();
 				if (++model_iterator ==threadLoopCounts.end())
@@ -90,14 +90,10 @@ void LiBiNorm::mcmcThread(paramSet params, optionsType options, modelType model)
 					return;
 				}
 			}
-			loop = model_iterator->second++;
+			loop = model_iterator->second--;
 			cerr << "Starting Model:" << model_iterator->first << " iteration:" << loop << endl;
-
+			options.Model = model_iterator->first;
 		}
-
-//		std::this_thread::sleep_for(std::chrono::milliseconds(20));
-
-		options.Model = model_iterator->first;
 
 		switch (options.Model)
 		{
@@ -312,10 +308,15 @@ int LiBiNorm::main(int argc, char **argv)
 	}
 	RejectionRate.resize(maxModel+1);
 
-	for (size_t m = minModel; m < maxModel+1;m++)
+	for (size_t m = 1; m < maxModel+1;m++)
 	{
-		threadLoopCounts[m] = 0;
+		if (m >= minModel)
+			threadLoopCounts[m] = options.Nruns;
+		else
+			threadLoopCounts[m] = 1;
 	}
+
+
 
 	vector<thread> threads;
 	for (size_t i = 0;i < Nthreads;i++)
@@ -329,22 +330,29 @@ int LiBiNorm::main(int argc, char **argv)
 	if (!testResult.open(filename))
 		exitFail("Unable to open output File ", filename);
 
-	for (size_t j = minModel;j < maxModel+1;j++) 
+	for (size_t j = 1;j <= maxModel;j++) 
 		testResult.printMiddle(headers[j],"chain","");
 	testResult.printEnd();
 
-	for (size_t i = 0;i < Chain[minModel].size();i++)
+	for (size_t i = 0;i < options.nsimu;i++)
 	{
-		for (size_t j = minModel;j < maxModel+1;j++) 
+		for (size_t j = 1;j <= maxModel;j++) 
 		{
-			testResult.printMiddle(Chain[j][i],SSChain[j][i],"");
+			if (i < SSChain[j].size() )
+				testResult.printMiddle(Chain[j][i],SSChain[j][i],"");
+			else
+			{
+				for (size_t k = 0;k < Chain[j][0].size();k++)
+					testResult.printMiddle("");
+				testResult.printMiddle("","");
+			}
 		}
 		testResult.printEnd();
 	}
 
 	if (debugMode)
 	{
-		for (size_t modl = minModel; modl < maxModel + 1; modl++)
+		for (size_t modl = 1; modl <= maxModel; modl++)
 		{
 			filename = consFileName.replaceSuffix("_debug", modl, "_Chain_.txt");
 			if(!testResult.open(filename))
