@@ -13,11 +13,11 @@ class LiBiNorm
 	bool fullOutputMode;
 
 
-	vector<vector <dataVec > > Chain;
-	vector<dataVec> SSChain; 
+	vector<map <size_t,dataVec > > Chain;
+	vector<map <size_t, VEC_DATA_TYPE> > SSChain;
 
-	vector<vector<vector <dataVec > > >debugChain;
-	vector<vector<dataVec> >debugSSChain;
+	vector<map<size_t,vector <dataVec > > >fullResultChain;
+	vector<map<size_t,dataVec> >fullResultSSChain;
 
 	dataVec RejectionRate;
 

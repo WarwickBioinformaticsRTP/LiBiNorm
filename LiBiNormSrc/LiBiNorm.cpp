@@ -190,13 +190,13 @@ void LiBiNorm::mcmcThread(paramSet params, optionsType options, modelType model)
 				headers[options.Model].push_back(params[i].name);
 		}
 
-		Chain[options.Model].push_back(mcmcEngine.chain().back());
-		SSChain[options.Model].push_back(mcmcEngine.sschain().back());
+		Chain[options.Model].emplace(loop,mcmcEngine.chain().back());
+		SSChain[options.Model].emplace(loop,mcmcEngine.sschain().back());
 
 		if (fullOutputMode)
 		{
-			debugChain[options.Model].push_back(mcmcEngine.chain());
-			debugSSChain[options.Model].push_back(mcmcEngine.sschain());
+			fullResultChain[options.Model].emplace(loop,mcmcEngine.chain());
+			fullResultSSChain[options.Model].emplace(loop,mcmcEngine.sschain());
 		}
 
 
@@ -309,8 +309,8 @@ int LiBiNorm::main(int argc, char **argv)
 	Chain.resize(maxModel+1);
 	if (fullOutputMode)
 	{
-		debugSSChain.resize(maxModel + 1);
-		debugChain.resize(maxModel + 1);
+		fullResultSSChain.resize(maxModel + 1);
+		fullResultChain.resize(maxModel + 1);
 	}
 	RejectionRate.resize(maxModel+1);
 
@@ -340,15 +340,15 @@ int LiBiNorm::main(int argc, char **argv)
 		testResult.printMiddle(headers[j],"chain","");
 	testResult.printEnd();
 
-	for (size_t i = 0;i < options.Nruns;i++)
+	for (size_t i = 1;i <= options.Nruns;i++)
 	{
 		for (size_t j = 1;j <= maxModel;j++) 
 		{
-			if (i < SSChain[j].size() )
+			if (i <= SSChain[j].rbegin()->first)
 				testResult.printMiddle(Chain[j][i],SSChain[j][i],"");
 			else
 			{
-				for (size_t k = 0;k < Chain[j][0].size();k++)
+				for (size_t k = 0;k < Chain[j][1].size();k++)
 					testResult.printMiddle("");
 				testResult.printMiddle("","");
 			}
@@ -365,16 +365,16 @@ int LiBiNorm::main(int argc, char **argv)
 			if(!testResult.open(filename))
 				exitFail("Unable to open output File ", filename);
 
-			for (size_t i = 0;i < debugChain[modl].size();i++)
+			for (size_t i = 0;i < fullResultChain[modl].size();i++)
 				testResult.printMiddle(headers[modl], "chain", "");
 	
 			testResult.printEnd();
 
-			for (size_t i = 0; i < debugChain[modl][0].size(); i++)
+			for (size_t i = 0; i < fullResultChain[modl][1].size(); i++)
 			{
-				for (size_t j = 0; j < debugChain[modl].size(); j++)
+				for (size_t j = 1; j <= fullResultChain[modl].rbegin()->first; j++)
 				{
-					testResult.printMiddle(debugChain[modl][j][i], debugSSChain[modl][j][i], "");
+					testResult.printMiddle(fullResultChain[modl][j][i], fullResultSSChain[modl][j][i], "");
 				}
 				testResult.printEnd();
 			}
