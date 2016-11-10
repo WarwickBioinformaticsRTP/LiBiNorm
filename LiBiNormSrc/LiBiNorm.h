@@ -6,11 +6,11 @@
 
 class LiBiNorm
 {
-	stringEx consFileName;
+	stringEx consFileName,outputFileName;
 	transcriptDataMap transData;
 
 	dataType consData;
-	bool debugMode;
+	bool fullOutputMode;
 
 
 	vector<vector <dataVec > > Chain;

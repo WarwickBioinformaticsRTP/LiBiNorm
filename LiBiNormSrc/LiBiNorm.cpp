@@ -193,7 +193,7 @@ void LiBiNorm::mcmcThread(paramSet params, optionsType options, modelType model)
 		Chain[options.Model].push_back(mcmcEngine.chain().back());
 		SSChain[options.Model].push_back(mcmcEngine.sschain().back());
 
-		if (debugMode)
+		if (fullOutputMode)
 		{
 			debugChain[options.Model].push_back(mcmcEngine.chain());
 			debugSSChain[options.Model].push_back(mcmcEngine.sschain());
@@ -218,7 +218,7 @@ int LiBiNorm::main(int argc, char **argv)
 	size_t minModel = 1;
 	size_t maxModel = 6;
 	size_t Nruns = 100;
-	debugMode = false;
+	fullOutputMode = false;
 
 	initClock();
 	if(argc < 1)
@@ -239,6 +239,12 @@ int LiBiNorm::main(int argc, char **argv)
 		if(strcmp(argv[ni], "-c") == 0)
 		{
 			consFileName = argv[++ni];
+			if (!outputFileName)
+				outputFileName = consFileName;
+		}
+		else if (strcmp(argv[ni], "-o") == 0)
+		{
+			outputFileName = argv[++ni];
 		}
 		else if(strcmp(argv[ni], "-p") == 0)
 		{
@@ -253,13 +259,13 @@ int LiBiNorm::main(int argc, char **argv)
 			minModel = atoi(argv[++ni]);
 			maxModel = minModel;
 		}
-		else if (strcmp(argv[ni], "-d") == 0)
+		else if (strcmp(argv[ni], "-f") == 0)
 		{
-			debugMode = true;
+			fullOutputMode = true;
 		}
 		else
 		{
-			cout << "Invalid parameter";
+			exitFail("Invalid parameter: ",argv[ni]);
 		}
 		ni++;
 	}
@@ -301,7 +307,7 @@ int LiBiNorm::main(int argc, char **argv)
 	model.sigma2 = 1;
 	SSChain.resize(maxModel+1);
 	Chain.resize(maxModel+1);
-	if (debugMode)
+	if (fullOutputMode)
 	{
 		debugSSChain.resize(maxModel + 1);
 		debugChain.resize(maxModel + 1);
@@ -326,7 +332,7 @@ int LiBiNorm::main(int argc, char **argv)
 		i.join();
 
 	TsvFile testResult;
-	stringEx filename(consFileName.replaceSuffix("_Chain_.txt"));
+	stringEx filename(outputFileName.replaceSuffix("_Chain.txt"));
 	if (!testResult.open(filename))
 		exitFail("Unable to open output File ", filename);
 
@@ -334,7 +340,7 @@ int LiBiNorm::main(int argc, char **argv)
 		testResult.printMiddle(headers[j],"chain","");
 	testResult.printEnd();
 
-	for (size_t i = 0;i < options.nsimu;i++)
+	for (size_t i = 0;i < options.Nruns;i++)
 	{
 		for (size_t j = 1;j <= maxModel;j++) 
 		{
@@ -349,12 +355,13 @@ int LiBiNorm::main(int argc, char **argv)
 		}
 		testResult.printEnd();
 	}
+	testResult.close();
 
-	if (debugMode)
+	if (fullOutputMode)
 	{
 		for (size_t modl = 1; modl <= maxModel; modl++)
 		{
-			filename = consFileName.replaceSuffix("_debug", modl, "_Chain_.txt");
+			filename = outputFileName.replaceSuffix("_model_", modl, ".txt");
 			if(!testResult.open(filename))
 				exitFail("Unable to open output File ", filename);
 
