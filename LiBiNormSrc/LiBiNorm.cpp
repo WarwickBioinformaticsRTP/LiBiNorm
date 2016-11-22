@@ -229,7 +229,22 @@ int LiBiNorm::main(int argc, char **argv)
 	else if(argc == 1)
 	{
 		printf("/* ----------------------------- */\n");
-		printf("     LiBiNorm:    RNA-seq library bias normalisation   \n");
+		printf("     LiBiNorm:    RNA-seq library bias normalisation   \n\n");
+		printf("Options:\n");
+		printf("  -h, --help            show this help message and exit\n");
+		printf("  -c <filename>\n");
+		printf("                        Location of consolidated location file data\n");
+		printf("  -o <filename>\n");
+		printf("                        Optional root for output file.  Default is that it\n");
+		printf("                        is derived from the location file name\n");
+		printf("  -p N\n");
+		printf("                        Number of threads\n");
+		printf("  -n N\n");
+		printf("                        Number of mcmc iterations (100)\n");
+		printf("  -m N\n");
+		printf("                        Just run for model N -n times.  All other models run once\n");
+		printf("  -f\n");
+		printf("                        Output complete set of output filesN\n");
 		return EXIT_SUCCESS;
 	}
 
@@ -377,6 +392,28 @@ int LiBiNorm::main(int argc, char **argv)
 					testResult.printMiddle(fullResultChain[modl][j][i], fullResultSSChain[modl][j][i], "");
 				}
 				testResult.printEnd();
+			}
+			testResult.close();
+
+
+			multimap <double, dataVec *> orderedResults;
+
+			for (size_t i = 0; i < fullResultChain[modl][1].size(); i++)
+			{
+				for (size_t j = 1; j <= fullResultChain[modl].rbegin()->first; j++)
+				{
+					orderedResults.emplace(fullResultSSChain[modl][j][i], &fullResultChain[modl][j][i]);
+				}
+			}
+
+			filename = outputFileName.replaceSuffix("_model_cons_", modl, ".txt");
+			if (!testResult.open(filename))
+				exitFail("Unable to open output File ", filename);
+
+			testResult.print(headers[modl], "chain");
+			for (multimap <double, dataVec *>::iterator j = orderedResults.begin(); j != orderedResults.end();j++)
+			{
+				testResult.print(*(j->second), j->first);
 			}
 			testResult.close();
 		}
