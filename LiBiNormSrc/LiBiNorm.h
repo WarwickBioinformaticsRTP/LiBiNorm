@@ -10,7 +10,7 @@ class LiBiNorm
 	transcriptDataMap transData;
 
 	dataType consData;
-	bool fullOutputMode;
+	bool fullOutputMode,singleModel;
 
 
 	vector<map <size_t,dataVec > > Chain;
@@ -23,7 +23,8 @@ class LiBiNorm
 
 	map<size_t, vector<string> > headers;
 
-	map<size_t,size_t> threadLoopCounts;
+	//	Counts of the number of loops of each model
+	map<size_t,int> threadLoopCounts;
 
 public:
 	void mcmcThread(paramSet params, optionsType options, modelType model);

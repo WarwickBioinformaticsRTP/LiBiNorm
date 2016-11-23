@@ -75,14 +75,18 @@ int main(int argc, char **argv)
 
 void LiBiNorm::mcmcThread(paramSet params, optionsType options, modelType model)
 {
-	map<size_t,size_t>::iterator model_iterator = threadLoopCounts.begin();
+	map<size_t,int>::iterator model_iterator = threadLoopCounts.begin();
 	size_t loop;
 	while (true)
 	{
+		//  Look for an iteration of a loop that is yet to be done.
+		//	The iteration with the counter set to zero is not used for an mcmc run but is a dummy
+		//	to ensure that the header information is set even if we are not running any iterations of this
+		//	model
 		{
 			static mutex mtx; 
 			lock_guard<mutex> lock(mtx);
-			while(model_iterator->second == 0)
+			while(model_iterator->second == -1)
 			{
 				dataVec::clearCache();
 				if (++model_iterator ==threadLoopCounts.end())
@@ -174,34 +178,36 @@ void LiBiNorm::mcmcThread(paramSet params, optionsType options, modelType model)
 
 		};
 
-		mcmc mcmcEngine;
-
-		mcmcEngine.mcmcrun(model,consData,params,options);
-
-		static mutex mtx; 
-
-		lock_guard<mutex> lock(mtx);
-
-		cerr << "Finishing Model:" << model_iterator->first << " iteration:" << loop << endl;
-
-		if (headers[options.Model].size() == 0)
+		if (loop == 0)
 		{
-			for (size_t i = 0;i < params.size();i++)
+			for (size_t i = 0; i < params.size(); i++)
 				headers[options.Model].push_back(params[i].name);
 		}
-
-		Chain[options.Model].emplace(loop,mcmcEngine.chain().back());
-		SSChain[options.Model].emplace(loop,mcmcEngine.sschain().back());
-
-		if (fullOutputMode)
+		else
 		{
-			fullResultChain[options.Model].emplace(loop,mcmcEngine.chain());
-			fullResultSSChain[options.Model].emplace(loop,mcmcEngine.sschain());
+			mcmc mcmcEngine;
+
+			mcmcEngine.mcmcrun(model, consData, params, options);
+
+			static mutex mtx;
+
+			lock_guard<mutex> lock(mtx);
+
+			cerr << "Finishing Model:" << model_iterator->first << " iteration:" << loop << endl;
+
+
+			Chain[options.Model].emplace(loop, mcmcEngine.chain().back());
+			SSChain[options.Model].emplace(loop, mcmcEngine.sschain().back());
+
+			if (fullOutputMode || singleModel)
+			{
+				fullResultChain[options.Model].emplace(loop, mcmcEngine.chain());
+				fullResultSSChain[options.Model].emplace(loop, mcmcEngine.sschain());
+			}
+
+
+			RejectionRate[options.Model] += mcmcEngine.rejected();
 		}
-
-
-		RejectionRate[options.Model] += mcmcEngine.rejected();
-
 	}
 
 }
@@ -218,7 +224,9 @@ int LiBiNorm::main(int argc, char **argv)
 	size_t minModel = 1;
 	size_t maxModel = 6;
 	size_t Nruns = 100;
+	size_t Nsimu = 2000;
 	fullOutputMode = false;
+	singleModel = false;
 
 	initClock();
 	if(argc < 1)
@@ -241,8 +249,12 @@ int LiBiNorm::main(int argc, char **argv)
 		printf("                        Number of threads\n");
 		printf("  -n N\n");
 		printf("                        Number of mcmc iterations (100)\n");
+		printf("  -s N\n");
+		printf("                        Length of each simulation (100)\n");
 		printf("  -m N\n");
 		printf("                        Just run for model N -n times.  All other models run once\n");
+		printf("  -M N\n");
+		printf("                        Just run for model N -n times.  All other models not run\n");
 		printf("  -f\n");
 		printf("                        Output complete set of output filesN\n");
 		return EXIT_SUCCESS;
@@ -269,10 +281,20 @@ int LiBiNorm::main(int argc, char **argv)
 		{
 			Nruns = atoi(argv[++ni]);
 		}
+		else if (strcmp(argv[ni], "-s") == 0)
+		{
+			Nsimu = atoi(argv[++ni]);
+		}
 		else if(strcmp(argv[ni], "-m") == 0)
 		{
 			minModel = atoi(argv[++ni]);
 			maxModel = minModel;
+		}
+		else if (strcmp(argv[ni], "-M") == 0)
+		{
+			minModel = atoi(argv[++ni]);
+			maxModel = minModel;
+			singleModel = true;
 		}
 		else if (strcmp(argv[ni], "-f") == 0)
 		{
@@ -302,7 +324,7 @@ int LiBiNorm::main(int argc, char **argv)
 	modelType model;
 
 	options.jumpSize = 0.01;
-	options.nsimu = 2000;
+	options.nsimu = Nsimu;
 	options.Nruns = Nruns;
 
 #ifdef _DEBUG
@@ -322,19 +344,20 @@ int LiBiNorm::main(int argc, char **argv)
 	model.sigma2 = 1;
 	SSChain.resize(maxModel+1);
 	Chain.resize(maxModel+1);
-	if (fullOutputMode)
+	if (fullOutputMode || singleModel)
 	{
 		fullResultSSChain.resize(maxModel + 1);
 		fullResultChain.resize(maxModel + 1);
 	}
 	RejectionRate.resize(maxModel+1);
 
+	//	Set the number of iterations required of each of the models.
 	for (size_t m = 1; m < maxModel+1;m++)
 	{
 		if (m >= minModel)
 			threadLoopCounts[m] = options.Nruns;
 		else
-			threadLoopCounts[m] = 1;
+			threadLoopCounts[m] = singleModel?0:1;
 	}
 
 
@@ -347,25 +370,26 @@ int LiBiNorm::main(int argc, char **argv)
 		i.join();
 
 	TsvFile testResult;
+
 	stringEx filename(outputFileName.replaceSuffix("_Chain.txt"));
 	if (!testResult.open(filename))
 		exitFail("Unable to open output File ", filename);
 
-	for (size_t j = 1;j <= maxModel;j++) 
-		testResult.printMiddle(headers[j],"chain","");
+	for (size_t j = 1; j <= maxModel; j++)
+		testResult.printMiddle(headers[j], "chain", "");
 	testResult.printEnd();
 
-	for (size_t i = 1;i <= options.Nruns;i++)
+	for (size_t i = 1; i <= options.Nruns; i++)
 	{
-		for (size_t j = 1;j <= maxModel;j++) 
+		for (size_t j = 1; j <= maxModel; j++)
 		{
-			if (i <= SSChain[j].rbegin()->first)
-				testResult.printMiddle(Chain[j][i],SSChain[j][i],"");
+			if (SSChain[j].size() && (i <= SSChain[j].rbegin()->first))
+				testResult.printMiddle(Chain[j][i], SSChain[j][i], "");
 			else
 			{
-				for (size_t k = 0;k < Chain[j][1].size();k++)
+				for (size_t k = 0; k < headers[j].size(); k++)
 					testResult.printMiddle("");
-				testResult.printMiddle("","");
+				testResult.printMiddle("", "");
 			}
 		}
 		testResult.printEnd();
@@ -376,11 +400,13 @@ int LiBiNorm::main(int argc, char **argv)
 	{
 		for (size_t modl = 1; modl <= maxModel; modl++)
 		{
-			filename = outputFileName.replaceSuffix("_model_", modl, ".txt");
+			string filename = outputFileName.replaceSuffix("_model_", modl, ".txt");
 			if(!testResult.open(filename))
 				exitFail("Unable to open output File ", filename);
 
-			for (size_t i = 0;i < fullResultChain[modl].size();i++)
+			testResult.printMiddle(headers[modl], "chain", "");
+
+			for (size_t i = 1;i < fullResultChain[modl].size();i++)
 				testResult.printMiddle(headers[modl], "chain", "");
 	
 			testResult.printEnd();
@@ -395,7 +421,13 @@ int LiBiNorm::main(int argc, char **argv)
 			}
 			testResult.close();
 
+		}
+	}
 
+	if (singleModel || fullOutputMode)
+	{
+		for (size_t modl = singleModel?minModel:1; modl <= maxModel; modl++)
+		{
 			multimap <double, dataVec *> orderedResults;
 
 			for (size_t i = 0; i < fullResultChain[modl][1].size(); i++)
@@ -406,16 +438,17 @@ int LiBiNorm::main(int argc, char **argv)
 				}
 			}
 
-			filename = outputFileName.replaceSuffix("_model_cons_", modl, ".txt");
+			string filename = outputFileName.replaceSuffix("_model_cons_", modl, ".txt");
 			if (!testResult.open(filename))
 				exitFail("Unable to open output File ", filename);
 
 			testResult.print(headers[modl], "chain");
-			for (multimap <double, dataVec *>::iterator j = orderedResults.begin(); j != orderedResults.end();j++)
+			for (multimap <double, dataVec *>::iterator j = orderedResults.begin(); j != orderedResults.end(); j++)
 			{
 				testResult.print(*(j->second), j->first);
 			}
 			testResult.close();
+
 		}
 	}
 
