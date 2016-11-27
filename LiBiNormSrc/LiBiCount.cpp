@@ -259,10 +259,11 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 	{
 		if (strncasecmp(i.RefName.c_str(),"chr",3) == 0)
 			i.RefName = i.RefName.substr(3);
+		genomeDef.addToChromosomeMap(i.RefLength, i.RefName);
 	}
 
 	initClock();
-
+	
 	if (!genomeDef.open(gtfFileName,verbose,id_attribute,feature_type))
 		exitFail("Could not open gtf file: ",gtfFileName);
 
