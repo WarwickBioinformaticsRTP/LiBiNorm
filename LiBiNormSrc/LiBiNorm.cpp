@@ -66,6 +66,11 @@ int main(int argc, char **argv)
 			LiBiNorm norm;
 			return norm.main(argc-1,argv+1);
 		}
+		if (command == "--version")
+		{
+			cout << "LiBiNorm version 1.0.1" << endl;
+			return EXIT_SUCCESS;
+		}
 		else
 			exitFail("Invalid commmand:",command);
 	}

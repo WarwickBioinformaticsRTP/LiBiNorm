@@ -53,7 +53,7 @@ public:
 
 
 
-//	A nested string map for holding counts for each identifier for each gene  
+//	A nested string map for holding counts for each identifier (e.g. exon, gene) for each gene  
 class geneCountsClass : public std::map<const std::string,gtfGeneAttribute >
 {
 public:
@@ -74,34 +74,37 @@ typedef std::multimap<size_t, gtfRegion> chromosomeGtfData ;
 
 struct gtfOverlap
 {
-	size_t start,finish;
+	size_t start,finish,RNApos;
 	bool strict;
 	//	Store references here as these are created and deleted lots and these removes the need to allocate and
 	//	deallocate on the heap.
 	const std::string & geneName;
 	const std::string & featType;
-	gtfOverlap(size_t start,size_t finish,bool strict,const std::string & geneName,const std::string & featType): 
-		start(start),finish(finish),strict(strict),geneName(geneName),featType(featType){};
+	gtfOverlap(size_t start,size_t finish,size_t RNApos,bool strict,const std::string & geneName,const std::string & featType): 
+		start(start),finish(finish), RNApos(RNApos),strict(strict),geneName(geneName),featType(featType)
+	{
+	};
 };
 
 class gtfRegion
 {
 public:
-	size_t start,finish;
+	size_t start,finish,RNAstart;
 	//	Store actual values here as these are only created once and then referenced lots, so this is more efficient
 	const std::string name;
 	const std::string type;
 	char strand;
 	chromosomeGtfData::iterator * overlaps;
 
-	gtfRegion(gtfRegion && gtf) : start(gtf.start),finish(gtf.finish),name(move(gtf.name)),type(move(gtf.type)),strand(gtf.strand),overlaps(gtf.overlaps)
+	gtfRegion(gtfRegion && gtf) : start(gtf.start),finish(gtf.finish),name(move(gtf.name)),type(move(gtf.type)),strand(gtf.strand),
+		overlaps(gtf.overlaps), RNAstart(gtf.RNAstart)
 	{
 		gtf.overlaps = 0;
 	}
 
 	gtfRegion(	size_t start, size_t finish,const std::string & name,char strand,const std::string & type );
 	~gtfRegion();
-	void checkOverlap(const region & segment,std::vector<gtfOverlap> & overlaps) const;
+	void checkOverlap(const region & segment,std::vector<gtfOverlap> & overlapList) const;
 };
 
 
@@ -110,12 +113,39 @@ typedef std::multimap<size_t,chromosomeGtfData::iterator> chromosomeEndIndexMap;
 
 typedef std::map<std::string,chromosomeEndIndexMap > genomeEndIndexMap;
 
+typedef std::vector<gtfRegion *> gtfRegionList;
+
+class geneData
+{
+public:
+	gtfRegionList regions;
+	bool overlaps;
+
+	void addRegion(gtfRegion * newRegion,bool ol)
+	{
+		if (ol)
+			overlaps = true;
+		if (regions.size())
+		{
+			gtfRegion & gtf = **regions.rbegin();
+			newRegion->RNAstart = gtf.RNAstart + gtf.finish - gtf.start;
+		}
+		regions.push_back(newRegion);
+	};
+	geneData() : overlaps(false) {};
+};
+
 
 class gtfFileEx : public gtfFile
 {
 public: 
+	//	A container of all teh consolidated gtf regions
 	genomeGtfRegions genomeGtfData; 
+	//	A map of the ends of the gtf regions.   Used for finding overlaps
 	genomeEndIndexMap genomeEndIndex;
+
+	//	A map of the regions associated with a gene
+	std::map<std::string,geneData> genes;
 
 	void index(geneCountsClass & geneCounts);
 	void outputChromData(const std::string & filename);

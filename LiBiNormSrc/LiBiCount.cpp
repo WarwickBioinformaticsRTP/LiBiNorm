@@ -18,7 +18,19 @@
 #include "LiBiCount.h"
 #include "parser.h"
 
-#define MATCH_USING_POSITION
+//#define MATCH_USING_POSITION
+
+//	The insert size for matching pairs should be A and -A.  In some datasets they are A and A.  By using the absolute value of the
+//	insert size we can ensure that the pairs are still matched up
+#define USE_ABS_INSERT_TO_MATCH_READS
+
+#ifdef USE_ABS_INSERT_TO_MATCH_READS
+#define insertConv(A) abs(A)
+#else
+#define insertConv(A) A
+#endif
+
+
 
 #ifdef _DEBUG
 #define READ_CACHE_SIZE 50
@@ -31,7 +43,7 @@
 
 using namespace std;
 
-#define BAMNAME "FCC7KR5ACXX:2:2303:10982:64672#/1"
+#define BAMNAME "D00695:68:C9ME4ANXX:8:1114:5379:10897"
 
 int LiBiCount::main(int argc, char **argv)
 {
@@ -267,6 +279,11 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 	if (!genomeDef.open(gtfFileName,verbose,id_attribute,feature_type))
 		exitFail("Could not open gtf file: ",gtfFileName);
 
+	if (countsFilename)
+	{
+		genomeDef.printEntries(countsFilename.replaceSuffix("_genome.txt"));
+	}
+
 	genomeDef.index(geneCounts);
 
 //	_DBG(cin >> test;)
@@ -328,22 +345,30 @@ bool LiBiCount::outputGeneCounts(const string & filename)
 }
 
 
-//	overlapCounts and chromosomeInfo would have been declared inside addRead as they are local to addRead.  However this produces a C++ warning that the
-//	decorated name is too long, which can cause problems with debugging
+//	overlapCounts and chromosomeInfo would have been declared inside addRead as they are local to addRead.  
+//	However this produces a C++ warning that the decorated name is too long, which can cause problems with debugging
 
+//	
 struct overlapCounts
 {
-	size_t partial;
-	size_t strict;
-	size_t length;
+	size_t partial; // A count of the number of partial matches for this gene/region type combination
+	size_t strict;	// A count of the number of strict matches for this gene/region type combination
+	size_t length;  // The total length of the matches
 	overlapCounts(size_t partial=0,size_t strict=0,size_t length = 0):partial(partial),strict(strict),length(length){};
 };
 
+//	Contains information on the overlaps between a region of the read and gtfRegions
+//	The nested map is indexed first by gene and then by region type (e.g. exon) allowing data to be 
+//	accumlated for multiple region types if required.
 struct chromosomeGeneInfo: public map<string,map <string,overlapCounts> >
 {
 	size_t noMatch;
 	size_t nSegments;
 	chromosomeGeneInfo():noMatch(0),nSegments(0){};
+
+	//	Returns the number of independent gene/region type combinations
+	//	It is possible that this is incorrect and it should be returning the number of genes associated with a particular region type
+	//	This needs to be checked
 	size_t size()
 	{
 		size_t _s = 0;
@@ -417,7 +442,7 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 				genes.nSegments++;
 				vector<gtfOverlap> overlaps;
 				//	Trying out each of the gtfRegions in turn to see if there is an overlap. 
-				//	If there is then it gets added to the list of ovberlaps
+				//	If there is then it gets added to the list of overlaps
 				for (auto j = gtfRegion; (j != thisChromGtfRegions->second.end()) && (j->first <= segment.second.end); j++)
 				{
 					//	Check for strand match
@@ -678,7 +703,8 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 				{
 					//  but for intersection nonempty we can ignore the segments that match nothing and look at all the genes
 					//	which match all of the rest of the remaining segments.  We select the gene where the 
-					//	length of the match is longest
+					//	length of the match within any of the segments is longest
+					//	If multiple types are selected (exon/transcript) 
 					size_t bestLength = 0;
 
 					result = &noFeatureString;
@@ -801,7 +827,7 @@ bool LiBiCount::processNameOrderedBamData()
 		while ((ba[Nreads].Name == name) && (OK) && (Nreads < READ_BUFFER_SIZE));
 
 		//	This is a fairly direct implementation of the htseq logic in __init_.py line 570 onwards
-		//	There are potential issues with the ability of teh code to cope with datasets where there are multiple
+		//	There are potential issues with the ability of the code to cope with datasets where there are multiple
 		//	alignments
 
 		if (AReadIsMapped(ba[0]))
@@ -901,7 +927,7 @@ bool LiBiCount::processPositionOrderedBamData()
 				ba.IsMateMapped()?stringEx(ba.MateRefID,ba.MatePosition):"0","_",
 				ba.IsMapped()?stringEx(ba.RefID,ba.Position):"0","_",
 #endif
-				(ba.IsMapped() && ba.IsMateMapped())?-ba.InsertSize:0,"_",
+				(ba.IsMapped() && ba.IsMateMapped())? insertConv(-ba.InsertSize):0,"_",
 				ba.IsFirstMate()?"S":"F");
 			readCacheClass::iterator i = readCache.find(mateIndex);
 			if (i == readCache.end())
@@ -911,7 +937,7 @@ bool LiBiCount::processPositionOrderedBamData()
 					ba.IsMapped()?stringEx(ba.RefID,ba.Position):"0","_",
 					ba.IsMateMapped()?stringEx(ba.MateRefID,ba.MatePosition):"0","_",
 #endif
-					(ba.IsMapped() && ba.IsMateMapped())?ba.InsertSize:0,"_",
+					(ba.IsMapped() && ba.IsMateMapped())? insertConv(ba.InsertSize):0,"_",
 					ba.IsFirstMate()?"F":"S");
 
 				i = readCache.find(thisIndex);
