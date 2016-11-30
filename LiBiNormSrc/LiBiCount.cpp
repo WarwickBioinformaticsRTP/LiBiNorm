@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <algorithm>
 #include <chrono>
 
 #ifdef _WIN32
@@ -33,8 +34,10 @@
 
 
 #ifdef _DEBUG
-#define READ_CACHE_SIZE 50
-#define REP_LEN 100
+//	Put reads into cache file when number of reads exceed READ_CACHE_SIZE
+#define READ_CACHE_SIZE 50000
+//	Report progress every REP_LEN entries
+#define REP_LEN 100000
 #else
 #define READ_CACHE_SIZE 2000000
 //#define READ_CACHE_SIZE 10000
@@ -43,7 +46,7 @@
 
 using namespace std;
 
-#define BAMNAME "D00695:68:C9ME4ANXX:8:1114:5379:10897"
+#define BAMNAME "D00695:68:C9ME4ANXX:8:1207:12365:99191"
 
 int LiBiCount::main(int argc, char **argv)
 {
@@ -218,7 +221,11 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 		if (tempDirectory)
 		{
 			if (mkdir(tempDirectory.c_str()) != 0)
-				exitFail("Unable create temporary directory ",tempDirectory,"\n Try using the -c option for the count files instead"); 
+			{
+				rmdir(tempDirectory.c_str());
+				if (mkdir(tempDirectory.c_str()) != 0)
+					exitFail("Unable create temporary directory ", tempDirectory, "\n Try using the -c option for the count files instead");
+			}
 		}
 		else
 		{
@@ -304,6 +311,10 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 	if(!outputGeneCounts(countsFilename))
 		exitFail("Unable to output counts to :",countsFilename);
 
+
+	if (!outputRNApositions(countsFilename.replaceSuffix("_positions.txt")))
+		exitFail("Unable to output RNA positions to :", countsFilename.replaceSuffix("_positions.txt"));
+
 	if (verbose)
 		elapsedTime();
 
@@ -344,6 +355,25 @@ bool LiBiCount::outputGeneCounts(const string & filename)
 	return true;
 }
 
+bool LiBiCount::outputRNApositions(const std::string & filename)
+{
+	TsvFile output;
+
+	if (!output.open(filename))
+		return false;
+
+	for (auto i : geneCounts)
+	{
+		output.printStart(i.first, "9999 plus");
+		output.printEnd(printZero(i.second["exon"].posPositions));
+		output.printStart(i.first, "9999 minus");
+		output.printEnd(printZero(i.second["exon"].negPositions));
+	}
+	return true;
+
+}
+
+
 
 //	overlapCounts and chromosomeInfo would have been declared inside addRead as they are local to addRead.  
 //	However this produces a C++ warning that the decorated name is too long, which can cause problems with debugging
@@ -354,7 +384,8 @@ struct overlapCounts
 	size_t partial; // A count of the number of partial matches for this gene/region type combination
 	size_t strict;	// A count of the number of strict matches for this gene/region type combination
 	size_t length;  // The total length of the matches
-	overlapCounts(size_t partial=0,size_t strict=0,size_t length = 0):partial(partial),strict(strict),length(length){};
+	rna_pos_type RNApos;
+	overlapCounts(size_t partial=0,size_t strict=0,size_t length = 0):partial(partial),strict(strict),length(length),RNApos(99999999){};
 };
 
 //	Contains information on the overlaps between a region of the read and gtfRegions
@@ -489,6 +520,7 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 
 					//	This will create an entry for the combination if it does not exist before, which is needed later on
 					overlapCounts & GeneAttributeCombo1 = genes[overlap.geneName][overlap.featType];
+					GeneAttributeCombo1.RNApos = overlap.RNApos;
 
 					//	Need to register all strict overlaps, because overlaps-strict require them to be unique
 					if (overlap.strict)
@@ -543,11 +575,13 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 									region.geneSet.resize(1);
 									region.geneSet.at(0).name = overlap.geneName;
 									region.geneSet.at(0).type = overlap.featType;
+									GeneAttributeCombo2.RNApos = min<long>(GeneAttributeCombo2.RNApos, overlap.RNApos);
 									newRegion = false;
 								}
 								else
 								{
 									newRegion = true;
+									GeneAttributeCombo2.RNApos = min<long>(GeneAttributeCombo2.RNApos, overlap.RNApos);
 								}
 							}
 							if (newRegion)
@@ -558,6 +592,8 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 
 						//	We now have one or more regions within the read, each one of which matches regions in the gtf file
 						//	
+						_DBG(size_t Ngenes = segRegions.at(0).geneSet.size();)
+
 						for (gtfId & g : segRegions.at(0).geneSet)
 						{
 							bool matchesInAllRegions = true;
@@ -579,6 +615,7 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 							}
 							if (matchesInAllRegions)
 							{
+								//	Use at() rather than [] as it is more efficient: assumes the entry is already in place
 								genes.at(g.name).at(g.type).partial++;
 								genes.at(g.name).at(g.type).length += size;
 							}
@@ -615,6 +652,8 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 	const string * type = &blankString;		//
 	const string * mode = &blankString;		//The mode that selected the region
 
+	rna_pos_type RNApos = 0;
+
 	switch(countMode)
 	{
 	case intersect_strict:
@@ -639,9 +678,10 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 								if (outputFile.is_open())
 									outputFile.printEnd(*mode,*result,*type,location,segments.name);
 								geneCounts.at(*result).at(*type)++;
-
+								geneCounts.at(*result).at(*type).posPositions.emplace_back(RNApos);
 								result = &gene.first;
 								type = &regionType.first;
+								RNApos = regionType.second.RNApos;
 							}
 							else
 							{
@@ -656,6 +696,7 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 							//	A strict match, keep looking as there may be more
 							result = &gene.first;
 							type = &regionType.first;
+							RNApos = regionType.second.RNApos;
 						}
 					}
 				}
@@ -691,6 +732,7 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 				//	If we only match to one gene then the answer is simple
 				result = &genes.begin()->first;
 				type = &genes.begin()->second.begin()->first;
+				RNApos = genes.begin()->second.begin()->second.RNApos;
 			}
 			else if (Ngenes > 1)
 			{
@@ -749,8 +791,10 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 	if (outputFile.is_open())
 		outputFile.printEnd(*mode,*result,*type,location,segments.name);
 
-	geneCounts.at(*result).at(*type)++;
+	_DBG(bool err = ((type != &blankString) && (RNApos == 99999999));)
 
+	geneCounts.at(*result).at(*type)++;
+	geneCounts.at(*result).at(*type).posPositions.emplace_back(RNApos);
 }
 
 

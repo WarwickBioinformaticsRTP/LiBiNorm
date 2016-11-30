@@ -1,12 +1,12 @@
+#include <algorithm>
 #include "GtfFileEx.h"
-
 
 
 using namespace std;
 
 void gtfRegion::checkOverlap(const region & segment,vector<gtfOverlap> & overlapList) const
 {
-	size_t rnaStart = segment.start - start + RNAstart;
+	rna_pos_type rnaStart = max<long>(segment.start - start + RNAstart,0);
 	//	strict fit
 	if ((segment.start >= start) && (segment.end <= finish))
 	{

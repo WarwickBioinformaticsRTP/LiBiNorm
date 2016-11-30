@@ -18,34 +18,64 @@ static std::string lowQualString = "__too_low_aQual";
 static std::string notAlignedString = "__not_aligned";
 static std::string notUnique = "__alignment_not_unique";
 
+typedef long rna_pos_type;
 
-class gtfGeneAttribute : public mapZeroDef<const std::string,size_t> 
+
+class geneTypeInfo
+{
+public:
+	geneTypeInfo() :count(0) {};
+	size_t count;
+	std::vector <rna_pos_type> posPositions, negPositions;
+	void reset() {
+		count = 0;
+		posPositions.clear();
+		negPositions.clear();
+
+	}
+	const size_t operator++(int) {
+		size_t _R = count;
+		count++;
+		return _R;
+	}
+
+};
+
+//	Support function used by the print class for printing gtf tags
+inline bool printVal(outputDataFile * f, const geneTypeInfo & gti)
+{
+	fprintf(f->fout, "%zu", gti.count);
+	return true;
+};
+
+
+class gtfGeneAttribute : public std::map<const std::string, geneTypeInfo>
 {
 public:
 	void print(const std::string & index,TsvFile & output)	
 	{
-		//Print entries for all of the attributes being considered
+		// Print entries for all of the attributes being considered.  Only output the type info if 
+		// there are multiple region types being considered.  This is for consistency with
+		// the htseq-count standard count output
 		if (size() > 1)
 			for (auto & entry: This)
-				output.print(index,entry.first,_Z(entry.second));
+				output.print(index,entry.first,entry.second);
 		else
 			for (auto & entry: This)
-				output.print(index,_Z(entry.second));
+				output.print(index,entry.second);
 	};
 	void reset()	
 	{
 		for (auto & entry: This)
-			entry.second = 0;
+			entry.second.reset();
 	};
 
 	const size_t operator++(int){
-	//	Increments the count for the 'totals' counts for which there is no 'type' information so 
-	//	we use a dummy 'blank' entry 
+	//	Increments the count for the 'totals' counts for which there is no 'type' information 
+	//	such as notUnique and loqQualString for which we use a dummy 'blank' entry 
 
-		//	For consistency with definition of post operator, return velu before increment
-		size_t _R = at(blankString);
-		at(blankString)++;
-		return _R;
+		//	For consistency with definition of post operator, return value before increment
+		return at(blankString)++;
 	}
 
 };
@@ -74,13 +104,14 @@ typedef std::multimap<size_t, gtfRegion> chromosomeGtfData ;
 
 struct gtfOverlap
 {
-	size_t start,finish,RNApos;
+	size_t start,finish;
+	rna_pos_type RNApos;
 	bool strict;
 	//	Store references here as these are created and deleted lots and these removes the need to allocate and
 	//	deallocate on the heap.
 	const std::string & geneName;
 	const std::string & featType;
-	gtfOverlap(size_t start,size_t finish,size_t RNApos,bool strict,const std::string & geneName,const std::string & featType): 
+	gtfOverlap(size_t start, size_t finish, rna_pos_type RNApos,bool strict,const std::string & geneName,const std::string & featType):
 		start(start),finish(finish), RNApos(RNApos),strict(strict),geneName(geneName),featType(featType)
 	{
 	};
@@ -89,7 +120,8 @@ struct gtfOverlap
 class gtfRegion
 {
 public:
-	size_t start,finish,RNAstart;
+	size_t start,finish;
+	rna_pos_type RNAstart;
 	//	Store actual values here as these are only created once and then referenced lots, so this is more efficient
 	const std::string name;
 	const std::string type;
