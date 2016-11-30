@@ -286,10 +286,8 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 	if (!genomeDef.open(gtfFileName,verbose,id_attribute,feature_type))
 		exitFail("Could not open gtf file: ",gtfFileName);
 
-	if (countsFilename)
-	{
-		genomeDef.printEntries(countsFilename.replaceSuffix("_genome.txt"));
-	}
+	if ((countsFilename) && !genomeDef.printEntries(countsFilename.replaceSuffix("_genome.txt")))
+		cerr << "Unable to output genome data to :" << countsFilename.replaceSuffix("_genome.txt") << endl;
 
 	genomeDef.index(geneCounts);
 
@@ -312,8 +310,8 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 		exitFail("Unable to output counts to :",countsFilename);
 
 
-	if (!outputRNApositions(countsFilename.replaceSuffix("_positions.txt")))
-		exitFail("Unable to output RNA positions to :", countsFilename.replaceSuffix("_positions.txt"));
+	if ((countsFilename) && !outputRNApositions(countsFilename.replaceSuffix("_positions.txt")))
+		cerr << "Unable to output RNA positions to :" << countsFilename.replaceSuffix("_positions.txt") << endl;
 
 	if (verbose)
 		elapsedTime();
@@ -362,11 +360,13 @@ bool LiBiCount::outputRNApositions(const std::string & filename)
 	if (!output.open(filename))
 		return false;
 
+
 	for (auto i : geneCounts)
 	{
-		output.printStart(i.first, "9999 plus");
+		long len = genomeDef.genes[i.first].length;
+		output.printStart(i.first, _S(len," plus"));
 		output.printEnd(printZero(i.second["exon"].posPositions));
-		output.printStart(i.first, "9999 minus");
+		output.printStart(i.first, _S(len, " minus"));
 		output.printEnd(printZero(i.second["exon"].negPositions));
 	}
 	return true;
@@ -518,9 +518,11 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 					//	
 					gtfOverlap & overlap = overlaps[0];
 
+					_DBG(bool found = (overlap.geneName == "ENSMUSG00000001576"));
+
 					//	This will create an entry for the combination if it does not exist before, which is needed later on
 					overlapCounts & GeneAttributeCombo1 = genes[overlap.geneName][overlap.featType];
-					GeneAttributeCombo1.RNApos = overlap.RNApos;
+					GeneAttributeCombo1.RNApos = min(overlap.RNApos, GeneAttributeCombo1.RNApos);
 
 					//	Need to register all strict overlaps, because overlaps-strict require them to be unique
 					if (overlap.strict)
@@ -965,49 +967,57 @@ bool LiBiCount::processPositionOrderedBamData()
 
 		if (AReadIsMapped(ba))
 		{
-			//	Store reads in a cache so they can be paired up.
-			stringEx mateIndex(ba.Name,"_",
-#ifdef MATCH_USING_POSITION
-				ba.IsMateMapped()?stringEx(ba.MateRefID,ba.MatePosition):"0","_",
-				ba.IsMapped()?stringEx(ba.RefID,ba.Position):"0","_",
-#endif
-				(ba.IsMapped() && ba.IsMateMapped())? insertConv(-ba.InsertSize):0,"_",
-				ba.IsFirstMate()?"S":"F");
-			readCacheClass::iterator i = readCache.find(mateIndex);
-			if (i == readCache.end())
+			if (ba.IsPaired())
 			{
-				stringEx thisIndex(ba.Name,"_",
+				//	Store reads in a cache so they can be paired up.
+				stringEx mateIndex(ba.Name, "_",
 #ifdef MATCH_USING_POSITION
-					ba.IsMapped()?stringEx(ba.RefID,ba.Position):"0","_",
-					ba.IsMateMapped()?stringEx(ba.MateRefID,ba.MatePosition):"0","_",
+					ba.IsMateMapped() ? stringEx(ba.MateRefID, ba.MatePosition) : "0", "_",
+					ba.IsMapped() ? stringEx(ba.RefID, ba.Position) : "0", "_",
 #endif
-					(ba.IsMapped() && ba.IsMateMapped())? insertConv(ba.InsertSize):0,"_",
-					ba.IsFirstMate()?"F":"S");
-
-				i = readCache.find(thisIndex);
+					(ba.IsMapped() && ba.IsMateMapped()) ? insertConv(-ba.InsertSize) : 0, "_",
+					ba.IsFirstMate() ? "S" : "F");
+				readCacheClass::iterator i = readCache.find(mateIndex);
 				if (i == readCache.end())
 				{
-					auto i = readCache.emplace(thisIndex,vector<readData>());
-					i.first->second.emplace_back(move(ba));
+					stringEx thisIndex(ba.Name, "_",
+#ifdef MATCH_USING_POSITION
+						ba.IsMapped() ? stringEx(ba.RefID, ba.Position) : "0", "_",
+						ba.IsMateMapped() ? stringEx(ba.MateRefID, ba.MatePosition) : "0", "_",
+#endif
+						(ba.IsMapped() && ba.IsMateMapped()) ? insertConv(ba.InsertSize) : 0, "_",
+						ba.IsFirstMate() ? "F" : "S");
+
+					i = readCache.find(thisIndex);
+					if (i == readCache.end())
+					{
+						auto i = readCache.emplace(thisIndex, vector<readData>());
+						i.first->second.emplace_back(move(ba));
+					}
+					else
+						i->second.emplace_back(move(ba));
 				}
 				else
-					i->second.emplace_back(move(ba));
+				{
+					regionLists regions(i->second.front(), ba.Name);
+
+					regions.combine(move(ba));
+
+					addRead(regions, genomeDef);
+
+					if (i->second.size() > 1)
+						i->second.erase(i->second.begin());
+					else
+						readCache.erase(i);
+
+					incBamCounter(&ba, readCache.size());
+
+				}
 			}
 			else
 			{
-				regionLists regions(i->second.front(),ba.Name);
-
-				regions.combine(move(ba));
-
-				addRead(regions,genomeDef);
-
-				if (i->second.size() > 1)
-					i->second.erase(i->second.begin());
-				else
-					readCache.erase(i);
-
-				incBamCounter(&ba,readCache.size());
-
+				regionLists regions(ba, ba.Name);
+				addRead(regions, genomeDef);
 			}
 		}
 		incBamCounter(&ba,readCache.size());

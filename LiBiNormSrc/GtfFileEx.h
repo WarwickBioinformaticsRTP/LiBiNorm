@@ -21,18 +21,23 @@ static std::string notUnique = "__alignment_not_unique";
 typedef long rna_pos_type;
 
 
+//	Conatins information relating to a specific gene/region type  combination
 class geneTypeInfo
 {
 public:
-	geneTypeInfo() :count(0) {};
+	//	Number of associated reads
 	size_t count;
+	//	and their locations
 	std::vector <rna_pos_type> posPositions, negPositions;
+
+	geneTypeInfo() :count(0) {};
 	void reset() {
 		count = 0;
 		posPositions.clear();
 		negPositions.clear();
 
 	}
+	//	For consistency with definition of post operator, return value before increment
 	const size_t operator++(int) {
 		size_t _R = count;
 		count++;
@@ -73,8 +78,6 @@ public:
 	const size_t operator++(int){
 	//	Increments the count for the 'totals' counts for which there is no 'type' information 
 	//	such as notUnique and loqQualString for which we use a dummy 'blank' entry 
-
-		//	For consistency with definition of post operator, return value before increment
 		return at(blankString)++;
 	}
 
@@ -152,6 +155,9 @@ class geneData
 public:
 	gtfRegionList regions;
 	bool overlaps;
+	char strand;
+	//	The total length of the regions associated with the gene
+	long length;
 
 	void addRegion(gtfRegion * newRegion,bool ol)
 	{
@@ -162,9 +168,13 @@ public:
 			gtfRegion & gtf = **regions.rbegin();
 			newRegion->RNAstart = gtf.RNAstart + gtf.finish - gtf.start;
 		}
+		else
+			strand = newRegion->strand;
 		regions.push_back(newRegion);
+		length += (newRegion->finish - newRegion->start);
+
 	};
-	geneData() : overlaps(false) {};
+	geneData() : overlaps(false),length(0), strand(' ') {};
 };
 
 
