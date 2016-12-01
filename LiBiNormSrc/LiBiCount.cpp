@@ -384,8 +384,8 @@ struct overlapCounts
 	size_t partial; // A count of the number of partial matches for this gene/region type combination
 	size_t strict;	// A count of the number of strict matches for this gene/region type combination
 	size_t length;  // The total length of the matches
-	rna_pos_type RNApos;
-	overlapCounts(size_t partial=0,size_t strict=0,size_t length = 0):partial(partial),strict(strict),length(length),RNApos(99999999){};
+	rna_pos_type RNAstartPos, RNAendPos;
+	overlapCounts(size_t partial=0,size_t strict=0,size_t length = 0):partial(partial),strict(strict),length(length),RNAstartPos(99999999),RNAendPos(0){};
 };
 
 //	Contains information on the overlaps between a region of the read and gtfRegions
@@ -522,7 +522,8 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 
 					//	This will create an entry for the combination if it does not exist before, which is needed later on
 					overlapCounts & GeneAttributeCombo1 = genes[overlap.geneName][overlap.featType];
-					GeneAttributeCombo1.RNApos = min(overlap.RNApos, GeneAttributeCombo1.RNApos);
+					GeneAttributeCombo1.RNAstartPos = min(overlap.RNAstartPos, GeneAttributeCombo1.RNAstartPos);
+					GeneAttributeCombo1.RNAendPos = max(overlap.RNAendPos, GeneAttributeCombo1.RNAendPos);
 
 					//	Need to register all strict overlaps, because overlaps-strict require them to be unique
 					if (overlap.strict)
@@ -577,13 +578,16 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 									region.geneSet.resize(1);
 									region.geneSet.at(0).name = overlap.geneName;
 									region.geneSet.at(0).type = overlap.featType;
-									GeneAttributeCombo2.RNApos = min<long>(GeneAttributeCombo2.RNApos, overlap.RNApos);
+									GeneAttributeCombo2.RNAstartPos = min(GeneAttributeCombo2.RNAstartPos, overlap.RNAstartPos);
+									GeneAttributeCombo2.RNAendPos = max(GeneAttributeCombo2.RNAendPos, overlap.RNAendPos);
 									newRegion = false;
 								}
 								else
 								{
 									newRegion = true;
-									GeneAttributeCombo2.RNApos = min<long>(GeneAttributeCombo2.RNApos, overlap.RNApos);
+									GeneAttributeCombo2.RNAstartPos = min(GeneAttributeCombo2.RNAstartPos, overlap.RNAstartPos);
+									GeneAttributeCombo2.RNAendPos = max(GeneAttributeCombo2.RNAendPos, overlap.RNAendPos);
+
 								}
 							}
 							if (newRegion)
@@ -654,7 +658,7 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 	const string * type = &blankString;		//
 	const string * mode = &blankString;		//The mode that selected the region
 
-	rna_pos_type RNApos = 0;
+	rna_pos_type RNAstartPos = 0, RNAendPos = 0;
 
 	switch(countMode)
 	{
@@ -680,10 +684,11 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 								if (outputFile.is_open())
 									outputFile.printEnd(*mode,*result,*type,location,segments.name);
 								geneCounts.at(*result).at(*type)++;
-								geneCounts.at(*result).at(*type).posPositions.emplace_back(RNApos);
+								geneCounts.at(*result).at(*type).posPositions.emplace_back(RNAstartPos);
 								result = &gene.first;
 								type = &regionType.first;
-								RNApos = regionType.second.RNApos;
+								RNAstartPos = regionType.second.RNAstartPos;
+								RNAendPos = regionType.second.RNAendPos;
 							}
 							else
 							{
@@ -698,7 +703,8 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 							//	A strict match, keep looking as there may be more
 							result = &gene.first;
 							type = &regionType.first;
-							RNApos = regionType.second.RNApos;
+							RNAstartPos = regionType.second.RNAstartPos;
+							RNAendPos = regionType.second.RNAendPos;
 						}
 					}
 				}
@@ -734,7 +740,8 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 				//	If we only match to one gene then the answer is simple
 				result = &genes.begin()->first;
 				type = &genes.begin()->second.begin()->first;
-				RNApos = genes.begin()->second.begin()->second.RNApos;
+				RNAstartPos = genes.begin()->second.begin()->second.RNAstartPos;
+				RNAendPos = genes.begin()->second.begin()->second.RNAendPos;
 			}
 			else if (Ngenes > 1)
 			{
@@ -793,10 +800,63 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 	if (outputFile.is_open())
 		outputFile.printEnd(*mode,*result,*type,location,segments.name);
 
-	_DBG(bool err = ((type != &blankString) && (RNApos == 99999999));)
-
 	geneCounts.at(*result).at(*type)++;
-	geneCounts.at(*result).at(*type).posPositions.emplace_back(RNApos);
+
+	if (type != &blankString)
+	{
+		_DBG(bool err = (RNAstartPos == 99999999);)
+		if (segments.strands.size() == 1)
+		{
+			if (genomeDef.genes[*result].strand == '+')
+			{
+				if (segments.strands[0] == '+')
+					geneCounts.at(*result).at(*type).posPositions.emplace_back(RNAstartPos);
+				else
+					geneCounts.at(*result).at(*type).negPositions.emplace_back(RNAendPos);
+			}
+			else
+			{
+				rna_pos_type geneLen = genomeDef.genes[*result].length;
+				if (segments.strands[0] == '+')
+					geneCounts.at(*result).at(*type).negPositions.emplace_back(max<rna_pos_type>(geneLen - RNAstartPos,0));
+				else
+					geneCounts.at(*result).at(*type).posPositions.emplace_back(max<rna_pos_type>(geneLen - RNAendPos,0));
+
+			}
+		}
+		else
+		{
+			// paired end, an entry for each end
+			if (genomeDef.genes[*result].strand == '+')
+			{
+				if (segments.strands[0] == segments.strands[1])
+				{
+					geneCounts.at(*result).at(*type).posPositions.emplace_back(RNAstartPos);
+					geneCounts.at(*result).at(*type).negPositions.emplace_back(RNAendPos);
+				}
+				else
+				{
+					cerr << "Mismatched paired end: " << segments.name << " Position: "
+						<< references[segments.data.begin()->first].RefName << ":" << segments.data.begin()->second.data.begin()->first << endl;
+				}
+			}
+			else
+			{
+				rna_pos_type geneLen = genomeDef.genes[*result].length;
+				if (segments.strands[0] == segments.strands[1])
+				{
+					geneCounts.at(*result).at(*type).negPositions.emplace_back(max<rna_pos_type>(geneLen - RNAstartPos,0));
+					geneCounts.at(*result).at(*type).posPositions.emplace_back(max<rna_pos_type>(geneLen - RNAendPos,0));
+				}
+				else
+				{
+					cerr << "Mismatched paired end: " << segments.name << " Position: "
+						<< references[segments.data.begin()->first].RefName << ":" << segments.data.begin()->second.data.begin()->first << endl;
+				}
+			}
+		}
+	}
+
 }
 
 

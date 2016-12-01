@@ -108,14 +108,14 @@ typedef std::multimap<size_t, gtfRegion> chromosomeGtfData ;
 struct gtfOverlap
 {
 	size_t start,finish;
-	rna_pos_type RNApos;
+	rna_pos_type RNAstartPos,RNAendPos;
 	bool strict;
 	//	Store references here as these are created and deleted lots and these removes the need to allocate and
 	//	deallocate on the heap.
 	const std::string & geneName;
 	const std::string & featType;
-	gtfOverlap(size_t start, size_t finish, rna_pos_type RNApos,bool strict,const std::string & geneName,const std::string & featType):
-		start(start),finish(finish), RNApos(RNApos),strict(strict),geneName(geneName),featType(featType)
+	gtfOverlap(size_t start, size_t finish, rna_pos_type RNAstartPos, rna_pos_type RNAendPos,bool strict,const std::string & geneName,const std::string & featType):
+		start(start),finish(finish), RNAstartPos(RNAstartPos), RNAendPos(RNAendPos),strict(strict),geneName(geneName),featType(featType)
 	{
 	};
 };
@@ -157,7 +157,7 @@ public:
 	bool overlaps;
 	char strand;
 	//	The total length of the regions associated with the gene
-	long length;
+	rna_pos_type length;
 
 	void addRegion(gtfRegion * newRegion,bool ol)
 	{

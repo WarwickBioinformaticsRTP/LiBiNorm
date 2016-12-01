@@ -6,24 +6,26 @@ using namespace std;
 
 void gtfRegion::checkOverlap(const region & segment,vector<gtfOverlap> & overlapList) const
 {
-	rna_pos_type rnaStart = max<long>(segment.start - start + RNAstart,0);
+	rna_pos_type RNAstartPos = max<long>(segment.start - start + RNAstart,0);
+	rna_pos_type RNAendPos = segment.end-start + RNAstart;
+
 	//	strict fit
 	if ((segment.start >= start) && (segment.end <= finish))
 	{
-		overlapList.emplace_back(segment.start,segment.end, rnaStart,true,name,type);
+		overlapList.emplace_back(segment.start,segment.end, RNAstartPos, RNAendPos,true,name,type);
 	}
 	//	non-strict fits
 	else if ((segment.start <= finish) && (segment.start >= start)) 
 	{
-		overlapList.emplace_back(segment.start,finish, rnaStart, false,name,type);
+		overlapList.emplace_back(segment.start,finish, RNAstartPos, RNAendPos, false,name,type);
 	}
 	else if ((segment.end <= finish) && (segment.end >= start))
 	{
-		overlapList.emplace_back(start,segment.end, rnaStart, false,name,type);
+		overlapList.emplace_back(start,segment.end, RNAstartPos, RNAendPos, false,name,type);
 	}
 	else if ((segment.start <= start) && (segment.end >= finish))
 	{
-		overlapList.emplace_back(start,finish, rnaStart, false,name,type);
+		overlapList.emplace_back(start,finish, RNAstartPos, RNAendPos,false,name,type);
 	}
 }
 

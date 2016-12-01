@@ -58,10 +58,11 @@ class readData
 			//	then the pythin throws an error, which we simulate by setting NH to zero
 			if (!ba.GetTag("NH",NH))
 				NH = ba.IsFirstMate()?0:-1;
-			if (ba.IsReverseStrand() == ba.IsFirstMate())
-				strand = '-';
+			if (ba.IsPaired())
+				strand = (ba.IsReverseStrand() == ba.IsFirstMate())?'-':'+';
 			else
-				strand = '+';
+				strand = ba.IsReverseStrand() ? '-' : '+';
+
 		};
 };
 
@@ -128,11 +129,13 @@ public:
 	const std::string & name;
 	int NH;
 	int qual;
+	std::vector<char> strands;
 
 	//	Creates a regionList from one of the reads, either from a bam entry or from cachedData.  Use emplace so that the
 	//	regionList can be efficiently placed straight into the map.
-	regionLists(const readData & read,const std::string & name) :name(name),NH(read.NH),qual(read.qual) {
+	regionLists(const readData & read,const std::string & name) :name(name),NH(read.NH),qual(read.qual), strands(1,read.strand){
 		data.emplace(read.refId,regionList(read));
+//		strands.emplace_back(read.strand);
 	};
 
 	//	Adds the information associated with the second read, which will be placed in the existing chromosome
@@ -145,6 +148,7 @@ public:
 				NH = read.NH;
 			if (read.qual < qual)
 				qual = read.qual;
+			strands.emplace_back(read.strand);
 	};
 };
 
