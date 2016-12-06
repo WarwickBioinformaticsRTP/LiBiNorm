@@ -38,6 +38,7 @@
 #define READ_CACHE_SIZE 50000
 //	Report progress every REP_LEN entries
 #define REP_LEN 100000
+bool found = false;
 #else
 #define READ_CACHE_SIZE 2000000
 //#define READ_CACHE_SIZE 10000
@@ -46,7 +47,7 @@
 
 using namespace std;
 
-#define BAMNAME "D00695:68:C9ME4ANXX:8:1207:12365:99191"
+#define BAMNAME "SRR557798.11792470"
 
 int LiBiCount::main(int argc, char **argv)
 {
@@ -363,11 +364,14 @@ bool LiBiCount::outputRNApositions(const std::string & filename)
 
 	for (auto i : geneCounts)
 	{
-		long len = genomeDef.genes[i.first].length;
-		output.printStart(i.first, _S(len," plus"));
-		output.printEnd(printZero(i.second["exon"].posPositions));
-		output.printStart(i.first, _S(len, " minus"));
-		output.printEnd(printZero(i.second["exon"].negPositions));
+		if ((i.second["exon"].posPositions.size()) || (i.second["exon"].negPositions.size()))
+		{
+			long len = genomeDef.genes[i.first].length;
+			output.printStart(i.first, _S(len, " plus"));
+			output.printEnd(printZero(i.second["exon"].posPositions));
+			output.printStart(i.first, _S(len, " minus"));
+			output.printEnd(printZero(i.second["exon"].negPositions));
+		}
 	}
 	return true;
 
@@ -518,7 +522,7 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 					//	
 					gtfOverlap & overlap = overlaps[0];
 
-					_DBG(bool found = (overlap.geneName == "ENSMUSG00000001576"));
+					_DBG(found = (overlap.geneName == "NM_001115075.1"));
 
 					//	This will create an entry for the combination if it does not exist before, which is needed later on
 					overlapCounts & GeneAttributeCombo1 = genes[overlap.geneName][overlap.featType];
@@ -922,7 +926,7 @@ bool LiBiCount::processNameOrderedBamData()
 	while (OK)
 	{
 		string & name = ba[0].Name;
-		_DBG(bool found = (name == BAMNAME);)
+		_DBG(found = (name == BAMNAME);)
 
 		int Nreads = 0;
 

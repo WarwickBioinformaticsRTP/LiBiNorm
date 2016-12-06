@@ -163,15 +163,13 @@ public:
 	{
 		if (ol)
 			overlaps = true;
-		if (regions.size())
-		{
-			gtfRegion & gtf = **regions.rbegin();
-			newRegion->RNAstart = gtf.RNAstart + gtf.finish - gtf.start;
-		}
-		else
+
+		newRegion->RNAstart = length + 1;
+		if (regions.size() == 0)
 			strand = newRegion->strand;
+
 		regions.push_back(newRegion);
-		length += (newRegion->finish - newRegion->start);
+		length += (newRegion->finish - newRegion->start + 1);
 
 	};
 	geneData() : overlaps(false),length(0), strand(' ') {};

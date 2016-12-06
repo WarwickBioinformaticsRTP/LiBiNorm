@@ -43,10 +43,15 @@ class readData
 			//	then the pythin throws an error, which we simulate by setting NH to zero
 			if (!ba.GetTag("NH",NH))
 				NH = ba.IsFirstMate()?0:-1;
-			if (ba.IsReverseStrand() == ba.IsFirstMate())
-				strand = '-';
+			if (ba.IsPaired())
+			{
+				if (ba.IsReverseStrand() == ba.IsFirstMate())
+					strand = '-';
+				else
+					strand = '+';
+			}
 			else
-				strand = '+';
+				strand = ba.IsReverseStrand() ? '-' : '+';
 		};
 		readData(const BamTools::BamAlignment & ba):
 			refId(ba.RefID),
