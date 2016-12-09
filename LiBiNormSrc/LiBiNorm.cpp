@@ -30,8 +30,8 @@ extern map<thread::id,map<size_t,vector<vector<VEC_DATA_TYPE> > > > cache;
 int main(int argc, char **argv)
 {
 
-#ifdef _WIN32
 
+#ifdef _WIN32
 	_DBG( _CrtSetDbgFlag ( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF ));
 #endif
 

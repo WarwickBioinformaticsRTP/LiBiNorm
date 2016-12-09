@@ -45,13 +45,42 @@ gtfRegion::~gtfRegion() {
 
 void gtfFileEx::index(geneCountsClass & geneCounts)
 {
+	ifstream file;
+	file.open("Y:\\LiBiNorm\\refGeneList2.txt");
+
+	if (!file.is_open())
+		return;
+
+	string line;
+	while (!file.eof())
+	{
+		std::getline(file, line);
+		if (!line.empty())
+		geneSet.emplace(line);
+		if (geneList.empty() || (geneList.back() != line))
+			geneList.emplace_back(line);
+	};
 
 	for (auto & chrom : entryMap)
 	{
+		//	First get rid of entries associated with genes that we are not interested in (temp fix)
+		for (auto i = chrom.second.begin(); i != chrom.second.end();)
+		{
+			if (!geneSet.contains(i->second.tags[0].val))
+			{
+				//			if (!geneList.contains(i->second.tags[0].val))
+				auto j = i++;
+				chrom.second.erase(j);
+			}
+			else
+				i++;
+		}
+
 		//	In each chromosome go through all of the regions to see what regions can be amalgamated
 		chromosomeGtfData & thisChromData = genomeGtfData[chrom.first];
 		for (auto i = chrom.second.begin(); i != chrom.second.end();i++)
 		{
+
 			size_t finish = i->second.finish;
 			setEx<string> type(i->second.type);
 			for (auto j = next(i,1);(j != chrom.second.end()) && (j->first <= (finish + 1));)
@@ -79,7 +108,6 @@ void gtfFileEx::index(geneCountsClass & geneCounts)
 					}
 				}
 			}
-
 			thisChromData.emplace(i->first,gtfRegion(i->second.start,finish,i->second.tags[0].val,i->second.strand,i->second.type));
 
 		}
@@ -98,6 +126,7 @@ void gtfFileEx::index(geneCountsClass & geneCounts)
 
 		for (chromosomeGtfData::iterator i = thisChromData.begin(); i != thisChromData.end();i++)
 		{
+
 			//	Take the opportunity to produce a map of all the genes for holding counts
 			geneCounts[i->second.name][i->second.type];
 

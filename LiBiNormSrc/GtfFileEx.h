@@ -184,6 +184,11 @@ public:
 	//	A map of the ends of the gtf regions.   Used for finding overlaps
 	genomeEndIndexMap genomeEndIndex;
 
+	//	Dans original list of genes
+	setEx<std::string> geneSet;
+	std::vector<std::string> geneList;
+
+
 	//	A map of the regions associated with a gene
 	std::map<std::string,geneData> genes;
 

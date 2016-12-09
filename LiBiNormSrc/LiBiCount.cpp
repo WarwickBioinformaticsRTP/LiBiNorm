@@ -47,7 +47,7 @@ bool found = false;
 
 using namespace std;
 
-#define BAMNAME "SRR557798.11792470"
+#define BAMNAME "SRR557798.3975438"
 
 int LiBiCount::main(int argc, char **argv)
 {
@@ -361,16 +361,23 @@ bool LiBiCount::outputRNApositions(const std::string & filename)
 	if (!output.open(filename))
 		return false;
 
-
-	for (auto i : geneCounts)
+	for (auto gene : genomeDef.geneList)
 	{
-		if ((i.second["exon"].posPositions.size()) || (i.second["exon"].negPositions.size()))
+		geneCountsClass::iterator j = geneCounts.find(gene);
+		if (j == geneCounts.end())
 		{
-			long len = genomeDef.genes[i.first].length;
-			output.printStart(i.first, _S(len, " plus"));
-			output.printEnd(printZero(i.second["exon"].posPositions));
-			output.printStart(i.first, _S(len, " minus"));
-			output.printEnd(printZero(i.second["exon"].negPositions));
+			output.print(gene, _S(0, " plus"));
+			output.print(gene, _S(0, " minus"));
+		}
+		else
+//		if ((i.second["exon"].posPositions.size()) || (i.second["exon"].negPositions.size()))
+		{
+
+			long len =genomeDef.genes[gene].length;
+			output.printStart(gene, _S(len, " plus"));
+			output.printEnd(printZero(j->second["exon"].posPositions));
+			output.printStart(gene, _S(len, " minus"));
+			output.printEnd(printZero(j->second["exon"].negPositions));
 		}
 	}
 	return true;
@@ -455,180 +462,184 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 			//	Get the map of neds of gtfRegions associated with the chromosome
 			const chromosomeEndIndexMap & thisChromEndMap = gtfData.genomeEndIndex.at(references[chromSegments.first].RefName);
 
-			//	And find the first one that finishes at or beyond the start of the first segment
-			chromosomeEndIndexMap::const_iterator indirectIteratorStart = thisChromEndMap.lower_bound(chromSegments.second.data.begin()->second.start);
-
-			//	And move back one to ensure we have the region that covers segment
-//			if (indirectIteratorStart != thisChromEndMap.begin())
-			if (indirectIteratorStart == thisChromEndMap.end())
-				indirectIteratorStart--;
-
-			chromosomeGtfData::iterator gtfRegion = indirectIteratorStart->second;
-
-			//	If this region overlaps any other regions then go to the one that starts the earliest.
-			//	If there were no overlaps then default is the overlaps points to self
-			gtfRegion = *gtfRegion->second.overlaps;
-
-
-			//And now go through each of the segments
-			for (auto & segment : chromSegments.second.data)
+			if(thisChromEndMap.size())
 			{
 
-				genes.nSegments++;
-				vector<gtfOverlap> overlaps;
-				//	Trying out each of the gtfRegions in turn to see if there is an overlap. 
-				//	If there is then it gets added to the list of overlaps
-				for (auto j = gtfRegion; (j != thisChromGtfRegions->second.end()) && (j->first <= segment.second.end); j++)
+				//	And find the first one that finishes at or beyond the start of the first segment
+				chromosomeEndIndexMap::const_iterator indirectIteratorStart = thisChromEndMap.lower_bound(chromSegments.second.data.begin()->second.start);
+
+				//	And move back one to ensure we have the region that covers segment
+	//			if (indirectIteratorStart != thisChromEndMap.begin())
+				if (indirectIteratorStart == thisChromEndMap.end())
+					indirectIteratorStart--;
+
+				chromosomeGtfData::iterator gtfRegion = indirectIteratorStart->second;
+
+				//	If this region overlaps any other regions then go to the one that starts the earliest.
+				//	If there were no overlaps then default is the overlaps points to self
+				gtfRegion = *gtfRegion->second.overlaps;
+
+
+				//And now go through each of the segments
+				for (auto & segment : chromSegments.second.data)
 				{
-					//	Check for strand match
-					if (!useStrand || ((j->second.strand == segment.second.strand) != reverseStrand))
+
+					genes.nSegments++;
+					vector<gtfOverlap> overlaps;
+					//	Trying out each of the gtfRegions in turn to see if there is an overlap. 
+					//	If there is then it gets added to the list of overlaps
+					for (auto j = gtfRegion; (j != thisChromGtfRegions->second.end()) && (j->first <= segment.second.end); j++)
 					{
-						j->second.checkOverlap(segment.second,overlaps);
+						//	Check for strand match
+						if (!useStrand || ((j->second.strand == segment.second.strand) != reverseStrand))
+						{
+							j->second.checkOverlap(segment.second, overlaps);
+						}
+
+						gtfRegion = *j->second.overlaps;
 					}
 
-					gtfRegion = *j->second.overlaps;
-				}
 
-
-				//	Now go through all the overlaps between the read and the regions identified in the gtf file
-				if (overlaps.size() == 0)
-				{
-					//	There were none
-					genes.noMatch++;
-				}
-				else
-				{
-					struct gtfId
+					//	Now go through all the overlaps between the read and the regions identified in the gtf file
+					if (overlaps.size() == 0)
 					{
-						string name,type;
-						gtfId(){};
-						gtfId(const gtfOverlap & region):name(region.geneName),type(region.featType){};
-
-					};
-
-					class segRegion
-					{
-					public:
-						size_t min,max;
-						vector<gtfId> geneSet;
-						segRegion():min(INT_MAX),max(0){};
-						segRegion(const gtfOverlap & region):min(region.start),max(region.finish) 
-						{
-							geneSet.emplace_back(region);
-						};
-
-					};
-
-					//	
-					gtfOverlap & overlap = overlaps[0];
-
-					_DBG(found = (overlap.geneName == "NM_001115075.1"));
-
-					//	This will create an entry for the combination if it does not exist before, which is needed later on
-					overlapCounts & GeneAttributeCombo1 = genes[overlap.geneName][overlap.featType];
-					GeneAttributeCombo1.RNAstartPos = min(overlap.RNAstartPos, GeneAttributeCombo1.RNAstartPos);
-					GeneAttributeCombo1.RNAendPos = max(overlap.RNAendPos, GeneAttributeCombo1.RNAendPos);
-
-					//	Need to register all strict overlaps, because overlaps-strict require them to be unique
-					if (overlap.strict)
-						GeneAttributeCombo1.strict++;
-
-					if (overlaps.size() == 1)
-					{
-						GeneAttributeCombo1.length += (overlap.finish - overlap.start);
-						GeneAttributeCombo1.partial++;
+						//	There were none
+						genes.noMatch++;
 					}
 					else
 					{
-						vector<segRegion> segRegions;
-						segRegions.emplace_back(overlap);
-
-						// More than one region.  If the gtf regions identify separate sections of the read then keep both, 
-						//	If they overlap then only keep the largest if it fully overlaps the other.  If they are identical then keep both
-						//	
-
-						for (int i = 1; i < overlaps.size(); i++)
+						struct gtfId
 						{
-							gtfOverlap & overlap = overlaps[i];
+							string name, type;
+							gtfId() {};
+							gtfId(const gtfOverlap & region) :name(region.geneName), type(region.featType) {};
 
-							//	Create dummy entry for every region type that the read overlapped;
-		
-							overlapCounts & GeneAttributeCombo2 = genes[overlap.geneName][overlap.featType];
+						};
 
-							if (overlap.strict)
-								GeneAttributeCombo2.strict++;
-							bool newRegion = false;
-
-							for (auto & region : segRegions)
+						class segRegion
+						{
+						public:
+							size_t min, max;
+							vector<gtfId> geneSet;
+							segRegion() :min(INT_MAX), max(0) {};
+							segRegion(const gtfOverlap & region) :min(region.start), max(region.finish)
 							{
-								if ((overlap.start == region.min) && (overlap.finish == region.max))
-								{
-									//Identical
-									region.geneSet.emplace_back(overlap);
-									newRegion = false;
-								}
-								else if ((overlap.start >= region.min) && (overlap.finish <= region.max))
-								{
-									//	smaller ignore.  It must be smaller in that we have already excluded the case
-									//	where it is identical
-									newRegion = false;
-								}
-								else if ((overlap.start <= region.min) && (overlap.finish >= region.max))
-								{
-									//	It is bigger so replace.  Again we have excluded the option that it is identical
-									//	which would have been otherwise included in the case
-									region.min = overlap.start;
-									region.max = overlap.finish;
-									region.geneSet.resize(1);
-									region.geneSet.at(0).name = overlap.geneName;
-									region.geneSet.at(0).type = overlap.featType;
-									GeneAttributeCombo2.RNAstartPos = min(GeneAttributeCombo2.RNAstartPos, overlap.RNAstartPos);
-									GeneAttributeCombo2.RNAendPos = max(GeneAttributeCombo2.RNAendPos, overlap.RNAendPos);
-									newRegion = false;
-								}
-								else
-								{
-									newRegion = true;
-									GeneAttributeCombo2.RNAstartPos = min(GeneAttributeCombo2.RNAstartPos, overlap.RNAstartPos);
-									GeneAttributeCombo2.RNAendPos = max(GeneAttributeCombo2.RNAendPos, overlap.RNAendPos);
+								geneSet.emplace_back(region);
+							};
 
-								}
-							}
-							if (newRegion)
-							{
-								segRegions.emplace_back(overlap);
-							}
+						};
+
+						//	
+						gtfOverlap & overlap = overlaps[0];
+
+						_DBG(found = (overlap.geneName == "NM_001115075.1"));
+
+						//	This will create an entry for the combination if it does not exist before, which is needed later on
+						overlapCounts & GeneAttributeCombo1 = genes[overlap.geneName][overlap.featType];
+						GeneAttributeCombo1.RNAstartPos = min(overlap.RNAstartPos, GeneAttributeCombo1.RNAstartPos);
+						GeneAttributeCombo1.RNAendPos = max(overlap.RNAendPos, GeneAttributeCombo1.RNAendPos);
+
+						//	Need to register all strict overlaps, because overlaps-strict require them to be unique
+						if (overlap.strict)
+							GeneAttributeCombo1.strict++;
+
+						if (overlaps.size() == 1)
+						{
+							GeneAttributeCombo1.length += (overlap.finish - overlap.start);
+							GeneAttributeCombo1.partial++;
 						}
-
-						//	We now have one or more regions within the read, each one of which matches regions in the gtf file
-						//	
-						_DBG(size_t Ngenes = segRegions.at(0).geneSet.size();)
-
-						for (gtfId & g : segRegions.at(0).geneSet)
+						else
 						{
-							bool matchesInAllRegions = true;
-							int size = segRegions.at(0).max - segRegions.at(0).min;
-							for (size_t i = 1; i < segRegions.size();i++)
+							vector<segRegion> segRegions;
+							segRegions.emplace_back(overlap);
+
+							// More than one region.  If the gtf regions identify separate sections of the read then keep both, 
+							//	If they overlap then only keep the largest if it fully overlaps the other.  If they are identical then keep both
+							//	
+
+							for (int i = 1; i < overlaps.size(); i++)
 							{
-								bool found = false;
-								for (auto & j: segRegions.at(i).geneSet)
+								gtfOverlap & overlap = overlaps[i];
+
+								//	Create dummy entry for every region type that the read overlapped;
+
+								overlapCounts & GeneAttributeCombo2 = genes[overlap.geneName][overlap.featType];
+
+								if (overlap.strict)
+									GeneAttributeCombo2.strict++;
+								bool newRegion = false;
+
+								for (auto & region : segRegions)
 								{
-									if ((g.name == j.name) && (g.type == j.type))
+									if ((overlap.start == region.min) && (overlap.finish == region.max))
 									{
-										size += (segRegions.at(i).max - segRegions.at(i).min);
-										found = true;
-										break;
+										//Identical
+										region.geneSet.emplace_back(overlap);
+										newRegion = false;
+									}
+									else if ((overlap.start >= region.min) && (overlap.finish <= region.max))
+									{
+										//	smaller ignore.  It must be smaller in that we have already excluded the case
+										//	where it is identical
+										newRegion = false;
+									}
+									else if ((overlap.start <= region.min) && (overlap.finish >= region.max))
+									{
+										//	It is bigger so replace.  Again we have excluded the option that it is identical
+										//	which would have been otherwise included in the case
+										region.min = overlap.start;
+										region.max = overlap.finish;
+										region.geneSet.resize(1);
+										region.geneSet.at(0).name = overlap.geneName;
+										region.geneSet.at(0).type = overlap.featType;
+										GeneAttributeCombo2.RNAstartPos = min(GeneAttributeCombo2.RNAstartPos, overlap.RNAstartPos);
+										GeneAttributeCombo2.RNAendPos = max(GeneAttributeCombo2.RNAendPos, overlap.RNAendPos);
+										newRegion = false;
+									}
+									else
+									{
+										newRegion = true;
+										GeneAttributeCombo2.RNAstartPos = min(GeneAttributeCombo2.RNAstartPos, overlap.RNAstartPos);
+										GeneAttributeCombo2.RNAendPos = max(GeneAttributeCombo2.RNAendPos, overlap.RNAendPos);
+
 									}
 								}
-								if (!found)
-									matchesInAllRegions = false;
+								if (newRegion)
+								{
+									segRegions.emplace_back(overlap);
+								}
 							}
-							if (matchesInAllRegions)
-							{
-								//	Use at() rather than [] as it is more efficient: assumes the entry is already in place
-								genes.at(g.name).at(g.type).partial++;
-								genes.at(g.name).at(g.type).length += size;
-							}
+
+							//	We now have one or more regions within the read, each one of which matches regions in the gtf file
+							//	
+							_DBG(size_t Ngenes = segRegions.at(0).geneSet.size();)
+
+								for (gtfId & g : segRegions.at(0).geneSet)
+								{
+									bool matchesInAllRegions = true;
+									int size = segRegions.at(0).max - segRegions.at(0).min;
+									for (size_t i = 1; i < segRegions.size(); i++)
+									{
+										bool found = false;
+										for (auto & j : segRegions.at(i).geneSet)
+										{
+											if ((g.name == j.name) && (g.type == j.type))
+											{
+												size += (segRegions.at(i).max - segRegions.at(i).min);
+												found = true;
+												break;
+											}
+										}
+										if (!found)
+											matchesInAllRegions = false;
+									}
+									if (matchesInAllRegions)
+									{
+										//	Use at() rather than [] as it is more efficient: assumes the entry is already in place
+										genes.at(g.name).at(g.type).partial++;
+										genes.at(g.name).at(g.type).length += size;
+									}
+								}
 						}
 					}
 				}
@@ -809,22 +820,22 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 	if (type != &blankString)
 	{
 		_DBG(bool err = (RNAstartPos == 99999999);)
+		rna_pos_type geneLen = genomeDef.genes[*result].length;
 		if (segments.strands.size() == 1)
 		{
 			if (genomeDef.genes[*result].strand == '+')
 			{
 				if (segments.strands[0] == '+')
-					geneCounts.at(*result).at(*type).posPositions.emplace_back(RNAstartPos);
+					geneCounts.at(*result).at(*type).posPositions.emplace_back(max(min(RNAstartPos, geneLen - 1),(rna_pos_type)1));
 				else
-					geneCounts.at(*result).at(*type).negPositions.emplace_back(RNAendPos);
+					geneCounts.at(*result).at(*type).negPositions.emplace_back(max(min(RNAendPos,geneLen-1), (rna_pos_type)1));
 			}
 			else
 			{
-				rna_pos_type geneLen = genomeDef.genes[*result].length;
 				if (segments.strands[0] == '+')
-					geneCounts.at(*result).at(*type).negPositions.emplace_back(max<rna_pos_type>(geneLen - RNAstartPos,0));
+					geneCounts.at(*result).at(*type).negPositions.emplace_back(max(geneLen - RNAstartPos + 1,(rna_pos_type)1));
 				else
-					geneCounts.at(*result).at(*type).posPositions.emplace_back(max<rna_pos_type>(geneLen - RNAendPos,0));
+					geneCounts.at(*result).at(*type).posPositions.emplace_back(max(geneLen - RNAendPos + 1,(rna_pos_type)1));
 
 			}
 		}
@@ -835,8 +846,8 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 			{
 				if (segments.strands[0] == segments.strands[1])
 				{
-					geneCounts.at(*result).at(*type).posPositions.emplace_back(RNAstartPos);
-					geneCounts.at(*result).at(*type).negPositions.emplace_back(RNAendPos);
+					geneCounts.at(*result).at(*type).posPositions.emplace_back(max(min(RNAstartPos, geneLen - 1), (rna_pos_type)1));
+					geneCounts.at(*result).at(*type).negPositions.emplace_back(max(min(RNAendPos, geneLen - 1), (rna_pos_type)1));
 				}
 				else
 				{
@@ -846,11 +857,10 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 			}
 			else
 			{
-				rna_pos_type geneLen = genomeDef.genes[*result].length;
 				if (segments.strands[0] == segments.strands[1])
 				{
-					geneCounts.at(*result).at(*type).negPositions.emplace_back(max<rna_pos_type>(geneLen - RNAstartPos,0));
-					geneCounts.at(*result).at(*type).posPositions.emplace_back(max<rna_pos_type>(geneLen - RNAendPos,0));
+					geneCounts.at(*result).at(*type).negPositions.emplace_back(max(geneLen - RNAstartPos + 1,(rna_pos_type)1));
+					geneCounts.at(*result).at(*type).posPositions.emplace_back(max(geneLen - RNAendPos + 1,(rna_pos_type)1));
 				}
 				else
 				{
