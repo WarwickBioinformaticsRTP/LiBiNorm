@@ -4,6 +4,9 @@
 #include "stringEx.h"
 #include "transcriptData.h"
 
+extern bool verbose;
+
+
 class LiBiNorm
 {
 	stringEx consFileName,outputFileName;

@@ -20,7 +20,7 @@
 #include "parser.h"
 #include "transcriptData.h"
 
-//	Test code
+//	Test code: Compare lengths calculated from the gff file with the lengths in the original landscape file
 #define COMPARE_RESULTS
 
 //#define MATCH_USING_POSITION
@@ -224,6 +224,9 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 
 	if (!nameOrder)
 	{
+		//Only need temporary directory for caching files
+		// if the data are position ordered
+		//	If a count filename is explicitly specified then we can use this as the basis for the temp directory name
 		if (tempDirectory)
 		{
 			if (mkdir(tempDirectory.c_str()) != 0)
@@ -235,6 +238,7 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 		}
 		else
 		{
+			//	Otherwise, put one in the temporary directory
 			const char * p = getenv("TEMP");
 			if (p == 0) 
 				p = getenv("TMPDIR");
@@ -256,19 +260,15 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 			string tempDirRoot = tempDirectory;
 			tempDirectory += stringEx("LiBiNorm_temp_",randValue);
 
-			if (verbose)
-				cerr << "temp Directory = " << tempDirectory << endl;
+			optMessage("temp Directory = ",tempDirectory);
 
-			//Only need temporary directory for caching files
-			// if the data are position ordered
 			if (mkdir(tempDirectory.c_str()) != 0)
 			{
 				randValue++;
 
 				tempDirectory = stringEx(tempDirRoot,"LiBiNorm_temp_",randValue);
 
-				if (verbose)
-					cerr << "second attempt at temp Directory = " << tempDirectory << endl;
+				optMessage("second attempt at temp Directory = ",tempDirectory);
 
 				if (mkdir(tempDirectory.c_str()) != 0)
 					exitFail("Unable create temporary directory ",tempDirectory,"\n Try using the -c option for the count files instead");  	
@@ -289,7 +289,7 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 
 	initClock();
 	
-	if (!genomeDef.open(gtfFileName,verbose,id_attribute,feature_type))
+	if (!genomeDef.open(gtfFileName,id_attribute,feature_type))
 		exitFail("Could not open gtf file: ",gtfFileName);
 
 	if ((countsFilename) && !genomeDef.printEntries(countsFilename.replaceSuffix("_genome.txt")))
@@ -312,14 +312,8 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 
 #endif
 
-
-//	_DBG(cin >> test;)
-
-	if (verbose)
-	{
-		cerr << "GFF file consolidated." << endl;
-		elapsedTime();
-	}
+	optMessage("GFF file consolidated.");
+	elapsedTime();
 
 	_DBG(genomeDef.outputChromData(gtfFileName.replaceSuffix(".txt"));)
 
@@ -889,20 +883,18 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 void LiBiCount::incBamCounter(const BamAlignment * ba,int size)
 {
 	if ((++bamCounter % REP_LEN) == 0)
-		if (verbose)
 		{
-			cerr << bamCounter << " BAM alignment record pairs processed.";
+			stringEx msg(bamCounter, " BAM alignment record pairs processed.");
 			if (ba)
 			{
 				if(ba->RefID >= 0)
-					cerr << " cache size = " << size << "  " << references[ba->RefID].RefName << ":" << ba ->Position << endl;
+					msg += _s(" cache size = ",size,"  ",references[ba->RefID].RefName,":",ba ->Position);
 				else
-					cerr << " cache size = " << size << "  unmapped read" << endl;
+					msg += _s(" cache size = ",size,"  unmapped read");
 			}
 			else if (size != -1)
-				cerr << " cache reads processed = " << size << endl;
-			else
-				cerr << endl;
+				msg += _s(" cache reads processed = ",size);
+			progMessage(msg);
 		}
 }
 
