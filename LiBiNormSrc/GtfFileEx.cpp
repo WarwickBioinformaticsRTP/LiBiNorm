@@ -2,8 +2,6 @@
 #include "GtfFileEx.h"
 
 
-// #define SELECTED_GENES
-
 using namespace std;
 
 void gtfRegion::checkOverlap(const region & segment,vector<gtfOverlap> & overlapList) const

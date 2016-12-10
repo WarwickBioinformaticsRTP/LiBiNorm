@@ -36,7 +36,7 @@ void transcriptDataMap::histc (const vector<int> E)
 
 void transcriptDataMap::remove_invalid_values()
 {
-	for (auto & i : *this)
+	for (auto & i : This)
 		i.remove_invalid_values();
 }
 

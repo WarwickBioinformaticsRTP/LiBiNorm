@@ -17,9 +17,6 @@ data.geneData gives inforation about each gene
 data.genedata[0] is the lengths of the genes
 data.geneData[1] are the frequencies
 
-This makes extensive use of the dataVec class which implements the required vector functions in a way that mimics matlab, 
-allowing the original matlab equations to be used almost unaltered.
-
 One modification arises from teh fact that the normalisation values are the same for all reads in the gene so only need
 to be calculated per gene.  The (x) method uses the geneIndex to expand the one per gene vector to a one per read vector so that the normalisation 
 can be performed for each read.

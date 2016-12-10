@@ -21,7 +21,9 @@
 #include "transcriptData.h"
 
 //	Test code: Compare lengths calculated from the gff file with the lengths in the original landscape file
+#ifndef _DEBUG
 #define COMPARE_RESULTS
+#endif
 
 //#define MATCH_USING_POSITION
 
@@ -293,7 +295,7 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 		exitFail("Could not open gtf file: ",gtfFileName);
 
 	if ((countsFilename) && !genomeDef.printEntries(countsFilename.replaceSuffix("_genome.txt")))
-		cerr << "Unable to output genome data to :" << countsFilename.replaceSuffix("_genome.txt") << endl;
+		progMessage("Unable to output genome data to :",countsFilename.replaceSuffix("_genome.txt"));
 
 	genomeDef.index(geneCounts);
 
@@ -327,7 +329,7 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 
 
 	if ((countsFilename) && !outputRNApositions(countsFilename.replaceSuffix("_positions.txt")))
-		cerr << "Unable to output RNA positions to :" << countsFilename.replaceSuffix("_positions.txt") << endl;
+		progMessage("Unable to output RNA positions to :",countsFilename.replaceSuffix("_positions.txt"));
 
 	if (verbose)
 		elapsedTime();
@@ -370,8 +372,9 @@ bool LiBiCount::outputRNApositions(const stringEx & filename)
 	TsvFile output;
 
 	if (!output.open(filename))
-		return false;
+		exitFail("Unable to open ", filename, " for position data"); 
 
+#ifdef SELECTED_GENES
 	for (auto gene : genomeDef.geneList)
 	{
 		geneCountsClass::iterator j = geneCounts.find(gene);
@@ -381,6 +384,7 @@ bool LiBiCount::outputRNApositions(const stringEx & filename)
 			output.print(gene, "0 minus");
 		}
 		else
+		
 //		if ((i.second["exon"].posPositions.size()) || (i.second["exon"].negPositions.size()))
 		{
 
@@ -389,7 +393,18 @@ bool LiBiCount::outputRNApositions(const stringEx & filename)
 			output.print(gene, _s(len, " minus"),j->second["exon"].negPositions);
 		}
 	}
-	return true;
+#else
+	for (auto i : geneCounts)
+	{
+		if ((i.second["exon"].posPositions.size()) || (i.second["exon"].negPositions.size()))
+		{
+			long len = genomeDef.genes[i.first].length;
+			output.print(i.first, _s(len, " plus"), i.second["exon"].posPositions);
+			output.print(i.first, _s(len, " minus"), i.second["exon"].negPositions);
+		}
+	}
+#endif
+return true;
 
 }
 
@@ -1098,8 +1113,7 @@ bool LiBiCount::processPositionOrderedBamData()
 
 		if (readCache.size() > maxCacheSize)
 		{
-			if (verbose)
-				cerr << "Outputting cache data " << cacheCounter+1 << endl;
+			optMessage("Outputting cache data ",cacheCounter+1);
 			readCache.save(stringEx(tempDirectory,"file",cacheCounter++));
 		}
 
