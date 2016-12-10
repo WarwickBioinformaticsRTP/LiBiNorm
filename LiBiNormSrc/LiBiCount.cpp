@@ -18,12 +18,17 @@
 #include "libCommon.h"
 #include "LiBiCount.h"
 #include "parser.h"
+#include "transcriptData.h"
+
+//	Test code
+#define COMPARE_RESULTS
 
 //#define MATCH_USING_POSITION
 
 //	The insert size for matching pairs should be A and -A.  In some datasets they are A and A.  By using the absolute value of the
 //	insert size we can ensure that the pairs are still matched up
 #define USE_ABS_INSERT_TO_MATCH_READS
+
 
 #ifdef USE_ABS_INSERT_TO_MATCH_READS
 #define insertConv(A) abs(A)
@@ -292,11 +297,27 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 
 	genomeDef.index(geneCounts);
 
+#ifdef COMPARE_RESULTS
+	transcriptDataMap transData;
+	transData.loadData("Y:\\LiBiNorm\\SRR557798\\SRR557798.NoA.plus.minus");
+	TsvFile testOut;
+	testOut.open(countsFilename.replaceSuffix(".test.txt"));
+
+	for (size_t i = 0; i < transData.size(); i++)
+	{
+		long len = genomeDef.genes[transData[i].gene].length;
+		testOut.print(transData[i].gene, transData[i].length, len);
+	}
+	testOut.close();
+
+#endif
+
+
 //	_DBG(cin >> test;)
 
 	if (verbose)
 	{
-		cerr << "GFF file sonsolidated." << endl;
+		cerr << "GFF file consolidated." << endl;
 		elapsedTime();
 	}
 
@@ -340,11 +361,6 @@ bool LiBiCount::outputGeneCounts(const string & filename)
 	{
 		if (i.first.substr(0,2) != "__")
 			geneCounts.print(i.first,output);
-/*		for(auto j : i.second)
-		{
-			if (i.first.substr(0,2) != "__")
-				output.printEnd(i.first,j.first,j.second);
-		}*/
 	}
 	geneCounts.print("__no_feature",output);
 	geneCounts.print("__ambiguous",output);
@@ -354,8 +370,9 @@ bool LiBiCount::outputGeneCounts(const string & filename)
 	return true;
 }
 
-bool LiBiCount::outputRNApositions(const std::string & filename)
+bool LiBiCount::outputRNApositions(const stringEx & filename)
 {
+
 	TsvFile output;
 
 	if (!output.open(filename))
@@ -366,17 +383,17 @@ bool LiBiCount::outputRNApositions(const std::string & filename)
 		geneCountsClass::iterator j = geneCounts.find(gene);
 		if (j == geneCounts.end())
 		{
-			output.print(gene, _S(0, " plus"));
-			output.print(gene, _S(0, " minus"));
+			output.print(gene, _s(0, " plus"));
+			output.print(gene, _s(0, " minus"));
 		}
 		else
 //		if ((i.second["exon"].posPositions.size()) || (i.second["exon"].negPositions.size()))
 		{
 
 			long len =genomeDef.genes[gene].length;
-			output.printStart(gene, _S(len, " plus"));
+			output.printStart(gene, _s(len, " plus"));
 			output.printEnd(printZero(j->second["exon"].posPositions));
-			output.printStart(gene, _S(len, " minus"));
+			output.printStart(gene, _s(len, " minus"));
 			output.printEnd(printZero(j->second["exon"].negPositions));
 		}
 	}

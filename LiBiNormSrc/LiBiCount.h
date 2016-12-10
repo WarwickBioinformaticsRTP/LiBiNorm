@@ -45,7 +45,7 @@ public:
 	void processCachedReads(size_t cacheFileCount);
 
 	bool outputGeneCounts(const std::string & filename);
-	bool outputRNApositions(const std::string & filename);
+	bool outputRNApositions(const stringEx & filename);
 	
 	void addRead(const regionLists & segments,const gtfFileEx & gtfData);
 
