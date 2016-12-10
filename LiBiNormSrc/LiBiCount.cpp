@@ -43,7 +43,8 @@
 #define READ_CACHE_SIZE 50000
 //	Report progress every REP_LEN entries
 #define REP_LEN 100000
-bool found = false;
+#define BAMNAME "SRR557798.3975438"
+bool dbgFound = false;
 #else
 #define READ_CACHE_SIZE 2000000
 //#define READ_CACHE_SIZE 10000
@@ -52,7 +53,7 @@ bool found = false;
 
 using namespace std;
 
-#define BAMNAME "SRR557798.3975438"
+
 
 int LiBiCount::main(int argc, char **argv)
 {
@@ -61,7 +62,6 @@ int LiBiCount::main(int argc, char **argv)
 		id_attribute = "gene_id";
 
 	setEx<string> feature_type;
-	bool featureAdded = false;
 
 	reverseStrand = false;
 	useStrand = true;
@@ -547,7 +547,7 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 						//	
 						gtfOverlap & overlap = overlaps[0];
 
-						_DBG(found = (overlap.geneName == "NM_001115075.1"));
+						_DBG(dbgFound = (overlap.geneName == "NM_001115075.1"));
 
 						//	This will create an entry for the combination if it does not exist before, which is needed later on
 						overlapCounts & GeneAttributeCombo1 = genes[overlap.geneName][overlap.featType];
@@ -572,7 +572,7 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 							//	If they overlap then only keep the largest if it fully overlaps the other.  If they are identical then keep both
 							//	
 
-							for (int i = 1; i < overlaps.size(); i++)
+							for (size_t i = 1; i < overlaps.size(); i++)
 							{
 								gtfOverlap & overlap = overlaps[i];
 
@@ -627,8 +627,6 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 
 							//	We now have one or more regions within the read, each one of which matches regions in the gtf file
 							//	
-							_DBG(size_t Ngenes = segRegions.at(0).geneSet.size();)
-
 								for (gtfId & g : segRegions.at(0).geneSet)
 								{
 									bool matchesInAllRegions = true;
@@ -834,7 +832,6 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 
 	if (type != &blankString)
 	{
-		_DBG(bool err = (RNAstartPos == 99999999);)
 		rna_pos_type geneLen = genomeDef.genes[*result].length;
 		if (segments.strands.size() == 1)
 		{
@@ -889,7 +886,7 @@ void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
 }
 
 
-void LiBiCount::incBamCounter(const BamAlignment * ba,size_t size)
+void LiBiCount::incBamCounter(const BamAlignment * ba,int size)
 {
 	if ((++bamCounter % REP_LEN) == 0)
 		if (verbose)
@@ -940,18 +937,15 @@ bool LiBiCount::processNameOrderedBamData()
 	BamAlignment ba[READ_BUFFER_SIZE];
 	bool used[READ_BUFFER_SIZE];
 
-	size_t misPairs(0);
 	bamCounter = 0;
 	set<string> previousNames;
 
 	bool OK = reader.GetNextAlignment(ba[0],false);
 
-	int N = 0;
-
 	while (OK)
 	{
 		string & name = ba[0].Name;
-		_DBG(found = (name == BAMNAME);)
+		_DBG(dbgFound = (name == BAMNAME);)
 
 		int Nreads = 0;
 
@@ -974,12 +968,12 @@ bool LiBiCount::processNameOrderedBamData()
 			}
 			else
 			{
-				for (size_t i = 0;i < Nreads;i++)
+				for (int i = 0;i < Nreads;i++)
 				{
 					if (!used[i])
 					{
 						regionLists regions(readData(move(ba[i])),name);
-						for (size_t j = i+1;j < Nreads;j++)
+						for (int j = i+1;j < Nreads;j++)
 						{
 							if (!used[j])
 							{
@@ -1048,8 +1042,7 @@ bool LiBiCount::processPositionOrderedBamData()
 
 	while (OK)
 	{
-		_DBG(string name = ba.Name;
-		bool found = (name == BAMNAME);)
+		_DBG(dbgFound = (ba.Name == BAMNAME);)
 
 		//	The NH handling is complex is that there may be one NH (with NH = 1) at one end, and multiple NHs (with NH > 1) at the other
 		//	The NH > 1 samples have to be used to either pair with the other, or to remove the NH = 1 sample 
@@ -1131,7 +1124,7 @@ bool LiBiCount::processPositionOrderedBamData()
 			_DBG(
 				vector<string> tags;
 				parser(i.first,"_",tags);
-				bool found = (tags[0] == BAMNAME);
+				dbgFound = (tags[0] == BAMNAME);
 				)
 
 			for (auto & j: i.second)
@@ -1190,7 +1183,7 @@ void LiBiCount::processCachedReads(size_t cacheFileCount)
 		}
 	} reads;
 
-	for (int i = 0;i < cacheFileCount;i++)
+	for (size_t i = 0;i < cacheFileCount;i++)
 	{
 		cacheReads[i].open(stringEx(tempDirectory,"file",i));
 		reads[cacheReads[i].name][i].emplace_back(cacheReads[i]);
@@ -1203,7 +1196,7 @@ void LiBiCount::processCachedReads(size_t cacheFileCount)
 	int cacheReadCounter = 0;
 	while (reads.size())
 	{
-		_DBG( bool found = (reads.begin()->first == BAMNAME);)
+		_DBG( dbgFound = (reads.begin()->first == BAMNAME);)
 
 		readCache::iterator i1 = reads.begin();
 

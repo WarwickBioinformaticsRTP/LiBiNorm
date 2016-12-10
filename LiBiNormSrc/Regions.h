@@ -93,9 +93,9 @@ public:
 class region 
 {
 public:
-	int start,end;
+	size_t start,end;
 	char strand;
-	region(int start,int end,char strand) : start(start),end(end),strand(strand) {};
+	region(size_t start, size_t end,char strand) : start(start),end(end),strand(strand) {};
 };
 
 
@@ -111,7 +111,7 @@ public:
 	//	Map of the regions, indexed by the location on teh chromosome
 	//	Separate entries for and -ve strands so needs to be a multimap to cater 
 	//	for + and - entries starting at the same location (usually an artefact)
-	std::multimap<int,region> data;
+	std::multimap<size_t,region> data;
 
 
 	//	For combining data from a second read

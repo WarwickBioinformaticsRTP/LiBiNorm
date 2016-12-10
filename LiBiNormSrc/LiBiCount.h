@@ -21,7 +21,7 @@ class LiBiCount
 	size_t bamCounter,maxCacheSize;
 	int minqual;
 
-	void incBamCounter(const BamAlignment * ba = 0,size_t size = -1);
+	void incBamCounter(const BamAlignment * ba = 0,int size = -1);
 
 public:
 	bool useStrand,reverseStrand,verbose,htSeqCompatible,nameOrder;

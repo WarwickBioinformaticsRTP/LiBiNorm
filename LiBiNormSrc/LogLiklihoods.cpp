@@ -230,7 +230,7 @@ freq_l = data(3, :);
 //         1./(t1+ t2) .* (t1.*exp(-t1*(l-x)) + t2.*exp(-t1*l-t2*(x)))/d;
 
 	double t1_p_t2 = t1+t2;
-	double t1_p_t2_sq = t1_p_t2*t1_p_t2;
+//	double t1_p_t2_sq = t1_p_t2*t1_p_t2;
 
 
 	for (size_t i = 0;i < data.fragData.size(); i++)

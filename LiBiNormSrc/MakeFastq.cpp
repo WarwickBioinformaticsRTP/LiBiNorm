@@ -335,7 +335,7 @@ int MakeFastq::main(int argc, char **argv)
 					{
 						incrementCount();
 
-						int NH = -1;
+//						int NH = -1;
 						// Find a newname for the overamplified record.  Need a logic so that we only pick one 
 						// read with any given name	
 						do {

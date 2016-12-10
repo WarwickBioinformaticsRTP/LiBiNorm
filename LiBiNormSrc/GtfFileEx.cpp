@@ -2,6 +2,8 @@
 #include "GtfFileEx.h"
 
 
+// #define SELECTED_GENES
+
 using namespace std;
 
 void gtfRegion::checkOverlap(const region & segment,vector<gtfOverlap> & overlapList) const
@@ -45,6 +47,7 @@ gtfRegion::~gtfRegion() {
 
 void gtfFileEx::index(geneCountsClass & geneCounts)
 {
+#ifdef SELECTED_GENES
 	ifstream file;
 	file.open("Y:\\LiBiNorm\\refGeneList2.txt");
 
@@ -60,9 +63,11 @@ void gtfFileEx::index(geneCountsClass & geneCounts)
 		if (geneList.empty() || (geneList.back() != line))
 			geneList.emplace_back(line);
 	};
-
+#endif
 	for (auto & chrom : entryMap)
 	{
+
+#ifdef SELECTED_GENES
 		//	First get rid of entries associated with genes that we are not interested in (temp fix)
 		for (auto i = chrom.second.begin(); i != chrom.second.end();)
 		{
@@ -75,7 +80,7 @@ void gtfFileEx::index(geneCountsClass & geneCounts)
 			else
 				i++;
 		}
-
+#endif
 		//	In each chromosome go through all of the regions to see what regions can be amalgamated
 		chromosomeGtfData & thisChromData = genomeGtfData[chrom.first];
 		for (auto i = chrom.second.begin(); i != chrom.second.end();i++)

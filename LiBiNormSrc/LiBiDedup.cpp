@@ -113,7 +113,7 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 
 
 
-		size_t thisChromosome = ba[0].RefID;
+		int thisChromosome = ba[0].RefID;
 		map<size_t,vector<size_t>> instances;
 		instances[0].push_back(0);
 
@@ -140,7 +140,6 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 			else
 				instances[lastPos-firstPos].push_back(i);
 		}
-		size_t pos = ba[0].Position;
 		if (i >= minCount)
 		{
 			size_t maxPos = 0;

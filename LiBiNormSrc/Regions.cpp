@@ -64,10 +64,8 @@ regionList::regionList(const readData & read)
 	size_t end = start;
 
 	// iterate over cigar operations
-//	vector<CigarOp>::const_iterator cigarIter = read.cigar.begin();
 	vector<CigarOp>::const_iterator cigarEnd  = read.cigar.end();
 	for (vector<CigarOp>::const_iterator cigarIter = read.cigar.begin() ; cigarIter != cigarEnd; ++cigarIter) {
-//		const CigarOp& op = (*cigarIter);
 
 		switch ( cigarIter->Type ) {
 
@@ -98,10 +96,10 @@ regionList::regionList(const readData & read)
 	combineRegion(region(start,end-1,read.strand));
 }
 
-//	Parse a text string and convert it into a cigar value.  Used when retreiving entries from cache files
+//	Parse a text string and convert it into a cigar value.  Used when retrieving entries from cache files
 void parserInternal::parseval(const char *& start,Cigar & co,size_t & len)
 {
-	int i = 0;
+	size_t i = 0;
 	while (i < len)
 	{
 		char c = start[i++];
