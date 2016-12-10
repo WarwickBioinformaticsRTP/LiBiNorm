@@ -383,18 +383,16 @@ bool LiBiCount::outputRNApositions(const stringEx & filename)
 		geneCountsClass::iterator j = geneCounts.find(gene);
 		if (j == geneCounts.end())
 		{
-			output.print(gene, _s(0, " plus"));
-			output.print(gene, _s(0, " minus"));
+			output.print(gene, "0 plus");
+			output.print(gene, "0 minus");
 		}
 		else
 //		if ((i.second["exon"].posPositions.size()) || (i.second["exon"].negPositions.size()))
 		{
 
 			long len =genomeDef.genes[gene].length;
-			output.printStart(gene, _s(len, " plus"));
-			output.printEnd(printZero(j->second["exon"].posPositions));
-			output.printStart(gene, _s(len, " minus"));
-			output.printEnd(printZero(j->second["exon"].negPositions));
+			output.print(gene, _s(len, " plus"),j->second["exon"].posPositions);
+			output.print(gene, _s(len, " minus"),j->second["exon"].negPositions);
 		}
 	}
 	return true;

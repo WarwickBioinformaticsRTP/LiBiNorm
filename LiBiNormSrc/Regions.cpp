@@ -124,7 +124,7 @@ bool printVal(outputDataFile * f,const Cigar & cigar)
 //	printVal associated with the cigar above
 bool printVal(outputDataFile * f,const readData & read)
 {
-	f->printStart(printZero(read.refId),read.position,read.strand,read.cigar,read.NH,printZero(read.qual));
+	f->printStart(read.refId,read.position,read.strand,read.cigar,read.NH,read.qual);
 	return true;
 };
 
