@@ -22,7 +22,7 @@
 
 //	Test code: Compare lengths calculated from the gff file with the lengths in the original landscape file
 #ifndef _DEBUG
-#define COMPARE_RESULTS
+//#define COMPARE_RESULTS
 #endif
 
 //#define MATCH_USING_POSITION
@@ -260,7 +260,7 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 			unsigned randValue = chrono::duration_cast<chrono::microseconds>(now_us.time_since_epoch()).count();
 
 			string tempDirRoot = tempDirectory;
-			tempDirectory += stringEx("LiBiNorm_temp_",randValue);
+			tempDirectory += _s("LiBiNorm_temp_",randValue);
 
 			optMessage("temp Directory = ",tempDirectory);
 
@@ -268,7 +268,7 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 			{
 				randValue++;
 
-				tempDirectory = stringEx(tempDirRoot,"LiBiNorm_temp_",randValue);
+				tempDirectory = _s(tempDirRoot,"LiBiNorm_temp_",randValue);
 
 				optMessage("second attempt at temp Directory = ",tempDirectory);
 

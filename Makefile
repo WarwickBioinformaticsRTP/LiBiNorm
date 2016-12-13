@@ -64,9 +64,9 @@ LIBPATH     = -L$(BAMTOOLSDIR)$(BUILD)
 
 ################################################################################
 # Source files and the build specific outputs
-#  All of the .cpp files in LIBDIR are included in the build and the objects are in <build>/mcmcLib
-#  The files that are from external directories are handled slightly differently so that their object files
-#  are still within the $(BUILD) directory and are deleted with a make clean
+#  All of the .cpp files in MCMCLIBDIR are included in the build and the objects are in <build>/mcmcLib
+#  The files that are from the external directories are handled slightly differently so that their object files
+#  are also placed within the $(BUILD) directory and so are deleted with a make clean
 
 LIBINORMSRC = LiBiNormSrc/LiBiNorm.cpp
 
@@ -96,8 +96,6 @@ DIRMARKERS = $(addsuffix .z , $(DIRECTORIES) )
 ################################################################################
 # The main builds
 
-
-
 debug : all
 	
 release : all    
@@ -105,7 +103,7 @@ release : all
 all:  $(DIRMARKERS) $(TARGS)
 	@echo "%% $(BUILD) LiBiNorm code built"
 
-#	This is the format for a manual final make rule
+#	The final make rule
 $(LIBINORMEXE) :$(BUILD)/$(LIBINORMSRC:%.cpp=%.o) $(COREOBJS)
 	$(CCC)  $^ -o $@ $(CCCALLFLAGS) $(INCLUDES) $(LIBPATH) $(LIBS)
 
@@ -116,7 +114,7 @@ clean :
 
 #	do make depend to update dependancies.  This makes a dependancy list that is dynamically dependant 
 #	on the build type.  There are two make depends, one for all of the sources within this directory (SOURCES)
-#	and one for the sources that are in another library directory (FASTASRC)
+#	and one for the sources that are in another library directory (BIOLIBSRC)
 
 depend :
 	makedepend  -Y $(CCCAALLFLAGS) $(INCLUDES) $(SOURCES) -p'$$(BUILD)/'
@@ -211,6 +209,8 @@ $(BUILD)/LiBiNormSrc/LiBiCount.o: ../bamtools/api/SamReadGroup.h
 $(BUILD)/LiBiNormSrc/LiBiCount.o: ../bamtools/api/SamSequenceDictionary.h
 $(BUILD)/LiBiNormSrc/LiBiCount.o: ../bamtools/api/SamSequence.h
 $(BUILD)/LiBiNormSrc/LiBiCount.o: ../bioinformaticsLib/parser.h
+$(BUILD)/LiBiNormSrc/LiBiCount.o: LiBiNormSrc/transcriptData.h
+$(BUILD)/LiBiNormSrc/LiBiCount.o: mcmcLib/dataVec.h
 $(BUILD)/LiBiNormSrc/LogLiklihoods.o: LiBiNormSrc/LogLiklihoods.h
 $(BUILD)/LiBiNormSrc/LogLiklihoods.o: mcmcLib/mcmc.h mcmcLib/dataVec.h
 $(BUILD)/LiBiNormSrc/LogLiklihoods.o: ../bioinformaticsLib/printEx.h

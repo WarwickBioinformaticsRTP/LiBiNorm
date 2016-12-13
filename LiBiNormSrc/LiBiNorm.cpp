@@ -8,6 +8,7 @@
 #include <mutex>
 #include <chrono>
 #include <thread>
+#include <float.h>
 #include "libCommon.h"
 #include "containerEx.h"
 #include "mcmc.h"
@@ -19,12 +20,16 @@
 
 using namespace std;
 
-// model  -m 3 -n 1 -p 1 -c "Y:\LiBiNorm\TestData\SCII25s72_S19_L001.map.plus.minus.noERCC.txt"
-
-
 //#define TEST_CODE
 #ifdef TEST_CODE
 extern map<thread::id,map<size_t,vector<vector<VEC_DATA_TYPE> > > > cache;
+#endif
+
+#ifdef _DEBUG
+//	use this to test the calculations based on a specific result of the parameter derivation
+// #define FIXED_RESULTS log10(3.9644),log10(147.39),log10(0.0079),log10(2.0128E-4),0
+#define M_FIXED_RESULTS 5
+
 #endif
 
 int main(int argc, char **argv)
@@ -201,8 +206,10 @@ void LiBiNorm::mcmcThread(paramSet params, optionsType options, modelType model)
 			cerr << "Finishing Model:" << model_iterator->first << " iteration:" << loop << endl;
 
 
+#ifdef STORE_ENDPOINTS
 			Chain[options.Model].emplace(loop, mcmcEngine.chain().back());
 			SSChain[options.Model].emplace(loop, mcmcEngine.sschain().back());
+#endif
 
 			if (fullOutputMode || singleModel)
 			{
@@ -347,8 +354,10 @@ int LiBiNorm::main(int argc, char **argv)
 	options.method = method;
 
 	model.sigma2 = 1;
+#ifdef STORE_ENDPOINTS
 	SSChain.resize(maxModel+1);
 	Chain.resize(maxModel+1);
+#endif
 	if (fullOutputMode || singleModel)
 	{
 		fullResultSSChain.resize(maxModel + 1);
@@ -365,8 +374,23 @@ int LiBiNorm::main(int argc, char **argv)
 			threadLoopCounts[m] = singleModel?0:1;
 	}
 
+	struct bestResult
+	{
+		bestResult() :minLL(DBL_MAX), run(0), pos(0) {};
+		VEC_DATA_TYPE minLL;
+		size_t run, pos;
+		dataVec params;
+		dataVec norm;
+		operator bool() const { return params.size(); };
+	};
 
+	map<size_t, bestResult> bestResults;
 
+#ifdef FIXED_RESULTS
+	maxModel = M_FIXED_RESULTS;
+	bestResults[maxModel].params = dataVec{ FIXED_RESULTS };
+#else
+	//	And then set the threads running
 	vector<thread> threads;
 	for (size_t i = 0;i < Nthreads;i++)
 		threads.emplace_back(thread(runThread,this,params, options,model));
@@ -374,57 +398,255 @@ int LiBiNorm::main(int argc, char **argv)
 	for (auto & i : threads)
 		i.join();
 
-	TsvFile testResult;
 
-	stringEx filename(outputFileName.replaceSuffix("_Chain.txt"));
-	if (!testResult.open(filename))
-		exitFail("Unable to open output File ", filename);
+	/*
+		Unfinished code for 
+	vector<int> geneL{ 500,1000,2000,4000,8000 };
+	dataVec TotalReads;
 
-	for (size_t j = 1; j <= maxModel; j++)
-		testResult.printMiddle(headers[j], "chain", "");
-	testResult.printEnd();
-
-	for (size_t i = 1; i <= options.Nruns; i++)
+	for (size_t i = 0; i < geneL.size(); i++)
 	{
-		for (size_t j = 1; j <= maxModel; j++)
+		for (size_t j = 0; j < transData.size(); j++)
 		{
-			if (SSChain[j].size() && (i <= SSChain[j].rbegin()->first))
-				testResult.printMiddle(Chain[j][i], SSChain[j][i], "");
-			else
+			if (abs(transData[j].length - geneL[i]) < (0.1 * geneL[i]))
+				TotalReads.append(transData[j].counts[0]/ transData[j].length);
+		}
+	}
+	*/
+
+
+	//********************************************************************************************
+	//	Find the optimal parameter values, which are associated with the lowest likelyhood value found in the last 
+	//	1000 iterations of all of the runs.
+
+	for (size_t m = 1; m <= maxModel; m++)
+	{
+		bestResult & br = bestResults[m];
+		for (size_t i = 1; i <= fullResultSSChain[m].size(); i++)
+		{
+			for (size_t j = fullResultSSChain[m][i].size()-1; j > fullResultSSChain[m][i].size()/2; j--)
 			{
-				for (size_t k = 0; k < headers[j].size(); k++)
-					testResult.printMiddle("");
-				testResult.printMiddle("", "");
+				if (fullResultSSChain[m][i][j] < br.minLL)
+				{
+					br.minLL = fullResultSSChain[m][i][j];
+					br.params = fullResultChain[m][i][j];
+					br.run = i;
+					br.pos = j;
+				}
 			}
 		}
-		testResult.printEnd();
 	}
-	testResult.close();
+#endif
 
+	dataVec l;
+	for (size_t i = 100; i <= 10000; i += 100)
+		l.push_back(i);
+
+	for (size_t m = 1; m <= maxModel; m++)
+	{
+		if (bestResults[m])
+		{
+			double d = pow(10, bestResults[m].params[0]);
+			double h = pow(10, bestResults[m].params[1]);
+			double t1, t2, a;
+			switch (m)
+			{
+			case 2:
+			case 4:
+			case 5:
+				t1 = pow(10, bestResults[m].params[2]);
+				t2 = pow(10, bestResults[m].params[3]);
+				break;
+			case 3:
+				t1 = 0;
+				t2 = pow(10, bestResults[m].params[2]);
+				break;
+			case 6:
+				t1 = pow(10, bestResults[m].params[2]);
+				t2 = pow(10, bestResults[m].params[3]);
+				a = bestResults[m].params[4];
+				break;
+			}
+
+			dataVec & norm = bestResults[m].norm;
+			norm.resize(l.size());
+
+			switch (m)
+			{
+			case 1:
+				norm = (2 * h<l)*(l - 2 * h) + l / d;
+				break;
+			case 2:
+				norm = ((2 * h<l)*(t1*(exp(-2 * h*(t1 + t2)) - exp(-l*(t1 + t2))) + t2*(t1 + t2)*(l - 2 * h)*exp(-l*(t1 + t2))) / ((t1 + t2)*(t1 + t2)) +
+					exp(-l*(t1 + t2))*(l*t2*t2 + t1*(exp(l*(t1 + t2)) + l*t2 - 1)) / ((t1 + t2)*(t1 + t2)) / d);
+				break;
+			case 3:
+/*				for (size_t i = 0; i < l.size(); i++)
+				{
+					if (2 * h < l[i])
+						norm[i] = (exp(-2 * h*t2 - l[i] * t1) - exp(-l[i] * (t1 + t2))) / t2 + (exp(-l[i] * t1) - exp(-l[i] * (t1 + t2))) / t2 / d;
+					else
+						norm[i] = (exp(-l[i] * t1) - exp(-l[i] * (t1 + t2))) / t2 / d;
+				}
+*/
+			{
+				dataVec exp_ml_t2 = exp(-l*(t2));
+				norm = (2 * h < l)*(exp(-2 * h*t2) - exp_ml_t2) / t2 + (1 - exp_ml_t2) / t2 / d;
+			}
+
+				break;
+			case 4:
+				for (size_t i = 0; i < l.size(); i++)
+				{
+					if (2 * h < l[i])
+						norm[i] = (exp(-2 * h*(t1 + t2)) - exp(-l[i] * (t1 + t2))) / (t1 + t2) + (1 - exp(-l[i] * (t1 + t2))) / (t1 + t2) / d;
+					else
+						norm[i] = (1 - exp(-l[i] * (t1 + t2))) / (t1 + t2) / d;
+				}
+				break;
+			case 5:
+/*  MATLAB
+				if (2 * h<l(i))
+					norm(i) = (exp(-l(i)*t1 - 2 * h*t2)*(t1 + t2) ^ 2 - exp(-l(i)*(t1 + t2))*t1 ^ 2 + t1*t2*exp(-2 * h*(t1 + t2))*(l(i)*t2 - 2 * h*t1 - 2 * h*t2 + l(i)*t1 - t2 / t1 - 2)) / (t1 + t2) ^ 2 / t1 ^ 2 / t2 + ...
+					(l(i) - 1 / (t1 + t2) - 1 / t1 - t1 / t2 / (t1 + t2)*exp(-l(i)*(t1 + t2)) + (t1 + t2) / t1 / t2*exp(-l(i)*t1)) / (t1 + t2) / t1 / d;
+				else
+					norm(i) = (l(i) - 1 / (t1 + t2) - 1 / t1 - t1 / t2 / (t1 + t2)*exp(-l(i)*(t1 + t2)) + (t1 + t2) / t1 / t2*exp(-l(i)*t1)) / (t1 + t2) / t1 / d;
+*/
+/*				for (size_t i = 0; i < l.size(); i++)
+				{
+					if (2 * h < l[i])
+						norm[i] = (exp(-l[i]*t1 - 2 * h*t2)*(t1 + t2)*(t1 + t2) - exp(-l[i]*(t1 + t2))*t1*t1 + t1*t2*exp(-2 * h*(t1 + t2))*(l[i]*t2 - 2 * h*t1 - 2 * h*t2 + l[i]*t1 - t2 / t1 - 2)) / ((t1 + t2)*(t1 + t2)) / (t1 *t1)/ t2 +
+						(l[i] - 1 / (t1 + t2) - 1 / t1 - t1 / t2 / (t1 + t2)*exp(-l[i]*(t1 + t2)) + (t1 + t2) / t1 / t2*exp(-l[i]*t1)) / (t1 + t2) / t1 / d;
+					else
+
+						norm[i] = (l[i] - 1 / (t1 + t2) - 1 / t1 - t1 / t2 / (t1 + t2)*exp(-l[i]*(t1 + t2)) + (t1 + t2) / t1 / t2*exp(-l[i]*t1)) / (t1 + t2) / t1 / d;
+				}
+*/
+				
+/*	MATLAB
+	norm =  (2*h<l).*(exp(-l*t1 - 2*h*t2)*(t1 + t2)^2 - exp(-l*(t1 + t2))*t1^2 + t1*t2*exp(-2*h*(t1 + t2))*(l*t2 -2*h*t1 -2*h*t2+l*t1 - t2/t1 - 2))/(t1 + t2)^2/t1^2/t2 + ...
+	    (l-1/(t1 + t2) - 1/t1 - t1/t2/(t1+t2)*exp(-l*(t1 + t2))+(t1 + t2)/t1/t2*exp(-l*t1))/(t1 + t2)/t1/d;
+*/
+
+				norm = (2 * h<l)*(exp(-l*t1 - 2 * h*t2)*(t1 + t2)*(t1 + t2) - exp(-l*(t1 + t2))*t1*t1 + t1*t2*exp(-2 * h*(t1 + t2))*(l*t2 - 2 * h*t1 - 2 * h*t2 + l*t1 - t2 / t1 - 2)) / ((t1 + t2) * (t1 + t2) ) / (t1 * t1 ) / t2 +
+					(l - 1 / (t1 + t2) - 1 / t1 - t1 / t2 / (t1 + t2)*exp(-l*(t1 + t2)) + (t1 + t2) / t1 / t2*exp(-l*t1)) / (t1 + t2) / t1 / d;
+
+				norm /= t1;
+
+				break;
+			case 6:
+			{
+				norm = a*((2 * h < l)*(t1*(exp(-2 * h*(t1 + t2)) - exp(-l*(t1 + t2))) + t2*(t1 + t2)*(l - 2 * h)*exp(-l*(t1 + t2))) / ((t1 + t2) * (t1 + t2)) +
+					(exp(-l*(t1 + t2))*(l*t2 *t2 + l*t2*t1 - t1) + t1) / ((t1 + t2) *(t1 + t2)) / d) +
+					(1 - a)*((2 * h < l)*(exp(-2 * h*(t1 + t2)) - exp(-l*(t1 + t2))) / (t1 + t2) +
+					(1 - exp(-l*(t1 + t2))) / (t1 + t2) / d);
+
+
+				//					norm = a*((2 * h<l).*(t1.*(exp(-2 * h*(t1 + t2)) - exp(-l.*(t1 + t2))) + t2*(t1 + t2).*(l - 2 * h).*exp(-l.*(t1 + t2))) / (t1 + t2) ^ 2 + ...
+				//						(exp(-l.*(t1 + t2)).*(l.*t2 ^ 2 + l.*t2*t1 - t1) + t1) / (t1 + t2) ^ 2 / d) + ...
+				//						(1 - a)*((2 * h<l).*(exp(-2 * h*(t1 + t2)) - exp(-l.*(t1 + t2))) / (t1 + t2) + ...
+				//						(1 - exp(-l.*(t1 + t2))) / (t1 + t2) / d);
+				break;
+			}
+			}
+			norm = norm * l[9] / norm[9];
+			norm /= l;
+
+		}
+	}
+
+	//********************************************************************************************
+	TsvFile mcmcResult;
+
+	stringEx filename(outputFileName.replaceSuffix("_norm.txt"));
+	if (!mcmcResult.open(filename))
+		exitFail("Unable to open output File ", filename);
+
+	for (size_t m = 1; m <= maxModel; m++)
+	{
+		mcmcResult.print(m, bestResults[m].minLL, bestResults[m].run, bestResults[m].pos,bestResults[m].params);
+		if (bestResults[m].norm.size())
+		{
+			mcmcResult.print(m, l);
+			mcmcResult.print(m, bestResults[m].norm);
+		}
+		else
+		{
+			mcmcResult.print(m);
+			mcmcResult.print(m);
+		}
+		mcmcResult.print();
+	}
+	mcmcResult.close();
+
+
+#ifdef STORE_ENDPOINTS
+	//	Now output a table with the end points of each of the chains.
+	filename = outputFileName.replaceSuffix("_Chain.txt");
+	if (!mcmcResult.open(filename))
+		exitFail("Unable to open output File ", filename);
+
+	//	First headers up to and including the maximum model that is run.   Always leave space
+	//	for the intermediate models so the layout of the results is consistent
+	for (size_t m = 1; m <= maxModel; m++)
+		mcmcResult.printMiddle(headers[m], "chain", "");
+	mcmcResult.printEnd();
+
+	//	A row for the optimal parameters that were found for each model
+	for (size_t m = 1; m <= maxModel; m++)
+	{
+		if (bestResults[m].params.size())
+			mcmcResult.printMiddle(bestResults[m].params, bestResults[m].minLL, "");
+		else
+			mcmcResult.printGaps(headers[m].size() + 2);
+	}
+	mcmcResult.printEnd();
+	//	The number of rows is set by the maximum number of runs, which may be for one or all models
+	for (size_t i = 1; i <= options.Nruns; i++)
+	{
+		for (size_t m = 1; m <= maxModel; m++)
+		{
+			//	Was there a jth run of this model?  If so then print the end points
+			if (SSChain[m].size() && (i <= SSChain[m].rbegin()->first))
+				mcmcResult.printMiddle(Chain[m][i], SSChain[m][i], "");
+			else
+				mcmcResult.printGaps(headers[m].size() + 2);
+		}
+		mcmcResult.printEnd();
+	}
+	mcmcResult.close();
+#endif
+	//********************************************************************************************
+	//	This prints out all of the data for the full set of mcmc runs for each model
 	if (fullOutputMode)
 	{
+
 		for (size_t modl = 1; modl <= maxModel; modl++)
 		{
 			string filename = outputFileName.replaceSuffix("_model_", modl, ".txt");
-			if(!testResult.open(filename))
-				exitFail("Unable to open output File ", filename);
+			if(!mcmcResult.open(filename))
+				exitFail("Unable to open output file ", filename);
 
-			testResult.printMiddle(headers[modl], "chain", "");
+//			mcmcResult.printMiddle(headers[modl], "chain", "");
 
-			for (size_t i = 1;i < fullResultChain[modl].size();i++)
-				testResult.printMiddle(headers[modl], "chain", "");
-	
-			testResult.printEnd();
+			//	This ensures that at least one header is output, which ensures that there is something in the file
+			//	even if no data were produced for this model
+			for (size_t i = 0;i < fullResultChain[modl].size();i++)
+				mcmcResult.printMiddle(headers[modl], "chain", "");
+			mcmcResult.printEnd();
 
+			//	For each of the mcmc runs print out the results.  Each run is a column
 			for (size_t i = 0; i < fullResultChain[modl][1].size(); i++)
 			{
 				for (size_t j = 1; j <= fullResultChain[modl].rbegin()->first; j++)
 				{
-					testResult.printMiddle(fullResultChain[modl][j][i], fullResultSSChain[modl][j][i], "");
+					// fullResultChain[modl][j][i] is a vector of N values which are printed out as N tab separated values
+					//	using the TsvFile support for printing vectors.
+					mcmcResult.printMiddle(fullResultChain[modl][j][i], fullResultSSChain[modl][j][i], "");
 				}
-				testResult.printEnd();
+				mcmcResult.printEnd();
 			}
-			testResult.close();
+			mcmcResult.close();
 
 		}
 	}
@@ -444,15 +666,15 @@ int LiBiNorm::main(int argc, char **argv)
 			}
 
 			string filename = outputFileName.replaceSuffix("_model_cons_", modl, ".txt");
-			if (!testResult.open(filename))
+			if (!mcmcResult.open(filename))
 				exitFail("Unable to open output File ", filename);
 
-			testResult.print(headers[modl], "chain");
+			mcmcResult.print(headers[modl], "chain");
 			for (multimap <double, dataVec *>::iterator j = orderedResults.begin(); j != orderedResults.end(); j++)
 			{
-				testResult.print(*(j->second), j->first);
+				mcmcResult.print(*(j->second), j->first);
 			}
-			testResult.close();
+			mcmcResult.close();
 
 		}
 	}

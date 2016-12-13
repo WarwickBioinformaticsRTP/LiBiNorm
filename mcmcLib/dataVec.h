@@ -5,6 +5,7 @@
 #include <vector>
 #include <string>
 #include <valarray>
+#include "libCommon.h"
 #include "printEx.h"
 
 #define VEC_DATA_TYPE double
@@ -17,7 +18,7 @@ public:
 	dataVec(size_t s,VEC_DATA_TYPE v);
 	dataVec(const std::vector<VEC_DATA_TYPE> & a);
 	dataVec(const dataVec & a);
-
+	dataVec(std::initializer_list<VEC_DATA_TYPE> a) : std::vector<VEC_DATA_TYPE>(a) {};
 	static void clearCache();
 
 	~dataVec();
@@ -330,6 +331,19 @@ inline dataVec operator / (dataVec && a,VEC_DATA_TYPE b)
 {
 	for (VEC_DATA_TYPE &  i : a)
 		i /= b;
+	return a;
+}
+inline dataVec operator /= (dataVec & a, VEC_DATA_TYPE b)
+{
+	for (VEC_DATA_TYPE & i : a)
+		i /= b;
+	return a;
+}
+inline dataVec operator /= (dataVec & a, const dataVec & b)
+{
+	_ASSERT_EXPR(a.size() == b.size(), "/= vector sizes do not match");
+	for (size_t i = 0;i < a.size();i++)
+		a.at(i) /= b.at(i);
 	return a;
 }
 inline dataVec operator / (const dataVec & a ,VEC_DATA_TYPE b)
