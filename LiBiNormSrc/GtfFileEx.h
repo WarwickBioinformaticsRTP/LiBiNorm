@@ -22,7 +22,7 @@ typedef long rna_pos_type;
 
 
 //	Enable this to only use the genes that are used by Dan for generating his landscape data
-#define SELECTED_GENES
+// #define SELECTED_GENES
 
 //	Conatins information relating to a specific gene/region type  combination
 class geneTypeInfo
