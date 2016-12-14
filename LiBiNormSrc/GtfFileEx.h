@@ -134,8 +134,8 @@ public:
 	char strand;
 	chromosomeGtfData::iterator * overlaps;
 
-	gtfRegion(gtfRegion && gtf) : start(gtf.start),finish(gtf.finish),name(move(gtf.name)),type(move(gtf.type)),strand(gtf.strand),
-		overlaps(gtf.overlaps), RNAstart(gtf.RNAstart)
+	gtfRegion(gtfRegion && gtf) : start(gtf.start),finish(gtf.finish), RNAstart(gtf.RNAstart),name(std::move(gtf.name)),type(std::move(gtf.type)),strand(gtf.strand),
+		overlaps(gtf.overlaps)
 	{
 		gtf.overlaps = 0;
 	}
@@ -158,9 +158,9 @@ class geneData
 public:
 	gtfRegionList regions;
 	bool overlaps;
-	char strand;
 	//	The total length of the regions associated with the gene
 	rna_pos_type length;
+	char strand;
 
 	void addRegion(gtfRegion * newRegion,bool ol)
 	{

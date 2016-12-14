@@ -376,10 +376,11 @@ int LiBiNorm::main(int argc, char **argv)
 
 	struct bestResult
 	{
-		bestResult() :minLL(DBL_MAX), run(0), pos(0) {};
-		VEC_DATA_TYPE minLL;
+		bestResult() :minLL(DBL_MAX), minLL_dev(0), run(0), pos(0) {};
+		VEC_DATA_TYPE minLL, minLL_dev;
 		size_t run, pos;
 		dataVec params;
+		vector<dataVec> param_dev;
 		dataVec norm;
 		operator bool() const { return params.size(); };
 	};
@@ -436,6 +437,46 @@ int LiBiNorm::main(int argc, char **argv)
 			}
 		}
 	}
+
+	//******************************************************************************************
+	//	And then find the standard deviation
+	for (size_t m = 1; m <= maxModel; m++)
+	{
+		bestResult & br = bestResults[m];
+		VEC_DATA_TYPE LL_dev = 0;
+		size_t size = br.params.size();
+		vector<dataVec> param_dev(2,dataVec(size));
+		vector<dataVec> p_N(2,dataVec(size));
+		int N = 0;
+
+		for (size_t i = 1; i <= fullResultSSChain[m].size(); i++)
+		{
+			for (size_t j = fullResultSSChain[m][i].size() - 1; j > fullResultSSChain[m][i].size() / 2; j--)
+			{
+				N++;
+				VEC_DATA_TYPE diff = fullResultSSChain[m][i][j] - br.minLL;
+				LL_dev += (diff * diff);
+				for (size_t k = 0; k < size; k++)
+				{
+					VEC_DATA_TYPE diff = fullResultChain[m][i][j][k] - br.params[k];
+					if (diff >= 0)
+					{
+						param_dev[0][k] += (diff * diff);
+						p_N[0][k]++;
+					}
+					else
+					{
+						param_dev[1][k] += (diff * diff);
+						p_N[1][k]++;
+					}
+				}
+			}
+		}
+		br.minLL_dev = sqrt(LL_dev / N);
+		br.param_dev.emplace_back(sqrt(param_dev[0] / p_N[0]));
+		br.param_dev.emplace_back(sqrt(param_dev[1] / p_N[1]));
+	}
+
 #endif
 
 	dataVec l;
@@ -588,11 +629,13 @@ int LiBiNorm::main(int argc, char **argv)
 
 	//	First headers up to and including the maximum model that is run.   Always leave space
 	//	for the intermediate models so the layout of the results is consistent
+	mcmcResult.printStart("");
 	for (size_t m = 1; m <= maxModel; m++)
 		mcmcResult.printMiddle(headers[m], "chain", "");
 	mcmcResult.printEnd();
 
 	//	A row for the optimal parameters that were found for each model
+	mcmcResult.printStart("Best");
 	for (size_t m = 1; m <= maxModel; m++)
 	{
 		if (bestResults[m].params.size())
@@ -601,9 +644,23 @@ int LiBiNorm::main(int argc, char **argv)
 			mcmcResult.printGaps(headers[m].size() + 2);
 	}
 	mcmcResult.printEnd();
+	//	A row for the standard deviations for each model
+	for (size_t i = 0; i < 2; i++)
+	{
+		mcmcResult.printStart((i==0)?"Pos Dev":"Neg Dev");
+		for (size_t m = 1; m <= maxModel; m++)
+		{
+			if (bestResults[m].param_dev[i].size())
+				mcmcResult.printMiddle(bestResults[m].param_dev[i], bestResults[m].minLL_dev, "");
+			else
+				mcmcResult.printGaps(headers[m].size() + 2);
+		}
+		mcmcResult.printEnd();
+	}
 	//	The number of rows is set by the maximum number of runs, which may be for one or all models
 	for (size_t i = 1; i <= options.Nruns; i++)
 	{
+		mcmcResult.printStart(_s("Chain end ",i));
 		for (size_t m = 1; m <= maxModel; m++)
 		{
 			//	Was there a jth run of this model?  If so then print the end points

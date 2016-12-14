@@ -24,9 +24,9 @@ class readData
 		int refId;
 		int position;
 		char strand;
-		Cigar cigar;
 		int NH;
 		int qual;
+		Cigar cigar;
 		readData(void){}
 
 		//	This constructor creates the readData from the bam file entry.  This means that methos expecting 

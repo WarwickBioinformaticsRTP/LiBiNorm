@@ -30,7 +30,7 @@ void gtfRegion::checkOverlap(const region & segment,vector<gtfOverlap> & overlap
 }
 
 gtfRegion::gtfRegion(size_t start, size_t finish, const std::string & name, char strand, const std::string & type) :
-	start(start), finish(finish), name(name), strand(strand), type(type), RNAstart(0)
+	start(start), finish(finish),  RNAstart(0), name(name), type(type), strand(strand)
 {
 	overlaps = new chromosomeGtfData::iterator();
 };

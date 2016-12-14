@@ -9,10 +9,10 @@ using namespace std;
 class transcriptData
 {
 public:
-	int length;
-	int histoGram_ind;
-	std::string gene;
 	vector<dataVec > counts;
+	int length;
+	std::string gene;
+	int histoGram_ind;
 	transcriptData(): counts(2),length(0) {	};
 
 	transcriptData(transcriptData && a) : counts(move(a.counts)),length(a.length),gene(a.gene)

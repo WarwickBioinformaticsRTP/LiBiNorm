@@ -13,9 +13,9 @@
 class dataVec: public std::vector<VEC_DATA_TYPE>
 {
 public:
-	dataVec(size_t s = 0);
+//	dataVec(size_t s = 0);
 	void resize(size_t s = 0);
-	dataVec(size_t s,VEC_DATA_TYPE v);
+	dataVec(size_t s = 0,VEC_DATA_TYPE v = 0);
 	dataVec(const std::vector<VEC_DATA_TYPE> & a);
 	dataVec(const dataVec & a);
 	dataVec(std::initializer_list<VEC_DATA_TYPE> a) : std::vector<VEC_DATA_TYPE>(a) {};
@@ -235,7 +235,12 @@ inline dataVec log(dataVec && a)
 		i = log(i);
 	return a;
 }
-
+inline dataVec sqrt(dataVec && a)
+{
+	for (VEC_DATA_TYPE & i : a)
+		i = sqrt(i);
+	return a;
+}
 inline dataVec operator * (VEC_DATA_TYPE a, const dataVec & b)
 {
 	size_t s(b.size());
@@ -296,6 +301,14 @@ inline dataVec operator + (const dataVec & a ,VEC_DATA_TYPE b)
 	for (size_t i = 0; i < s;i++)
 		retVal.at(i) = a.at(i) + b;
 	return retVal;
+}
+
+inline dataVec operator += (dataVec & a, const dataVec & b)
+{
+	_ASSERT_EXPR(a.size() == b.size(), "/= vector sizes do not match");
+	for (size_t i = 0; i < a.size(); i++)
+		a.at(i) += b.at(i);
+	return a;
 }
 
 inline dataVec operator - (dataVec && a,VEC_DATA_TYPE b)

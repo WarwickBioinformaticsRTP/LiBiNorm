@@ -120,7 +120,7 @@ void dataVec::clearCache()
 
 
 #else
-dataVec::dataVec(size_t s): std::vector<VEC_DATA_TYPE>(s){};
+//dataVec::dataVec(size_t s): std::vector<VEC_DATA_TYPE>(s){};
 dataVec::dataVec(size_t s, VEC_DATA_TYPE v):std::vector<VEC_DATA_TYPE>(s,v) {};
 dataVec::dataVec(const std::vector<VEC_DATA_TYPE> & a): std::vector<VEC_DATA_TYPE>(a){};
 dataVec::dataVec(const dataVec & a):std::vector<VEC_DATA_TYPE>(a) {};
