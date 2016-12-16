@@ -21,9 +21,6 @@ static std::string notUnique = "__alignment_not_unique";
 typedef long rna_pos_type;
 
 
-//	Enable this to only use the genes that are used by Dan for generating his landscape data
-// #define SELECTED_GENES
-
 //	Conatins information relating to a specific gene/region type  combination
 class geneTypeInfo
 {
@@ -187,7 +184,7 @@ public:
 	//	A map of the ends of the gtf regions.   Used for finding overlaps
 	genomeEndIndexMap genomeEndIndex;
 
-	//	Dans original list of genes
+	//	For doing comparison run with a specific set of genes
 	setEx<std::string> geneSet;
 	std::vector<std::string> geneList;
 
@@ -197,6 +194,7 @@ public:
 
 	void index(geneCountsClass & geneCounts);
 	void outputChromData(const std::string & filename);
+	void useSelectedGenes(const std::string & filename);
 
 };
 

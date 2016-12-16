@@ -211,12 +211,9 @@ void LiBiNorm::mcmcThread(paramSet params, optionsType options, modelType model)
 			SSChain[options.Model].emplace(loop, mcmcEngine.sschain().back());
 #endif
 
-			if (fullOutputMode || singleModel)
-			{
-				fullResultChain[options.Model].emplace(loop, mcmcEngine.chain());
-				fullResultSSChain[options.Model].emplace(loop, mcmcEngine.sschain());
-			}
-
+			//	Always store full set of results as these are needed to calculate the optimal parameters
+			fullResultChain[options.Model].emplace(loop, mcmcEngine.chain());
+			fullResultSSChain[options.Model].emplace(loop, mcmcEngine.sschain());
 
 			RejectionRate[options.Model] += mcmcEngine.rejected();
 		}
@@ -237,8 +234,6 @@ int LiBiNorm::main(int argc, char **argv)
 	size_t maxModel = 6;
 	size_t Nruns = 100;
 	size_t Nsimu = 2000;
-	fullOutputMode = false;
-	singleModel = false;
 
 	initClock();
 	if(argc < 1)
@@ -267,8 +262,12 @@ int LiBiNorm::main(int argc, char **argv)
 		printf("                        Just run for model N -n times.  All other models run once\n");
 		printf("  -M N\n");
 		printf("                        Just run for model N -n times.  All other models not run\n");
-		printf("  -f\n");
-		printf("                        Output complete set of output filesN\n");
+		printf("  -fm \n");
+		printf("                        Output complete set of montecarlo data\n");
+		printf("  -fc \n");
+		printf("                        Output consolidated montecarlo data\n");
+		printf("  -fn \n");
+		printf("                        Output normalisation data\n");
 		return EXIT_SUCCESS;
 	}
 
@@ -308,10 +307,12 @@ int LiBiNorm::main(int argc, char **argv)
 			maxModel = minModel;
 			singleModel = true;
 		}
-		else if (strcmp(argv[ni], "-f") == 0)
-		{
-			fullOutputMode = true;
-		}
+		else if (strcmp(argv[ni], "-fm") == 0)
+			outputMonteCarlo = true;
+		else if (strcmp(argv[ni], "-fc") == 0)
+			outputConsolidated = true;
+		else if (strcmp(argv[ni], "-fn") == 0)
+			outputNormalisation = true;
 		else
 		{
 			exitFail("Invalid parameter: ",argv[ni]);
@@ -358,11 +359,10 @@ int LiBiNorm::main(int argc, char **argv)
 	SSChain.resize(maxModel+1);
 	Chain.resize(maxModel+1);
 #endif
-	if (fullOutputMode || singleModel)
-	{
-		fullResultSSChain.resize(maxModel + 1);
-		fullResultChain.resize(maxModel + 1);
-	}
+
+	fullResultSSChain.resize(maxModel + 1);
+	fullResultChain.resize(maxModel + 1);
+
 	RejectionRate.resize(maxModel+1);
 
 	//	Set the number of iterations required of each of the models.
@@ -373,6 +373,20 @@ int LiBiNorm::main(int argc, char **argv)
 		else
 			threadLoopCounts[m] = singleModel?0:1;
 	}
+
+
+#ifdef FIXED_RESULTS
+	maxModel = M_FIXED_RESULTS;
+	bestResults[maxModel].params = dataVec{ FIXED_RESULTS };
+#else
+	//	And then set the threads running
+	vector<thread> threads;
+	for (size_t i = 0;i < Nthreads;i++)
+		threads.emplace_back(thread(runThread,this,params, options,model));
+
+	for (auto & i : threads)
+		i.join();
+
 
 	struct bestResult
 	{
@@ -386,18 +400,6 @@ int LiBiNorm::main(int argc, char **argv)
 	};
 
 	map<size_t, bestResult> bestResults;
-
-#ifdef FIXED_RESULTS
-	maxModel = M_FIXED_RESULTS;
-	bestResults[maxModel].params = dataVec{ FIXED_RESULTS };
-#else
-	//	And then set the threads running
-	vector<thread> threads;
-	for (size_t i = 0;i < Nthreads;i++)
-		threads.emplace_back(thread(runThread,this,params, options,model));
-
-	for (auto & i : threads)
-		i.join();
 
 
 	/*
@@ -420,13 +422,20 @@ int LiBiNorm::main(int argc, char **argv)
 	//	Find the optimal parameter values, which are associated with the lowest likelyhood value found in the last 
 	//	1000 iterations of all of the runs.
 
+	map<size_t, multimap <double, dataVec *> > allOrderedResults;
+
 	for (size_t m = 1; m <= maxModel; m++)
 	{
+		multimap <double, dataVec *> & orderedResults = allOrderedResults[m];
+
 		bestResult & br = bestResults[m];
 		for (size_t i = 1; i <= fullResultSSChain[m].size(); i++)
 		{
 			for (size_t j = fullResultSSChain[m][i].size()-1; j > fullResultSSChain[m][i].size()/2; j--)
 			{
+				if(outputConsolidated)
+					orderedResults.emplace(fullResultSSChain[m][i][j], &fullResultChain[m][i][j]);
+
 				if (fullResultSSChain[m][i][j] < br.minLL)
 				{
 					br.minLL = fullResultSSChain[m][i][j];
@@ -599,31 +608,8 @@ int LiBiNorm::main(int argc, char **argv)
 	//********************************************************************************************
 	TsvFile mcmcResult;
 
-	stringEx filename(outputFileName.replaceSuffix("_norm.txt"));
-	if (!mcmcResult.open(filename))
-		exitFail("Unable to open output File ", filename);
-
-	for (size_t m = 1; m <= maxModel; m++)
-	{
-		mcmcResult.print(m, bestResults[m].minLL, bestResults[m].run, bestResults[m].pos,bestResults[m].params);
-		if (bestResults[m].norm.size())
-		{
-			mcmcResult.print(m, l);
-			mcmcResult.print(m, bestResults[m].norm);
-		}
-		else
-		{
-			mcmcResult.print(m);
-			mcmcResult.print(m);
-		}
-		mcmcResult.print();
-	}
-	mcmcResult.close();
-
-
-#ifdef STORE_ENDPOINTS
 	//	Now output a table with the end points of each of the chains.
-	filename = outputFileName.replaceSuffix("_Chain.txt");
+	stringEx filename = outputFileName.replaceSuffix("_results.txt");
 	if (!mcmcResult.open(filename))
 		exitFail("Unable to open output File ", filename);
 
@@ -664,18 +650,43 @@ int LiBiNorm::main(int argc, char **argv)
 		for (size_t m = 1; m <= maxModel; m++)
 		{
 			//	Was there a jth run of this model?  If so then print the end points
-			if (SSChain[m].size() && (i <= SSChain[m].rbegin()->first))
-				mcmcResult.printMiddle(Chain[m][i], SSChain[m][i], "");
+			if (fullResultSSChain[m].size() && (i <= fullResultSSChain[m].rbegin()->first))
+				mcmcResult.printMiddle(*fullResultChain[m][i].rbegin(), *fullResultSSChain[m][i].rbegin(), "");
 			else
 				mcmcResult.printGaps(headers[m].size() + 2);
 		}
 		mcmcResult.printEnd();
 	}
 	mcmcResult.close();
-#endif
+
+	if (outputNormalisation)
+	{
+		filename = outputFileName.replaceSuffix("_norm.txt");
+		if (!mcmcResult.open(filename))
+			exitFail("Unable to open output File ", filename);
+
+		for (size_t m = 1; m <= maxModel; m++)
+		{
+			mcmcResult.print(m, bestResults[m].minLL, bestResults[m].run, bestResults[m].pos, bestResults[m].params);
+			if (bestResults[m].norm.size())
+			{
+				mcmcResult.print(m, l);
+				mcmcResult.print(m, bestResults[m].norm);
+			}
+			else
+			{
+				mcmcResult.print(m);
+				mcmcResult.print(m);
+			}
+			mcmcResult.print();
+		}
+		mcmcResult.close();
+	}
+
+
 	//********************************************************************************************
 	//	This prints out all of the data for the full set of mcmc runs for each model
-	if (fullOutputMode)
+	if (outputMonteCarlo)
 	{
 
 		for (size_t modl = 1; modl <= maxModel; modl++)
@@ -708,35 +719,42 @@ int LiBiNorm::main(int argc, char **argv)
 		}
 	}
 
-	if (singleModel || fullOutputMode)
+	if (outputConsolidated)
 	{
-		for (size_t modl = singleModel?minModel:1; modl <= maxModel; modl++)
+		string filename = outputFileName.replaceSuffix("_model_cons.txt");
+		if (!mcmcResult.open(filename))
+			exitFail("Unable to open output File ", filename);
+
+		map<size_t, multimap <double, dataVec *>::iterator > iterators;
+		mcmcResult.printStart("");
+		for (size_t m = 1; m <= maxModel; m++)
 		{
-			multimap <double, dataVec *> orderedResults;
-
-			for (size_t i = 0; i < fullResultChain[modl][1].size(); i++)
-			{
-				for (size_t j = 1; j <= fullResultChain[modl].rbegin()->first; j++)
-				{
-					orderedResults.emplace(fullResultSSChain[modl][j][i], &fullResultChain[modl][j][i]);
-				}
-			}
-
-			string filename = outputFileName.replaceSuffix("_model_cons_", modl, ".txt");
-			if (!mcmcResult.open(filename))
-				exitFail("Unable to open output File ", filename);
-
-			mcmcResult.print(headers[modl], "chain");
-			for (multimap <double, dataVec *>::iterator j = orderedResults.begin(); j != orderedResults.end(); j++)
-			{
-				mcmcResult.print(*(j->second), j->first);
-			}
-			mcmcResult.close();
-
+			mcmcResult.printMiddle(headers[m], "chain","");
+			iterators[m] = allOrderedResults[m].begin();
 		}
+		mcmcResult.printEnd("");
+		bool found = true;
+		for (size_t i = 0; (i < 1000) && found; i++)
+		{
+			found = false;
+			mcmcResult.printStart(i);
+			for (size_t m = 1; m <= maxModel; m++)
+			{
+				if (iterators[m] != allOrderedResults[m].end())
+				{
+					found = true;
+					mcmcResult.printMiddle(*(iterators[m]->second), iterators[m]->first,"");
+					iterators[m]++;
+				}
+				else
+					mcmcResult.printGaps(headers[m].size() + 2);
+			}
+			mcmcResult.printEnd();
+		}
+		mcmcResult.close();
 	}
 
-	cerr << "Data modelled" << endl;
+	progMessage("Data modelled");
 	elapsedTime();
 
 #ifdef _WIN32

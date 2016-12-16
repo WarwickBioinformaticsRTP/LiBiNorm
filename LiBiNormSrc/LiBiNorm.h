@@ -6,15 +6,22 @@
 
 extern bool verbose;
 
-#define STORE_ENDPOINTS
+//#define STORE_ENDPOINTS
 
 class LiBiNorm
 {
+public:
+	LiBiNorm() : outputMonteCarlo(false), outputConsolidated(false), outputNormalisation(false), singleModel(false) {};
+
+	void mcmcThread(paramSet params, optionsType options, modelType model);
+	int main(int argc, char **argv);
+
+private:
 	stringEx consFileName,outputFileName;
 	transcriptDataMap transData;
 
 	dataType consData;
-	bool fullOutputMode,singleModel;
+	bool outputMonteCarlo, outputConsolidated, outputNormalisation,singleModel;
 
 	//	Four containers for the results.  The vector holds the results for each of the
 	//	models.  For each model the results for each mcmc run is stored as a map indexd by run number
@@ -36,12 +43,6 @@ class LiBiNorm
 
 	//	Counts of the number of loops of each model
 	map<size_t,int> threadLoopCounts;
-
-public:
-	void mcmcThread(paramSet params, optionsType options, modelType model);
-	int main(int argc, char **argv);
-	int loadData();
-
 
 };
 

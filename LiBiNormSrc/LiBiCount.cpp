@@ -22,8 +22,11 @@
 
 //	Test code: Compare lengths calculated from the gff file with the lengths in the original landscape file
 #ifndef _DEBUG
-//#define COMPARE_RESULTS
+//#define COMPARE_RESULTS "Y:\\LiBiNorm\\SRR557798\\SRR557798.NoA.plus.minus"
 #endif
+
+//	Enable this to only use the genes that are used by Dan for generating his landscape data
+#define SELECTED_GENES "Y:\\LiBiNorm\\refGeneList3.txt"
 
 //#define MATCH_USING_POSITION
 
@@ -73,6 +76,7 @@ int LiBiCount::main(int argc, char **argv)
 	nameOrder = true;
 	countMode = intersect_union;
 	maxCacheSize = READ_CACHE_SIZE;
+	bool mapRef = false;
 
 	if(argc < 1)
 	{
@@ -115,6 +119,9 @@ printf("                        (choices: union, intersection-strict, intersecti
 printf("                        nonempty; default: union)\n");
 printf("  -c COUNTS, --counts=COUNT\n");
 printf("                        Name of output file. default: writes to stdout)\n");
+printf("  -x --mapRef\n");
+printf("                        Creates a new version of the gff file with the chromosome names\n"); 
+printf("                        mapped to the names in the bam file\n");
 //printf("  -o SAMOUT, --samout=SAMOUT\n");
 //printf("                        write out all SAM alignment records into an output SAM\n");
 //printf("                        file called SAMOUT, annotating each line with its\n");
@@ -204,6 +211,10 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 			countsFilename = opt2?argv[++ni]+9:argv[++ni];
 			tempDirectory = countsFilename.replaceSuffix("_tempFiles");
 		}
+		else if ((strcmp(argv[ni], "-x") == 0) || (opt2 = (strncmp(argv[ni], "--mapRef", 9) == 0)))
+		{
+			mapRef = true;
+		}
 		else
 		{
 			exitFail("Invalid parameter: ",string(argv[ni]));
@@ -291,19 +302,22 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 
 	initClock();
 	
-	if (!genomeDef.open(gtfFileName,id_attribute,feature_type))
+	if (!genomeDef.open(gtfFileName,id_attribute,feature_type, mapRef))
 		exitFail("Could not open gtf file: ",gtfFileName);
 
 	if ((countsFilename) && !genomeDef.printEntries(countsFilename.replaceSuffix("_genome.txt")))
 		progMessage("Unable to output genome data to :",countsFilename.replaceSuffix("_genome.txt"));
 
+#ifdef 	SELECTED_GENES
+	genomeDef.useSelectedGenes(SELECTED_GENES);
+#endif
 	genomeDef.index(geneCounts);
 
 #ifdef COMPARE_RESULTS
 	transcriptDataMap transData;
-	transData.loadData("Y:\\LiBiNorm\\SRR557798\\SRR557798.NoA.plus.minus");
+	transData.loadData(COMPARE_RESULTS);
 	TsvFile testOut;
-	testOut.open(countsFilename.replaceSuffix(".test.txt"));
+	testOut.open(countsFilename.replaceSuffix(".compareLengths.txt"));
 
 	for (size_t i = 0; i < transData.size(); i++)
 	{
@@ -374,37 +388,39 @@ bool LiBiCount::outputRNApositions(const stringEx & filename)
 	if (!output.open(filename))
 		exitFail("Unable to open ", filename, " for position data"); 
 
-#ifdef SELECTED_GENES
-	for (auto gene : genomeDef.geneList)
+	if (genomeDef.geneList.size())
 	{
-		geneCountsClass::iterator j = geneCounts.find(gene);
-		if (j == geneCounts.end())
+		for (auto gene : genomeDef.geneList)
 		{
-			output.print(gene, "0 plus");
-			output.print(gene, "0 minus");
-		}
-		else
-		
-//		if ((i.second["exon"].posPositions.size()) || (i.second["exon"].negPositions.size()))
-		{
+			geneCountsClass::iterator j = geneCounts.find(gene);
+			if (j == geneCounts.end())
+			{
+				output.print(gene, "0 plus");
+				output.print(gene, "0 minus");
+			}
+			else
+			{
 
-			long len =genomeDef.genes[gene].length;
-			output.print(gene, _s(len, " plus"),j->second["exon"].posPositions);
-			output.print(gene, _s(len, " minus"),j->second["exon"].negPositions);
+				long len = genomeDef.genes[gene].length;
+				output.print(gene, _s(len, " plus"), j->second["exon"].posPositions);
+				output.print(gene, _s(len, " minus"), j->second["exon"].negPositions);
+			}
 		}
 	}
-#else
-	for (auto i : geneCounts)
+	else
 	{
-		if ((i.second["exon"].posPositions.size()) || (i.second["exon"].negPositions.size()))
+		for (auto i : geneCounts)
 		{
-			long len = genomeDef.genes[i.first].length;
-			output.print(i.first, _s(len, " plus"), i.second["exon"].posPositions);
-			output.print(i.first, _s(len, " minus"), i.second["exon"].negPositions);
+			if ((i.second["exon"].posPositions.size()) || (i.second["exon"].negPositions.size()))
+			{
+				long len = genomeDef.genes[i.first].length;
+				output.print(i.first, _s(len, " plus"), i.second["exon"].posPositions);
+				output.print(i.first, _s(len, " minus"), i.second["exon"].negPositions);
+			}
 		}
 	}
-#endif
-return true;
+
+	return true;
 
 }
 

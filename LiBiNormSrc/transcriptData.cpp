@@ -69,8 +69,9 @@ int transcriptDataMap::loadData(const string filename)
 	return EXIT_SUCCESS;
 }
 
+//	Transfers information for up to maxLength reads from the complete set of read data into
+//	
 void transcriptDataMap::transferTo(dataType & mcmcData,size_t maxLength)
-//void dataType::consolidateWith(transcriptDataMap & transData,size_t maxLength)
 {
 	vectorEx<int> bins(0,300);
 	for (size_t i = 500;i <= 10000;i+=500)

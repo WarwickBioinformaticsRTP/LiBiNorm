@@ -11,11 +11,11 @@ CCC = g++
 CCCALLFLAGS= -std=gnu++11 
 
 # Directory information
-
 BAMTOOLSDIR = bamtools/
 BIOINFORMATICSLIBDIR = bioinformaticsLib/
 MCMCLIBDIR = mcmcLib/
 LIBINORMSRCDIR = LiBiNormSrc/
+
 RELDIR = Release
 DEBUGDIR = Debug
 
@@ -28,20 +28,6 @@ CCCALLFLAGS += -O3
 endif
 
 INCLUDES= -I../$(BAMTOOLSDIR) -I../$(BIOINFORMATICSLIBDIR) -I$(MCMCLIBDIR)
-
-##################################################################
-#
-#	Instructions for building release and debug object files  These are dependant on the Makefile so Makefile changes
-#	force a rebuild.  
-
-$(BUILD)/%.o : %.cpp Makefile
-	$(CCC) -c $(CCCALLFLAGS) $(INCLUDES) -o $@ $<
-
-$(BUILD)/$(BIOINFORMATICSLIBDIR)%.o : ../$(BIOINFORMATICSLIBDIR)%.cpp Makefile
-	$(CCC) -c $(CCCALLFLAGS) $(INCLUDES) -o $@ $<
-
-$(BUILD)/$(BAMTOOLSDIR)%.o : ../$(BAMTOOLSDIR)%.cpp Makefile
-	$(CCC) -c $(CCCALLFLAGS) $(INCLUDES) -Wno-sign-compare -o $@ $<
 
 ################################################################################
 # Outputs of this Makefile
@@ -70,11 +56,16 @@ LIBPATH     =
 
 LIBINORMSRC = LiBiNormSrc/LiBiNorm.cpp
 
-LIBINORMSRCEX = $(addprefix $(LIBINORMSRCDIR), LiBiDedup.cpp LiBiCount.cpp LogLiklihoods.cpp GtfFileEx.cpp transcriptData.cpp Regions.cpp MakeFastq.cpp) 
+LIBINORMSRCEX = $(addprefix $(LIBINORMSRCDIR), \
+	LiBiDedup.cpp LiBiCount.cpp LogLiklihoods.cpp GtfFileEx.cpp \
+	transcriptData.cpp Regions.cpp MakeFastq.cpp) 
+
+MCMCLIBSRC =  $(shell find $(MCMCLIBDIR) -name *.cpp)
 
 BIOLIBSRC = $(shell find ../$(BIOINFORMATICSLIBDIR) -name *.cpp)
-MCMCLIBSRC =  $(shell find $(MCMCLIBDIR) -name *.cpp)
-BAMTOOLSFILES = api/BamAlignment.cpp api/BamReader.cpp api/BamWriter.cpp api/SamHeader.cpp api/SamProgram.cpp api/SamProgramChain.cpp \
+
+BAMTOOLSSRC = $(addprefix ../$(BAMTOOLSDIR), \
+	api/BamAlignment.cpp api/BamReader.cpp api/BamWriter.cpp api/SamHeader.cpp api/SamProgram.cpp api/SamProgramChain.cpp \
     api/SamReadGroup.cpp api/SamReadGroupDictionary.cpp api/SamSequence.cpp api/SamSequenceDictionary.cpp \
     api/BamMultiReader.cpp \
     api/internal/bam/BamHeader_p.cpp api/internal/bam/BamMultiReader_p.cpp api/internal/bam/BamRandomAccessController_p.cpp \
@@ -89,17 +80,11 @@ BAMTOOLSFILES = api/BamAlignment.cpp api/BamReader.cpp api/BamWriter.cpp api/Sam
     api/internal/io/ILocalIODevice_p.cpp api/internal/io/RollingBuffer_p.cpp \
     api/internal/io/TcpSocket_p.cpp api/internal/io/TcpSocketEngine_p.cpp \
     api/internal/io/TcpSocketEngine_unix_p.cpp \
-    toolkit/bamtools_sort.cpp utils/bamtools_options.cpp
-    
-BAMTOOLSSRC = $(addprefix ../$(BAMTOOLSDIR), $(BAMTOOLSFILES) )    
-
+    toolkit/bamtools_sort.cpp utils/bamtools_options.cpp )
        
-COREOBJS :=  $(LIBINORMSRCEX:%.cpp=$(BUILD)/%.o) \
-	$(MCMCLIBSRC:%.cpp=$(BUILD)/%.o) \
-	$(subst ../,,$(BIOLIBSRC:%.cpp=$(BUILD)/%.o) $(BAMTOOLSSRC:%.cpp=$(BUILD)/%.o) ) 
-
-#	SOURCES used in Make depend
-SOURCES = $(LIBINORMSRC) $(MCMCLIBSRC) $(LIBINORMSRCEX)
+COREOBJS :=  $(addprefix $(BUILD)/, \
+		$(LIBINORMSRCEX:%.cpp=%.o) $(MCMCLIBSRC:%.cpp=%.o) \
+		$(subst ../,,$(BIOLIBSRC:%.cpp=%.o) $(BAMTOOLSSRC:%.cpp=%.o) ) ) 
 
 
 ################################################################################
@@ -114,6 +99,20 @@ DIRMARKERS = $(addsuffix .z , $(dir $(COREOBJS) ) )
 	touch $@
 
 
+##################################################################
+#
+#	Instructions for building release and debug object files  These are dependant on the Makefile so Makefile changes
+#	force a rebuild.  
+
+$(BUILD)/%.o : %.cpp Makefile
+	$(CCC) -c $(CCCALLFLAGS) $(INCLUDES) -o $@ $<
+
+$(BUILD)/$(BIOINFORMATICSLIBDIR)%.o : ../$(BIOINFORMATICSLIBDIR)%.cpp Makefile
+	$(CCC) -c $(CCCALLFLAGS) $(INCLUDES) -o $@ $<
+
+$(BUILD)/$(BAMTOOLSDIR)%.o : ../$(BAMTOOLSDIR)%.cpp Makefile
+	$(CCC) -c $(CCCALLFLAGS) $(INCLUDES) -Wno-sign-compare -o $@ $<
+
 ################################################################################
 # The main builds
 
@@ -121,7 +120,7 @@ debug : all
 	
 release : all    
 
-all:  $(DIRMARKERS) $(TARGS)
+all:   $(DIRMARKERS) $(TARGS)
 	@echo "%% $(BUILD) LiBiNorm code built"
 
 #	The final make rule
@@ -142,7 +141,7 @@ clean :
 #	are not in the same directory as the source files
 
 depend :
-	makedepend  -Y $(CCCAALLFLAGS) $(INCLUDES) $(SOURCES) -p'$$(BUILD)/'
+	makedepend  -Y $(CCCAALLFLAGS) $(INCLUDES) $(LIBINORMSRC) $(MCMCLIBSRC) $(LIBINORMSRCEX) -p'$$(BUILD)/'
 	makedepend  -Y -a $(CCCAALLFLAGS) $(INCLUDES) $(BIOLIBSRC) -p'$$(BUILD)/XXZZ/'
 	makedepend  -Y -a $(CCCAALLFLAGS) $(INCLUDES) $(BAMTOOLSSRC) -p'$$(BUILD)/XXZZ/'
 	sed -i -- 's/\/XXZZ\/..//g' Makefile	
