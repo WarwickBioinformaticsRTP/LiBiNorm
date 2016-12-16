@@ -26,7 +26,7 @@
 #endif
 
 //	Enable this to only use the genes that are used by Dan for generating his landscape data
-#define SELECTED_GENES "Y:\\LiBiNorm\\refGeneList3.txt"
+//#define SELECTED_GENES "Y:\\LiBiNorm\\refGeneList3.txt"
 
 //#define MATCH_USING_POSITION
 
@@ -63,8 +63,10 @@ using namespace std;
 int LiBiCount::main(int argc, char **argv)
 {
 
-	stringEx bamFileName,gtfFileName,outputFilename,
+	stringEx bamFileName,gtfFileName,outputFilename,geneListFilename,
 		id_attribute = "gene_id";
+
+	int geneListNo = -1;
 
 	setEx<string> feature_type;
 
@@ -211,6 +213,14 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 			countsFilename = opt2?argv[++ni]+9:argv[++ni];
 			tempDirectory = countsFilename.replaceSuffix("_tempFiles");
 		}
+		else if ((strcmp(argv[ni], "-g") == 0) || (opt2 = (strncmp(argv[ni], "--genes=", 8) == 0)))
+		{
+			geneListFilename = opt2 ? argv[++ni] + 8 : argv[++ni];
+		}
+		else if ((strcmp(argv[ni], "-gN") == 0) || (opt2 = (strncmp(argv[ni], "--Ngenes=", 9) == 0)))
+		{
+			geneListNo = atoi(opt2 ? argv[++ni] + 9 : argv[++ni]);
+		}
 		else if ((strcmp(argv[ni], "-x") == 0) || (opt2 = (strncmp(argv[ni], "--mapRef", 9) == 0)))
 		{
 			mapRef = true;
@@ -308,9 +318,12 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 	if ((countsFilename) && !genomeDef.printEntries(countsFilename.replaceSuffix("_genome.txt")))
 		progMessage("Unable to output genome data to :",countsFilename.replaceSuffix("_genome.txt"));
 
-#ifdef 	SELECTED_GENES
-	genomeDef.useSelectedGenes(SELECTED_GENES);
-#endif
+	if (geneListFilename)
+	{
+		progMessage("Using ", geneListNo==-1?"all":_s(geneListNo).c_str(),"genes from ", geneListFilename);
+		genomeDef.useSelectedGenes(geneListFilename, geneListNo);
+	}
+
 	genomeDef.index(geneCounts);
 
 #ifdef COMPARE_RESULTS

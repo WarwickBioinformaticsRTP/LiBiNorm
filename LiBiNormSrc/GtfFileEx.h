@@ -194,7 +194,7 @@ public:
 
 	void index(geneCountsClass & geneCounts);
 	void outputChromData(const std::string & filename);
-	void useSelectedGenes(const std::string & filename);
+	void useSelectedGenes(const std::string & filename,int geneListNo = -1);
 
 };
 

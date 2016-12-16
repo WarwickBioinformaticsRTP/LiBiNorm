@@ -39,7 +39,7 @@ gtfRegion::~gtfRegion() {
 };
 
 
-void gtfFileEx::useSelectedGenes(const std::string & filename)
+void gtfFileEx::useSelectedGenes(const std::string & filename,int geneListNo)
 {
 	ifstream file;
 	file.open(filename);
@@ -51,13 +51,16 @@ void gtfFileEx::useSelectedGenes(const std::string & filename)
 	}
 
 	string line;
-	while (!file.eof())
+	while (!file.eof()&& (geneListNo != 0))
 	{
 		std::getline(file, line);
 		if (!line.empty())
 			geneSet.emplace(line);
 		if (geneList.empty() || (geneList.back() != line))
+		{
+			geneListNo--;
 			geneList.emplace_back(line);
+		}
 	};
 }
 
