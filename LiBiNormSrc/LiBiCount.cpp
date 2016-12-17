@@ -63,10 +63,8 @@ using namespace std;
 int LiBiCount::main(int argc, char **argv)
 {
 
-	stringEx bamFileName,gtfFileName,outputFilename,geneListFilename,
+	stringEx bamFileName,featureFileName,outputFilename,geneListFilename,
 		id_attribute = "gene_id";
-
-	int geneListNo = -1;
 
 	setEx<string> feature_type;
 
@@ -217,10 +215,6 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 		{
 			geneListFilename = opt2 ? argv[++ni] + 8 : argv[++ni];
 		}
-		else if ((strcmp(argv[ni], "-gN") == 0) || (opt2 = (strncmp(argv[ni], "--Ngenes=", 9) == 0)))
-		{
-			geneListNo = atoi(opt2 ? argv[++ni] + 9 : argv[++ni]);
-		}
 		else if ((strcmp(argv[ni], "-x") == 0) || (opt2 = (strncmp(argv[ni], "--mapRef", 9) == 0)))
 		{
 			mapRef = true;
@@ -233,7 +227,7 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 	}
 
 	bamFileName = argv[argc-2];
-	gtfFileName = argv[argc-1];
+	featureFileName = argv[argc-1];
 
 
 	if (feature_type.size() == 0)
@@ -312,16 +306,16 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 
 	initClock();
 	
-	if (!genomeDef.open(gtfFileName,id_attribute,feature_type, mapRef))
-		exitFail("Could not open gtf file: ",gtfFileName);
+	if (!genomeDef.open(featureFileName,id_attribute,feature_type, mapRef))
+		exitFail("Could not open gtf file: ",featureFileName);
 
 	if ((countsFilename) && !genomeDef.printEntries(countsFilename.replaceSuffix("_genome.txt")))
 		progMessage("Unable to output genome data to :",countsFilename.replaceSuffix("_genome.txt"));
 
 	if (geneListFilename)
 	{
-		progMessage("Using ", geneListNo==-1?"all":_s(geneListNo).c_str(),"genes from ", geneListFilename);
-		genomeDef.useSelectedGenes(geneListFilename, geneListNo);
+		progMessage("Using genes from ", geneListFilename);
+		genomeDef.useSelectedGenes(geneListFilename);
 	}
 
 	genomeDef.index(geneCounts);
@@ -344,7 +338,7 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 	optMessage("GFF file consolidated.");
 	elapsedTime();
 
-	_DBG(genomeDef.outputChromData(gtfFileName.replaceSuffix(".txt"));)
+	_DBG(genomeDef.outputChromData(featureFileName.replaceSuffix(".txt"));)
 
 	if (nameOrder)
 		processNameOrderedBamData();
@@ -476,7 +470,7 @@ struct chromosomeGeneInfo: public map<string,map <string,overlapCounts> >
 };
 
 
-void LiBiCount::addRead(const regionLists & segments,const gtfFileEx & gtfData)
+void LiBiCount::addRead(const regionLists & segments,const featureFileEx & gtfData)
 {
 	if (segments.NH > 1)
 	{

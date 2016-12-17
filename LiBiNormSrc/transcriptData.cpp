@@ -40,7 +40,7 @@ void transcriptDataMap::remove_invalid_values()
 		i.remove_invalid_values();
 }
 
-int transcriptDataMap::loadData(const string filename)
+string transcriptDataMap::loadData(const string filename, int Nlines)
 {
 	std::ifstream f;
 	f.open(filename);
@@ -49,7 +49,8 @@ int transcriptDataMap::loadData(const string filename)
 
 	string buffer,gene,direction;
 	int a = 1;
-	while (!f.eof())
+	string lastGene;
+	while (!f.eof() & (Nlines-- != 0))
 	{
 		//	Need to check for gene and length consistency and that the gene has not appeared before
 		transcriptData tempData;
@@ -64,9 +65,11 @@ int transcriptDataMap::loadData(const string filename)
 
 			a++;
 		}
+		lastGene = tempData.gene;
 	}
 
-	return EXIT_SUCCESS;
+	progMessage("Last gene = ", lastGene);
+	return lastGene;
 }
 
 //	Transfers information for up to maxLength reads from the complete set of read data into

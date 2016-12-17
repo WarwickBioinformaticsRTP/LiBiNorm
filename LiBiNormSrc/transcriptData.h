@@ -37,7 +37,7 @@ public:
 	vector<double> freq;
 
 	void remove_invalid_values();
-	int loadData(const string filename);
+	std::string loadData(const string filename,int Nlines = -1);
 	void histc (const vector<int> E);
 	void transferTo(dataType & mcmcData,size_t maxLength);
 

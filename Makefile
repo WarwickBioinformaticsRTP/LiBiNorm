@@ -57,8 +57,8 @@ LIBPATH     =
 LIBINORMSRC = LiBiNormSrc/LiBiNorm.cpp
 
 LIBINORMSRCEX = $(addprefix $(LIBINORMSRCDIR), \
-	LiBiDedup.cpp LiBiCount.cpp LogLiklihoods.cpp GtfFileEx.cpp \
-	transcriptData.cpp Regions.cpp MakeFastq.cpp) 
+	LiBiDedup.cpp LiBiCount.cpp LogLiklihoods.cpp FeatureFileEx.cpp \
+	transcriptData.cpp Regions.cpp MakeFastq.cpp LiBiConv.cpp) 
 
 MCMCLIBSRC =  $(shell find $(MCMCLIBDIR) -name *.cpp)
 
@@ -158,8 +158,8 @@ $(BUILD)/LiBiNormSrc/LiBiNorm.o: LiBiNormSrc/LiBiNorm.h
 $(BUILD)/LiBiNormSrc/LiBiNorm.o: ../bioinformaticsLib/stringEx.h
 $(BUILD)/LiBiNormSrc/LiBiNorm.o: LiBiNormSrc/transcriptData.h
 $(BUILD)/LiBiNormSrc/LiBiNorm.o: LiBiNormSrc/LiBiCount.h
-$(BUILD)/LiBiNormSrc/LiBiNorm.o: LiBiNormSrc/GtfFileEx.h
-$(BUILD)/LiBiNormSrc/LiBiNorm.o: ../bioinformaticsLib/gtfFile.h
+$(BUILD)/LiBiNormSrc/LiBiNorm.o: LiBiNormSrc/featureFileEx.h
+$(BUILD)/LiBiNormSrc/LiBiNorm.o: ../bioinformaticsLib/FeatureFile.h
 $(BUILD)/LiBiNormSrc/LiBiNorm.o: ../bioinformaticsLib/genbankFile.h
 $(BUILD)/LiBiNormSrc/LiBiNorm.o: LiBiNormSrc/Regions.h
 $(BUILD)/LiBiNormSrc/LiBiNorm.o: ../bamtools/api/BamReader.h
@@ -216,9 +216,9 @@ $(BUILD)/LiBiNormSrc/LiBiDedup.o: ../bioinformaticsLib/printEx.h
 $(BUILD)/LiBiNormSrc/LiBiDedup.o: ../bioinformaticsLib/parser.h
 $(BUILD)/LiBiNormSrc/LiBiCount.o: ../bioinformaticsLib/libCommon.h
 $(BUILD)/LiBiNormSrc/LiBiCount.o: LiBiNormSrc/LiBiCount.h
-$(BUILD)/LiBiNormSrc/LiBiCount.o: LiBiNormSrc/GtfFileEx.h
+$(BUILD)/LiBiNormSrc/LiBiCount.o: LiBiNormSrc/featureFileEx.h
 $(BUILD)/LiBiNormSrc/LiBiCount.o: ../bioinformaticsLib/containerEx.h
-$(BUILD)/LiBiNormSrc/LiBiCount.o: ../bioinformaticsLib/gtfFile.h
+$(BUILD)/LiBiNormSrc/LiBiCount.o: ../bioinformaticsLib/FeatureFile.h
 $(BUILD)/LiBiNormSrc/LiBiCount.o: ../bioinformaticsLib/genbankFile.h
 $(BUILD)/LiBiNormSrc/LiBiCount.o: ../bioinformaticsLib/stringEx.h
 $(BUILD)/LiBiNormSrc/LiBiCount.o: ../bioinformaticsLib/inQuotes.h
@@ -248,29 +248,6 @@ $(BUILD)/LiBiNormSrc/LogLiklihoods.o: ../bioinformaticsLib/printEx.h
 $(BUILD)/LiBiNormSrc/LogLiklihoods.o: ../bioinformaticsLib/inQuotes.h
 $(BUILD)/LiBiNormSrc/LogLiklihoods.o: mcmcLib/params.h
 $(BUILD)/LiBiNormSrc/LogLiklihoods.o: ../bioinformaticsLib/containerEx.h
-$(BUILD)/LiBiNormSrc/GtfFileEx.o: LiBiNormSrc/GtfFileEx.h
-$(BUILD)/LiBiNormSrc/GtfFileEx.o: ../bioinformaticsLib/containerEx.h
-$(BUILD)/LiBiNormSrc/GtfFileEx.o: ../bioinformaticsLib/libCommon.h
-$(BUILD)/LiBiNormSrc/GtfFileEx.o: ../bioinformaticsLib/gtfFile.h
-$(BUILD)/LiBiNormSrc/GtfFileEx.o: ../bioinformaticsLib/genbankFile.h
-$(BUILD)/LiBiNormSrc/GtfFileEx.o: ../bioinformaticsLib/stringEx.h
-$(BUILD)/LiBiNormSrc/GtfFileEx.o: ../bioinformaticsLib/inQuotes.h
-$(BUILD)/LiBiNormSrc/GtfFileEx.o: ../bioinformaticsLib/printEx.h
-$(BUILD)/LiBiNormSrc/GtfFileEx.o: LiBiNormSrc/Regions.h
-$(BUILD)/LiBiNormSrc/GtfFileEx.o: ../bamtools/api/BamReader.h
-$(BUILD)/LiBiNormSrc/GtfFileEx.o: ../bamtools/api/api_global.h
-$(BUILD)/LiBiNormSrc/GtfFileEx.o: ../bamtools/shared/bamtools_global.h
-$(BUILD)/LiBiNormSrc/GtfFileEx.o: ../bamtools/api/BamAlignment.h
-$(BUILD)/LiBiNormSrc/GtfFileEx.o: ../bamtools/api/BamAux.h
-$(BUILD)/LiBiNormSrc/GtfFileEx.o: ../bamtools/api/BamConstants.h
-$(BUILD)/LiBiNormSrc/GtfFileEx.o: ../bamtools/api/BamIndex.h
-$(BUILD)/LiBiNormSrc/GtfFileEx.o: ../bamtools/api/SamHeader.h
-$(BUILD)/LiBiNormSrc/GtfFileEx.o: ../bamtools/api/SamProgramChain.h
-$(BUILD)/LiBiNormSrc/GtfFileEx.o: ../bamtools/api/SamProgram.h
-$(BUILD)/LiBiNormSrc/GtfFileEx.o: ../bamtools/api/SamReadGroupDictionary.h
-$(BUILD)/LiBiNormSrc/GtfFileEx.o: ../bamtools/api/SamReadGroup.h
-$(BUILD)/LiBiNormSrc/GtfFileEx.o: ../bamtools/api/SamSequenceDictionary.h
-$(BUILD)/LiBiNormSrc/GtfFileEx.o: ../bamtools/api/SamSequence.h
 $(BUILD)/LiBiNormSrc/transcriptData.o: ../bioinformaticsLib/parser.h
 $(BUILD)/LiBiNormSrc/transcriptData.o: ../bioinformaticsLib/libCommon.h
 $(BUILD)/LiBiNormSrc/transcriptData.o: ../bioinformaticsLib/containerEx.h
@@ -326,6 +303,14 @@ $(BUILD)/bioinformaticsLib/fastaFile.o: ../bioinformaticsLib/inQuotes.h
 $(BUILD)/bioinformaticsLib/fastaFile.o: ../bioinformaticsLib/parser.h
 $(BUILD)/bioinformaticsLib/fastaFile.o: ../bioinformaticsLib/libCommon.h
 $(BUILD)/bioinformaticsLib/fastaFile.o: ../bioinformaticsLib/fastaFile.h
+$(BUILD)/bioinformaticsLib/featureFile.o: ../bioinformaticsLib/stringEx.h
+$(BUILD)/bioinformaticsLib/featureFile.o: ../bioinformaticsLib/inQuotes.h
+$(BUILD)/bioinformaticsLib/featureFile.o: ../bioinformaticsLib/featureFile.h
+$(BUILD)/bioinformaticsLib/featureFile.o: ../bioinformaticsLib/genbankFile.h
+$(BUILD)/bioinformaticsLib/featureFile.o: ../bioinformaticsLib/containerEx.h
+$(BUILD)/bioinformaticsLib/featureFile.o: ../bioinformaticsLib/printEx.h
+$(BUILD)/bioinformaticsLib/featureFile.o: ../bioinformaticsLib/parser.h
+$(BUILD)/bioinformaticsLib/featureFile.o: ../bioinformaticsLib/libCommon.h
 $(BUILD)/bioinformaticsLib/genbankFile.o: ../bioinformaticsLib/libCommon.h
 $(BUILD)/bioinformaticsLib/genbankFile.o: ../bioinformaticsLib/genbankFile.h
 $(BUILD)/bioinformaticsLib/genbankFile.o: ../bioinformaticsLib/containerEx.h
@@ -339,14 +324,6 @@ $(BUILD)/bioinformaticsLib/genomicPosition.o: ../bioinformaticsLib/genomicPositi
 $(BUILD)/bioinformaticsLib/genomicPosition.o: ../bioinformaticsLib/parser.h
 $(BUILD)/bioinformaticsLib/genomicPosition.o: ../bioinformaticsLib/libCommon.h
 $(BUILD)/bioinformaticsLib/genomicPosition.o: ../bioinformaticsLib/printEx.h
-$(BUILD)/bioinformaticsLib/gtfFile.o: ../bioinformaticsLib/stringEx.h
-$(BUILD)/bioinformaticsLib/gtfFile.o: ../bioinformaticsLib/inQuotes.h
-$(BUILD)/bioinformaticsLib/gtfFile.o: ../bioinformaticsLib/gtfFile.h
-$(BUILD)/bioinformaticsLib/gtfFile.o: ../bioinformaticsLib/genbankFile.h
-$(BUILD)/bioinformaticsLib/gtfFile.o: ../bioinformaticsLib/containerEx.h
-$(BUILD)/bioinformaticsLib/gtfFile.o: ../bioinformaticsLib/printEx.h
-$(BUILD)/bioinformaticsLib/gtfFile.o: ../bioinformaticsLib/parser.h
-$(BUILD)/bioinformaticsLib/gtfFile.o: ../bioinformaticsLib/libCommon.h
 $(BUILD)/bioinformaticsLib/parser.o: ../bioinformaticsLib/libCommon.h
 $(BUILD)/bioinformaticsLib/parser.o: ../bioinformaticsLib/parser.h
 $(BUILD)/bioinformaticsLib/printEx.o: ../bioinformaticsLib/printEx.h

@@ -30,13 +30,16 @@
     <ClCompile Include="Regions.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="GtfFileEx.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="LiBiDedup.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="MakeFastq.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="LiBiConv.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="FeatureFileEx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -56,13 +59,16 @@
     <ClInclude Include="Regions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="GtfFileEx.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="LiBiDedup.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="MakeFastq.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LiBiConv.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="featureFileEx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

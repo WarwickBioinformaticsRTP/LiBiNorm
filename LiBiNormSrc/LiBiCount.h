@@ -1,7 +1,7 @@
 #ifndef LIBICOUNT_H
 #define LIBICOUNT_H
 
-#include "GtfFileEx.h"
+#include "featureFileEx.h"
 
 using namespace BamTools;
 
@@ -30,7 +30,7 @@ public:
 
 	geneCountsClass geneCounts;
 
-	gtfFileEx genomeDef;
+	featureFileEx genomeDef;
 
 	BamReader reader;
 	RefVector references;
@@ -47,7 +47,7 @@ public:
 	bool outputGeneCounts(const std::string & filename);
 	bool outputRNApositions(const stringEx & filename);
 	
-	void addRead(const regionLists & segments,const gtfFileEx & gtfData);
+	void addRead(const regionLists & segments,const featureFileEx & gtfData);
 
 	void fileCompare(int argc, char **argv);
 

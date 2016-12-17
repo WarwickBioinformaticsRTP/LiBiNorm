@@ -1,5 +1,5 @@
 #include <algorithm>
-#include "GtfFileEx.h"
+#include "featureFileEx.h"
 
 
 using namespace std;
@@ -39,7 +39,7 @@ gtfRegion::~gtfRegion() {
 };
 
 
-void gtfFileEx::useSelectedGenes(const std::string & filename,int geneListNo)
+void featureFileEx::useSelectedGenes(const std::string & filename)
 {
 	ifstream file;
 	file.open(filename);
@@ -51,14 +51,13 @@ void gtfFileEx::useSelectedGenes(const std::string & filename,int geneListNo)
 	}
 
 	string line;
-	while (!file.eof()&& (geneListNo != 0))
+	while (!file.eof())
 	{
 		std::getline(file, line);
 		if (!line.empty())
 			geneSet.emplace(line);
 		if (geneList.empty() || (geneList.back() != line))
 		{
-			geneListNo--;
 			geneList.emplace_back(line);
 		}
 	};
@@ -67,7 +66,7 @@ void gtfFileEx::useSelectedGenes(const std::string & filename,int geneListNo)
 
 
 
-void gtfFileEx::index(geneCountsClass & geneCounts)
+void featureFileEx::index(geneCountsClass & geneCounts)
 {
 	for (auto & chrom : entryMap)
 	{
@@ -174,7 +173,7 @@ void gtfFileEx::index(geneCountsClass & geneCounts)
 
 }
 
-void gtfFileEx::outputChromData(const string & filename)
+void featureFileEx::outputChromData(const string & filename)
 {
 	TsvFile output;
 	output.open(filename);

@@ -16,6 +16,7 @@
 #include "LiBiNorm.h"
 #include "LiBiCount.h"
 #include "LiBiDedup.h"
+#include "LiBiConv.h"
 #include "MakeFastq.h"
 
 using namespace std;
@@ -46,6 +47,7 @@ int main(int argc, char **argv)
 		printf("Commands:\n");	
 		printf("     count            htseq-count replacement\n");
 		printf("     dedup            removes duplicates\n");
+		printf("     conv	          renames chromosomes in a .gff3 file to match those in a bam file\n");
 		printf("     makefastq        makes a fastq file from the bam file\n");
 	}
 	else if (argc > 1)
@@ -70,6 +72,11 @@ int main(int argc, char **argv)
 		{
 			LiBiNorm norm;
 			return norm.main(argc-1,argv+1);
+		}
+		else if (command == "conv")
+		{
+			LiBiConv conv;
+			return conv.main(argc - 1, argv + 1);
 		}
 		if (command == "--version")
 		{
@@ -234,6 +241,7 @@ int LiBiNorm::main(int argc, char **argv)
 	size_t maxModel = 6;
 	size_t Nruns = 100;
 	size_t Nsimu = 2000;
+	size_t condFileN = -1;
 
 	initClock();
 	if(argc < 1)
@@ -280,6 +288,11 @@ int LiBiNorm::main(int argc, char **argv)
 			if (!outputFileName)
 				outputFileName = consFileName;
 		}
+		else if (strcmp(argv[ni], "-cN") == 0)
+		{
+			condFileN = atoi(argv[++ni]) * 10;
+			outputFileName = consFileName.removeSuffix() + _s(condFileN) + ".txt";
+		}
 		else if (strcmp(argv[ni], "-o") == 0)
 		{
 			outputFileName = argv[++ni];
@@ -322,7 +335,7 @@ int LiBiNorm::main(int argc, char **argv)
 
 
 
-	transData.loadData(consFileName);
+	string lastGene = transData.loadData(consFileName, condFileN);
 	transData.remove_invalid_values();
 	transData.transferTo(consData,100);
 	
@@ -615,7 +628,7 @@ int LiBiNorm::main(int argc, char **argv)
 
 	//	First headers up to and including the maximum model that is run.   Always leave space
 	//	for the intermediate models so the layout of the results is consistent
-	mcmcResult.printStart("");
+	mcmcResult.printStart(lastGene);
 	for (size_t m = 1; m <= maxModel; m++)
 		mcmcResult.printMiddle(headers[m], "chain", "");
 	mcmcResult.printEnd();

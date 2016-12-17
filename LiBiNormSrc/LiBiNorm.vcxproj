@@ -111,7 +111,8 @@
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="GtfFileEx.cpp" />
+    <ClCompile Include="FeatureFileEx.cpp" />
+    <ClCompile Include="LiBiConv.cpp" />
     <ClCompile Include="LiBiCount.cpp" />
     <ClCompile Include="LiBiDedup.cpp" />
     <ClCompile Include="LiBiNorm.cpp" />
@@ -121,7 +122,8 @@
     <ClCompile Include="transcriptData.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="GtfFileEx.h" />
+    <ClInclude Include="featureFileEx.h" />
+    <ClInclude Include="LiBiConv.h" />
     <ClInclude Include="LiBiCount.h" />
     <ClInclude Include="LiBiDedup.h" />
     <ClInclude Include="LiBiNorm.h" />

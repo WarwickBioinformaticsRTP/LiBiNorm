@@ -1,10 +1,10 @@
 
-#ifndef GTFFILEEX_H
-#define GTFFILEEX_H
+#ifndef FEATURE_FILE_EX_HEADER
+#define FEATURE_FILE_EX_HEADER
 
 #include "containerEx.h"
 #include "libCommon.h"
-#include "gtfFile.h"
+#include "FeatureFile.h"
 #include "Regions.h"
 
 class gtfRegion;
@@ -176,7 +176,7 @@ public:
 };
 
 
-class gtfFileEx : public gtfFile
+class featureFileEx : public featureFile
 {
 public: 
 	//	A container of all teh consolidated gtf regions
@@ -194,7 +194,7 @@ public:
 
 	void index(geneCountsClass & geneCounts);
 	void outputChromData(const std::string & filename);
-	void useSelectedGenes(const std::string & filename,int geneListNo = -1);
+	void useSelectedGenes(const std::string & filename);
 
 };
 
