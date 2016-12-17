@@ -11,19 +11,19 @@ using namespace std;
 class transcriptData
 {
 public:
-	vector<dataVec > counts;
+	vector<dataVec > positions;
 	int length;
 	std::string gene;
 	int histoGram_ind;
-	transcriptData(): counts(2),length(0) {	};
+	transcriptData(): positions(2),length(0) {	};
 
-	transcriptData(transcriptData && a) : counts(move(a.counts)),length(a.length),gene(a.gene)
+	transcriptData(transcriptData && a) : positions(move(a.positions)),length(a.length),gene(a.gene)
 	{
 	};
 
 	void remove_invalid_values()
 	{
-		for (auto & i : counts)
+		for (auto & i : positions)
 			i.removeInvalidValues(length);
 	}
 

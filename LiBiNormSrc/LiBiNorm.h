@@ -8,6 +8,18 @@ extern bool verbose;
 
 //#define STORE_ENDPOINTS
 
+struct bestResult
+{
+	bestResult() :minLL(DBL_MAX), minLL_dev(0), run(0), pos(0) {};
+	VEC_DATA_TYPE minLL, minLL_dev;
+	size_t run, pos;
+	dataVec params;
+	vector<dataVec> param_dev;
+	dataVec norm;
+	operator bool() const { return params.size(); };
+};
+
+
 class LiBiNorm
 {
 public:
@@ -15,6 +27,7 @@ public:
 
 	void mcmcThread(paramSet params, optionsType options, modelType model);
 	int main(int argc, char **argv);
+	bool core(size_t Nthreads,size_t maxModel, size_t minModel,size_t Nruns,size_t Nsimu);
 
 private:
 	stringEx consFileName,outputFileName;
@@ -43,6 +56,11 @@ private:
 
 	//	Counts of the number of loops of each model
 	map<size_t,int> threadLoopCounts;
+
+	//	The results data
+	map<size_t, multimap <double, dataVec *> > allOrderedResults;
+	map<size_t, bestResult> bestResults;
+
 
 };
 

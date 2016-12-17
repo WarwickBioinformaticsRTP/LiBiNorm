@@ -137,8 +137,9 @@ clean :
 #	do make depend to update dependancies.  This makes a dependancy list that is dynamically dependant 
 #	on the build type.  There are three make depends, one for all of the sources within this directory (SOURCES)
 #	and one for the sources that are in other library directories (BIOLIBSRC & BAMTOOLSSRC)
-#	The dummy X/ that is prefixed is part of the proxess of dealing with the fact that the object files
-#	are not in the same directory as the source files
+#	The dummy /XXZZ/ that is prefixed is part of the proxess of dealing with the fact that the object files
+#	are not in the same directory as the source files.  The dependancies work without removing the /XXZZ/.. 
+#   but it looks neater if they are removed.
 
 depend :
 	makedepend  -Y $(CCCAALLFLAGS) $(INCLUDES) $(LIBINORMSRC) $(MCMCLIBSRC) $(LIBINORMSRCEX) -p'$$(BUILD)/'

@@ -1,4 +1,5 @@
 #include <algorithm>
+#include "parser.h"
 #include "featureFileEx.h"
 
 
@@ -50,15 +51,16 @@ void featureFileEx::useSelectedGenes(const std::string & filename)
 		return;
 	}
 
-	string line;
+	string line,gene;
 	while (!file.eof())
 	{
 		std::getline(file, line);
-		if (!line.empty())
-			geneSet.emplace(line);
-		if (geneList.empty() || (geneList.back() != line))
+		parser(line, " \n\r", line, gene);
+		if (!gene.empty())
+			geneSet.emplace(gene);
+		if (geneList.empty() || (geneList.back() != gene))
 		{
-			geneList.emplace_back(line);
+			geneList.emplace_back(gene);
 		}
 	};
 }

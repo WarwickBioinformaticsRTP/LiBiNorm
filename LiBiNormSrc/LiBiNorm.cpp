@@ -80,7 +80,7 @@ int main(int argc, char **argv)
 		}
 		if (command == "--version")
 		{
-			cout << "LiBiNorm version 1.0.2" << endl;
+			cout << "LiBiNorm version 1.0.3" << endl;
 			return EXIT_SUCCESS;
 		}
 		else
@@ -236,8 +236,8 @@ void runThread(LiBiNorm * root,	paramSet params, optionsType options, modelType 
 int LiBiNorm::main(int argc, char **argv)
 {
 
-	size_t Nthreads = 1;
 	size_t minModel = 1;
+	size_t Nthreads = 1;
 	size_t maxModel = 6;
 	size_t Nruns = 100;
 	size_t Nsimu = 2000;
@@ -290,7 +290,7 @@ int LiBiNorm::main(int argc, char **argv)
 		}
 		else if (strcmp(argv[ni], "-cN") == 0)
 		{
-			condFileN = atoi(argv[++ni]) * 10;
+			condFileN = atoi(argv[++ni]);
 			outputFileName = consFileName.removeSuffix() + _s(condFileN) + ".txt";
 		}
 		else if (strcmp(argv[ni], "-o") == 0)
@@ -336,6 +336,9 @@ int LiBiNorm::main(int argc, char **argv)
 
 
 	string lastGene = transData.loadData(consFileName, condFileN);
+	core(Nthreads, maxModel, minModel, Nruns, Nsimu);
+
+	/*
 	transData.remove_invalid_values();
 	transData.transferTo(consData,100);
 	
@@ -401,21 +404,7 @@ int LiBiNorm::main(int argc, char **argv)
 		i.join();
 
 
-	struct bestResult
-	{
-		bestResult() :minLL(DBL_MAX), minLL_dev(0), run(0), pos(0) {};
-		VEC_DATA_TYPE minLL, minLL_dev;
-		size_t run, pos;
-		dataVec params;
-		vector<dataVec> param_dev;
-		dataVec norm;
-		operator bool() const { return params.size(); };
-	};
-
-	map<size_t, bestResult> bestResults;
-
-
-	/*
+#ifdef XXXX
 		Unfinished code for 
 	vector<int> geneL{ 500,1000,2000,4000,8000 };
 	dataVec TotalReads;
@@ -428,14 +417,12 @@ int LiBiNorm::main(int argc, char **argv)
 				TotalReads.append(transData[j].counts[0]/ transData[j].length);
 		}
 	}
-	*/
+#endif
 
 
-	//********************************************************************************************
+	// ********************************************************************************************
 	//	Find the optimal parameter values, which are associated with the lowest likelyhood value found in the last 
 	//	1000 iterations of all of the runs.
-
-	map<size_t, multimap <double, dataVec *> > allOrderedResults;
 
 	for (size_t m = 1; m <= maxModel; m++)
 	{
@@ -460,7 +447,7 @@ int LiBiNorm::main(int argc, char **argv)
 		}
 	}
 
-	//******************************************************************************************
+	// ******************************************************************************************
 	//	And then find the standard deviation
 	for (size_t m = 1; m <= maxModel; m++)
 	{
@@ -500,7 +487,7 @@ int LiBiNorm::main(int argc, char **argv)
 	}
 
 #endif
-
+*/
 	dataVec l;
 	for (size_t i = 100; i <= 10000; i += 100)
 		l.push_back(i);
@@ -657,7 +644,7 @@ int LiBiNorm::main(int argc, char **argv)
 		mcmcResult.printEnd();
 	}
 	//	The number of rows is set by the maximum number of runs, which may be for one or all models
-	for (size_t i = 1; i <= options.Nruns; i++)
+	for (size_t i = 1; i <= Nruns; i++)
 	{
 		mcmcResult.printStart(_s("Chain end ",i));
 		for (size_t m = 1; m <= maxModel; m++)
@@ -777,5 +764,157 @@ int LiBiNorm::main(int argc, char **argv)
 	return EXIT_SUCCESS;
 }
 
+bool LiBiNorm::core(size_t Nthreads, size_t maxModel, size_t minModel,size_t Nruns, size_t Nsimu)
+{
 
+	transData.remove_invalid_values();
+	transData.transferTo(consData, 100);
+
+	cerr << "Data loaded" << endl;
+	elapsedTime();
+
+
+	string method = "mh";
+
+	paramSet params;
+	optionsType options;
+	modelType model;
+
+	options.jumpSize = 0.01;
+	options.nsimu = Nsimu;
+	options.Nruns = Nruns;
+
+#ifdef _DEBUG
+	//	options.Nruns = 6;
+	//	options.nsimu = 100;
+#else
+	//	size_t Nruns = 100;
+#endif
+
+//	double drscale  = 0;
+//	double adaptint = 0;
+
+	options.updatesigma = 0;
+
+	options.method = method;
+
+	model.sigma2 = 1;
+#ifdef STORE_ENDPOINTS
+	SSChain.resize(maxModel + 1);
+	Chain.resize(maxModel + 1);
+#endif
+
+	fullResultSSChain.resize(maxModel + 1);
+	fullResultChain.resize(maxModel + 1);
+
+	RejectionRate.resize(maxModel + 1);
+
+	//	Set the number of iterations required of each of the models.
+	for (size_t m = 1; m < maxModel + 1; m++)
+	{
+		if (m >= minModel)
+			threadLoopCounts[m] = options.Nruns;
+		else
+			threadLoopCounts[m] = singleModel ? 0 : 1;
+	}
+
+
+#ifdef FIXED_RESULTS
+	maxModel = M_FIXED_RESULTS;
+	bestResults[maxModel].params = dataVec{ FIXED_RESULTS };
+#else
+	//	And then set the threads running
+	vector<thread> threads;
+	for (size_t i = 0; i < Nthreads; i++)
+		threads.emplace_back(thread(runThread, this, params, options, model));
+
+	for (auto & i : threads)
+		i.join();
+
+
+#ifdef XXXX
+	Unfinished code for
+		vector<int> geneL{ 500,1000,2000,4000,8000 };
+	dataVec TotalReads;
+
+	for (size_t i = 0; i < geneL.size(); i++)
+	{
+		for (size_t j = 0; j < transData.size(); j++)
+		{
+			if (abs(transData[j].length - geneL[i]) < (0.1 * geneL[i]))
+				TotalReads.append(transData[j].counts[0] / transData[j].length);
+		}
+	}
+#endif
+
+
+	//********************************************************************************************
+	//	Find the optimal parameter values, which are associated with the lowest likelyhood value found in the last 
+	//	1000 iterations of all of the runs.
+
+	for (size_t m = 1; m <= maxModel; m++)
+	{
+		multimap <double, dataVec *> & orderedResults = allOrderedResults[m];
+
+		bestResult & br = bestResults[m];
+		for (size_t i = 1; i <= fullResultSSChain[m].size(); i++)
+		{
+			for (size_t j = fullResultSSChain[m][i].size() - 1; j > fullResultSSChain[m][i].size() / 2; j--)
+			{
+				if (outputConsolidated)
+					orderedResults.emplace(fullResultSSChain[m][i][j], &fullResultChain[m][i][j]);
+
+				if (fullResultSSChain[m][i][j] < br.minLL)
+				{
+					br.minLL = fullResultSSChain[m][i][j];
+					br.params = fullResultChain[m][i][j];
+					br.run = i;
+					br.pos = j;
+				}
+			}
+		}
+	}
+
+	//******************************************************************************************
+	//	And then find the standard deviation
+	for (size_t m = 1; m <= maxModel; m++)
+	{
+		bestResult & br = bestResults[m];
+		VEC_DATA_TYPE LL_dev = 0;
+		size_t size = br.params.size();
+		vector<dataVec> param_dev(2, dataVec(size));
+		vector<dataVec> p_N(2, dataVec(size));
+		int N = 0;
+
+		for (size_t i = 1; i <= fullResultSSChain[m].size(); i++)
+		{
+			for (size_t j = fullResultSSChain[m][i].size() - 1; j > fullResultSSChain[m][i].size() / 2; j--)
+			{
+				N++;
+				VEC_DATA_TYPE diff = fullResultSSChain[m][i][j] - br.minLL;
+				LL_dev += (diff * diff);
+				for (size_t k = 0; k < size; k++)
+				{
+					VEC_DATA_TYPE diff = fullResultChain[m][i][j][k] - br.params[k];
+					if (diff >= 0)
+					{
+						param_dev[0][k] += (diff * diff);
+						p_N[0][k]++;
+					}
+					else
+					{
+						param_dev[1][k] += (diff * diff);
+						p_N[1][k]++;
+					}
+				}
+			}
+		}
+		br.minLL_dev = sqrt(LL_dev / N);
+		br.param_dev.emplace_back(sqrt(param_dev[0] / p_N[0]));
+		br.param_dev.emplace_back(sqrt(param_dev[1] / p_N[1]));
+	}
+#endif
+
+	return true;
+}
 

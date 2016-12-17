@@ -6,6 +6,8 @@
 #include "containerEx.h"
 #include "transcriptData.h"
 
+//	Find the number of values in 'this' which is a vector that sits within each bin of the
+//	histogram defined by E.   The results go into the 'freq'vector
 void transcriptDataMap::histc (const vector<int> E)
 {
 	freq.assign (E.size(),0);
@@ -58,9 +60,9 @@ string transcriptDataMap::loadData(const string filename, int Nlines)
 		getline(f,buffer);
 		if (buffer.size())
 		{
-			parseTsv(buffer,tempData.gene,tempData.length," ",direction,tempData.counts[0].values());
+			parseTsv(buffer,tempData.gene,tempData.length," ",direction,tempData.positions[0].values());
 			getline(f,buffer);
-			parseTsv(buffer,tempData.gene,tempData.length," ",direction,tempData.counts[1].values());
+			parseTsv(buffer,tempData.gene,tempData.length," ",direction,tempData.positions[1].values());
 			push_back(move(tempData));
 
 			a++;
@@ -101,13 +103,15 @@ void transcriptDataMap::transferTo(dataType & mcmcData,size_t maxLength)
 
 	for (auto & gene : *this)
 	{
-		for (auto & counts : gene.counts)
+		//	For the forward and the reverse counts
+		for (auto & positions : gene.positions)
 		{
-			counts.selectAtMost(maxLength);
+			positions.selectAtMost(maxLength);
 
-			mcmcData.fragData.append(counts);
+			//	fragData contains the count 
+			mcmcData.fragData.append(positions);
 
-			mcmcData.geneIndex.insert(mcmcData.geneIndex.end(),counts.size(),geneIndex);//gene.length);
+			mcmcData.geneIndex.insert(mcmcData.geneIndex.end(), positions.size(),geneIndex);//gene.length);
 		}
 		mcmcData.geneData[0][geneIndex] = gene.length;
 		mcmcData.geneData[1][geneIndex] = freq[gene.histoGram_ind];

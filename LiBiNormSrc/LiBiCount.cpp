@@ -20,13 +20,15 @@
 #include "parser.h"
 #include "transcriptData.h"
 
-//	Test code: Compare lengths calculated from the gff file with the lengths in the original landscape file
 #ifndef _DEBUG
+
+//	Test code: Compare lengths calculated from the gff file with the lengths in the original landscape file
 //#define COMPARE_RESULTS "Y:\\LiBiNorm\\SRR557798\\SRR557798.NoA.plus.minus"
+
+//  Output detailed results of interpreting the Feature file
+//#define OUTPUT_FEATURE_DATA
 #endif
 
-//	Enable this to only use the genes that are used by Dan for generating his landscape data
-//#define SELECTED_GENES "Y:\\LiBiNorm\\refGeneList3.txt"
 
 //#define MATCH_USING_POSITION
 
@@ -75,8 +77,8 @@ int LiBiCount::main(int argc, char **argv)
 	minqual = 10;
 	nameOrder = true;
 	countMode = intersect_union;
+	bool normalise = false;
 	maxCacheSize = READ_CACHE_SIZE;
-	bool mapRef = false;
 
 	if(argc < 1)
 	{
@@ -117,11 +119,10 @@ printf("                        suitable for Ensembl GTF files: gene_id)\n");
 printf("  -m MODE, --mode=MODE  mode to handle reads overlapping more than one feature\n");
 printf("                        (choices: union, intersection-strict, intersection-\n");
 printf("                        nonempty; default: union)\n");
-printf("  -c COUNTS, --counts=COUNT\n");
+printf("  -c filename, --counts=filename\n");
 printf("                        Name of output file. default: writes to stdout)\n");
-printf("  -x --mapRef\n");
-printf("                        Creates a new version of the gff file with the chromosome names\n"); 
-printf("                        mapped to the names in the bam file\n");
+printf("  -l filename, --landscape=filename\n");
+printf("                        Name of output file. default: writes to stdout)\n");
 //printf("  -o SAMOUT, --samout=SAMOUT\n");
 //printf("                        write out all SAM alignment records into an output SAM\n");
 //printf("                        file called SAMOUT, annotating each line with its\n");
@@ -211,13 +212,17 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 			countsFilename = opt2?argv[++ni]+9:argv[++ni];
 			tempDirectory = countsFilename.replaceSuffix("_tempFiles");
 		}
+		else if ((strcmp(argv[ni], "-n") == 0) || (opt2 = (strncmp(argv[ni], "--normalise", 11) == 0)))
+		{
+			normalise = true;
+		}
+		else if ((strcmp(argv[ni], "-l") == 0) || (opt2 = (strncmp(argv[ni], "--landscape=", 12) == 0)))
+		{
+			landscapeFilename = opt2 ? argv[++ni] + 12 : argv[++ni];
+		}
 		else if ((strcmp(argv[ni], "-g") == 0) || (opt2 = (strncmp(argv[ni], "--genes=", 8) == 0)))
 		{
 			geneListFilename = opt2 ? argv[++ni] + 8 : argv[++ni];
-		}
-		else if ((strcmp(argv[ni], "-x") == 0) || (opt2 = (strncmp(argv[ni], "--mapRef", 9) == 0)))
-		{
-			mapRef = true;
 		}
 		else
 		{
@@ -306,15 +311,17 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 
 	initClock();
 	
-	if (!genomeDef.open(featureFileName,id_attribute,feature_type, mapRef))
+	if (!genomeDef.open(featureFileName,id_attribute,feature_type))
 		exitFail("Could not open gtf file: ",featureFileName);
 
-	if ((countsFilename) && !genomeDef.printEntries(countsFilename.replaceSuffix("_genome.txt")))
+#ifdef	OUTPUT_FEATURE_DATA
+		if ((countsFilename) && !genomeDef.printEntries(countsFilename.replaceSuffix("_genome.txt")))
 		progMessage("Unable to output genome data to :",countsFilename.replaceSuffix("_genome.txt"));
+#endif
 
 	if (geneListFilename)
 	{
-		progMessage("Using genes from ", geneListFilename);
+		progMessage("Using genes/transcripts listed in ", geneListFilename);
 		genomeDef.useSelectedGenes(geneListFilename);
 	}
 
@@ -345,12 +352,16 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 	else
 		processPositionOrderedBamData();
 
+	if (normalise)
+	{
+
+	}
+
 	if(!outputGeneCounts(countsFilename))
 		exitFail("Unable to output counts to :",countsFilename);
 
-
-	if ((countsFilename) && !outputRNApositions(countsFilename.replaceSuffix("_positions.txt")))
-		progMessage("Unable to output RNA positions to :",countsFilename.replaceSuffix("_positions.txt"));
+	if ((landscapeFilename) && !outputRNApositions(landscapeFilename))
+		progMessage("Unable to output RNA positions to :", landscapeFilename);
 
 	if (verbose)
 		elapsedTime();

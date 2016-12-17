@@ -26,7 +26,7 @@ class LiBiCount
 public:
 	bool useStrand,reverseStrand,htSeqCompatible,nameOrder;
 	mode countMode;
-	stringEx outputFilename,countsFilename,tempDirectory;
+	stringEx outputFilename,countsFilename,landscapeFilename,tempDirectory;
 
 	geneCountsClass geneCounts;
 

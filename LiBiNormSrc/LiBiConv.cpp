@@ -13,7 +13,7 @@ int LiBiConv::main(int argc, char **argv)
 
 	stringEx bamFileName, featureFileName;
 	featureFileEx genomeDef;
-
+	verbose = true;
 
 	if (argc < 1)
 	{
@@ -28,14 +28,13 @@ int LiBiConv::main(int argc, char **argv)
 		printf("used for the chromosomes in the bam file\n");
 		return EXIT_SUCCESS;
 	}
-
-	int ni = 1;
-
 	if (argc < 3)
 		exitFail("Insufficient arguments");
 
 	bamFileName = argv[argc - 2];
 	featureFileName = argv[argc - 1];
+
+	progMessage("Converting ", featureFileName);
 
 	BamReader reader;
 	RefVector references;
