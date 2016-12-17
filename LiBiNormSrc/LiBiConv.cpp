@@ -2,7 +2,7 @@
 #include "api/BamReader.h"
 #include "libCommon.h"
 #include "LiBiConv.h"
-#include "featureFileEx.h"
+#include "FeatureFileEx.h"
 
 using namespace std;
 using namespace BamTools;

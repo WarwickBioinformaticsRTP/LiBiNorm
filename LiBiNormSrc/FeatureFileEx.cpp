@@ -1,6 +1,6 @@
 #include <algorithm>
 #include "parser.h"
-#include "featureFileEx.h"
+#include "FeatureFileEx.h"
 
 
 using namespace std;

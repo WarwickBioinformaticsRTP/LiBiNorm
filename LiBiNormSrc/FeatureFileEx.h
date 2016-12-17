@@ -4,7 +4,7 @@
 
 #include "containerEx.h"
 #include "libCommon.h"
-#include "FeatureFile.h"
+#include "featureFile.h"
 #include "Regions.h"
 
 class gtfRegion;

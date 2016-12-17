@@ -1,7 +1,7 @@
 #ifndef LIBICOUNT_H
 #define LIBICOUNT_H
 
-#include "featureFileEx.h"
+#include "FeatureFileEx.h"
 
 using namespace BamTools;
 
