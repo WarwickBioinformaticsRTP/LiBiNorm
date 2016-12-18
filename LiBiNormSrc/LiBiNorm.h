@@ -3,35 +3,29 @@
 
 #include "stringEx.h"
 #include "transcriptData.h"
-
-extern bool verbose;
-
-//#define STORE_ENDPOINTS
-
-struct bestResult
-{
-	bestResult() :minLL(DBL_MAX), minLL_dev(0), run(0), pos(0) {};
-	VEC_DATA_TYPE minLL, minLL_dev;
-	size_t run, pos;
-	dataVec params;
-	vector<dataVec> param_dev;
-	dataVec norm;
-	operator bool() const { return params.size(); };
-};
-
+#include "mcmc.h"
+#include "LogLiklihoods.h"
 
 class LiBiNorm
 {
 public:
-	LiBiNorm() : outputMonteCarlo(false), outputConsolidated(false), outputNormalisation(false), singleModel(false) {};
+	LiBiNorm(size_t minModel,size_t maxModel,size_t Nruns) :
+		minModel(minModel),maxModel(maxModel),Nruns(Nruns),
+		outputMonteCarlo(false), outputConsolidated(false), outputNormalisation(false), singleModel(false) {};
 
 	void mcmcThread(paramSet params, optionsType options, modelType model);
 	int main(int argc, char **argv);
-	bool core(size_t Nthreads,size_t maxModel, size_t minModel,size_t Nruns,size_t Nsimu);
+	bool core(size_t Nthreads,size_t Nsimu, int Ngenes);
+	void printResults(const stringEx & outputFileName,const string & lastGene);
+	void printNormalisation(const stringEx & outputFileName, const dataVec & lengths);
+
+	transcriptDataMap transData;
+	map<size_t, bestResult> bestResults;
 
 private:
+	size_t minModel,maxModel,Nruns;
+
 	stringEx consFileName,outputFileName;
-	transcriptDataMap transData;
 
 	dataType consData;
 	bool outputMonteCarlo, outputConsolidated, outputNormalisation,singleModel;
@@ -41,11 +35,6 @@ private:
 	//	This is because the runs are done on separate threads and we want to store the results by the run
 	//	identifier and not the order that they finished
 
-	//	These two are for the endpoints of the chain
-#ifdef STORE_ENDPOINTS
-	vector<map <size_t,dataVec > > Chain;
-	vector<map <size_t, VEC_DATA_TYPE> > SSChain;
-#endif
 	//	And these are for the full results within each chain
 	vector<map<size_t,vector <dataVec > > >fullResultChain;
 	vector<map<size_t,dataVec> >fullResultSSChain;
@@ -59,8 +48,6 @@ private:
 
 	//	The results data
 	map<size_t, multimap <double, dataVec *> > allOrderedResults;
-	map<size_t, bestResult> bestResults;
-
 
 };
 

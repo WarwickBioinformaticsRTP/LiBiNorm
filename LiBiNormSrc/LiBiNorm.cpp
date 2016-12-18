@@ -8,11 +8,9 @@
 #include <mutex>
 #include <chrono>
 #include <thread>
-#include <float.h>
 #include "libCommon.h"
 #include "containerEx.h"
 #include "mcmc.h"
-#include "LogLiklihoods.h"
 #include "LiBiNorm.h"
 #include "LiBiCount.h"
 #include "LiBiDedup.h"
@@ -70,7 +68,7 @@ int main(int argc, char **argv)
 		}
 		else if (command == "model")
 		{
-			LiBiNorm norm;
+			LiBiNorm norm(1,6,5);
 			return norm.main(argc-1,argv+1);
 		}
 		else if (command == "conv")
@@ -238,8 +236,8 @@ int LiBiNorm::main(int argc, char **argv)
 
 	size_t minModel = 1;
 	size_t Nthreads = 1;
-	size_t maxModel = 6;
-	size_t Nruns = 100;
+	maxModel = 6;
+	Nruns = 100;
 	size_t Nsimu = 2000;
 	size_t condFileN = -1;
 
@@ -336,359 +334,29 @@ int LiBiNorm::main(int argc, char **argv)
 
 
 	string lastGene = transData.loadData(consFileName, condFileN);
-	core(Nthreads, maxModel, minModel, Nruns, Nsimu);
+	core(Nthreads, Nsimu,-1);
 
-	/*
-	transData.remove_invalid_values();
-	transData.transferTo(consData,100);
-	
-	cerr << "Data loaded" << endl;
-	elapsedTime();
-
-
-	string method = "mh";
-
-	paramSet params;
-	optionsType options;
-	modelType model;
-
-	options.jumpSize = 0.01;
-	options.nsimu = Nsimu;
-	options.Nruns = Nruns;
-
-#ifdef _DEBUG
-//	options.Nruns = 6;
-//	options.nsimu = 100;
-#else
-//	size_t Nruns = 100;
-#endif
-
-//	double drscale  = 0;
-//	double adaptint = 0;
-
-	options.updatesigma = 0;
-
-	options.method = method;
-
-	model.sigma2 = 1;
-#ifdef STORE_ENDPOINTS
-	SSChain.resize(maxModel+1);
-	Chain.resize(maxModel+1);
-#endif
-
-	fullResultSSChain.resize(maxModel + 1);
-	fullResultChain.resize(maxModel + 1);
-
-	RejectionRate.resize(maxModel+1);
-
-	//	Set the number of iterations required of each of the models.
-	for (size_t m = 1; m < maxModel+1;m++)
-	{
-		if (m >= minModel)
-			threadLoopCounts[m] = options.Nruns;
-		else
-			threadLoopCounts[m] = singleModel?0:1;
-	}
-
-
-#ifdef FIXED_RESULTS
-	maxModel = M_FIXED_RESULTS;
-	bestResults[maxModel].params = dataVec{ FIXED_RESULTS };
-#else
-	//	And then set the threads running
-	vector<thread> threads;
-	for (size_t i = 0;i < Nthreads;i++)
-		threads.emplace_back(thread(runThread,this,params, options,model));
-
-	for (auto & i : threads)
-		i.join();
-
-
-#ifdef XXXX
-		Unfinished code for 
-	vector<int> geneL{ 500,1000,2000,4000,8000 };
-	dataVec TotalReads;
-
-	for (size_t i = 0; i < geneL.size(); i++)
-	{
-		for (size_t j = 0; j < transData.size(); j++)
-		{
-			if (abs(transData[j].length - geneL[i]) < (0.1 * geneL[i]))
-				TotalReads.append(transData[j].counts[0]/ transData[j].length);
-		}
-	}
-#endif
-
-
-	// ********************************************************************************************
-	//	Find the optimal parameter values, which are associated with the lowest likelyhood value found in the last 
-	//	1000 iterations of all of the runs.
-
-	for (size_t m = 1; m <= maxModel; m++)
-	{
-		multimap <double, dataVec *> & orderedResults = allOrderedResults[m];
-
-		bestResult & br = bestResults[m];
-		for (size_t i = 1; i <= fullResultSSChain[m].size(); i++)
-		{
-			for (size_t j = fullResultSSChain[m][i].size()-1; j > fullResultSSChain[m][i].size()/2; j--)
-			{
-				if(outputConsolidated)
-					orderedResults.emplace(fullResultSSChain[m][i][j], &fullResultChain[m][i][j]);
-
-				if (fullResultSSChain[m][i][j] < br.minLL)
-				{
-					br.minLL = fullResultSSChain[m][i][j];
-					br.params = fullResultChain[m][i][j];
-					br.run = i;
-					br.pos = j;
-				}
-			}
-		}
-	}
-
-	// ******************************************************************************************
-	//	And then find the standard deviation
-	for (size_t m = 1; m <= maxModel; m++)
-	{
-		bestResult & br = bestResults[m];
-		VEC_DATA_TYPE LL_dev = 0;
-		size_t size = br.params.size();
-		vector<dataVec> param_dev(2,dataVec(size));
-		vector<dataVec> p_N(2,dataVec(size));
-		int N = 0;
-
-		for (size_t i = 1; i <= fullResultSSChain[m].size(); i++)
-		{
-			for (size_t j = fullResultSSChain[m][i].size() - 1; j > fullResultSSChain[m][i].size() / 2; j--)
-			{
-				N++;
-				VEC_DATA_TYPE diff = fullResultSSChain[m][i][j] - br.minLL;
-				LL_dev += (diff * diff);
-				for (size_t k = 0; k < size; k++)
-				{
-					VEC_DATA_TYPE diff = fullResultChain[m][i][j][k] - br.params[k];
-					if (diff >= 0)
-					{
-						param_dev[0][k] += (diff * diff);
-						p_N[0][k]++;
-					}
-					else
-					{
-						param_dev[1][k] += (diff * diff);
-						p_N[1][k]++;
-					}
-				}
-			}
-		}
-		br.minLL_dev = sqrt(LL_dev / N);
-		br.param_dev.emplace_back(sqrt(param_dev[0] / p_N[0]));
-		br.param_dev.emplace_back(sqrt(param_dev[1] / p_N[1]));
-	}
-
-#endif
-*/
 	dataVec l;
+	l.push_back(1000);
 	for (size_t i = 100; i <= 10000; i += 100)
 		l.push_back(i);
 
 	for (size_t m = 1; m <= maxModel; m++)
 	{
 		if (bestResults[m])
-		{
-			double d = pow(10, bestResults[m].params[0]);
-			double h = pow(10, bestResults[m].params[1]);
-			double t1, t2, a;
-			switch (m)
-			{
-			case 2:
-			case 4:
-			case 5:
-				t1 = pow(10, bestResults[m].params[2]);
-				t2 = pow(10, bestResults[m].params[3]);
-				break;
-			case 3:
-				t1 = 0;
-				t2 = pow(10, bestResults[m].params[2]);
-				break;
-			case 6:
-				t1 = pow(10, bestResults[m].params[2]);
-				t2 = pow(10, bestResults[m].params[3]);
-				a = bestResults[m].params[4];
-				break;
-			}
-
-			dataVec & norm = bestResults[m].norm;
-			norm.resize(l.size());
-
-			switch (m)
-			{
-			case 1:
-				norm = (2 * h<l)*(l - 2 * h) + l / d;
-				break;
-			case 2:
-				norm = ((2 * h<l)*(t1*(exp(-2 * h*(t1 + t2)) - exp(-l*(t1 + t2))) + t2*(t1 + t2)*(l - 2 * h)*exp(-l*(t1 + t2))) / ((t1 + t2)*(t1 + t2)) +
-					exp(-l*(t1 + t2))*(l*t2*t2 + t1*(exp(l*(t1 + t2)) + l*t2 - 1)) / ((t1 + t2)*(t1 + t2)) / d);
-				break;
-			case 3:
-/*				for (size_t i = 0; i < l.size(); i++)
-				{
-					if (2 * h < l[i])
-						norm[i] = (exp(-2 * h*t2 - l[i] * t1) - exp(-l[i] * (t1 + t2))) / t2 + (exp(-l[i] * t1) - exp(-l[i] * (t1 + t2))) / t2 / d;
-					else
-						norm[i] = (exp(-l[i] * t1) - exp(-l[i] * (t1 + t2))) / t2 / d;
-				}
-*/
-			{
-				dataVec exp_ml_t2 = exp(-l*(t2));
-				norm = (2 * h < l)*(exp(-2 * h*t2) - exp_ml_t2) / t2 + (1 - exp_ml_t2) / t2 / d;
-			}
-
-				break;
-			case 4:
-				for (size_t i = 0; i < l.size(); i++)
-				{
-					if (2 * h < l[i])
-						norm[i] = (exp(-2 * h*(t1 + t2)) - exp(-l[i] * (t1 + t2))) / (t1 + t2) + (1 - exp(-l[i] * (t1 + t2))) / (t1 + t2) / d;
-					else
-						norm[i] = (1 - exp(-l[i] * (t1 + t2))) / (t1 + t2) / d;
-				}
-				break;
-			case 5:
-/*  MATLAB
-				if (2 * h<l(i))
-					norm(i) = (exp(-l(i)*t1 - 2 * h*t2)*(t1 + t2) ^ 2 - exp(-l(i)*(t1 + t2))*t1 ^ 2 + t1*t2*exp(-2 * h*(t1 + t2))*(l(i)*t2 - 2 * h*t1 - 2 * h*t2 + l(i)*t1 - t2 / t1 - 2)) / (t1 + t2) ^ 2 / t1 ^ 2 / t2 + ...
-					(l(i) - 1 / (t1 + t2) - 1 / t1 - t1 / t2 / (t1 + t2)*exp(-l(i)*(t1 + t2)) + (t1 + t2) / t1 / t2*exp(-l(i)*t1)) / (t1 + t2) / t1 / d;
-				else
-					norm(i) = (l(i) - 1 / (t1 + t2) - 1 / t1 - t1 / t2 / (t1 + t2)*exp(-l(i)*(t1 + t2)) + (t1 + t2) / t1 / t2*exp(-l(i)*t1)) / (t1 + t2) / t1 / d;
-*/
-/*				for (size_t i = 0; i < l.size(); i++)
-				{
-					if (2 * h < l[i])
-						norm[i] = (exp(-l[i]*t1 - 2 * h*t2)*(t1 + t2)*(t1 + t2) - exp(-l[i]*(t1 + t2))*t1*t1 + t1*t2*exp(-2 * h*(t1 + t2))*(l[i]*t2 - 2 * h*t1 - 2 * h*t2 + l[i]*t1 - t2 / t1 - 2)) / ((t1 + t2)*(t1 + t2)) / (t1 *t1)/ t2 +
-						(l[i] - 1 / (t1 + t2) - 1 / t1 - t1 / t2 / (t1 + t2)*exp(-l[i]*(t1 + t2)) + (t1 + t2) / t1 / t2*exp(-l[i]*t1)) / (t1 + t2) / t1 / d;
-					else
-
-						norm[i] = (l[i] - 1 / (t1 + t2) - 1 / t1 - t1 / t2 / (t1 + t2)*exp(-l[i]*(t1 + t2)) + (t1 + t2) / t1 / t2*exp(-l[i]*t1)) / (t1 + t2) / t1 / d;
-				}
-*/
-				
-/*	MATLAB
-	norm =  (2*h<l).*(exp(-l*t1 - 2*h*t2)*(t1 + t2)^2 - exp(-l*(t1 + t2))*t1^2 + t1*t2*exp(-2*h*(t1 + t2))*(l*t2 -2*h*t1 -2*h*t2+l*t1 - t2/t1 - 2))/(t1 + t2)^2/t1^2/t2 + ...
-	    (l-1/(t1 + t2) - 1/t1 - t1/t2/(t1+t2)*exp(-l*(t1 + t2))+(t1 + t2)/t1/t2*exp(-l*t1))/(t1 + t2)/t1/d;
-*/
-
-				norm = (2 * h<l)*(exp(-l*t1 - 2 * h*t2)*(t1 + t2)*(t1 + t2) - exp(-l*(t1 + t2))*t1*t1 + t1*t2*exp(-2 * h*(t1 + t2))*(l*t2 - 2 * h*t1 - 2 * h*t2 + l*t1 - t2 / t1 - 2)) / ((t1 + t2) * (t1 + t2) ) / (t1 * t1 ) / t2 +
-					(l - 1 / (t1 + t2) - 1 / t1 - t1 / t2 / (t1 + t2)*exp(-l*(t1 + t2)) + (t1 + t2) / t1 / t2*exp(-l*t1)) / (t1 + t2) / t1 / d;
-
-				norm /= t1;
-
-				break;
-			case 6:
-			{
-				norm = a*((2 * h < l)*(t1*(exp(-2 * h*(t1 + t2)) - exp(-l*(t1 + t2))) + t2*(t1 + t2)*(l - 2 * h)*exp(-l*(t1 + t2))) / ((t1 + t2) * (t1 + t2)) +
-					(exp(-l*(t1 + t2))*(l*t2 *t2 + l*t2*t1 - t1) + t1) / ((t1 + t2) *(t1 + t2)) / d) +
-					(1 - a)*((2 * h < l)*(exp(-2 * h*(t1 + t2)) - exp(-l*(t1 + t2))) / (t1 + t2) +
-					(1 - exp(-l*(t1 + t2))) / (t1 + t2) / d);
-
-
-				//					norm = a*((2 * h<l).*(t1.*(exp(-2 * h*(t1 + t2)) - exp(-l.*(t1 + t2))) + t2*(t1 + t2).*(l - 2 * h).*exp(-l.*(t1 + t2))) / (t1 + t2) ^ 2 + ...
-				//						(exp(-l.*(t1 + t2)).*(l.*t2 ^ 2 + l.*t2*t1 - t1) + t1) / (t1 + t2) ^ 2 / d) + ...
-				//						(1 - a)*((2 * h<l).*(exp(-2 * h*(t1 + t2)) - exp(-l.*(t1 + t2))) / (t1 + t2) + ...
-				//						(1 - exp(-l.*(t1 + t2))) / (t1 + t2) / d);
-				break;
-			}
-			}
-			norm = norm * l[9] / norm[9];
-			norm /= l;
-
-		}
+			normaliseExpression(m, bestResults[m], l);
 	}
 
-	//********************************************************************************************
-	TsvFile mcmcResult;
-
-	//	Now output a table with the end points of each of the chains.
-	stringEx filename = outputFileName.replaceSuffix("_results.txt");
-	if (!mcmcResult.open(filename))
-		exitFail("Unable to open output File ", filename);
-
-	//	First headers up to and including the maximum model that is run.   Always leave space
-	//	for the intermediate models so the layout of the results is consistent
-	mcmcResult.printStart(lastGene);
-	for (size_t m = 1; m <= maxModel; m++)
-		mcmcResult.printMiddle(headers[m], "chain", "");
-	mcmcResult.printEnd();
-
-	//	A row for the optimal parameters that were found for each model
-	mcmcResult.printStart("Best");
-	for (size_t m = 1; m <= maxModel; m++)
-	{
-		if (bestResults[m].params.size())
-			mcmcResult.printMiddle(bestResults[m].params, bestResults[m].minLL, "");
-		else
-			mcmcResult.printGaps(headers[m].size() + 2);
-	}
-	mcmcResult.printEnd();
-	//	A row for the standard deviations for each model
-	for (size_t i = 0; i < 2; i++)
-	{
-		mcmcResult.printStart((i==0)?"Pos Dev":"Neg Dev");
-		for (size_t m = 1; m <= maxModel; m++)
-		{
-			if (bestResults[m].param_dev[i].size())
-				mcmcResult.printMiddle(bestResults[m].param_dev[i], bestResults[m].minLL_dev, "");
-			else
-				mcmcResult.printGaps(headers[m].size() + 2);
-		}
-		mcmcResult.printEnd();
-	}
-	//	The number of rows is set by the maximum number of runs, which may be for one or all models
-	for (size_t i = 1; i <= Nruns; i++)
-	{
-		mcmcResult.printStart(_s("Chain end ",i));
-		for (size_t m = 1; m <= maxModel; m++)
-		{
-			//	Was there a jth run of this model?  If so then print the end points
-			if (fullResultSSChain[m].size() && (i <= fullResultSSChain[m].rbegin()->first))
-				mcmcResult.printMiddle(*fullResultChain[m][i].rbegin(), *fullResultSSChain[m][i].rbegin(), "");
-			else
-				mcmcResult.printGaps(headers[m].size() + 2);
-		}
-		mcmcResult.printEnd();
-	}
-	mcmcResult.close();
+	printResults(outputFileName, lastGene);
 
 	if (outputNormalisation)
-	{
-		filename = outputFileName.replaceSuffix("_norm.txt");
-		if (!mcmcResult.open(filename))
-			exitFail("Unable to open output File ", filename);
-
-		for (size_t m = 1; m <= maxModel; m++)
-		{
-			mcmcResult.print(m, bestResults[m].minLL, bestResults[m].run, bestResults[m].pos, bestResults[m].params);
-			if (bestResults[m].norm.size())
-			{
-				mcmcResult.print(m, l);
-				mcmcResult.print(m, bestResults[m].norm);
-			}
-			else
-			{
-				mcmcResult.print(m);
-				mcmcResult.print(m);
-			}
-			mcmcResult.print();
-		}
-		mcmcResult.close();
-	}
-
+		printNormalisation(outputFileName,l);
 
 	//********************************************************************************************
 	//	This prints out all of the data for the full set of mcmc runs for each model
 	if (outputMonteCarlo)
 	{
-
+		TsvFile mcmcResult;
 		for (size_t modl = 1; modl <= maxModel; modl++)
 		{
 			string filename = outputFileName.replaceSuffix("_model_", modl, ".txt");
@@ -721,6 +389,7 @@ int LiBiNorm::main(int argc, char **argv)
 
 	if (outputConsolidated)
 	{
+		TsvFile mcmcResult;
 		string filename = outputFileName.replaceSuffix("_model_cons.txt");
 		if (!mcmcResult.open(filename))
 			exitFail("Unable to open output File ", filename);
@@ -764,11 +433,11 @@ int LiBiNorm::main(int argc, char **argv)
 	return EXIT_SUCCESS;
 }
 
-bool LiBiNorm::core(size_t Nthreads, size_t maxModel, size_t minModel,size_t Nruns, size_t Nsimu)
+bool LiBiNorm::core(size_t Nthreads, size_t Nsimu, int Ngenes)
 {
 
 	transData.remove_invalid_values();
-	transData.transferTo(consData, 100);
+	transData.transferTo(consData, 100, Ngenes);
 
 	cerr << "Data loaded" << endl;
 	elapsedTime();
@@ -799,10 +468,6 @@ bool LiBiNorm::core(size_t Nthreads, size_t maxModel, size_t minModel,size_t Nru
 	options.method = method;
 
 	model.sigma2 = 1;
-#ifdef STORE_ENDPOINTS
-	SSChain.resize(maxModel + 1);
-	Chain.resize(maxModel + 1);
-#endif
 
 	fullResultSSChain.resize(maxModel + 1);
 	fullResultChain.resize(maxModel + 1);
@@ -916,5 +581,89 @@ bool LiBiNorm::core(size_t Nthreads, size_t maxModel, size_t minModel,size_t Nru
 #endif
 
 	return true;
+}
+
+
+
+void LiBiNorm::printResults(const stringEx & outputFileName,const string & lastGene)
+{
+	TsvFile mcmcResult;
+
+	//	Now output a table with the end points of each of the chains.
+	stringEx filename = outputFileName.replaceSuffix("_results.txt");
+	if (!mcmcResult.open(filename))
+		exitFail("Unable to open output File ", filename);
+
+	//	First headers up to and including the maximum model that is run.   Always leave space
+	//	for the intermediate models so the layout of the results is consistent
+	mcmcResult.printStart(lastGene);
+	for (size_t m = 1; m <= maxModel; m++)
+		mcmcResult.printMiddle(headers[m], "chain", "");
+	mcmcResult.printEnd();
+
+	//	A row for the optimal parameters that were found for each model
+	mcmcResult.printStart("Best");
+	for (size_t m = 1; m <= maxModel; m++)
+	{
+		if (bestResults[m].params.size())
+			mcmcResult.printMiddle(bestResults[m].params, bestResults[m].minLL, "");
+		else
+			mcmcResult.printGaps(headers[m].size() + 2);
+	}
+	mcmcResult.printEnd();
+	//	A row for the standard deviations for each model
+	for (size_t i = 0; i < 2; i++)
+	{
+		mcmcResult.printStart((i == 0) ? "Pos Dev" : "Neg Dev");
+		for (size_t m = 1; m <= maxModel; m++)
+		{
+			if (bestResults[m].param_dev[i].size())
+				mcmcResult.printMiddle(bestResults[m].param_dev[i], bestResults[m].minLL_dev, "");
+			else
+				mcmcResult.printGaps(headers[m].size() + 2);
+		}
+		mcmcResult.printEnd();
+	}
+	//	The number of rows is set by the maximum number of runs, which may be for one or all models
+	for (size_t i = 1; i <= Nruns; i++)
+	{
+		mcmcResult.printStart(_s("Chain end ", i));
+		for (size_t m = 1; m <= maxModel; m++)
+		{
+			//	Was there a jth run of this model?  If so then print the end points
+			if (fullResultSSChain[m].size() && (i <= fullResultSSChain[m].rbegin()->first))
+				mcmcResult.printMiddle(*fullResultChain[m][i].rbegin(), *fullResultSSChain[m][i].rbegin(), "");
+			else
+				mcmcResult.printGaps(headers[m].size() + 2);
+		}
+		mcmcResult.printEnd();
+	}
+	mcmcResult.close();
+}
+
+
+void LiBiNorm::printNormalisation(const stringEx & outputFileName,const dataVec & lengths)
+{
+	TsvFile mcmcResult;
+	stringEx filename = outputFileName.replaceSuffix("_norm.txt");
+	if (!mcmcResult.open(filename))
+		exitFail("Unable to open output File ", filename);
+
+	for (size_t m = 1; m <= maxModel; m++)
+	{
+		mcmcResult.print(m, bestResults[m].minLL, bestResults[m].run, bestResults[m].pos, bestResults[m].params);
+		if (bestResults[m].norm.size())
+		{
+			mcmcResult.print(m, lengths);
+			mcmcResult.print(m, bestResults[m].norm);
+		}
+		else
+		{
+			mcmcResult.print(m);
+			mcmcResult.print(m);
+		}
+		mcmcResult.print();
+	}
+	mcmcResult.close();
 }
 

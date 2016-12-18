@@ -5,6 +5,15 @@
 
 using namespace std;
 
+
+dataVec conv(const std::vector<rna_pos_type> a)
+{
+	dataVec retVal(a.size());
+	for (size_t i = 0; i < a.size(); i++)
+		retVal.at(i) = a.at(i);
+	return retVal;
+};
+
 void gtfRegion::checkOverlap(const region & segment,vector<gtfOverlap> & overlapList) const
 {
 	rna_pos_type RNAstartPos = max<long>(segment.start - start + RNAstart,0);

@@ -13,12 +13,12 @@
 class dataVec: public std::vector<VEC_DATA_TYPE>
 {
 public:
-//	dataVec(size_t s = 0);
 	void resize(size_t s = 0);
 	dataVec(size_t s = 0,VEC_DATA_TYPE v = 0);
 	dataVec(const std::vector<VEC_DATA_TYPE> & a);
 	dataVec(const dataVec & a);
 	dataVec(std::initializer_list<VEC_DATA_TYPE> a) : std::vector<VEC_DATA_TYPE>(a) {};
+
 	static void clearCache();
 
 	~dataVec();

@@ -374,6 +374,9 @@ $(BUILD)/bioinformaticsLib/genomicPosition.o: ../bioinformaticsLib/genomicPositi
 $(BUILD)/bioinformaticsLib/genomicPosition.o: ../bioinformaticsLib/parser.h
 $(BUILD)/bioinformaticsLib/genomicPosition.o: ../bioinformaticsLib/libCommon.h
 $(BUILD)/bioinformaticsLib/genomicPosition.o: ../bioinformaticsLib/printEx.h
+$(BUILD)/bioinformaticsLib/libCommon.o: ../bioinformaticsLib/libCommon.h
+$(BUILD)/bioinformaticsLib/libCommon.o: ../bioinformaticsLib/stringEx.h
+$(BUILD)/bioinformaticsLib/libCommon.o: ../bioinformaticsLib/inQuotes.h
 $(BUILD)/bioinformaticsLib/parser.o: ../bioinformaticsLib/libCommon.h
 $(BUILD)/bioinformaticsLib/parser.o: ../bioinformaticsLib/parser.h
 $(BUILD)/bioinformaticsLib/printEx.o: ../bioinformaticsLib/printEx.h

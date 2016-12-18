@@ -6,6 +6,7 @@
 #include "libCommon.h"
 #include "featureFile.h"
 #include "Regions.h"
+#include "dataVec.h"
 
 class gtfRegion;
 
@@ -20,6 +21,8 @@ static std::string notUnique = "__alignment_not_unique";
 
 typedef long rna_pos_type;
 
+dataVec conv(const std::vector<rna_pos_type> a);
+
 
 //	Conatins information relating to a specific gene/region type  combination
 class geneTypeInfo
@@ -28,7 +31,7 @@ public:
 	//	Number of associated reads
 	size_t count;
 	//	and their locations
-	std::vector <rna_pos_type> posPositions, negPositions;
+	std::vector<rna_pos_type> posPositions, negPositions;
 
 	geneTypeInfo() :count(0) {};
 	void reset() {
@@ -57,7 +60,7 @@ inline bool printVal(outputDataFile * f, const geneTypeInfo & gti)
 class gtfGeneAttribute : public std::map<const std::string, geneTypeInfo>
 {
 public:
-	void print(const std::string & index,TsvFile & output)	
+	void print(TsvFile & output,const std::string & index)
 	{
 		// Print entries for all of the attributes being considered.  Only output the type info if 
 		// there are multiple region types being considered.  This is for consistency with
@@ -91,9 +94,9 @@ class geneCountsClass : public std::map<const std::string,gtfGeneAttribute >
 {
 public:
 	//	For printing out the list of counts.  entry.second is the count data one entry per attribute being investigated
-	void print(const std::string & index,TsvFile & output)	
+	void print(TsvFile & output,const std::string & index)
 	{
-		at(index).print(index,output);
+		at(index).print(output,index);
 	};
 
 	//	Needed if we decide the data is not name ordered and have to restart
@@ -158,7 +161,7 @@ public:
 	//	The total length of the regions associated with the gene
 	rna_pos_type length;
 	char strand;
-
+	double normFactor;
 	void addRegion(gtfRegion * newRegion,bool ol)
 	{
 		if (ol)
@@ -172,7 +175,7 @@ public:
 		length += (newRegion->finish - newRegion->start + 1);
 
 	};
-	geneData() : overlaps(false),length(0), strand(' ') {};
+	geneData() : overlaps(false),length(0), strand(' '), normFactor(1){};
 };
 
 

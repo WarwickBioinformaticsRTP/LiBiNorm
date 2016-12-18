@@ -2,6 +2,7 @@
 #define LIBICOUNT_H
 
 #include "FeatureFileEx.h"
+#include "dataVec.h"
 
 using namespace BamTools;
 
@@ -13,7 +14,13 @@ enum mode {
 };
 
 
-
+inline dataVec makeVec(const std::vector<rna_pos_type> & b)
+{
+	dataVec _ret(b.size());
+	for (size_t i = 0; i < b.size(); i++)
+		_ret.at(i) = b.at(i);
+	return _ret;
+};
 
 class LiBiCount
 {
@@ -26,7 +33,7 @@ class LiBiCount
 public:
 	bool useStrand,reverseStrand,htSeqCompatible,nameOrder;
 	mode countMode;
-	stringEx outputFilename,countsFilename,landscapeFilename,tempDirectory;
+	stringEx outputFilename,countsFilename,landscapeFilename, normaliseResultsFilename,tempDirectory;
 
 	geneCountsClass geneCounts;
 

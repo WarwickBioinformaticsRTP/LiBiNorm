@@ -24,6 +24,7 @@ can be performed for each read.
 */
 
 
+
 double FLL_ModelA(const dataVec & param, const dataType & data)
 {
 	double d = pow(10,param[0]);
@@ -402,3 +403,112 @@ double FLL_ModelBD(const dataVec & param, const dataType & data)
 	return -2*LogL;
 }
 
+
+void normaliseExpression(size_t m,bestResult & result,const dataVec & l)
+{
+	double d = pow(10, result.params[0]);
+	double h = pow(10, result.params[1]);
+	double t1, t2, a;
+	switch (m)
+	{
+	case 2:
+	case 4:
+	case 5:
+		t1 = pow(10, result.params[2]);
+		t2 = pow(10, result.params[3]);
+		break;
+	case 3:
+		t1 = 0;
+		t2 = pow(10, result.params[2]);
+		break;
+	case 6:
+		t1 = pow(10, result.params[2]);
+		t2 = pow(10, result.params[3]);
+		a = result.params[4];
+		break;
+	}
+
+	dataVec & norm = result.norm;
+	norm.resize(l.size());
+
+	switch (m)
+	{
+	case 1:
+		norm = (2 * h < l)*(l - 2 * h) + l / d;
+		break;
+	case 2:
+		norm = ((2 * h < l)*(t1*(exp(-2 * h*(t1 + t2)) - exp(-l*(t1 + t2))) + t2*(t1 + t2)*(l - 2 * h)*exp(-l*(t1 + t2))) / ((t1 + t2)*(t1 + t2)) +
+			exp(-l*(t1 + t2))*(l*t2*t2 + t1*(exp(l*(t1 + t2)) + l*t2 - 1)) / ((t1 + t2)*(t1 + t2)) / d);
+		break;
+	case 3:
+		/*				for (size_t i = 0; i < l.size(); i++)
+		{
+		if (2 * h < l[i])
+		norm[i] = (exp(-2 * h*t2 - l[i] * t1) - exp(-l[i] * (t1 + t2))) / t2 + (exp(-l[i] * t1) - exp(-l[i] * (t1 + t2))) / t2 / d;
+		else
+		norm[i] = (exp(-l[i] * t1) - exp(-l[i] * (t1 + t2))) / t2 / d;
+		}
+		*/
+	{
+		dataVec exp_ml_t2 = exp(-l*(t2));
+		norm = (2 * h < l)*(exp(-2 * h*t2) - exp_ml_t2) / t2 + (1 - exp_ml_t2) / t2 / d;
+	}
+
+	break;
+	case 4:
+		for (size_t i = 0; i < l.size(); i++)
+		{
+			if (2 * h < l[i])
+				norm[i] = (exp(-2 * h*(t1 + t2)) - exp(-l[i] * (t1 + t2))) / (t1 + t2) + (1 - exp(-l[i] * (t1 + t2))) / (t1 + t2) / d;
+			else
+				norm[i] = (1 - exp(-l[i] * (t1 + t2))) / (t1 + t2) / d;
+		}
+		break;
+	case 5:
+		/*  MATLAB
+		if (2 * h<l(i))
+		norm(i) = (exp(-l(i)*t1 - 2 * h*t2)*(t1 + t2) ^ 2 - exp(-l(i)*(t1 + t2))*t1 ^ 2 + t1*t2*exp(-2 * h*(t1 + t2))*(l(i)*t2 - 2 * h*t1 - 2 * h*t2 + l(i)*t1 - t2 / t1 - 2)) / (t1 + t2) ^ 2 / t1 ^ 2 / t2 + ...
+		(l(i) - 1 / (t1 + t2) - 1 / t1 - t1 / t2 / (t1 + t2)*exp(-l(i)*(t1 + t2)) + (t1 + t2) / t1 / t2*exp(-l(i)*t1)) / (t1 + t2) / t1 / d;
+		else
+		norm(i) = (l(i) - 1 / (t1 + t2) - 1 / t1 - t1 / t2 / (t1 + t2)*exp(-l(i)*(t1 + t2)) + (t1 + t2) / t1 / t2*exp(-l(i)*t1)) / (t1 + t2) / t1 / d;
+		*/
+		/*				for (size_t i = 0; i < l.size(); i++)
+		{
+		if (2 * h < l[i])
+		norm[i] = (exp(-l[i]*t1 - 2 * h*t2)*(t1 + t2)*(t1 + t2) - exp(-l[i]*(t1 + t2))*t1*t1 + t1*t2*exp(-2 * h*(t1 + t2))*(l[i]*t2 - 2 * h*t1 - 2 * h*t2 + l[i]*t1 - t2 / t1 - 2)) / ((t1 + t2)*(t1 + t2)) / (t1 *t1)/ t2 +
+		(l[i] - 1 / (t1 + t2) - 1 / t1 - t1 / t2 / (t1 + t2)*exp(-l[i]*(t1 + t2)) + (t1 + t2) / t1 / t2*exp(-l[i]*t1)) / (t1 + t2) / t1 / d;
+		else
+
+		norm[i] = (l[i] - 1 / (t1 + t2) - 1 / t1 - t1 / t2 / (t1 + t2)*exp(-l[i]*(t1 + t2)) + (t1 + t2) / t1 / t2*exp(-l[i]*t1)) / (t1 + t2) / t1 / d;
+		}
+		*/
+
+		/*	MATLAB
+		norm =  (2*h<l).*(exp(-l*t1 - 2*h*t2)*(t1 + t2)^2 - exp(-l*(t1 + t2))*t1^2 + t1*t2*exp(-2*h*(t1 + t2))*(l*t2 -2*h*t1 -2*h*t2+l*t1 - t2/t1 - 2))/(t1 + t2)^2/t1^2/t2 + ...
+		(l-1/(t1 + t2) - 1/t1 - t1/t2/(t1+t2)*exp(-l*(t1 + t2))+(t1 + t2)/t1/t2*exp(-l*t1))/(t1 + t2)/t1/d;
+		*/
+
+		norm = (2 * h < l)*(exp(-l*t1 - 2 * h*t2)*(t1 + t2)*(t1 + t2) - exp(-l*(t1 + t2))*t1*t1 + t1*t2*exp(-2 * h*(t1 + t2))*(l*t2 - 2 * h*t1 - 2 * h*t2 + l*t1 - t2 / t1 - 2)) / ((t1 + t2) * (t1 + t2)) / (t1 * t1) / t2 +
+			(l - 1 / (t1 + t2) - 1 / t1 - t1 / t2 / (t1 + t2)*exp(-l*(t1 + t2)) + (t1 + t2) / t1 / t2*exp(-l*t1)) / (t1 + t2) / t1 / d;
+
+		norm /= t1;
+
+		break;
+	case 6:
+	{
+		norm = a*((2 * h < l)*(t1*(exp(-2 * h*(t1 + t2)) - exp(-l*(t1 + t2))) + t2*(t1 + t2)*(l - 2 * h)*exp(-l*(t1 + t2))) / ((t1 + t2) * (t1 + t2)) +
+			(exp(-l*(t1 + t2))*(l*t2 *t2 + l*t2*t1 - t1) + t1) / ((t1 + t2) *(t1 + t2)) / d) +
+			(1 - a)*((2 * h < l)*(exp(-2 * h*(t1 + t2)) - exp(-l*(t1 + t2))) / (t1 + t2) +
+			(1 - exp(-l*(t1 + t2))) / (t1 + t2) / d);
+
+
+		//					norm = a*((2 * h<l).*(t1.*(exp(-2 * h*(t1 + t2)) - exp(-l.*(t1 + t2))) + t2*(t1 + t2).*(l - 2 * h).*exp(-l.*(t1 + t2))) / (t1 + t2) ^ 2 + ...
+		//						(exp(-l.*(t1 + t2)).*(l.*t2 ^ 2 + l.*t2*t1 - t1) + t1) / (t1 + t2) ^ 2 / d) + ...
+		//						(1 - a)*((2 * h<l).*(exp(-2 * h*(t1 + t2)) - exp(-l.*(t1 + t2))) / (t1 + t2) + ...
+		//						(1 - exp(-l.*(t1 + t2))) / (t1 + t2) / d);
+		break;
+	}
+	}
+	norm = norm * l[0] / norm[0];
+	norm /= l;
+}
