@@ -148,47 +148,54 @@ void LiBiNorm::mcmcThread(paramSet params, optionsType options, modelType model)
 #else
 		vectorEx<double> p0(rand(3)-1, rand(3), rand(4)-5, rand(4)-5, rand(1));
 #endif
-		
+
 		switch (options.Model)
 		{
 		case 2: case 4: case 5:
 			options.qcov = dataVec(4,options.jumpSize);
 
-			params = paramSet(paramType("d", p0[0], -1 , 2)    // average length of fragments
+			params = { paramType("d", p0[0], -1 , 2)    // average length of fragments
+			,paramType("h",  p0[1], 0 , 3)   // the minimum length of fragmenation
+			,paramType("t1", p0[2], -5 , -1)   // theta1
+			,paramType("t2", p0[3], -5, -1) // theta2
+			//				,paramType("sig", p0[4], 0, 3) // sigma
+			};
+
+/*			params = paramSet(paramType("d", p0[0], -1 , 2)    // average length of fragments
 				,paramType("h",  p0[1], 0 , 3)   // the minimum length of fragmenation
 				,paramType("t1", p0[2], -5 , -1)   // theta1
 				,paramType("t2", p0[3], -5, -1) // theta2
 				//				,paramType("sig", p0[4], 0, 3) // sigma
-				);
+				); */
 			break;
 		case 3:
 			options.qcov = dataVec(3,options.jumpSize);
 
-			params = paramSet(paramType("d", p0[0], -1 , 2)    // average length of fragments
+			params = { paramType("d", p0[0], -1 , 2)    // average length of fragments
 				,paramType("h",  p0[1], 0 , 3)   // the minimum length of fragmenation
 				//				,paramType("t1", p0[2], -5 , -1)   // theta1
 				,paramType("t2", p0[3], -5, -1) // theta2
 				//				,paramType("sig", p0[4], 0, 3) // sigma
-				);
+			};
 			break;
 		case 1:
 			options.qcov = dataVec(2,options.jumpSize);
 
-			params = paramSet(paramType("d", p0[0], -1 , 2)    // average length of fragments
+			params = { paramType("d", p0[0], -1 , 2)    // average length of fragments
 				,paramType("h",  p0[1], 0 , 3)   // the minimum length of fragmenation
 				//				,paramType("t1", p0[2], -5 , -1)   // theta1
 				//				,paramType("t2", p0[3], -5, -1) // theta2
-				);
+			};
 			break;
 		case 6:
 			options.qcov = dataVec(6,options.jumpSize);
 
-			params = paramSet(paramType("d", p0[0], -1 , 2)    // average length of fragments
+			params = { paramType("d", p0[0], -1 , 2)    // average length of fragments
 				,paramType("h",  p0[1], 0 , 3)   // the minimum length of fragmenation
 				,paramType("t1", p0[2], -5 , -1)   // theta1
 				,paramType("t2", p0[3], -5, -1) // theta2
 				,paramType("a", p0[4], 0, 1) // alpha strength of model B
-				);
+			};
 			break;
 
 		};
@@ -334,7 +341,7 @@ int LiBiNorm::main(int argc, char **argv)
 
 
 	string lastGene = transData.loadData(consFileName, condFileN);
-	core(Nthreads, Nsimu,-1);
+	core(Nthreads, Nsimu,0);
 
 	dataVec l;
 	l.push_back(1000);
@@ -433,11 +440,11 @@ int LiBiNorm::main(int argc, char **argv)
 	return EXIT_SUCCESS;
 }
 
-bool LiBiNorm::core(size_t Nthreads, size_t Nsimu, int Ngenes)
+bool LiBiNorm::core(size_t Nthreads, size_t Nsimu, int maxTotReads)
 {
 
 	transData.remove_invalid_values();
-	transData.transferTo(consData, 100, Ngenes);
+	transData.transferTo(consData, 100, maxTotReads);
 
 	cerr << "Data loaded" << endl;
 	elapsedTime();
@@ -514,7 +521,7 @@ bool LiBiNorm::core(size_t Nthreads, size_t Nsimu, int Ngenes)
 
 
 	//********************************************************************************************
-	//	Find the optimal parameter values, which are associated with the lowest likelyhood value found in the last 
+	//	Find the optimal parameter values, which are associated with the lowest likelihood value found in the last
 	//	1000 iterations of all of the runs.
 
 	for (size_t m = 1; m <= maxModel; m++)

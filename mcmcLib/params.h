@@ -3,7 +3,6 @@
 
 #include <limits> 
 #include <string>
-#include "containerEx.h"
 #include "dataVec.h"
 
 class paramType
@@ -15,13 +14,13 @@ public:
 	bool targetflag, localflag;
 };
 
-class paramSet: public vectorEx<paramType>
+class paramSet :public std::vector<paramType>
 {
 public:
-	//  template constructors do not require explicit declaration of the template type when they are used, as this is taken from the types
-	//	in the constructor
 	paramSet() {};
-	template<typename... P>paramSet(const paramType & first,const P & ... rest) : vectorEx<paramType>(first,rest...){};
+	//	This = operator allows the values to be assigned using an aggregate initiailiser for the base class
+	paramSet & operator = (std::vector<paramType>(a)) { std::vector<paramType>::operator = (a); return *this; };
+
 	bool isValid(const dataVec & data) const;
 
 	dataVec getvalues() const;

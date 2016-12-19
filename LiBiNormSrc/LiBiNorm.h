@@ -15,7 +15,7 @@ public:
 
 	void mcmcThread(paramSet params, optionsType options, modelType model);
 	int main(int argc, char **argv);
-	bool core(size_t Nthreads,size_t Nsimu, int Ngenes);
+	bool core(size_t Nthreads,size_t Nsimu, int maxTotReads = 0);
 	void printResults(const stringEx & outputFileName,const string & lastGene);
 	void printNormalisation(const stringEx & outputFileName, const dataVec & lengths);
 

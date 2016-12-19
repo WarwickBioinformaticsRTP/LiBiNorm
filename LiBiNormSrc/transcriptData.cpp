@@ -6,8 +6,12 @@
 #include "containerEx.h"
 #include "transcriptData.h"
 
-//	Find the number of values in 'this' which is a vector that sits within each bin of the
+
+#define MAX_LENGTH_OF_GENE_FOR_PARAM_ESTIMATION 20000
+
+//	Find the number of read position values in 'this' (a vector) that sits within each bin of the
 //	histogram defined by E.   The results go into the 'freq'vector
+//	This is used as part of the liklyhood calculations
 void transcriptDataMap::histc (const vector<int> E)
 {
 	freq.assign (E.size(),0);
@@ -33,8 +37,6 @@ void transcriptDataMap::histc (const vector<int> E)
 		freq[k]++;
 	}
 }
-
-
 
 void transcriptDataMap::remove_invalid_values()
 {
@@ -74,15 +76,14 @@ string transcriptDataMap::loadData(const string filename, int Nlines)
 	return lastGene;
 }
 
-//	Transfers information for up to maxLength reads from the complete set of read data into
-//	
-void transcriptDataMap::transferTo(dataType & mcmcData,size_t maxLength, int Ngenes)
+//	Transfers information for up to maxLength reads from up to Ngenes genes or transcripts
+//	into the form which can be used by the mcmc chain
+void transcriptDataMap::transferTo(dataType & mcmcData,size_t maxLength, int maxTotReads)
 {
 	vectorEx<int> bins(0,300);
 	for (size_t i = 500;i <= 10000;i+=500)
 		bins.push_back(i);
 	bins.add(11000,12000,15000,30000);
-
 
 	histc(bins);
 
@@ -93,32 +94,37 @@ void transcriptDataMap::transferTo(dataType & mcmcData,size_t maxLength, int Nge
 	freq[23] = freq[23]/6;
 	freq[24] = freq[24]/6;
 
-
 	size_t geneIndex = 0;
 	mcmcData.geneData[0].resize(size());
 	mcmcData.geneData[1].resize(size());
 
-
 	srand( (unsigned)time( NULL ) );
 
-	for (auto & gene : *this)
+	int Nreads = 0;
+
+	for (auto & gene : This)
 	{
-		//	For the forward and the reverse counts
-		for (auto & positions : gene.positions)
+		if (gene.length < MAX_LENGTH_OF_GENE_FOR_PARAM_ESTIMATION)
 		{
-			positions.selectAtMost(maxLength);
+			//	For the forward and the reverse counts
+			for (auto & positions : gene.positions)
+			{
+				positions.selectAtMost(maxLength);
 
-			//	fragData contains the count 
-			mcmcData.fragData.append(positions);
+				//	fragData contains the count 
+				mcmcData.fragData.append(positions);
 
-			mcmcData.geneIndex.insert(mcmcData.geneIndex.end(), positions.size(),geneIndex);//gene.length);
+				mcmcData.geneIndex.insert(mcmcData.geneIndex.end(), positions.size(), geneIndex);//gene.length);
+				Nreads += positions.size();
+			}
+			mcmcData.geneData[0][geneIndex] = gene.length;
+			mcmcData.geneData[1][geneIndex] = freq[gene.histoGram_ind];
+
+			geneIndex++;
+			if ((maxTotReads) && (Nreads > maxTotReads))
+				break;
 		}
-		mcmcData.geneData[0][geneIndex] = gene.length;
-		mcmcData.geneData[1][geneIndex] = freq[gene.histoGram_ind];
-
-		geneIndex++;
-		if (geneIndex == Ngenes)
-			break;
 	}
+	optMessage(Nreads, " used for parameter determination");
 }
 

@@ -39,7 +39,7 @@ public:
 	void remove_invalid_values();
 	std::string loadData(const string filename,int Nlines = -1);
 	void histc (const vector<int> E);
-	void transferTo(dataType & mcmcData,size_t maxLength,int Ngenes);
+	void transferTo(dataType & mcmcData,size_t maxLength,int maxTotReads);
 
 
 };

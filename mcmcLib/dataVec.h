@@ -211,7 +211,10 @@ inline VEC_DATA_TYPE sum(const dataVec & a)
 }
 
 /*
-//https://codingforspeed.com/using-faster-exponential-approximation/
+
+This is some code for a fast version of the exponent function that 
+was found at.   It did not prove to be make much difference so is not currently being used
+https://codingforspeed.com/using-faster-exponential-approximation/
 
 inline
 double exp1(double x) {

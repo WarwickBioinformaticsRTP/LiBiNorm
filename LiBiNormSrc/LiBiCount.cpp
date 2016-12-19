@@ -39,7 +39,7 @@
 #define insertConv(A) A
 #endif
 
-#define N_GENES_FOR_PARAM_ESTIMATION 10000
+#define MAX_READS_FOR_PARAM_ESTIMATION 5000000
 
 #ifdef _DEBUG
 //	Put reads into cache file when number of reads exceed READ_CACHE_SIZE
@@ -117,7 +117,7 @@ printf("                        nonempty; default: union)\n");
 printf("  -c filename, --counts=filename\n");
 printf("                        Name of output file. default: writes to stdout)\n");
 printf("  -l filename, --landscape=filename\n");
-printf("                        Name of output file. default: writes to stdout)\n");
+printf("                        Name of file for landscape data)\n");
 //printf("  -o SAMOUT, --samout=SAMOUT\n");
 //printf("                        write out all SAM alignment records into an output SAM\n");
 //printf("                        file called SAMOUT, annotating each line with its\n");
@@ -260,7 +260,7 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 	initClock();
 	
 	if (!genomeDef.open(featureFileName,id_attribute,feature_type))
-		exitFail("Could not open gtf file: ",featureFileName);
+		exitFail("Could not open feature file: ",featureFileName);
 
 #ifdef	OUTPUT_FEATURE_DATA
 		if ((countsFilename) && !genomeDef.printEntries(countsFilename.replaceSuffix("_genome.txt")))
@@ -290,7 +290,7 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 
 #endif
 
-	optMessage("GFF file consolidated.");
+	optMessage("Feature file consolidated.");
 	elapsedTime();
 
 	_DBG(genomeDef.outputChromData(featureFileName.replaceSuffix(".txt"));)
@@ -323,7 +323,7 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 				td.positions.emplace_back(conv(i.second["exon"].negPositions));
 			}
 		}
-		norm.core(3,2000,N_GENES_FOR_PARAM_ESTIMATION);
+		norm.core(3,2000,MAX_READS_FOR_PARAM_ESTIMATION);
 		normaliseExpression(6, norm.bestResults[6], lengths);
 		size_t j = 1;
 		for (auto i : geneCounts)
@@ -335,13 +335,13 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 		{
 			dataVec l;
 			l.push_back(1000);
-			for (size_t i = 100; i <= 10000; i += 100)
+			for (size_t i = 100; i <= 20000; i += 100)
 				l.push_back(i);
 
 			for (size_t i = minModel; i <= 6; i++)
 				normaliseExpression(i, norm.bestResults[i], l);
 			norm.printResults(normaliseResultsFilename, "Results");
-			norm.printNormalisation(normaliseResultsFilename, lengths);
+			norm.printNormalisation(normaliseResultsFilename, l);
 		}
 	}
 
