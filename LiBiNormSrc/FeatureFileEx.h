@@ -105,7 +105,7 @@ public:
 	{
 		at(index).print(output,index, norm,length);
 	};
-	void print(TsvFile & output, const std::string & index, double norm)
+	void print(TsvFile & output, const std::string & index, double norm = 1)
 	{
 		at(index).print(output, index, norm);
 	};

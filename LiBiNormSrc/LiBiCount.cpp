@@ -86,8 +86,7 @@ int LiBiCount::main(int argc, char **argv)
 
 	if(argc < 1)
 	{
-		printf("Error: parameter wrong!\n");
-		return EXIT_FAILURE;
+		exitFail("Error: parameter wrong!");
 	}
 	else if ((argc == 1) || ((argc == 2) && ((strcmp(argv[1],"-h") ==0) || (strcmp(argv[1],"--help")==0))))
 	{
@@ -116,24 +115,24 @@ printf("                        given minimum value (default: 10)\n");
 printf("  -t FEATURETYPE, --type=FEATURETYPE\n");
 printf("                        feature type (3rd column in GFF file) to be used, all\n");
 printf("                        features of other type are ignored (default for \n");
-printf(_s("                        Ensembl GTF files: ", DEFAULT_GTF_ID_ATTRIBUTE,"\n"));
-printf(_s("                        default for GFF3 files: ", DEFAULT_GFF_ID_ATTRIBUTE, ")\n"));
+printf(_s("                        Ensemble GTF and GFF files: ", DEFAULT_FEATURE_TYPE_EXON,")\n"));
 printf("  -i IDATTR, --idattr=IDATTR\n");
-printf("                        GFF attribute to be used as feature ID (default,\n");
-printf("                        suitable for Ensembl GTF files: gene_id)\n");
+printf("                        GFF attribute to be used as feature ID (default for \n");
+printf(_s("                        Ensembl GTF files: ", DEFAULT_GTF_ID_ATTRIBUTE, "\n"));
+printf(_s("                        default for GFF3 files: ", DEFAULT_GFF_ID_ATTRIBUTE, ")\n"));
 printf("  -m MODE, --mode=MODE  mode to handle reads overlapping more than one feature\n");
 printf("                        (choices: union, intersection-strict, intersection-\n");
 printf("                        nonempty; default: union)\n");
-printf("  -c filename, --counts=filename\n");
+printf("  -c FILENAME, --counts=FILENAME\n");
 printf("                        Name of output file. default: writes to stdout)\n");
-printf("  -l filename, --landscape=filename\n");
+printf("  -l FILENAME, --landscape=FILENAME\n");
 printf("                        Name of file for landscape data)\n");
 printf("  -n, --normalise\n");
 printf("                        Normalise rna-seq data using model 6 to correct for length related bias\n");
-printf("  -N filename, --Normalise=filename\n");
-printf("                        Normalise data trying all 6 models and output summary info to files with root filename\n");
+printf("  -N FILENAME, --Normalise=FILENAME\n");
+printf("                        Normalise data trying all 6 models and output summary info to files with root FILENAME\n");
 printf("  -p N, --threads=N\n");
-printf("                        Number of threads for normalisation parameter determination (3)\n");
+printf(_s("                        Number of threads for normalisation parameter determination (", DEF_THREADS,")\n"));
 printf("  -d N, --reads=N\n");
 printf(_s("                        Maximum number of reads using for normalisation parameter determination (", DEF_MAX_READS_FOR_PARAM_ESTIMATION,")\n"));
 //printf("  -o SAMOUT, --samout=SAMOUT\n");
@@ -402,12 +401,11 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 
 	elapsedTime("All results output");
 
-	string test;
-	_DBG(cin >> test);
-//	cin >> test;
-
 	if (!nameOrder)
 		rmdir(tempDirectory.c_str());
+
+	string test;
+	_DBG(cin >> test);
 
 	return EXIT_SUCCESS;
 }
@@ -435,11 +433,11 @@ bool LiBiCount::outputGeneCounts(const string & filename, bool withDetails)
 				geneCounts.print(output, i.first, norm);
 		}
 	}
-	geneCounts.print(output,"__no_feature",1);
-	geneCounts.print(output, "__ambiguous", 1);
-	geneCounts.print(output, "__too_low_aQual", 1);
-	geneCounts.print(output, "__not_aligned", 1);
-	geneCounts.print(output, "__alignment_not_unique", 1);
+	geneCounts.print(output,"__no_feature");
+	geneCounts.print(output, "__ambiguous");
+	geneCounts.print(output, "__too_low_aQual");
+	geneCounts.print(output, "__not_aligned");
+	geneCounts.print(output, "__alignment_not_unique");
 	return true;
 }
 
