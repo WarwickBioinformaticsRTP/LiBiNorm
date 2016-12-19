@@ -110,7 +110,7 @@ void LiBiNorm::mcmcThread(paramSet params, optionsType options, modelType model)
 				}
 			}
 			loop = model_iterator->second--;
-			cerr << "Starting Model:" << model_iterator->first << " iteration:" << loop << endl;
+			progMessage("Starting Model:",model_iterator->first," iteration:",loop);
 			options.Model = model_iterator->first;
 		}
 
@@ -140,13 +140,9 @@ void LiBiNorm::mcmcThread(paramSet params, optionsType options, modelType model)
 
 // #define _TEST
 #ifdef _TEST
-//		vectorEx<double> p0(1.590355415,0.249897587,-3.760142979,-3.226093068);
-//		vectorEx<double> p0(-0.458447029374,1.852235843328);
-
-		vectorEx<double> p0(1.5, 1.6,-3.1, -3.2,0.6);
-
+		vectorEx<double> p0{ {1.5, 1.6,-3.1, -3.2,0.6}};
 #else
-		vectorEx<double> p0(rand(3)-1, rand(3), rand(4)-5, rand(4)-5, rand(1));
+		vectorEx<double> p0{ {rand(3) - 1, rand(3), rand(4) - 5, rand(4) - 5, rand(1)} };
 #endif
 
 		switch (options.Model)
@@ -161,12 +157,6 @@ void LiBiNorm::mcmcThread(paramSet params, optionsType options, modelType model)
 			//				,paramType("sig", p0[4], 0, 3) // sigma
 			};
 
-/*			params = paramSet(paramType("d", p0[0], -1 , 2)    // average length of fragments
-				,paramType("h",  p0[1], 0 , 3)   // the minimum length of fragmenation
-				,paramType("t1", p0[2], -5 , -1)   // theta1
-				,paramType("t2", p0[3], -5, -1) // theta2
-				//				,paramType("sig", p0[4], 0, 3) // sigma
-				); */
 			break;
 		case 3:
 			options.qcov = dataVec(3,options.jumpSize);
@@ -215,7 +205,7 @@ void LiBiNorm::mcmcThread(paramSet params, optionsType options, modelType model)
 
 			lock_guard<mutex> lock(mtx);
 
-			cerr << "Finishing Model:" << model_iterator->first << " iteration:" << loop << endl;
+			progMessage("Finishing Model:",model_iterator->first," iteration:",loop);
 
 
 #ifdef STORE_ENDPOINTS
@@ -446,8 +436,7 @@ bool LiBiNorm::core(size_t Nthreads, size_t Nsimu, int maxTotReads)
 	transData.remove_invalid_values();
 	transData.transferTo(consData, 100, maxTotReads);
 
-	cerr << "Data loaded" << endl;
-	elapsedTime();
+	elapsedTime("Data loaded");
 
 
 	string method = "mh";

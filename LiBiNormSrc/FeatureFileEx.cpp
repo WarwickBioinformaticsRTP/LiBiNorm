@@ -102,7 +102,7 @@ void featureFileEx::index(geneCountsClass & geneCounts)
 		{
 
 			size_t finish = i->second.finish;
-			setEx<string> type(i->second.type);
+			setEx<string> type{{i->second.type}};
 			for (auto j = next(i,1);(j != chrom.second.end()) && (j->first <= (finish + 1));)
 			{
 				auto k = j++;

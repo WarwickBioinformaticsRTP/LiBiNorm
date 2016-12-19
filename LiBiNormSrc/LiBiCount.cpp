@@ -1,7 +1,5 @@
 
 
-
-
 #ifdef _WIN32
 #include <direct.h>
 #else
@@ -9,22 +7,22 @@
 #include <unistd.h>	
 #endif
 
-
 #include "libCommon.h"
 #include "LiBiCount.h"
 #include "LiBiNorm.h"
 #include "parser.h"
 #include "transcriptData.h"
 
-#ifndef _DEBUG
-
-//	Test code: Compare lengths calculated from the gff file with the lengths in the original landscape file
-//#define COMPARE_RESULTS "Y:\\LiBiNorm\\SRR557798\\SRR557798.NoA.plus.minus"
-
-//  Output detailed results of interpreting the Feature file
-//#define OUTPUT_FEATURE_DATA
-#endif
-
+#define DEF_MAX_READS_FOR_PARAM_ESTIMATION 1000000
+#define DEF_THREADS 3
+#define MCMC_ITERATIONS 2000
+#define DEFAULT_MODEL 6
+#define NUMBER_OF_MCMC_RUNS 3
+#define DEFAULT_NORMALISATION_GENE_LENGTH 1000
+#define DEFAULT_COUNT_MODE intersect_union
+#define DEFAULT_FEATURE_TYPE_EXON "exon" 
+#define DEFAULT_GTF_ID_ATTRIBUTE "gene_id"
+#define DEFAULT_GFF_ID_ATTRIBUTE "Genbank"
 
 //#define MATCH_USING_POSITION
 
@@ -39,7 +37,6 @@
 #define insertConv(A) A
 #endif
 
-#define MAX_READS_FOR_PARAM_ESTIMATION 5000000
 
 #ifdef _DEBUG
 //	Put reads into cache file when number of reads exceed READ_CACHE_SIZE
@@ -54,6 +51,16 @@ bool dbgFound = false;
 #define REP_LEN 100000
 #endif
 
+
+#ifndef _DEBUG
+
+//	Test code: Compare lengths calculated from the gff file with the lengths in the original landscape file
+//#define COMPARE_RESULTS "Y:\\LiBiNorm\\SRR557798\\SRR557798.NoA.plus.minus"
+
+//  Output detailed results of interpreting the Feature file
+//#define OUTPUT_FEATURE_DATA
+#endif
+
 using namespace std;
 
 
@@ -65,13 +72,15 @@ int LiBiCount::main(int argc, char **argv)
 
 	setEx<string> feature_type;
 
+	size_t maxReads(DEF_MAX_READS_FOR_PARAM_ESTIMATION);
+	size_t Nthreads(DEF_THREADS);
 	reverseStrand = false;
 	useStrand = true;
 	verbose = true;
 	htSeqCompatible = true;
 	minqual = 10;
 	nameOrder = true;
-	countMode = intersect_union;
+	countMode = DEFAULT_COUNT_MODE;
 	bool normalise = false;
 	maxCacheSize = READ_CACHE_SIZE;
 
@@ -106,8 +115,9 @@ printf("                        skip all reads with alignment quality lower than
 printf("                        given minimum value (default: 10)\n");
 printf("  -t FEATURETYPE, --type=FEATURETYPE\n");
 printf("                        feature type (3rd column in GFF file) to be used, all\n");
-printf("                        features of other type are ignored (default, suitable\n");
-printf("                        for Ensembl GTF files: exon)\n");
+printf("                        features of other type are ignored (default for \n");
+printf(_s("                        Ensembl GTF files: ", DEFAULT_GTF_ID_ATTRIBUTE,"\n"));
+printf(_s("                        default for GFF3 files: ", DEFAULT_GFF_ID_ATTRIBUTE, ")\n"));
 printf("  -i IDATTR, --idattr=IDATTR\n");
 printf("                        GFF attribute to be used as feature ID (default,\n");
 printf("                        suitable for Ensembl GTF files: gene_id)\n");
@@ -118,6 +128,14 @@ printf("  -c filename, --counts=filename\n");
 printf("                        Name of output file. default: writes to stdout)\n");
 printf("  -l filename, --landscape=filename\n");
 printf("                        Name of file for landscape data)\n");
+printf("  -n, --normalise\n");
+printf("                        Normalise rna-seq data using model 6 to correct for length related bias\n");
+printf("  -N filename, --Normalise=filename\n");
+printf("                        Normalise data trying all 6 models and output summary info to files with root filename\n");
+printf("  -p N, --threads=N\n");
+printf("                        Number of threads for normalisation parameter determination (3)\n");
+printf("  -d N, --reads=N\n");
+printf(_s("                        Maximum number of reads using for normalisation parameter determination (", DEF_MAX_READS_FOR_PARAM_ESTIMATION,")\n"));
 //printf("  -o SAMOUT, --samout=SAMOUT\n");
 //printf("                        write out all SAM alignment records into an output SAM\n");
 //printf("                        file called SAMOUT, annotating each line with its\n");
@@ -216,6 +234,14 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 			normalise = true;
 			normaliseResultsFilename = opt2 ? argv[++ni] + 11 : argv[++ni];
 		}
+		else if ((strcmp(argv[ni], "-p") == 0) || (opt2 = (strncmp(argv[ni], "--threads=", 10) == 0)))
+		{
+			Nthreads  = atoi(opt2 ? argv[ni] + 10 : argv[++ni]);
+		}
+		else if ((strcmp(argv[ni], "-d") == 0) || (opt2 = (strncmp(argv[ni], "--reads=", 8) == 0)))
+		{
+			maxReads = atoi(opt2 ? argv[ni] + 8 : argv[++ni]);
+		}
 		else if ((strcmp(argv[ni], "-l") == 0) || (opt2 = (strncmp(argv[ni], "--landscape=", 12) == 0)))
 		{
 			landscapeFilename = opt2 ? argv[++ni] + 12 : argv[++ni];
@@ -236,7 +262,20 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 
 
 	if (feature_type.size() == 0)
-		feature_type.emplace("exon");
+		feature_type.emplace(DEFAULT_FEATURE_TYPE_EXON);
+
+	if (!id_attribute)
+	{
+		if (featureFileName.suffix() == "gtf")
+			id_attribute = DEFAULT_GTF_ID_ATTRIBUTE;
+		else if (featureFileName.suffix().startsWith("gff"))
+			id_attribute = DEFAULT_GFF_ID_ATTRIBUTE;
+		else
+			exitFail("Unable to identify feature file type in order to specifiy default id attribute");
+	}
+
+	if(normalise && ((feature_type.size() > 1) || (*feature_type.begin() != "exon")))
+		exitFail("Can only normalise data when 'exon' is the only feature specified");
 
 	if (outputFilename && !outputFile.open(outputFilename))
 		exitFail("Unable to open output file: ",outputFilename);
@@ -290,8 +329,7 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 
 #endif
 
-	optMessage("Feature file consolidated.");
-	elapsedTime();
+	elapsedTime("Feature file consolidated.");
 
 	_DBG(genomeDef.outputChromData(featureFileName.replaceSuffix(".txt"));)
 
@@ -302,14 +340,14 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 
 	if (normalise)
 	{
-		size_t minModel = normaliseResultsFilename ? 1 : 6;
+		size_t minModel = normaliseResultsFilename ? 1 : DEFAULT_MODEL;
 
-		LiBiNorm norm(minModel,6,3);
+		LiBiNorm norm(minModel, DEFAULT_MODEL, NUMBER_OF_MCMC_RUNS);
 		dataVec lengths;
-		lengths.push_back(1000);
+		lengths.push_back(DEFAULT_NORMALISATION_GENE_LENGTH);
 		for (auto i : geneCounts)
 		{
-			if ((i.second["exon"].posPositions.size()) || (i.second["exon"].negPositions.size()))
+			if ((i.second[DEFAULT_FEATURE_TYPE_EXON].posPositions.size()) || (i.second[DEFAULT_FEATURE_TYPE_EXON].negPositions.size()))
 			{
 				long len = genomeDef.genes[i.first].length;
 				lengths.push_back(len);
@@ -319,30 +357,41 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 
 				td.gene = i.first;
 				td.length = len;
-				td.positions.emplace_back(conv(i.second["exon"].posPositions));
-				td.positions.emplace_back(conv(i.second["exon"].negPositions));
+				td.positions.emplace_back(conv(i.second[DEFAULT_FEATURE_TYPE_EXON].posPositions));
+				td.positions.emplace_back(conv(i.second[DEFAULT_FEATURE_TYPE_EXON].negPositions));
 			}
 		}
-		norm.core(3,2000,MAX_READS_FOR_PARAM_ESTIMATION);
-		normaliseExpression(6, norm.bestResults[6], lengths);
+		norm.core(Nthreads, MCMC_ITERATIONS, maxReads);
+
+		elapsedTime("Parameter estimation completeFeature file consolidated");
+
+		normaliseExpression(DEFAULT_MODEL, norm.bestResults[DEFAULT_MODEL], lengths);
 		size_t j = 1;
 		for (auto i : geneCounts)
 		{
-			if ((i.second["exon"].posPositions.size()) || (i.second["exon"].negPositions.size()))
-				genomeDef.genes[i.first].normFactor = 1.0 / norm.bestResults[6].norm[j++];
+			if ((i.second[DEFAULT_FEATURE_TYPE_EXON].posPositions.size()) || (i.second[DEFAULT_FEATURE_TYPE_EXON].negPositions.size()))
+				genomeDef.genes[i.first].normFactor = 1.0 / norm.bestResults[DEFAULT_MODEL].norm[j++];
 		}
+
 		if (normaliseResultsFilename)
 		{
 			dataVec l;
-			l.push_back(1000);
+			l.push_back(DEFAULT_NORMALISATION_GENE_LENGTH);
 			for (size_t i = 100; i <= 20000; i += 100)
 				l.push_back(i);
 
-			for (size_t i = minModel; i <= 6; i++)
+			for (size_t i = minModel; i <= DEFAULT_MODEL; i++)
 				normaliseExpression(i, norm.bestResults[i], l);
 			norm.printResults(normaliseResultsFilename, "Results");
 			norm.printNormalisation(normaliseResultsFilename, l);
 		}
+		if (countsFilename)
+		{
+			stringEx filename(countsFilename.replaceSuffix(".full.", countsFilename.suffix()));
+			if (!outputGeneCounts(filename,true))
+				exitFail("Unable to output counts to :", filename);
+		}
+
 	}
 
 	if(!outputGeneCounts(countsFilename))
@@ -351,8 +400,7 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 	if ((landscapeFilename) && !outputRNApositions(landscapeFilename))
 		progMessage("Unable to output RNA positions to :", landscapeFilename);
 
-	if (verbose)
-		elapsedTime();
+	elapsedTime("All results output");
 
 	string test;
 	_DBG(cin >> test);
@@ -366,7 +414,7 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 
 
 
-bool LiBiCount::outputGeneCounts(const string & filename)
+bool LiBiCount::outputGeneCounts(const string & filename, bool withDetails)
 {
 	TsvFile output;
 	
@@ -375,14 +423,23 @@ bool LiBiCount::outputGeneCounts(const string & filename)
 
 	for(auto i : geneCounts)
 	{
-		if (i.first.substr(0,2) != "__")
-			geneCounts.print(output,i.first);
+		if (i.first.substr(0, 2) != "__")
+		{
+			double norm = genomeDef.genes[i.first].normFactor;
+			if (withDetails)
+			{
+				size_t length = genomeDef.genes[i.first].length;
+				geneCounts.print(output, i.first,norm,length);
+			}
+			else
+				geneCounts.print(output, i.first, norm);
+		}
 	}
-	geneCounts.print(output,"__no_feature");
-	geneCounts.print(output, "__ambiguous");
-	geneCounts.print(output, "__too_low_aQual");
-	geneCounts.print(output, "__not_aligned");
-	geneCounts.print(output, "__alignment_not_unique");
+	geneCounts.print(output,"__no_feature",1);
+	geneCounts.print(output, "__ambiguous", 1);
+	geneCounts.print(output, "__too_low_aQual", 1);
+	geneCounts.print(output, "__not_aligned", 1);
+	geneCounts.print(output, "__alignment_not_unique", 1);
 	return true;
 }
 
@@ -1306,7 +1363,7 @@ void LiBiCount::fileCompare(int argc, char **argv)
 
 	string line;
 
-	vectorEx<size_t> cols(1,2,3,4,5);
+	vectorEx<size_t> cols{ {1,2,3,4,5}};
 
 
 	vector<string> myParams;

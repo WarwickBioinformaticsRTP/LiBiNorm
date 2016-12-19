@@ -57,10 +57,10 @@ inline bool printVal(outputDataFile * f, const geneTypeInfo & gti)
 };
 
 
-class gtfGeneAttribute : public std::map<const std::string, geneTypeInfo>
+class geneAttribute : public std::map<const std::string, geneTypeInfo>
 {
 public:
-	void print(TsvFile & output,const std::string & index)
+	void print(TsvFile & output,const std::string & index, double norm)
 	{
 		// Print entries for all of the attributes being considered.  Only output the type info if 
 		// there are multiple region types being considered.  This is for consistency with
@@ -69,10 +69,17 @@ public:
 			for (auto & entry: This)
 				output.print(index,entry.first,entry.second);
 		else
-			for (auto & entry: This)
-				output.print(index,entry.second);
+		{
+			auto i = begin();
+			output.print(index, (int)((*i).second.count * norm));
+		}
 	};
-	void reset()	
+	void print(TsvFile & output, const std::string & index, double norm, size_t length)
+	{
+		auto i = begin();
+		output.print(index, (int)((*i).second.count*norm), (*i).second.count, length,norm);
+	};
+	void reset()
 	{
 		for (auto & entry: This)
 			entry.second.reset();
@@ -90,13 +97,17 @@ public:
 
 
 //	A nested string map for holding counts for each identifier (e.g. exon, gene) for each gene  
-class geneCountsClass : public std::map<const std::string,gtfGeneAttribute >
+class geneCountsClass : public std::map<const std::string, geneAttribute >
 {
 public:
 	//	For printing out the list of counts.  entry.second is the count data one entry per attribute being investigated
-	void print(TsvFile & output,const std::string & index)
+	void print(TsvFile & output,const std::string & index,double norm,size_t length)
 	{
-		at(index).print(output,index);
+		at(index).print(output,index, norm,length);
+	};
+	void print(TsvFile & output, const std::string & index, double norm)
+	{
+		at(index).print(output, index, norm);
 	};
 
 	//	Needed if we decide the data is not name ordered and have to restart
