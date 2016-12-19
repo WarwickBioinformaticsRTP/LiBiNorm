@@ -125,6 +125,6 @@ void transcriptDataMap::transferTo(dataType & mcmcData,size_t maxLength, int max
 				break;
 		}
 	}
-	optMessage(Nreads, " used for parameter determination");
+	optMessage(Nreads, " reads used for parameter determination");
 }
 

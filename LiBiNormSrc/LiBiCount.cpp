@@ -127,14 +127,15 @@ printf("  -c FILENAME, --counts=FILENAME\n");
 printf("                        Name of output file. default: writes to stdout)\n");
 printf("  -l FILENAME, --landscape=FILENAME\n");
 printf("                        Name of file for landscape data)\n");
-printf("  -n, --normalise\n");
-printf("                        Normalise rna-seq data using model 6 to correct for length related bias\n");
+printf("  -n, --normalise       Normalise rna-seq data using model 6 to correct for\n");
+printf("                        length related bias\n");
 printf("  -N FILENAME, --Normalise=FILENAME\n");
-printf("                        Normalise data trying all 6 models and output summary info to files with root FILENAME\n");
-printf("  -p N, --threads=N\n");
-printf(_s("                        Number of threads for normalisation parameter determination (", DEF_THREADS,")\n"));
-printf("  -d N, --reads=N\n");
-printf(_s("                        Maximum number of reads using for normalisation parameter determination (", DEF_MAX_READS_FOR_PARAM_ESTIMATION,")\n"));
+printf("                        Normalise data trying all 6 models and output summary\n");
+printf("                        info to files with root FILENAME\n");
+printf("  -p N, --threads=N     Number of threads for normalisation parameter\n");
+printf(_s("                        determination (", DEF_THREADS,")\n"));
+printf("  -d N, --reads=N       Maximum number of reads using for normalisation\n");
+printf(_s("                        parameter determination (", DEF_MAX_READS_FOR_PARAM_ESTIMATION,")\n"));
 //printf("  -o SAMOUT, --samout=SAMOUT\n");
 //printf("                        write out all SAM alignment records into an output SAM\n");
 //printf("                        file called SAMOUT, annotating each line with its\n");
@@ -364,33 +365,45 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 
 		elapsedTime("Parameter estimation completeFeature file consolidated");
 
-		normaliseExpression(DEFAULT_MODEL, norm.bestResults[DEFAULT_MODEL], lengths);
+		size_t bestModel = 0;
+		double bestLL = 1E99;
+		for (size_t m = minModel; m <= DEFAULT_MODEL; m++)
+		{
+			if (norm.bestResults[m].minLL < bestLL)
+			{
+				bestModel = m;
+				bestLL = norm.bestResults[m].minLL;
+			}
+		}
+		progMessage("Best model is model ", bestModel);
+
+		normaliseExpression(bestModel, norm.bestResults[bestModel], lengths);
 		size_t j = 1;
 		for (auto i : geneCounts)
 		{
 			if ((i.second[DEFAULT_FEATURE_TYPE_EXON].posPositions.size()) || (i.second[DEFAULT_FEATURE_TYPE_EXON].negPositions.size()))
-				genomeDef.genes[i.first].normFactor = 1.0 / norm.bestResults[DEFAULT_MODEL].norm[j++];
+				genomeDef.genes[i.first].normFactor = 1.0 / norm.bestResults[bestModel].norm[j++];
 		}
 
 		if (normaliseResultsFilename)
 		{
-			dataVec l;
-			l.push_back(DEFAULT_NORMALISATION_GENE_LENGTH);
-			for (size_t i = 100; i <= 20000; i += 100)
-				l.push_back(i);
+			//	Output the results of the mcmc analysis
+			norm.printResults(normaliseResultsFilename.replaceSuffix("_results.txt"), "Results");
 
+			//	And then the bias predicted by all 6 models
+			dataVec lengths;
+			lengths.push_back(DEFAULT_NORMALISATION_GENE_LENGTH);
+			for (size_t i = 100; i <= 20000; i += 100)
+				lengths.push_back(i);
 			for (size_t i = minModel; i <= DEFAULT_MODEL; i++)
-				normaliseExpression(i, norm.bestResults[i], l);
-			norm.printResults(normaliseResultsFilename, "Results");
-			norm.printNormalisation(normaliseResultsFilename, l);
-		}
-		if (countsFilename)
-		{
-			stringEx filename(countsFilename.replaceSuffix(".full.", countsFilename.suffix()));
-			if (!outputGeneCounts(filename,true))
+				normaliseExpression(i, norm.bestResults[i], lengths);
+			norm.printNormalisation(normaliseResultsFilename.replaceSuffix("_norm.txt"), lengths);
+
+			//	And then the counts and the bias for the genes themselves
+			string filename = normaliseResultsFilename.replaceSuffix("_expression.txt");
+			if (!outputGeneCounts(filename, true))
 				exitFail("Unable to output counts to :", filename);
 		}
-
 	}
 
 	if(!outputGeneCounts(countsFilename))

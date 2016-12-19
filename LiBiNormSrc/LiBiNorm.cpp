@@ -586,9 +586,8 @@ void LiBiNorm::printResults(const stringEx & outputFileName,const string & lastG
 	TsvFile mcmcResult;
 
 	//	Now output a table with the end points of each of the chains.
-	stringEx filename = outputFileName.replaceSuffix("_results.txt");
-	if (!mcmcResult.open(filename))
-		exitFail("Unable to open output File ", filename);
+	if (!mcmcResult.open(outputFileName))
+		exitFail("Unable to open output File ", outputFileName);
 
 	//	First headers up to and including the maximum model that is run.   Always leave space
 	//	for the intermediate models so the layout of the results is consistent
@@ -641,9 +640,8 @@ void LiBiNorm::printResults(const stringEx & outputFileName,const string & lastG
 void LiBiNorm::printNormalisation(const stringEx & outputFileName,const dataVec & lengths)
 {
 	TsvFile mcmcResult;
-	stringEx filename = outputFileName.replaceSuffix("_norm.txt");
-	if (!mcmcResult.open(filename))
-		exitFail("Unable to open output File ", filename);
+	if (!mcmcResult.open(outputFileName))
+		exitFail("Unable to open output File ", outputFileName);
 
 	for (size_t m = 1; m <= maxModel; m++)
 	{
