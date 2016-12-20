@@ -14,7 +14,7 @@ dataVec conv(const std::vector<rna_pos_type> a)
 	return retVal;
 };
 
-void gtfRegion::checkOverlap(const region & segment,vector<gtfOverlap> & overlapList) const
+void featureRegion::checkOverlap(const region & segment,vector<featureOverlap> & overlapList) const
 {
 	rna_pos_type RNAstartPos = max<long>(segment.start - start + RNAstart,0);
 	rna_pos_type RNAendPos = segment.end-start + RNAstart;
@@ -39,12 +39,12 @@ void gtfRegion::checkOverlap(const region & segment,vector<gtfOverlap> & overlap
 	}
 }
 
-gtfRegion::gtfRegion(size_t start, size_t finish, const std::string & name, char strand, const std::string & type) :
+featureRegion::featureRegion(size_t start, size_t finish, const std::string & name, char strand, const std::string & type) :
 	start(start), finish(finish),  RNAstart(0), name(name), type(type), strand(strand)
 {
-	overlaps = new chromosomeGtfData::iterator();
+	overlaps = new chromosomeFeatureData::iterator();
 };
-gtfRegion::~gtfRegion() {
+featureRegion::~featureRegion() {
 	delete (overlaps);
 };
 
@@ -97,7 +97,7 @@ void featureFileEx::index(geneCountsClass & geneCounts)
 			}
 		}
 		//	In each chromosome go through all of the regions to see what regions can be amalgamated
-		chromosomeGtfData & thisChromData = genomeGtfData[chrom.first];
+		chromosomeFeatureData & thisChromData = genomeGtfData[chrom.first];
 		for (auto i = chrom.second.begin(); i != chrom.second.end();i++)
 		{
 
@@ -128,7 +128,7 @@ void featureFileEx::index(geneCountsClass & geneCounts)
 					}
 				}
 			}
-			thisChromData.emplace(i->first,gtfRegion(i->second.start,finish,i->second.tags[0].val,i->second.strand,i->second.type));
+			thisChromData.emplace(i->first,featureRegion(i->second.start,finish,i->second.tags[0].val,i->second.strand,i->second.type));
 
 		}
 		
@@ -142,29 +142,29 @@ void featureFileEx::index(geneCountsClass & geneCounts)
 		
 		//	We are using a temporary map of the address of the gtfEntries used to store the data.  This only works because the entries will not be moved
 		//	during this process
-		map<void *,map<size_t,chromosomeGtfData::iterator> > tempMap;
+		map<void *,map<size_t,chromosomeFeatureData::iterator> > tempMap;
 
-		for (chromosomeGtfData::iterator i = thisChromData.begin(); i != thisChromData.end();i++)
+		for (chromosomeFeatureData::iterator i = thisChromData.begin(); i != thisChromData.end();i++)
 		{
 
 			//	Take the opportunity to produce a map of all the genes for holding counts
 			geneCounts[i->second.name][i->second.type];
 
-			//	And a parallel map of the ends of all of the gtfRegions/
+			//	And a parallel map of the ends of all of the featureRegions/
 			thisChromEndMap.emplace(i->second.finish,i);
 
 		
-			for (chromosomeGtfData::iterator j = next(i,1);(j != thisChromData.end()) && (j->first < i->second.finish);j++)
+			for (chromosomeFeatureData::iterator j = next(i,1);(j != thisChromData.end()) && (j->first < i->second.finish);j++)
 				tempMap[&j->second].emplace(i->first,i);
 		}
-		for (chromosomeGtfData::iterator i = thisChromData.begin(); i != thisChromData.end();i++)
+		for (chromosomeFeatureData::iterator i = thisChromData.begin(); i != thisChromData.end();i++)
 		{
 			auto j = tempMap.find(&i->second);
 
 			if (j == tempMap.end())
 			{
 				*i->second.overlaps = i;
-				//	Add gtfRegion to the list of regions associated with the gene
+				//	Add featureRegion to the list of regions associated with the gene
 				genes[i->second.name].addRegion(&i->second, false);
 			}
 			else

@@ -8,7 +8,7 @@
 #include "Regions.h"
 #include "dataVec.h"
 
-class gtfRegion;
+class featureRegion;
 
 static std::string blankString = "";
 
@@ -117,10 +117,14 @@ public:
 	};
 };
 
-typedef std::multimap<size_t, gtfRegion> chromosomeGtfData ;
+typedef std::multimap<size_t, featureRegion> chromosomeFeatureData ;
 
-struct gtfOverlap
+struct featureOverlap
 {
+	featureOverlap(size_t start, size_t finish, rna_pos_type RNAstartPos, rna_pos_type RNAendPos, bool strict, const std::string & geneName, const std::string & featType) :
+		start(start), finish(finish), RNAstartPos(RNAstartPos), RNAendPos(RNAendPos), strict(strict), geneName(geneName), featType(featType)
+	{};
+
 	size_t start,finish;
 	rna_pos_type RNAstartPos,RNAendPos;
 	bool strict;
@@ -128,52 +132,44 @@ struct gtfOverlap
 	//	deallocate on the heap.
 	const std::string & geneName;
 	const std::string & featType;
-	gtfOverlap(size_t start, size_t finish, rna_pos_type RNAstartPos, rna_pos_type RNAendPos,bool strict,const std::string & geneName,const std::string & featType):
-		start(start),finish(finish), RNAstartPos(RNAstartPos), RNAendPos(RNAendPos),strict(strict),geneName(geneName),featType(featType)
-	{
-	};
 };
 
-class gtfRegion
+class featureRegion
 {
 public:
+	featureRegion(featureRegion && gtf) : start(gtf.start), finish(gtf.finish), RNAstart(gtf.RNAstart), name(std::move(gtf.name)), type(std::move(gtf.type)), strand(gtf.strand),
+		overlaps(gtf.overlaps)
+	{
+		gtf.overlaps = 0;
+	}
+	featureRegion(size_t start, size_t finish, const std::string & name, char strand, const std::string & type);
+	~featureRegion();
+
+	void checkOverlap(const region & segment, std::vector<featureOverlap> & overlapList) const;
+
 	size_t start,finish;
 	rna_pos_type RNAstart;
 	//	Store actual values here as these are only created once and then referenced lots, so this is more efficient
 	const std::string name;
 	const std::string type;
 	char strand;
-	chromosomeGtfData::iterator * overlaps;
-
-	gtfRegion(gtfRegion && gtf) : start(gtf.start),finish(gtf.finish), RNAstart(gtf.RNAstart),name(std::move(gtf.name)),type(std::move(gtf.type)),strand(gtf.strand),
-		overlaps(gtf.overlaps)
-	{
-		gtf.overlaps = 0;
-	}
-
-	gtfRegion(	size_t start, size_t finish,const std::string & name,char strand,const std::string & type );
-	~gtfRegion();
-	void checkOverlap(const region & segment,std::vector<gtfOverlap> & overlapList) const;
+	chromosomeFeatureData::iterator * overlaps;
 };
 
 
-typedef std::map<std::string,chromosomeGtfData> genomeGtfRegions;
-typedef std::multimap<size_t,chromosomeGtfData::iterator> chromosomeEndIndexMap;
+typedef std::map<std::string,chromosomeFeatureData> genomeFeatureRegions;
+typedef std::multimap<size_t,chromosomeFeatureData::iterator> chromosomeEndIndexMap;
 
 typedef std::map<std::string,chromosomeEndIndexMap > genomeEndIndexMap;
 
-typedef std::vector<gtfRegion *> gtfRegionList;
+typedef std::vector<featureRegion *> featureRegionList;
 
 class geneData
 {
 public:
-	gtfRegionList regions;
-	bool overlaps;
-	//	The total length of the regions associated with the gene
-	rna_pos_type length;
-	char strand;
-	double normFactor;
-	void addRegion(gtfRegion * newRegion,bool ol)
+	geneData() : overlaps(false), length(0), strand(' '), normFactor(1) {};
+
+	void addRegion(featureRegion * newRegion,bool ol)
 	{
 		if (ol)
 			overlaps = true;
@@ -186,16 +182,28 @@ public:
 		length += (newRegion->finish - newRegion->start + 1);
 
 	};
-	geneData() : overlaps(false),length(0), strand(' '), normFactor(1){};
+
+	featureRegionList regions;
+	bool overlaps;
+	//	The total length of the regions associated with the gene
+	rna_pos_type length;
+	char strand;
+	double normFactor;
 };
 
 
 class featureFileEx : public featureFile
 {
 public: 
-	//	A container of all teh consolidated gtf regions
-	genomeGtfRegions genomeGtfData; 
-	//	A map of the ends of the gtf regions.   Used for finding overlaps
+	void index(geneCountsClass & geneCounts);
+	void outputChromData(const std::string & filename);
+	void useSelectedGenes(const std::string & filename);
+
+
+
+	//	A container of all the consolidated feature regions
+	genomeFeatureRegions genomeGtfData; 
+	//	A map of the ends of the feature regions.   Used for finding overlaps
 	genomeEndIndexMap genomeEndIndex;
 
 	//	For doing comparison run with a specific set of genes
@@ -206,9 +214,6 @@ public:
 	//	A map of the regions associated with a gene
 	std::map<std::string,geneData> genes;
 
-	void index(geneCountsClass & geneCounts);
-	void outputChromData(const std::string & filename);
-	void useSelectedGenes(const std::string & filename);
 
 };
 

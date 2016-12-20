@@ -476,7 +476,7 @@ struct overlapCounts
 	overlapCounts(size_t partial=0,size_t strict=0,size_t length = 0):partial(partial),strict(strict),length(length),RNAstartPos(99999999),RNAendPos(0){};
 };
 
-//	Contains information on the overlaps between a region of the read and gtfRegions
+//	Contains information on the overlaps between a region of the read and featureRegions
 //	The nested map is indexed first by gene and then by region type (e.g. exon) allowing data to be 
 //	accumlated for multiple region types if required.
 struct chromosomeGeneInfo: public map<string,map <string,overlapCounts> >
@@ -524,8 +524,8 @@ void LiBiCount::addRead(const regionLists & segments,const featureFileEx & gtfDa
 	size_t pairNo = 0;
 	for (auto & chromSegments : segments.data)
 	{
-		//	For teh segments on each of the chromosomes (normally only one chromosome) get the gtfRegions for the chromosome
-		genomeGtfRegions::const_iterator thisChromGtfRegions = gtfData.genomeGtfData.find(references[chromSegments.first].RefName);
+		//	For teh segments on each of the chromosomes (normally only one chromosome) get the featureRegions for the chromosome
+		genomeFeatureRegions::const_iterator thisChromGtfRegions = gtfData.genomeGtfData.find(references[chromSegments.first].RefName);
 
 		if (thisChromGtfRegions != gtfData.genomeGtfData.end())
 		{
@@ -536,7 +536,7 @@ void LiBiCount::addRead(const regionLists & segments,const featureFileEx & gtfDa
 				location = stringEx(*chromosome,":",chromSegments.second.data.begin()->first);
 			}
 
-			//	Get the map of neds of gtfRegions associated with the chromosome
+			//	Get the map of neds of featureRegions associated with the chromosome
 			const chromosomeEndIndexMap & thisChromEndMap = gtfData.genomeEndIndex.at(references[chromSegments.first].RefName);
 
 			if(thisChromEndMap.size())
@@ -550,11 +550,11 @@ void LiBiCount::addRead(const regionLists & segments,const featureFileEx & gtfDa
 				if (indirectIteratorStart == thisChromEndMap.end())
 					indirectIteratorStart--;
 
-				chromosomeGtfData::iterator gtfRegion = indirectIteratorStart->second;
+				chromosomeFeatureData::iterator regionIterator = indirectIteratorStart->second;
 
 				//	If this region overlaps any other regions then go to the one that starts the earliest.
 				//	If there were no overlaps then default is the overlaps points to self
-				gtfRegion = *gtfRegion->second.overlaps;
+				regionIterator = *regionIterator->second.overlaps;
 
 
 				//And now go through each of the segments
@@ -562,10 +562,10 @@ void LiBiCount::addRead(const regionLists & segments,const featureFileEx & gtfDa
 				{
 
 					genes.nSegments++;
-					vector<gtfOverlap> overlaps;
-					//	Trying out each of the gtfRegions in turn to see if there is an overlap. 
+					vector<featureOverlap> overlaps;
+					//	Trying out each of the featureRegions in turn to see if there is an overlap. 
 					//	If there is then it gets added to the list of overlaps
-					for (auto j = gtfRegion; (j != thisChromGtfRegions->second.end()) && (j->first <= segment.second.end); j++)
+					for (auto j = regionIterator; (j != thisChromGtfRegions->second.end()) && (j->first <= segment.second.end); j++)
 					{
 						//	Check for strand match
 						if (!useStrand || ((j->second.strand == segment.second.strand) != reverseStrand))
@@ -573,7 +573,7 @@ void LiBiCount::addRead(const regionLists & segments,const featureFileEx & gtfDa
 							j->second.checkOverlap(segment.second, overlaps);
 						}
 
-						gtfRegion = *j->second.overlaps;
+						regionIterator = *j->second.overlaps;
 					}
 
 
@@ -589,7 +589,7 @@ void LiBiCount::addRead(const regionLists & segments,const featureFileEx & gtfDa
 						{
 							string name, type;
 							gtfId() {};
-							gtfId(const gtfOverlap & region) :name(region.geneName), type(region.featType) {};
+							gtfId(const featureOverlap & region) :name(region.geneName), type(region.featType) {};
 
 						};
 
@@ -599,7 +599,7 @@ void LiBiCount::addRead(const regionLists & segments,const featureFileEx & gtfDa
 							size_t min, max;
 							vector<gtfId> geneSet;
 							segRegion() :min(INT_MAX), max(0) {};
-							segRegion(const gtfOverlap & region) :min(region.start), max(region.finish)
+							segRegion(const featureOverlap & region) :min(region.start), max(region.finish)
 							{
 								geneSet.emplace_back(region);
 							};
@@ -607,7 +607,7 @@ void LiBiCount::addRead(const regionLists & segments,const featureFileEx & gtfDa
 						};
 
 						//	
-						gtfOverlap & overlap = overlaps[0];
+						featureOverlap & overlap = overlaps[0];
 
 						_DBG(dbgFound = (overlap.geneName == "NM_001115075.1"));
 
@@ -636,7 +636,7 @@ void LiBiCount::addRead(const regionLists & segments,const featureFileEx & gtfDa
 
 							for (size_t i = 1; i < overlaps.size(); i++)
 							{
-								gtfOverlap & overlap = overlaps[i];
+								featureOverlap & overlap = overlaps[i];
 
 								//	Create dummy entry for every region type that the read overlapped;
 

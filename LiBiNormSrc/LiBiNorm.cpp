@@ -110,7 +110,8 @@ void LiBiNorm::mcmcThread(paramSet params, optionsType options, modelType model)
 				}
 			}
 			loop = model_iterator->second--;
-			progMessage("Starting Model:",model_iterator->first," iteration:",loop);
+			if (loop != 0)
+				progMessage("Starting Model:",model_iterator->first," iteration:",loop);
 			options.Model = model_iterator->first;
 		}
 
@@ -198,15 +199,12 @@ void LiBiNorm::mcmcThread(paramSet params, optionsType options, modelType model)
 		else
 		{
 			mcmc mcmcEngine;
-
 			mcmcEngine.mcmcrun(model, consData, params, options);
 
 			static mutex mtx;
-
 			lock_guard<mutex> lock(mtx);
 
 			progMessage("Finishing Model:",model_iterator->first," iteration:",loop);
-
 
 #ifdef STORE_ENDPOINTS
 			Chain[options.Model].emplace(loop, mcmcEngine.chain().back());
@@ -220,7 +218,6 @@ void LiBiNorm::mcmcThread(paramSet params, optionsType options, modelType model)
 			RejectionRate[options.Model] += mcmcEngine.rejected();
 		}
 	}
-
 }
 
 void runThread(LiBiNorm * root,	paramSet params, optionsType options, modelType model)
@@ -332,7 +329,7 @@ int LiBiNorm::main(int argc, char **argv)
 	}
 
 	if (!landscapeFilename)
-		exitFail("Lanscape file must be specified");
+		exitFail("Landscape file must be specified");
 
 	if (!normaliseResultsFilename)
 		normaliseResultsFilename = landscapeFilename;
