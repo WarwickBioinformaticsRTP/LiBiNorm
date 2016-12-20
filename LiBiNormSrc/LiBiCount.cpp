@@ -59,7 +59,7 @@ int LiBiCount::main(int argc, char **argv)
 	stringEx bamFileName,featureFileName,outputFilename,geneListFilename,
 		id_attribute = "gene_id";
 
-	setEx<string> feature_type;
+	string feature_type;
 
 	reverseStrand = false;
 	useStrand = true;
@@ -157,7 +157,7 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 		}
 		else if((strcmp(argv[ni], "-t") == 0) || (opt2=(strncmp(argv[ni], "--type=",7) == 0)))
 		{
-			feature_type.emplace(opt2?argv[ni]+7:argv[++ni]);
+			feature_type = opt2?argv[ni]+7:argv[++ni];
 		}
 		else if((strcmp(argv[ni], "-i") == 0) || (opt2=(strncmp(argv[ni], "--idattr=",9) == 0))) 
 		{
@@ -223,7 +223,7 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 
 
 	if (feature_type.size() == 0)
-		feature_type.emplace(DEFAULT_FEATURE_TYPE_EXON);
+		feature_type = DEFAULT_FEATURE_TYPE_EXON;
 
 	if (!id_attribute)
 	{
@@ -235,7 +235,7 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 			exitFail("Unable to identify feature file type in order to specifiy default id attribute");
 	}
 
-	if(normalise && ((feature_type.size() > 1) || (*feature_type.begin() != "exon")))
+	if(normalise && (feature_type != "exon"))
 		exitFail("Can only normalise data when 'exon' is the only feature specified");
 
 	if (outputFilename && !outputFile.open(outputFilename))
@@ -270,7 +270,7 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 	if (geneListFilename)
 	{
 		progMessage("Using genes/transcripts listed in ", geneListFilename);
-		genomeDef.useSelectedGenes(geneListFilename);
+		geneCounts.useSelectedGenes(geneListFilename);
 	}
 
 	genomeDef.index(geneCounts);
@@ -308,7 +308,7 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 		lengths.push_back(DEFAULT_NORMALISATION_GENE_LENGTH);
 		for (auto i : geneCounts)
 		{
-			if ((i.second[DEFAULT_FEATURE_TYPE_EXON].posPositions.size()) || (i.second[DEFAULT_FEATURE_TYPE_EXON].negPositions.size()))
+			if ((i.second.posPositions.size()) || (i.second.negPositions.size()))
 			{
 				long len = genomeDef.genes[i.first].length;
 				lengths.push_back(len);
@@ -318,8 +318,8 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 
 				td.gene = i.first;
 				td.length = len;
-				td.positions.emplace_back(conv(i.second[DEFAULT_FEATURE_TYPE_EXON].posPositions));
-				td.positions.emplace_back(conv(i.second[DEFAULT_FEATURE_TYPE_EXON].negPositions));
+				td.positions.emplace_back(conv(i.second.posPositions));
+				td.positions.emplace_back(conv(i.second.negPositions));
 			}
 		}
 		coreParameterEstimation();
@@ -342,7 +342,7 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 		size_t j = 1;
 		for (auto i : geneCounts)
 		{
-			if ((i.second[DEFAULT_FEATURE_TYPE_EXON].posPositions.size()) || (i.second[DEFAULT_FEATURE_TYPE_EXON].negPositions.size()))
+			if ((i.second.posPositions.size()) || (i.second.negPositions.size()))
 				genomeDef.genes[i.first].normFactor = 1.0 / bestResults[bestModel].norm[j++];
 		}
 
@@ -378,7 +378,7 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 	if (!nameOrder)
 		rmdir(tempDirectory.c_str());
 
-#ifdef _WIN32
+#ifdef _DEBUG
 	string test;
 	cin >> test;
 #endif
@@ -429,7 +429,7 @@ bool LiBiCount::outputRNApositions(const stringEx & filename)
 	{
 		for (auto gene : genomeDef.geneList)
 		{
-			geneCountsClass::iterator j = geneCounts.find(gene);
+			GeneCountData::iterator j = geneCounts.find(gene);
 			if (j == geneCounts.end())
 			{
 				output.print(gene, "0 plus");
@@ -439,8 +439,8 @@ bool LiBiCount::outputRNApositions(const stringEx & filename)
 			{
 
 				long len = genomeDef.genes[gene].length;
-				output.print(gene, _s(len, " plus"), j->second["exon"].posPositions);
-				output.print(gene, _s(len, " minus"), j->second["exon"].negPositions);
+				output.print(gene, _s(len, " plus"), j->second.posPositions);
+				output.print(gene, _s(len, " minus"), j->second.negPositions);
 			}
 		}
 	}
@@ -448,11 +448,11 @@ bool LiBiCount::outputRNApositions(const stringEx & filename)
 	{
 		for (auto i : geneCounts)
 		{
-			if ((i.second["exon"].posPositions.size()) || (i.second["exon"].negPositions.size()))
+			if ((i.second.posPositions.size()) || (i.second.negPositions.size()))
 			{
 				long len = genomeDef.genes[i.first].length;
-				output.print(i.first, _s(len, " plus"), i.second["exon"].posPositions);
-				output.print(i.first, _s(len, " minus"), i.second["exon"].negPositions);
+				output.print(i.first, _s(len, " plus"), i.second.posPositions);
+				output.print(i.first, _s(len, " minus"), i.second.negPositions);
 			}
 		}
 	}
@@ -773,8 +773,8 @@ void LiBiCount::addRead(const regionLists & segments,const featureFileEx & gtfDa
 								//	a single fragment
 								if (outputFile.is_open())
 									outputFile.printEnd(*mode,*result,*type,location,segments.name);
-								geneCounts.at(*result).at(*type)++;
-								geneCounts.at(*result).at(*type).posPositions.emplace_back(RNAstartPos);
+								geneCounts.at(*result)++;
+								geneCounts.at(*result).posPositions.emplace_back(RNAstartPos);
 								result = &gene.first;
 								type = &regionType.first;
 								RNAstartPos = regionType.second.RNAstartPos;
@@ -890,7 +890,7 @@ void LiBiCount::addRead(const regionLists & segments,const featureFileEx & gtfDa
 	if (outputFile.is_open())
 		outputFile.printEnd(*mode,*result,*type,location,segments.name);
 
-	geneCounts.at(*result).at(*type)++;
+	geneCounts.at(*result)++;
 
 	if (type != &blankString)
 	{
@@ -900,46 +900,49 @@ void LiBiCount::addRead(const regionLists & segments,const featureFileEx & gtfDa
 			if (genomeDef.genes[*result].strand == '+')
 			{
 				if (segments.strands[0] == '+')
-					geneCounts.at(*result).at(*type).posPositions.emplace_back(max(min(RNAstartPos, geneLen - 1),(rna_pos_type)1));
+					geneCounts.at(*result).posPositions.emplace_back(max(min(RNAstartPos, geneLen - 1),(rna_pos_type)1));
 				else
-					geneCounts.at(*result).at(*type).negPositions.emplace_back(max(min(RNAendPos,geneLen-1), (rna_pos_type)1));
+					geneCounts.at(*result).negPositions.emplace_back(max(min(RNAendPos,geneLen-1), (rna_pos_type)1));
 			}
 			else
 			{
 				if (segments.strands[0] == '+')
-					geneCounts.at(*result).at(*type).negPositions.emplace_back(max(geneLen - RNAstartPos + 1,(rna_pos_type)1));
+					geneCounts.at(*result).negPositions.emplace_back(max(geneLen - RNAstartPos + 1,(rna_pos_type)1));
 				else
-					geneCounts.at(*result).at(*type).posPositions.emplace_back(max(geneLen - RNAendPos + 1,(rna_pos_type)1));
+					geneCounts.at(*result).posPositions.emplace_back(max(geneLen - RNAendPos + 1,(rna_pos_type)1));
 
 			}
 		}
 		else
 		{
+			static int messageCount = 0;
 			// paired end, an entry for each end
 			if (genomeDef.genes[*result].strand == '+')
 			{
 				if (segments.strands[0] == segments.strands[1])
 				{
-					geneCounts.at(*result).at(*type).posPositions.emplace_back(max(min(RNAstartPos, geneLen - 1), (rna_pos_type)1));
-					geneCounts.at(*result).at(*type).negPositions.emplace_back(max(min(RNAendPos, geneLen - 1), (rna_pos_type)1));
+					geneCounts.at(*result).posPositions.emplace_back(max(min(RNAstartPos, geneLen - 1), (rna_pos_type)1));
+					geneCounts.at(*result).negPositions.emplace_back(max(min(RNAendPos, geneLen - 1), (rna_pos_type)1));
 				}
 				else
 				{
-					cerr << "Mismatched paired end: " << segments.name << " Position: "
-						<< references[segments.data.begin()->first].RefName << ":" << segments.data.begin()->second.data.begin()->first << endl;
+					if (messageCount++ < 30)
+						optMessage("Mismatched paired end: ", segments.name, " Position: ",
+							references[segments.data.begin()->first].RefName, ":", segments.data.begin()->second.data.begin()->first);
 				}
 			}
 			else
 			{
 				if (segments.strands[0] == segments.strands[1])
 				{
-					geneCounts.at(*result).at(*type).negPositions.emplace_back(max(geneLen - RNAstartPos + 1,(rna_pos_type)1));
-					geneCounts.at(*result).at(*type).posPositions.emplace_back(max(geneLen - RNAendPos + 1,(rna_pos_type)1));
+					geneCounts.at(*result).negPositions.emplace_back(max(geneLen - RNAstartPos + 1,(rna_pos_type)1));
+					geneCounts.at(*result).posPositions.emplace_back(max(geneLen - RNAendPos + 1,(rna_pos_type)1));
 				}
 				else
 				{
-					cerr << "Mismatched paired end: " << segments.name << " Position: "
-						<< references[segments.data.begin()->first].RefName << ":" << segments.data.begin()->second.data.begin()->first << endl;
+					if (messageCount++ < 30)
+						optMessage("Mismatched paired end: ", segments.name, " Position: ",
+							references[segments.data.begin()->first].RefName, ":", segments.data.begin()->second.data.begin()->first);
 				}
 			}
 		}

@@ -52,8 +52,8 @@ int LiBiConv::main(int argc, char **argv)
 		genomeDef.addToChromosomeMap(i.RefLength, i.RefName);
 	}
 
-	if (!genomeDef.open(featureFileName, "",setEx<string>(),true))
-		exitFail("Could not open gtf file: ", featureFileName);
+	if (!genomeDef.open(featureFileName, "","",true))
+		exitFail("Could not open feature file: ", featureFileName);
 
 	return EXIT_SUCCESS;
 

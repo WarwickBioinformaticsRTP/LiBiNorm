@@ -42,7 +42,7 @@ void transcriptDataMap::remove_invalid_values()
 		i.remove_invalid_values();
 }
 
-string transcriptDataMap::loadData(const string filename, int Ngenes)
+string transcriptDataMap::loadData(const string filename, GeneCountData & countData, int Ngenes)
 {
 	std::ifstream f;
 	f.open(filename);
@@ -63,6 +63,11 @@ string transcriptDataMap::loadData(const string filename, int Ngenes)
 			parseTsv(buffer,tempData.gene,tempData.length," ",direction,tempData.positions[0].values());
 			getline(f,buffer);
 			parseTsv(buffer,tempData.gene,tempData.length," ",direction,tempData.positions[1].values());
+
+			countData.names.push_back(tempData.gene);
+			countData.lengths.push_back(tempData.length);
+			countData.rawCounts.push_back(tempData.positions[1].size() + tempData.positions[1].size());
+
 			push_back(move(tempData));
 
 			a++;

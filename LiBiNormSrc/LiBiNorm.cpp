@@ -334,7 +334,7 @@ int LiBiNorm::main(int argc, char **argv)
 	if (!normaliseResultsFilename)
 		normaliseResultsFilename = landscapeFilename;
 
-	string lastGene = transData.loadData(landscapeFilename, Ngenes);
+	string lastGene = transData.loadData(landscapeFilename,geneCounts, Ngenes);
 	coreParameterEstimation();
 
 	printResults(lastGene);

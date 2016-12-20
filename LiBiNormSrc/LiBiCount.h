@@ -14,7 +14,7 @@ enum mode {
 	intersect_all
 };
 
-
+/*
 inline dataVec makeVec(const std::vector<rna_pos_type> & b)
 {
 	dataVec _ret(b.size());
@@ -22,7 +22,7 @@ inline dataVec makeVec(const std::vector<rna_pos_type> & b)
 		_ret.at(i) = b.at(i);
 	return _ret;
 };
-
+*/
 class LiBiCount : private LiBiNorm
 {
 
@@ -36,7 +36,7 @@ public:
 	mode countMode;
 	stringEx outputFilename,countsFilename,tempDirectory;
 
-	geneCountsClass geneCounts;
+//	geneCountsClass geneCounts;
 
 	featureFileEx genomeDef;
 

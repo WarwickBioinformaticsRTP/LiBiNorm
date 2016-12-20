@@ -1,18 +1,9 @@
 #include <algorithm>
-#include "parser.h"
 #include "FeatureFileEx.h"
+#include "GeneCountData.h"
 
 
 using namespace std;
-
-
-dataVec conv(const std::vector<rna_pos_type> a)
-{
-	dataVec retVal(a.size());
-	for (size_t i = 0; i < a.size(); i++)
-		retVal.at(i) = a.at(i);
-	return retVal;
-};
 
 void featureRegion::checkOverlap(const region & segment,vector<featureOverlap> & overlapList) const
 {
@@ -48,7 +39,7 @@ featureRegion::~featureRegion() {
 	delete (overlaps);
 };
 
-
+/*
 void featureFileEx::useSelectedGenes(const std::string & filename)
 {
 	ifstream file;
@@ -73,11 +64,11 @@ void featureFileEx::useSelectedGenes(const std::string & filename)
 		}
 	};
 }
+*/
 
 
 
-
-void featureFileEx::index(geneCountsClass & geneCounts)
+void featureFileEx::index(GeneCountData & geneCounts)
 {
 	for (auto & chrom : entryMap)
 	{
@@ -148,7 +139,7 @@ void featureFileEx::index(geneCountsClass & geneCounts)
 		{
 
 			//	Take the opportunity to produce a map of all the genes for holding counts
-			geneCounts[i->second.name][i->second.type];
+			geneCounts[i->second.name];
 
 			//	And a parallel map of the ends of all of the featureRegions/
 			thisChromEndMap.emplace(i->second.finish,i);
@@ -176,11 +167,11 @@ void featureFileEx::index(geneCountsClass & geneCounts)
 
 	}
 
-	geneCounts[noFeatureString][blankString];
-	geneCounts[ambiguousString][blankString];
-	geneCounts[lowQualString][blankString];
-	geneCounts[notAlignedString][blankString];
-	geneCounts[notUnique][blankString];
+	geneCounts[noFeatureString];
+	geneCounts[ambiguousString];
+	geneCounts[lowQualString];
+	geneCounts[notAlignedString];
+	geneCounts[notUnique];
 
 }
 

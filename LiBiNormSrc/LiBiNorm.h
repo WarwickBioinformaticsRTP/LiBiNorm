@@ -61,6 +61,9 @@ public:
 	transcriptDataMap transData;
 	map<size_t, bestResult> bestResults;
 
+protected:
+	GeneCountData geneCounts;
+
 private:
 	size_t theModel;
 	bool outputFull;

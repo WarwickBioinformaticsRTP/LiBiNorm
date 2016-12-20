@@ -4,25 +4,18 @@
 
 #include "containerEx.h"
 #include "libCommon.h"
-#include "featureFile.h"
 #include "Regions.h"
+#include "featureFile.h"
 #include "dataVec.h"
+#include "GeneCountData.h"
 
 class featureRegion;
 
-static std::string blankString = "";
 
-//	Result options
-static std::string ambiguousString = "__ambiguous";
-static std::string noFeatureString = "__no_feature";
-static std::string lowQualString = "__too_low_aQual";
-static std::string notAlignedString = "__not_aligned";
-static std::string notUnique = "__alignment_not_unique";
-
+/*
 typedef long rna_pos_type;
 
 dataVec conv(const std::vector<rna_pos_type> a);
-
 
 //	Conatins information relating to a specific gene/region type  combination
 class geneTypeInfo
@@ -96,7 +89,9 @@ public:
 
 
 
-//	A nested string map for holding counts for each identifier (e.g. exon, gene) for each gene  
+//	A nested string map for holding counts for each identifier (e.g. exon, gene) for each gene 
+//	This is used particularly when counts are being taken for more than one attribute
+
 class geneCountsClass : public std::map<const std::string, geneAttribute >
 {
 public:
@@ -116,7 +111,7 @@ public:
 			gene.second.reset();
 	};
 };
-
+*/
 typedef std::multimap<size_t, featureRegion> chromosomeFeatureData ;
 
 struct featureOverlap
@@ -195,10 +190,8 @@ public:
 class featureFileEx : public featureFile
 {
 public: 
-	void index(geneCountsClass & geneCounts);
+	void index(GeneCountData & geneCounts);
 	void outputChromData(const std::string & filename);
-	void useSelectedGenes(const std::string & filename);
-
 
 
 	//	A container of all the consolidated feature regions

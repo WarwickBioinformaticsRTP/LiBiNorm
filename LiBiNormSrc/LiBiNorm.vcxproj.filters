@@ -42,6 +42,9 @@
     <ClCompile Include="FeatureFileEx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="GeneCountData.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="LiBiNorm.h">
@@ -68,7 +71,10 @@
     <ClInclude Include="LiBiConv.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="featureFileEx.h">
+    <ClInclude Include="FeatureFileEx.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GeneCountData.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -3,18 +3,14 @@
 
 #include <map>
 #include "mcmc.h"
+#include "geneCountData.h"
+
 
 using namespace std;
 
 class transcriptData
 {
 public:
-	vector<dataVec > positions;
-	int length;
-	std::string gene;
-	int histoGram_ind;
-	transcriptData(): positions(2),length(0) {	};
-
 	transcriptData(transcriptData && a) : positions(move(a.positions)),length(a.length),gene(a.gene)
 	{
 	};
@@ -25,6 +21,12 @@ public:
 			i.removeInvalidValues(length);
 	}
 
+	vector<dataVec > positions;
+	int length;
+	std::string gene;
+	int histoGram_ind;
+	transcriptData() : positions(2), length(0) {	};
+
 };
 
 
@@ -32,14 +34,12 @@ public:
 class transcriptDataMap : public vector<transcriptData>
 {
 public:
-	vector<double> freq;
-
+	std::string loadData(const string filename, GeneCountData & countData, int Nlines = -1);
 	void remove_invalid_values();
-	std::string loadData(const string filename,int Nlines = -1);
 	void histc (const vector<int> E);
 	void transferTo(dataType & mcmcData,size_t maxLength,int maxTotReads);
 
-
+	vector<double> freq;
 };
 
 #endif
