@@ -302,7 +302,7 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 	if (normalise)
 	{
 		//	If we are outputting results then we are doing all models
-		allModels = normaliseResultsFilename;
+		NrunsOtherModels = normaliseResultsFilename ? Nruns : 0;
 
 		dataVec lengths;
 		lengths.push_back(DEFAULT_NORMALISATION_GENE_LENGTH);
@@ -322,7 +322,7 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 				td.positions.emplace_back(conv(i.second[DEFAULT_FEATURE_TYPE_EXON].negPositions));
 			}
 		}
-		core();
+		coreParameterEstimation();
 
 		elapsedTime("Parameter estimation complete");
 
@@ -349,7 +349,7 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 		if (normaliseResultsFilename)
 		{
 			//	Output the results of the mcmc analysis
-			printResults(normaliseResultsFilename, "Results");
+			printResults("Results");
 
 			//	And then the bias predicted by all 6 models
 /*			dataVec lengths;
@@ -358,7 +358,7 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 				lengths.push_back(i);
 			for (size_t i = 1; i <= DEFAULT_MODEL; i++)
 				normaliseExpression(i, norm.bestResults[i], lengths);*/
-			printNormalisation(normaliseResultsFilename);
+			printBias();
 
 			//	And then the counts and the bias for the genes themselves
 			string filename = normaliseResultsFilename.replaceSuffix("_expression.txt");

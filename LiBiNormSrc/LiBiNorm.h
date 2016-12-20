@@ -26,17 +26,19 @@
 class LiBiNormCore
 {
 protected:
-	LiBiNormCore() :allModels(false),normalise(false), 
+	LiBiNormCore() :normalise(false), 
 		maxReads(DEF_MAX_READS_FOR_PARAM_ESTIMATION),
 		Nthreads(DEF_THREADS),
-		Nsimu(MCMC_ITERATIONS)
+		Nsimu(MCMC_ITERATIONS),
+		Nruns(NUMBER_OF_MCMC_RUNS),
+		NrunsOtherModels(0)
 	{};
 
 	void helpCommon();
 	bool commandParseCommon(int & ni, char **argv);
 
-	bool allModels,normalise;
-	size_t maxReads, Nthreads,Nsimu;
+	bool normalise;
+	size_t maxReads, Nthreads,Nsimu,Nruns,NrunsOtherModels;
 
 	stringEx landscapeFilename, normaliseResultsFilename;
 };
@@ -46,19 +48,21 @@ class LiBiNorm : protected LiBiNormCore
 {
 public:
 	LiBiNorm() :
-		theModel(DEFAULT_MODEL),Nruns(NUMBER_OF_MCMC_RUNS), outputFull(false) {};
+		theModel(DEFAULT_MODEL), outputFull(false) {};
 
 	void mcmcThread(paramSet params, optionsType options, modelType model);
 	int main(int argc, char **argv);
-	bool core();
-	void printResults(const stringEx & outputFileName,const string & lastGene);
-	void printNormalisation(const stringEx & outputFileName);
+	bool coreParameterEstimation();
+	void printResults(const string & lastGene);
+	void printBias();
+	void printAllMcmcRunData();
+	void printConsolidatedMcmcRunData();
 
 	transcriptDataMap transData;
 	map<size_t, bestResult> bestResults;
 
 private:
-	size_t theModel,Nruns;
+	size_t theModel;
 	bool outputFull;
 
 	dataType consData;

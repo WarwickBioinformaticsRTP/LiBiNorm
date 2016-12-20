@@ -78,7 +78,7 @@ string transcriptDataMap::loadData(const string filename, int Ngenes)
 //	into the form which can be used by the mcmc chain
 void transcriptDataMap::transferTo(dataType & mcmcData, size_t maxLength, int maxTotReads)
 {
-	vectorEx<int> bins{ 0,300 };
+	vectorEx<int> bins{ { 0,300 } };
 	for (size_t i = 500;i <= 10000;i+=500)
 		bins.push_back(i);
 	bins.add(11000,12000,15000,30000);

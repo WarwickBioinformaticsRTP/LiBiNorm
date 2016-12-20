@@ -244,10 +244,11 @@ $(BUILD)/LiBiNormSrc/LiBiCount.o: mcmcLib/params.h
 $(BUILD)/LiBiNormSrc/LiBiCount.o: LiBiNormSrc/LogLiklihoods.h
 $(BUILD)/LiBiNormSrc/LiBiCount.o: ../bioinformaticsLib/parser.h
 $(BUILD)/LiBiNormSrc/LogLiklihoods.o: LiBiNormSrc/LogLiklihoods.h
-$(BUILD)/LiBiNormSrc/LogLiklihoods.o: mcmcLib/dataVec.h
+$(BUILD)/LiBiNormSrc/LogLiklihoods.o: mcmcLib/mcmc.h mcmcLib/dataVec.h
 $(BUILD)/LiBiNormSrc/LogLiklihoods.o: ../bioinformaticsLib/libCommon.h
 $(BUILD)/LiBiNormSrc/LogLiklihoods.o: ../bioinformaticsLib/printEx.h
 $(BUILD)/LiBiNormSrc/LogLiklihoods.o: ../bioinformaticsLib/inQuotes.h
+$(BUILD)/LiBiNormSrc/LogLiklihoods.o: mcmcLib/params.h
 $(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bioinformaticsLib/parser.h
 $(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bioinformaticsLib/libCommon.h
 $(BUILD)/LiBiNormSrc/FeatureFileEx.o: LiBiNormSrc/FeatureFileEx.h
@@ -280,9 +281,9 @@ $(BUILD)/LiBiNormSrc/transcriptData.o: LiBiNormSrc/LiBiNorm.h
 $(BUILD)/LiBiNormSrc/transcriptData.o: ../bioinformaticsLib/stringEx.h
 $(BUILD)/LiBiNormSrc/transcriptData.o: ../bioinformaticsLib/inQuotes.h
 $(BUILD)/LiBiNormSrc/transcriptData.o: LiBiNormSrc/transcriptData.h
-$(BUILD)/LiBiNormSrc/transcriptData.o: mcmcLib/dataVec.h
+$(BUILD)/LiBiNormSrc/transcriptData.o: mcmcLib/mcmc.h mcmcLib/dataVec.h
 $(BUILD)/LiBiNormSrc/transcriptData.o: ../bioinformaticsLib/printEx.h
-$(BUILD)/LiBiNormSrc/transcriptData.o: mcmcLib/mcmc.h mcmcLib/params.h
+$(BUILD)/LiBiNormSrc/transcriptData.o: mcmcLib/params.h
 $(BUILD)/LiBiNormSrc/transcriptData.o: LiBiNormSrc/LogLiklihoods.h
 $(BUILD)/LiBiNormSrc/Regions.o: LiBiNormSrc/Regions.h
 $(BUILD)/LiBiNormSrc/Regions.o: ../bioinformaticsLib/libCommon.h
