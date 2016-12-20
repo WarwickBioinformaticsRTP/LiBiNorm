@@ -32,7 +32,7 @@ class LiBiCount : private LiBiNorm
 	void incBamCounter(const BamAlignment * ba = 0,int size = -1);
 
 public:
-	bool useStrand,reverseStrand,htSeqCompatible,nameOrder;
+	bool useStrand,reverseStrand,nameOrder;
 	mode countMode;
 	stringEx outputFilename,countsFilename,tempDirectory;
 

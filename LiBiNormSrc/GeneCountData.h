@@ -18,36 +18,13 @@ static std::string lowQualString = "__too_low_aQual";
 static std::string notAlignedString = "__not_aligned";
 static std::string notUnique = "__alignment_not_unique";
 
-//	Conatins information relating to a specific gene/region type  combination
-class geneTypeInfo
+
+
+class geneAttribute 
 {
 public:
-	//	Number of associated reads
-	size_t count;
-	//	and their locations
-	std::vector<rna_pos_type> posPositions, negPositions;
+	geneAttribute() :count(0) {};
 
-	geneTypeInfo() :count(0) {};
-	void reset() {
-		count = 0;
-		posPositions.clear();
-		negPositions.clear();
-
-	}
-
-};
-
-//	Support function used by the print class for printing gtf tags
-inline bool printVal(outputDataFile * f, const geneTypeInfo & gti)
-{
-	fprintf(f->fout, "%zu", gti.count);
-	return true;
-};
-
-
-class geneAttribute : public geneTypeInfo
-{
-public:
 	void print(TsvFile & output, const std::string & index, double norm)
 	{
 			output.print(index, count * norm);
@@ -61,6 +38,18 @@ public:
 		//	Increments the count for the 'totals' counts for which there is no 'type' information 
 		//	such as notUnique and loqQualString for which we use a dummy 'blank' entry 
 		return count++;
+	}
+
+	//	Number of associated reads
+	size_t count;
+	//	and their locations
+	std::vector<rna_pos_type> posPositions, negPositions;
+
+	void reset() {
+		count = 0;
+		posPositions.clear();
+		negPositions.clear();
+
 	}
 
 };

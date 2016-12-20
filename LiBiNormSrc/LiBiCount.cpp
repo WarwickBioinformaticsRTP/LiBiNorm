@@ -64,7 +64,6 @@ int LiBiCount::main(int argc, char **argv)
 	reverseStrand = false;
 	useStrand = true;
 	verbose = true;
-	htSeqCompatible = true;
 	minqual = 10;
 	nameOrder = true;
 	countMode = DEFAULT_COUNT_MODE;
@@ -111,6 +110,9 @@ printf("                        (choices: union, intersection-strict, intersecti
 printf("                        nonempty; default: union)\n");
 printf("  -c FILENAME, --counts=FILENAME\n");
 printf("                        Name of output file. default: writes to stdout)\n");
+printf("  -z, --htseq-compatible\n");
+printf("                        Run in htseq-compatible mode\n");
+
 //printf("  -o SAMOUT, --samout=SAMOUT\n");
 //printf("                        write out all SAM alignment records into an output SAM\n");
 //printf("                        file called SAMOUT, annotating each line with its\n");
@@ -196,7 +198,11 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 		{
 			verbose = false;
 		}
-/*		else if((strcmp(argv[ni], "-o") == 0) || (strcmp(argv[ni], "--samout") == 0))
+		else if ((strcmp(argv[ni], "-z") == 0) || (strcmp(argv[ni], "---htseq-compatible") == 0))
+		{
+			htSeqCompatible = true;
+		}
+		/*		else if((strcmp(argv[ni], "-o") == 0) || (strcmp(argv[ni], "--samout") == 0))
 		{
 			outputFilename = argv[++ni];
 		}*/
