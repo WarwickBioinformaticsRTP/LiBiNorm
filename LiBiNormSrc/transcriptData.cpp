@@ -4,10 +4,8 @@
 #include <fstream>
 #include "parser.h"
 #include "containerEx.h"
-#include "transcriptData.h"
+#include "LiBiNorm.h"
 
-
-#define MAX_LENGTH_OF_GENE_FOR_PARAM_ESTIMATION 20000
 
 //	Find the number of read position values in 'this' (a vector) that sits within each bin of the
 //	histogram defined by E.   The results go into the 'freq'vector
@@ -44,7 +42,7 @@ void transcriptDataMap::remove_invalid_values()
 		i.remove_invalid_values();
 }
 
-string transcriptDataMap::loadData(const string filename, int Nlines)
+string transcriptDataMap::loadData(const string filename, int Ngenes)
 {
 	std::ifstream f;
 	f.open(filename);
@@ -54,7 +52,7 @@ string transcriptDataMap::loadData(const string filename, int Nlines)
 	string buffer,gene,direction;
 	int a = 1;
 	string lastGene;
-	while (!f.eof() & (Nlines-- != 0))
+	while (!f.eof() & (Ngenes-- != 0))
 	{
 		//	Need to check for gene and length consistency and that the gene has not appeared before
 		transcriptData tempData;
@@ -78,9 +76,9 @@ string transcriptDataMap::loadData(const string filename, int Nlines)
 
 //	Transfers information for up to maxLength reads from up to Ngenes genes or transcripts
 //	into the form which can be used by the mcmc chain
-void transcriptDataMap::transferTo(dataType & mcmcData,size_t maxLength, int maxTotReads)
+void transcriptDataMap::transferTo(dataType & mcmcData, size_t maxLength, int maxTotReads)
 {
-	vectorEx<int> bins(0,300);
+	vectorEx<int> bins{ 0,300 };
 	for (size_t i = 500;i <= 10000;i+=500)
 		bins.push_back(i);
 	bins.add(11000,12000,15000,30000);

@@ -423,12 +423,4 @@ inline bool printVal(outputDataFile * f,const dataVec & value)
 	return true;
 };
 
-class dataType 
-{
-public:
-	dataVec fragData;
-	std::vector<int> geneIndex;
-	dataVec geneData[2];
-};
-
 #endif

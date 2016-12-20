@@ -13,17 +13,6 @@
 #include "parser.h"
 #include "transcriptData.h"
 
-#define DEF_MAX_READS_FOR_PARAM_ESTIMATION 1000000
-#define DEF_THREADS 3
-#define MCMC_ITERATIONS 2000
-#define DEFAULT_MODEL 6
-#define NUMBER_OF_MCMC_RUNS 3
-#define DEFAULT_NORMALISATION_GENE_LENGTH 1000
-#define DEFAULT_COUNT_MODE intersect_union
-#define DEFAULT_FEATURE_TYPE_EXON "exon" 
-#define DEFAULT_GTF_ID_ATTRIBUTE "gene_id"
-#define DEFAULT_GFF_ID_ATTRIBUTE "Genbank"
-
 //#define MATCH_USING_POSITION
 
 //	The insert size for matching pairs should be A and -A.  In some datasets they are A and A.  By using the absolute value of the
@@ -72,8 +61,6 @@ int LiBiCount::main(int argc, char **argv)
 
 	setEx<string> feature_type;
 
-	size_t maxReads(DEF_MAX_READS_FOR_PARAM_ESTIMATION);
-	size_t Nthreads(DEF_THREADS);
 	reverseStrand = false;
 	useStrand = true;
 	verbose = true;
@@ -81,7 +68,6 @@ int LiBiCount::main(int argc, char **argv)
 	minqual = 10;
 	nameOrder = true;
 	countMode = DEFAULT_COUNT_MODE;
-	bool normalise = false;
 	maxCacheSize = READ_CACHE_SIZE;
 
 	if(argc < 1)
@@ -125,23 +111,12 @@ printf("                        (choices: union, intersection-strict, intersecti
 printf("                        nonempty; default: union)\n");
 printf("  -c FILENAME, --counts=FILENAME\n");
 printf("                        Name of output file. default: writes to stdout)\n");
-printf("  -l FILENAME, --landscape=FILENAME\n");
-printf("                        Name of file for landscape data)\n");
-printf("  -n, --normalise       Normalise rna-seq data using model 6 to correct for\n");
-printf("                        length related bias\n");
-printf("  -N FILENAME, --Normalise=FILENAME\n");
-printf("                        Normalise data trying all 6 models and output summary\n");
-printf("                        info to files with root FILENAME\n");
-printf("  -p N, --threads=N     Number of threads for normalisation parameter\n");
-printf(_s("                        determination (", DEF_THREADS,")\n"));
-printf("  -d N, --reads=N       Maximum number of reads using for normalisation\n");
-printf(_s("                        parameter determination (", DEF_MAX_READS_FOR_PARAM_ESTIMATION,")\n"));
 //printf("  -o SAMOUT, --samout=SAMOUT\n");
 //printf("                        write out all SAM alignment records into an output SAM\n");
 //printf("                        file called SAMOUT, annotating each line with its\n");
 //printf("                        feature assignment (as an optional field with tag\n");
 //printf("                        'XF')\n");
-printf("  -q, --quiet           suppress progress report\n");
+helpCommon();
 printf("\n");
 printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 		return EXIT_SUCCESS;
@@ -212,6 +187,11 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 			else
 				exitFail("Invalid mode: ",mode);
 		}
+		else if ((strcmp(argv[ni], "-c") == 0) || (opt2 = (strncmp(argv[ni], "--counts=", 9) == 0)))
+		{
+			countsFilename = opt2 ? argv[++ni] + 9 : argv[++ni];
+			tempDirectory = countsFilename.replaceSuffix("_tempFiles");
+		}
 		else if((strcmp(argv[ni], "-q") == 0) || (strcmp(argv[ni], "--quiet") == 0))
 		{
 			verbose = false;
@@ -220,31 +200,12 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 		{
 			outputFilename = argv[++ni];
 		}*/
-		else if((strcmp(argv[ni], "-c") == 0) || (opt2 = (strncmp(argv[ni], "--counts=",9) == 0)))
-		{
-			countsFilename = opt2?argv[++ni]+9:argv[++ni];
-			tempDirectory = countsFilename.replaceSuffix("_tempFiles");
-		}
 		else if ((strcmp(argv[ni], "-n") == 0) || (opt2 = (strncmp(argv[ni], "--normalise", 11) == 0)))
 		{
 			normalise = true;
 		}
-		else if ((strcmp(argv[ni], "-N") == 0) || (opt2 = (strncmp(argv[ni], "--Normalise", 11) == 0)))
+		else if (commandParseCommon(ni, argv))
 		{
-			normalise = true;
-			normaliseResultsFilename = opt2 ? argv[++ni] + 11 : argv[++ni];
-		}
-		else if ((strcmp(argv[ni], "-p") == 0) || (opt2 = (strncmp(argv[ni], "--threads=", 10) == 0)))
-		{
-			Nthreads  = atoi(opt2 ? argv[ni] + 10 : argv[++ni]);
-		}
-		else if ((strcmp(argv[ni], "-d") == 0) || (opt2 = (strncmp(argv[ni], "--reads=", 8) == 0)))
-		{
-			maxReads = atoi(opt2 ? argv[ni] + 8 : argv[++ni]);
-		}
-		else if ((strcmp(argv[ni], "-l") == 0) || (opt2 = (strncmp(argv[ni], "--landscape=", 12) == 0)))
-		{
-			landscapeFilename = opt2 ? argv[++ni] + 12 : argv[++ni];
 		}
 		else if ((strcmp(argv[ni], "-g") == 0) || (opt2 = (strncmp(argv[ni], "--genes=", 8) == 0)))
 		{
@@ -284,7 +245,7 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 		exitFail("Could not open input BAM files: ",bamFileName);
 
 	if (!nameOrder)
-		tempDirectory = getTempDirectory(tempDirectory);
+		tempDirectory = tempDirectory::get(tempDirectory);
 
 
 	// retrieve 'metadata' from BAM files.
@@ -340,9 +301,9 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 
 	if (normalise)
 	{
-		size_t minModel = normaliseResultsFilename ? 1 : DEFAULT_MODEL;
+		//	If we are outputting results then we are doing all models
+		allModels = normaliseResultsFilename;
 
-		LiBiNorm norm(minModel, DEFAULT_MODEL, NUMBER_OF_MCMC_RUNS);
 		dataVec lengths;
 		lengths.push_back(DEFAULT_NORMALISATION_GENE_LENGTH);
 		for (auto i : geneCounts)
@@ -351,9 +312,9 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 			{
 				long len = genomeDef.genes[i.first].length;
 				lengths.push_back(len);
-				norm.transData.emplace_back(transcriptData());
+				transData.emplace_back(transcriptData());
 
-				transcriptData & td = norm.transData.back();
+				transcriptData & td = transData.back();
 
 				td.gene = i.first;
 				td.length = len;
@@ -361,43 +322,43 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 				td.positions.emplace_back(conv(i.second[DEFAULT_FEATURE_TYPE_EXON].negPositions));
 			}
 		}
-		norm.core(Nthreads, MCMC_ITERATIONS, maxReads);
+		core();
 
-		elapsedTime("Parameter estimation completeFeature file consolidated");
+		elapsedTime("Parameter estimation complete");
 
 		size_t bestModel = 0;
 		double bestLL = 1E99;
-		for (size_t m = minModel; m <= DEFAULT_MODEL; m++)
+		for (size_t m = 1; m <= N_MODELS; m++)
 		{
-			if (norm.bestResults[m].minLL < bestLL)
+			if (bestResults[m].minLL < bestLL)
 			{
 				bestModel = m;
-				bestLL = norm.bestResults[m].minLL;
+				bestLL = bestResults[m].minLL;
 			}
 		}
 		progMessage("Best model is model ", bestModel);
 
-		normaliseExpression(bestModel, norm.bestResults[bestModel], lengths);
+		normaliseExpression(bestModel, bestResults[bestModel], lengths);
 		size_t j = 1;
 		for (auto i : geneCounts)
 		{
 			if ((i.second[DEFAULT_FEATURE_TYPE_EXON].posPositions.size()) || (i.second[DEFAULT_FEATURE_TYPE_EXON].negPositions.size()))
-				genomeDef.genes[i.first].normFactor = 1.0 / norm.bestResults[bestModel].norm[j++];
+				genomeDef.genes[i.first].normFactor = 1.0 / bestResults[bestModel].norm[j++];
 		}
 
 		if (normaliseResultsFilename)
 		{
 			//	Output the results of the mcmc analysis
-			norm.printResults(normaliseResultsFilename.replaceSuffix("_results.txt"), "Results");
+			printResults(normaliseResultsFilename, "Results");
 
 			//	And then the bias predicted by all 6 models
-			dataVec lengths;
+/*			dataVec lengths;
 			lengths.push_back(DEFAULT_NORMALISATION_GENE_LENGTH);
-			for (size_t i = 100; i <= 20000; i += 100)
+			for (size_t i = 100; i <= MAX_GENE_LENGTH_FOR_NORM_PLOT; i += 100)
 				lengths.push_back(i);
-			for (size_t i = minModel; i <= DEFAULT_MODEL; i++)
-				normaliseExpression(i, norm.bestResults[i], lengths);
-			norm.printNormalisation(normaliseResultsFilename.replaceSuffix("_norm.txt"), lengths);
+			for (size_t i = 1; i <= DEFAULT_MODEL; i++)
+				normaliseExpression(i, norm.bestResults[i], lengths);*/
+			printNormalisation(normaliseResultsFilename);
 
 			//	And then the counts and the bias for the genes themselves
 			string filename = normaliseResultsFilename.replaceSuffix("_expression.txt");
@@ -417,8 +378,10 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 	if (!nameOrder)
 		rmdir(tempDirectory.c_str());
 
+#ifdef _WIN32
 	string test;
-	_DBG(cin >> test);
+	cin >> test;
+#endif
 
 	return EXIT_SUCCESS;
 }

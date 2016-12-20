@@ -5,6 +5,14 @@
 #include "dataVec.h"
 #include "params.h"
 
+class dataType
+{
+public:
+	dataVec fragData;
+	std::vector<int> geneIndex;
+	dataVec geneData[2];
+};
+
 
 double rand(double a);
 

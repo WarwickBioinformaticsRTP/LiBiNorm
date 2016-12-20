@@ -2,7 +2,7 @@
 #define LOG_LIKLIHOODS_H
 
 #include <float.h>
-#include "dataVec.h"
+#include "mcmc.h"
 
 
 struct bestResult

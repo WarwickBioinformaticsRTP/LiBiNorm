@@ -68,7 +68,7 @@ int main(int argc, char **argv)
 		}
 		else if (command == "model")
 		{
-			LiBiNorm norm(1,6,5);
+			LiBiNorm norm;
 			return norm.main(argc-1,argv+1);
 		}
 		else if (command == "conv")
@@ -228,15 +228,58 @@ void runThread(LiBiNorm * root,	paramSet params, optionsType options, modelType 
 	root->mcmcThread(params, options,model);
 }
 
+
+void LiBiNormCore::helpCommon()
+{
+	printf("  -l FILENAME, --landscape=FILENAME\n");
+	printf("                        Name of file for landscape data)\n");
+	printf("  -n, --normalise       Normalise rna-seq data using model 6 to correct for\n");
+	printf("                        length related bias\n");
+	printf("  -N FILENAME, --Normalise=FILENAME\n");
+	printf("                        Normalise data trying all 6 models and output summary\n");
+	printf("                        info to files with root FILENAME\n");
+	printf("  -p N, --threads=N     Number of threads for normalisation parameter\n");
+	printf(_s("                        determination (", DEF_THREADS, ")\n"));
+	printf("  -d N, --reads=N       Maximum number of reads using for normalisation\n");
+	printf(_s("                        parameter determination (", DEF_MAX_READS_FOR_PARAM_ESTIMATION, ")\n"));
+	printf("  -q, --quiet           suppress progress report\n");
+}
+
+bool LiBiNormCore::commandParseCommon(int & ni, char **argv)
+{
+		bool opt2 = false;
+		if ((strcmp(argv[ni], "-l") == 0) || (opt2 = (strncmp(argv[ni], "--landscape=", 12) == 0)))
+		{
+			landscapeFilename = opt2 ? argv[++ni] + 12 : argv[++ni];
+			return true;
+		}
+		if ((strcmp(argv[ni], "-N") == 0) || (opt2 = (strncmp(argv[ni], "--Normalise", 11) == 0)))
+		{
+			normalise = true;
+			normaliseResultsFilename = opt2 ? argv[++ni] + 11 : argv[++ni];
+			return true;
+		}
+		if ((strcmp(argv[ni], "-p") == 0) || (opt2 = (strncmp(argv[ni], "--threads=", 10) == 0)))
+		{
+			Nthreads = atoi(opt2 ? argv[ni] + 10 : argv[++ni]);
+			return true;
+		}
+		if ((strcmp(argv[ni], "-d") == 0) || (opt2 = (strncmp(argv[ni], "--reads=", 8) == 0)))
+		{
+			maxReads = atoi(opt2 ? argv[ni] + 8 : argv[++ni]);
+			return true;
+		}
+		return false;
+}
+
 int LiBiNorm::main(int argc, char **argv)
 {
 
-	size_t minModel = 1;
-	size_t Nthreads = 1;
-	maxModel = 6;
-	Nruns = 100;
-	size_t Nsimu = 2000;
-	size_t condFileN = -1;
+	theModel = -1;
+	allModels = true;
+	Nruns = NUMBER_OF_MCMC_RUNS;
+	int Ngenes = -1;
+	normalise = true;
 
 	initClock();
 	if(argc < 1)
@@ -250,34 +293,24 @@ int LiBiNorm::main(int argc, char **argv)
 		printf("     LiBiNorm:    RNA-seq library bias normalisation   \n\n");
 		printf("Options:\n");
 		printf("  -h, --help            show this help message and exit\n");
-		printf("  -c <filename>\n");
-		printf("                        Location of consolidated location file data\n");
-		printf("  -o <filename>\n");
-		printf("                        Optional root for output file.  Default is that it\n");
-		printf("                        is derived from the location file name\n");
-		printf("  -p N\n");
-		printf("                        Number of threads\n");
-		printf("  -n N\n");
-		printf("                        Number of mcmc iterations (100)\n");
-		printf("  -s N\n");
-		printf("                        Length of each simulation (100)\n");
-		printf("  -m N\n");
-		printf("                        Just run for model N -n times.  All other models run once\n");
-		printf("  -M N\n");
-		printf("                        Just run for model N -n times.  All other models not run\n");
-		printf("  -fm \n");
-		printf("                        Output complete set of montecarlo data\n");
-		printf("  -fc \n");
-		printf("                        Output consolidated montecarlo data\n");
-		printf("  -fn \n");
-		printf("                        Output normalisation data\n");
+		helpCommon();
+//		printf("  -c <filename>\n");
+//		printf("                        Location of consolidated location file data\n");
+//		printf("  -o <filename>\n");
+//		printf("                        Optional root for output file.  Default is that it\n");
+//		printf("                        is derived from the location file name\n");
+		printf("  -g N, --genes=N       Number of genes to be included in calculations\n");
+		printf(_s("  -r N, --runs=N        Number of mcmc iterations (", NUMBER_OF_MCMC_RUNS,")\n"));
+		printf(_s("  -s N, --mcmc=N        Length of each simulation (", MCMC_ITERATIONS,")\n"));
+		printf("  -m N, --model=N       Just run for model N -r times.  All other models run once\n");
+		printf("  -f, --full            Output complete set of montecarlo data\n");
 		return EXIT_SUCCESS;
 	}
-
 	int ni = 1;
 	while(ni < argc)
 	{
-		if(strcmp(argv[ni], "-c") == 0)
+		bool opt2 = false;
+/*		if(strcmp(argv[ni], "-c") == 0)
 		{
 			consFileName = argv[++ni];
 			if (!outputFileName)
@@ -296,31 +329,29 @@ int LiBiNorm::main(int argc, char **argv)
 		{
 			Nthreads = atoi(argv[++ni]);
 		}
-		else if(strcmp(argv[ni], "-n") == 0)
+		*/
+		if (commandParseCommon(ni, argv))
 		{
-			Nruns = atoi(argv[++ni]);
 		}
-		else if (strcmp(argv[ni], "-s") == 0)
+		else if ((strcmp(argv[ni], "-g") == 0) || (opt2 = (strncmp(argv[ni], "--genes=", 8) == 0)))
 		{
-			Nsimu = atoi(argv[++ni]);
+			Ngenes = atoi(opt2 ? argv[ni] + 8 : argv[++ni]);
 		}
-		else if(strcmp(argv[ni], "-m") == 0)
+		else if ((strcmp(argv[ni], "-r") == 0) || (opt2 = (strncmp(argv[ni], "--runs=", 7) == 0)))
 		{
-			minModel = atoi(argv[++ni]);
-			maxModel = minModel;
+			Nruns = atoi(opt2 ? argv[ni] + 7 : argv[++ni]);
 		}
-		else if (strcmp(argv[ni], "-M") == 0)
+		else if ((strcmp(argv[ni], "-s") == 0) || (opt2 = (strncmp(argv[ni], "--mcmc=", 7) == 0)))
 		{
-			minModel = atoi(argv[++ni]);
-			maxModel = minModel;
-			singleModel = true;
+			Nsimu = atoi(opt2 ? argv[ni] + 7 : argv[++ni]);
 		}
-		else if (strcmp(argv[ni], "-fm") == 0)
-			outputMonteCarlo = true;
-		else if (strcmp(argv[ni], "-fc") == 0)
-			outputConsolidated = true;
-		else if (strcmp(argv[ni], "-fn") == 0)
-			outputNormalisation = true;
+		else if ((strcmp(argv[ni], "-m") == 0) || (opt2 = (strncmp(argv[ni], "--model=", 8) == 0)))
+		{
+			theModel = atoi(opt2 ? argv[ni] + 8 : argv[++ni]);
+			allModels = false;
+		}
+		else if ((strcmp(argv[ni], "-f") == 0) || (opt2 = (strncmp(argv[ni], "--full=", 7) == 0)))
+			outputFull = true;
 		else
 		{
 			exitFail("Invalid parameter: ",argv[ni]);
@@ -328,35 +359,38 @@ int LiBiNorm::main(int argc, char **argv)
 		ni++;
 	}
 
+	if (!landscapeFilename)
+		exitFail("Lanscape file must be specified");
 
+	if (!normaliseResultsFilename)
+		normaliseResultsFilename = landscapeFilename;
 
-	string lastGene = transData.loadData(consFileName, condFileN);
-	core(Nthreads, Nsimu,0);
+	string lastGene = transData.loadData(landscapeFilename, Ngenes);
+	core();
 
-	dataVec l;
-	l.push_back(1000);
-	for (size_t i = 100; i <= 10000; i += 100)
-		l.push_back(i);
+	printResults(normaliseResultsFilename, lastGene);
+/*
+	dataVec lengths;
+	lengths.push_back(DEFAULT_NORMALISATION_GENE_LENGTH);
+	for (size_t i = 100; i <= MAX_GENE_LENGTH_FOR_NORM_PLOT; i += 100)
+		lengths.push_back(i);
 
-	for (size_t m = 1; m <= maxModel; m++)
+	for (size_t m = 1; m <= N_MODELS; m++)
 	{
 		if (bestResults[m])
-			normaliseExpression(m, bestResults[m], l);
+			normaliseExpression(m, bestResults[m], lengths);
 	}
-
-	printResults(outputFileName, lastGene);
-
-	if (outputNormalisation)
-		printNormalisation(outputFileName,l);
+*/
+	printNormalisation(normaliseResultsFilename);
 
 	//********************************************************************************************
 	//	This prints out all of the data for the full set of mcmc runs for each model
-	if (outputMonteCarlo)
+	if (outputFull)
 	{
 		TsvFile mcmcResult;
-		for (size_t modl = 1; modl <= maxModel; modl++)
+		for (size_t modl = 1; modl <= N_MODELS; modl++)
 		{
-			string filename = outputFileName.replaceSuffix("_model_", modl, ".txt");
+			string filename = normaliseResultsFilename.replaceSuffix("_model_", modl, ".txt");
 			if(!mcmcResult.open(filename))
 				exitFail("Unable to open output file ", filename);
 
@@ -380,20 +414,19 @@ int LiBiNorm::main(int argc, char **argv)
 				mcmcResult.printEnd();
 			}
 			mcmcResult.close();
-
 		}
 	}
 
-	if (outputConsolidated)
+	if (outputFull)
 	{
 		TsvFile mcmcResult;
-		string filename = outputFileName.replaceSuffix("_model_cons.txt");
+		string filename = normaliseResultsFilename.replaceSuffix("_model_cons.txt");
 		if (!mcmcResult.open(filename))
 			exitFail("Unable to open output File ", filename);
 
 		map<size_t, multimap <double, dataVec *>::iterator > iterators;
 		mcmcResult.printStart("");
-		for (size_t m = 1; m <= maxModel; m++)
+		for (size_t m = 1; m <= N_MODELS; m++)
 		{
 			mcmcResult.printMiddle(headers[m], "chain","");
 			iterators[m] = allOrderedResults[m].begin();
@@ -404,7 +437,7 @@ int LiBiNorm::main(int argc, char **argv)
 		{
 			found = false;
 			mcmcResult.printStart(i);
-			for (size_t m = 1; m <= maxModel; m++)
+			for (size_t m = 1; m <= N_MODELS; m++)
 			{
 				if (iterators[m] != allOrderedResults[m].end())
 				{
@@ -430,11 +463,11 @@ int LiBiNorm::main(int argc, char **argv)
 	return EXIT_SUCCESS;
 }
 
-bool LiBiNorm::core(size_t Nthreads, size_t Nsimu, int maxTotReads)
+bool LiBiNorm::core()
 {
 
 	transData.remove_invalid_values();
-	transData.transferTo(consData, 100, maxTotReads);
+	transData.transferTo(consData, MAX_READS_GENE,maxReads);
 
 	elapsedTime("Data loaded");
 
@@ -465,18 +498,18 @@ bool LiBiNorm::core(size_t Nthreads, size_t Nsimu, int maxTotReads)
 
 	model.sigma2 = 1;
 
-	fullResultSSChain.resize(maxModel + 1);
-	fullResultChain.resize(maxModel + 1);
+	fullResultSSChain.resize(N_MODELS + 1);
+	fullResultChain.resize(N_MODELS + 1);
 
-	RejectionRate.resize(maxModel + 1);
+	RejectionRate.resize(N_MODELS + 1);
 
 	//	Set the number of iterations required of each of the models.
-	for (size_t m = 1; m < maxModel + 1; m++)
+	for (size_t m = 1; m <= N_MODELS; m++)
 	{
-		if (m >= minModel)
+		if (allModels || (m == theModel))
 			threadLoopCounts[m] = options.Nruns;
 		else
-			threadLoopCounts[m] = singleModel ? 0 : 1;
+			threadLoopCounts[m] = 0;
 	}
 
 
@@ -513,7 +546,7 @@ bool LiBiNorm::core(size_t Nthreads, size_t Nsimu, int maxTotReads)
 	//	Find the optimal parameter values, which are associated with the lowest likelihood value found in the last
 	//	1000 iterations of all of the runs.
 
-	for (size_t m = 1; m <= maxModel; m++)
+	for (size_t m = 1; m <= N_MODELS; m++)
 	{
 		multimap <double, dataVec *> & orderedResults = allOrderedResults[m];
 
@@ -522,7 +555,7 @@ bool LiBiNorm::core(size_t Nthreads, size_t Nsimu, int maxTotReads)
 		{
 			for (size_t j = fullResultSSChain[m][i].size() - 1; j > fullResultSSChain[m][i].size() / 2; j--)
 			{
-				if (outputConsolidated)
+				if (outputFull)
 					orderedResults.emplace(fullResultSSChain[m][i][j], &fullResultChain[m][i][j]);
 
 				if (fullResultSSChain[m][i][j] < br.minLL)
@@ -538,7 +571,7 @@ bool LiBiNorm::core(size_t Nthreads, size_t Nsimu, int maxTotReads)
 
 	//******************************************************************************************
 	//	And then find the standard deviation
-	for (size_t m = 1; m <= maxModel; m++)
+	for (size_t m = 1; m <= N_MODELS; m++)
 	{
 		bestResult & br = bestResults[m];
 		VEC_DATA_TYPE LL_dev = 0;
@@ -583,22 +616,22 @@ bool LiBiNorm::core(size_t Nthreads, size_t Nsimu, int maxTotReads)
 
 void LiBiNorm::printResults(const stringEx & outputFileName,const string & lastGene)
 {
+	string filename(normaliseResultsFilename.replaceSuffix("_results.txt"));
 	TsvFile mcmcResult;
-
 	//	Now output a table with the end points of each of the chains.
-	if (!mcmcResult.open(outputFileName))
-		exitFail("Unable to open output File ", outputFileName);
+	if (!mcmcResult.open(filename))
+		exitFail("Unable to open output File ", filename);
 
 	//	First headers up to and including the maximum model that is run.   Always leave space
 	//	for the intermediate models so the layout of the results is consistent
 	mcmcResult.printStart(lastGene);
-	for (size_t m = 1; m <= maxModel; m++)
+	for (size_t m = 1; m <= N_MODELS; m++)
 		mcmcResult.printMiddle(headers[m], "chain", "");
 	mcmcResult.printEnd();
 
 	//	A row for the optimal parameters that were found for each model
 	mcmcResult.printStart("Best");
-	for (size_t m = 1; m <= maxModel; m++)
+	for (size_t m = 1; m <= N_MODELS; m++)
 	{
 		if (bestResults[m].params.size())
 			mcmcResult.printMiddle(bestResults[m].params, bestResults[m].minLL, "");
@@ -610,7 +643,7 @@ void LiBiNorm::printResults(const stringEx & outputFileName,const string & lastG
 	for (size_t i = 0; i < 2; i++)
 	{
 		mcmcResult.printStart((i == 0) ? "Pos Dev" : "Neg Dev");
-		for (size_t m = 1; m <= maxModel; m++)
+		for (size_t m = 1; m <= N_MODELS; m++)
 		{
 			if (bestResults[m].param_dev[i].size())
 				mcmcResult.printMiddle(bestResults[m].param_dev[i], bestResults[m].minLL_dev, "");
@@ -623,7 +656,7 @@ void LiBiNorm::printResults(const stringEx & outputFileName,const string & lastG
 	for (size_t i = 1; i <= Nruns; i++)
 	{
 		mcmcResult.printStart(_s("Chain end ", i));
-		for (size_t m = 1; m <= maxModel; m++)
+		for (size_t m = 1; m <= N_MODELS; m++)
 		{
 			//	Was there a jth run of this model?  If so then print the end points
 			if (fullResultSSChain[m].size() && (i <= fullResultSSChain[m].rbegin()->first))
@@ -637,13 +670,25 @@ void LiBiNorm::printResults(const stringEx & outputFileName,const string & lastG
 }
 
 
-void LiBiNorm::printNormalisation(const stringEx & outputFileName,const dataVec & lengths)
+void LiBiNorm::printNormalisation(const stringEx & outputFileName)
 {
 	TsvFile mcmcResult;
-	if (!mcmcResult.open(outputFileName))
-		exitFail("Unable to open output File ", outputFileName);
+	string filename(normaliseResultsFilename.replaceSuffix("_norm.txt"));
+	if (!mcmcResult.open(filename))
+		exitFail("Unable to open output File ", filename);
 
-	for (size_t m = 1; m <= maxModel; m++)
+	dataVec lengths;
+	lengths.push_back(DEFAULT_NORMALISATION_GENE_LENGTH);
+	for (size_t i = 100; i <= MAX_GENE_LENGTH_FOR_NORM_PLOT; i += 100)
+		lengths.push_back(i);
+
+	for (size_t m = 1; m <= N_MODELS; m++)
+	{
+		if (bestResults[m])
+			normaliseExpression(m, bestResults[m], lengths);
+	}
+
+	for (size_t m = 1; m <= N_MODELS; m++)
 	{
 		mcmcResult.print(m, bestResults[m].minLL, bestResults[m].run, bestResults[m].pos, bestResults[m].params);
 		if (bestResults[m].norm.size())

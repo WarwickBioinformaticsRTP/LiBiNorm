@@ -2,11 +2,9 @@
 #define TRANSDATA_H
 
 #include <map>
-#include "dataVec.h"
+#include "mcmc.h"
 
 using namespace std;
-
-
 
 class transcriptData
 {
