@@ -39,46 +39,20 @@ featureRegion::~featureRegion() {
 	delete (overlaps);
 };
 
-/*
-void featureFileEx::useSelectedGenes(const std::string & filename)
-{
-	ifstream file;
-	file.open(filename);
-
-	if (!file.is_open())
-	{
-		progMessage("Unable to read gene list from ", filename);
-		return;
-	}
-
-	string line,gene;
-	while (!file.eof())
-	{
-		std::getline(file, line);
-		parser(line, " \n\r", line, gene);
-		if (!gene.empty())
-			geneSet.emplace(gene);
-		if (geneList.empty() || (geneList.back() != gene))
-		{
-			geneList.emplace_back(gene);
-		}
-	};
-}
-*/
-
-
 
 void featureFileEx::index(GeneCountData & geneCounts)
 {
-	geneCounts.addEntry("reference", 1000);
 	for (auto & chrom : entryMap)
 	{
-		if (geneSet.size())
+		//	If there are already entries in the geneCounts data at this stage it is because
+		//	we have preloaded them with a set of genes/transcripts that we are specifically
+		//	interested in.  At this point we then get rid of the rest
+		if (geneCounts.size() > 1)
 		{
 			//	First get rid of entries associated with genes that we are not interested in 
 			for (auto i = chrom.second.begin(); i != chrom.second.end();)
 			{
-				if (!geneSet.contains(i->second.tags[0].val))
+				if (geneCounts.find(i->second.tags[0].val) == geneCounts.end())
 				{
 					//			if (!geneList.contains(i->second.tags[0].val))
 					auto j = i++;

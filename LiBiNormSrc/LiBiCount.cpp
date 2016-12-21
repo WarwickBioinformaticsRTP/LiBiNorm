@@ -273,6 +273,7 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 		progMessage("Unable to output genome data to :",countsFilename.replaceSuffix("_genome.txt"));
 #endif
 
+	geneCounts.addEntry("reference", 1000);
 	if (geneListFilename)
 	{
 		progMessage("Using genes/transcripts listed in ", geneListFilename);
@@ -337,13 +338,13 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 		}
 		progMessage("Best model is model ", bestModel);
 
-		normaliseExpression(bestModel, bestResults[bestModel], geneCounts.lengths);
+		normaliseExpression(bestModel, bestResults[bestModel], geneCounts.lengths, geneCounts.norm);
 		size_t j = 1;
-		for (auto i : geneCounts)
-		{
-			if ((i.second.posPositions.size()) || (i.second.negPositions.size()))
-				genomeDef.genes[i.first].normFactor = 1.0 / bestResults[bestModel].norm[j++];
-		}
+//		for (auto i : geneCounts)
+//		{
+//			if ((i.second.posPositions.size()) || (i.second.negPositions.size()))
+//				genomeDef.genes[i.first].normFactor = 1.0 / bestResults[bestModel].norm[j++];
+//		}
 
 		if (normaliseResultsFilename)
 		{
@@ -361,12 +362,12 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 
 			//	And then the counts and the bias for the genes themselves
 			string filename = normaliseResultsFilename.replaceSuffix("_expression.txt");
-			if (!outputGeneCounts(filename, true))
+			if (!geneCounts.outputGeneCounts(filename, true))
 				exitFail("Unable to output counts to :", filename);
 		}
 	}
 
-	if(!outputGeneCounts(countsFilename))
+	if(!geneCounts.outputGeneCounts(countsFilename))
 		exitFail("Unable to output counts to :",countsFilename);
 
 	if ((landscapeFilename) && !outputRNApositions(landscapeFilename))
@@ -450,7 +451,8 @@ bool LiBiCount::outputRNApositions(const stringEx & filename)
 		{
 			if ((i.second.posPositions.size()) || (i.second.negPositions.size()))
 			{
-				long len = genomeDef.genes[i.first].length;
+//				long len = genomeDef.genes[i.first].length;
+				long len = geneCounts.lengths[geneCounts.at(i.first).index];
 				output.print(i.first, _s(len, " plus"), i.second.posPositions);
 				output.print(i.first, _s(len, " minus"), i.second.negPositions);
 			}
@@ -894,7 +896,8 @@ void LiBiCount::addRead(const regionLists & segments,const featureFileEx & gtfDa
 
 	if (type != &blankString)
 	{
-		rna_pos_type geneLen = genomeDef.genes[*result].length;
+//		rna_pos_type geneLen = genomeDef.genes[*result].length;
+		rna_pos_type geneLen = geneCounts.lengths[geneCounts.at(*result).index];
 		if (segments.strands.size() == 1)
 		{
 			if (genomeDef.genes[*result].strand == '+')
@@ -910,7 +913,6 @@ void LiBiCount::addRead(const regionLists & segments,const featureFileEx & gtfDa
 					geneCounts.at(*result).negPositions.emplace_back(max(geneLen - RNAstartPos + 1,(rna_pos_type)1));
 				else
 					geneCounts.at(*result).posPositions.emplace_back(max(geneLen - RNAendPos + 1,(rna_pos_type)1));
-
 			}
 		}
 		else

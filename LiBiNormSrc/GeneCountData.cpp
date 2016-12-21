@@ -12,10 +12,6 @@ dataVec conv(const std::vector<rna_pos_type> a)
 	return retVal;
 };
 
-GeneCountData::GeneCountData()
-{
-}
-
 
 void GeneCountData::useSelectedGenes(const std::string & filename)
 {
@@ -33,10 +29,7 @@ void GeneCountData::useSelectedGenes(const std::string & filename)
 	{
 		std::getline(file, line);
 		parser(line, " \n\r", line, gene);
-		if (names.empty() || (names.back() != gene))
-		{
-			names.emplace_back(gene);
-		}
+		addEntry(gene);
 	};
 }
 
@@ -50,9 +43,9 @@ bool GeneCountData::outputGeneCounts(const string & filename, bool withDetails)
 	for (size_t i = 1; i < names.size(); i++)
 	{
 		if (withDetails)
-			output.print(names[i], rawCounts[i] / norm[i], rawCounts[i], lengths[i], norm[i]);
+			output.print(names[i], (int)floor(rawCounts[i] / ((lengths[i] == 0) ? 1 : norm[i]) +0.5), rawCounts[i], lengths[i], (lengths[i] == 0) ? 1 : norm[i]);
 		else
-			output.print(names[i], rawCounts[i] / norm[i], rawCounts[i], lengths[i], norm[i]);
-
+			output.print(names[i], (int)floor(rawCounts[i] / ((lengths[i] == 0)?1:norm[i]) + 0.5));
 	}
+	return true;
 }

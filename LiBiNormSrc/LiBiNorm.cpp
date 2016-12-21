@@ -569,7 +569,7 @@ void LiBiNorm::printBias()
 	for (size_t m = 1; m <= N_MODELS; m++)
 	{
 		if (bestResults[m])
-			normaliseExpression(m, bestResults[m], lengths);
+			normaliseExpression(m, bestResults[m], lengths,bestResults[m].norm);
 	}
 
 	for (size_t m = 1; m <= N_MODELS; m++)

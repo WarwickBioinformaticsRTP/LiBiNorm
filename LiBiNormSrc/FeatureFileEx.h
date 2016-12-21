@@ -162,7 +162,7 @@ typedef std::vector<featureRegion *> featureRegionList;
 class geneData
 {
 public:
-	geneData() : overlaps(false), strand(' '), normFactor(1) {};
+	geneData() : overlaps(false), strand(' ') {};
 
 	void addRegion(featureRegion * newRegion,bool ol, VEC_DATA_TYPE & length)
 	{
@@ -181,7 +181,7 @@ public:
 	featureRegionList regions;
 	bool overlaps;
 	char strand;
-	double normFactor;
+//	double normFactor;
 };
 
 

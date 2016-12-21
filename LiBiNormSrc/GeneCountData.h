@@ -42,8 +42,6 @@ public:
 class GeneCountData : public std::map<const std::string, geneAttribute >
 {
 public:
-	GeneCountData();
-
 	VEC_DATA_TYPE & operator[](const std::string gene) 
 	{
 		static VEC_DATA_TYPE dummy;
@@ -56,7 +54,7 @@ public:
 		else
 			return rawCounts.at((*i).second.index); 
 	}
-
+/*
 	//	For printing out the list of counts.  entry.second is the count data one entry per attribute being investigated
 	void print(TsvFile & output, const std::string & index, double norm, size_t length)
 	{
@@ -66,8 +64,8 @@ public:
 	{
 		output.print(index, rawCounts[at(index).index] * norm, norm);
 	};
-
-	bool outputGeneCounts(const std::string & filename, bool withDetails);
+*/
+	bool outputGeneCounts(const std::string & filename, bool withDetails = false);
 
 	//	Needed if we decide the data is not name ordered and have to restart
 	void reset() {

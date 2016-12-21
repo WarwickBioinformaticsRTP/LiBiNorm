@@ -52,7 +52,7 @@ public:
 	bool processPositionOrderedBamData();
 	void processCachedReads(size_t cacheFileCount);
 
-	bool outputGeneCounts(const std::string & filename,bool withDetails = false);
+//	bool outputGeneCounts(const std::string & filename,bool withDetails = false);
 	bool outputRNApositions(const stringEx & filename);
 	
 	void addRead(const regionLists & segments,const featureFileEx & gtfData);

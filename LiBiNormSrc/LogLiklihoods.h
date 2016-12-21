@@ -16,7 +16,7 @@ struct bestResult
 	operator bool() const { return params.size(); };
 };
 
-void normaliseExpression(size_t m, bestResult & result, const dataVec & l);
+void normaliseExpression(size_t m, bestResult & result, const dataVec & l,dataVec & norm);
 
 #ifdef _DEBUG
 #define VERIFY_SPEEDUP

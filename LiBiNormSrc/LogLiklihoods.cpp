@@ -404,7 +404,7 @@ double FLL_ModelBD(const dataVec & param, const dataType & data)
 }
 
 
-void normaliseExpression(size_t m,bestResult & result,const dataVec & l)
+void normaliseExpression(size_t m,bestResult & result,const dataVec & l, dataVec & norm)
 {
 	double d = pow(10, result.params[0]);
 	double h = pow(10, result.params[1]);
@@ -428,7 +428,6 @@ void normaliseExpression(size_t m,bestResult & result,const dataVec & l)
 		break;
 	}
 
-	dataVec & norm = result.norm;
 	norm.resize(l.size());
 
 	switch (m)
