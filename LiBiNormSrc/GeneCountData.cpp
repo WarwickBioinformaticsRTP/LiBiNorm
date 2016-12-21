@@ -39,3 +39,20 @@ void GeneCountData::useSelectedGenes(const std::string & filename)
 		}
 	};
 }
+
+bool GeneCountData::outputGeneCounts(const string & filename, bool withDetails)
+{
+	TsvFile output;
+
+	if (!output.open(filename))
+		return false;
+
+	for (size_t i = 1; i < names.size(); i++)
+	{
+		if (withDetails)
+			output.print(names[i], rawCounts[i] / norm[i], rawCounts[i], lengths[i], norm[i]);
+		else
+			output.print(names[i], rawCounts[i] / norm[i], rawCounts[i], lengths[i], norm[i]);
+
+	}
+}

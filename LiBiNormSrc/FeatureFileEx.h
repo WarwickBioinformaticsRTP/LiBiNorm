@@ -162,9 +162,9 @@ typedef std::vector<featureRegion *> featureRegionList;
 class geneData
 {
 public:
-	geneData() : overlaps(false), length(0), strand(' '), normFactor(1) {};
+	geneData() : overlaps(false), strand(' '), normFactor(1) {};
 
-	void addRegion(featureRegion * newRegion,bool ol)
+	void addRegion(featureRegion * newRegion,bool ol, VEC_DATA_TYPE & length)
 	{
 		if (ol)
 			overlaps = true;
@@ -180,8 +180,6 @@ public:
 
 	featureRegionList regions;
 	bool overlaps;
-	//	The total length of the regions associated with the gene
-	rna_pos_type length;
 	char strand;
 	double normFactor;
 };
@@ -200,8 +198,8 @@ public:
 	genomeEndIndexMap genomeEndIndex;
 
 	//	For doing comparison run with a specific set of genes
-	setEx<std::string> geneSet;
-	std::vector<std::string> geneList;
+//	setEx<std::string> geneSet;
+//	std::vector<std::string> geneList;
 
 
 	//	A map of the regions associated with a gene

@@ -70,6 +70,7 @@ void featureFileEx::useSelectedGenes(const std::string & filename)
 
 void featureFileEx::index(GeneCountData & geneCounts)
 {
+	geneCounts.addEntry("reference", 1000);
 	for (auto & chrom : entryMap)
 	{
 		if (geneSet.size())
@@ -139,7 +140,7 @@ void featureFileEx::index(GeneCountData & geneCounts)
 		{
 
 			//	Take the opportunity to produce a map of all the genes for holding counts
-			geneCounts[i->second.name];
+			geneCounts.addEntry(i->second.name);
 
 			//	And a parallel map of the ends of all of the featureRegions/
 			thisChromEndMap.emplace(i->second.finish,i);
@@ -150,28 +151,34 @@ void featureFileEx::index(GeneCountData & geneCounts)
 		}
 		for (chromosomeFeatureData::iterator i = thisChromData.begin(); i != thisChromData.end();i++)
 		{
+			VEC_DATA_TYPE & length = geneCounts.lengths.at(geneCounts.at(i->second.name).index);
 			auto j = tempMap.find(&i->second);
 
 			if (j == tempMap.end())
 			{
 				*i->second.overlaps = i;
 				//	Add featureRegion to the list of regions associated with the gene
-				genes[i->second.name].addRegion(&i->second, false);
+				genes[i->second.name].addRegion(&i->second, false,length);
 			}
 			else
 			{
 				*i->second.overlaps = j->second.begin()->second;
-				genes[i->second.name].addRegion(&i->second, true);
+				genes[i->second.name].addRegion(&i->second, true,length);
 			}
 		}
 
 	}
+/*	for (size_t i = 0;i < geneCounts.names.size();i++)
+	{
+		geneCounts.lengths.at(i) = genes.at(geneCounts.names.at(i)).length;
+	}*/
 
-	geneCounts[noFeatureString];
-	geneCounts[ambiguousString];
-	geneCounts[lowQualString];
-	geneCounts[notAlignedString];
-	geneCounts[notUnique];
+
+	geneCounts.addEntry(noFeatureString);
+	geneCounts.addEntry(ambiguousString);
+	geneCounts.addEntry(lowQualString);
+	geneCounts.addEntry(notAlignedString);
+	geneCounts.addEntry(notUnique);
 
 }
 

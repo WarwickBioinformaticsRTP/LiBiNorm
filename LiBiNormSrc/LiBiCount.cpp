@@ -310,23 +310,16 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 		//	If we are outputting results then we are doing all models
 		NrunsOtherModels = normaliseResultsFilename ? Nruns : 0;
 
-		dataVec lengths;
-		lengths.push_back(DEFAULT_NORMALISATION_GENE_LENGTH);
-		for (auto i : geneCounts)
+		for (size_t i = 0; i < geneCounts.names.size();i++)
 		{
-			if ((i.second.posPositions.size()) || (i.second.negPositions.size()))
-			{
-				long len = genomeDef.genes[i.first].length;
-				lengths.push_back(len);
-				transData.emplace_back(transcriptData());
+			transData.emplace_back(transcriptData());
 
-				transcriptData & td = transData.back();
+			transcriptData & td = transData.back();
 
-				td.gene = i.first;
-				td.length = len;
-				td.positions.emplace_back(conv(i.second.posPositions));
-				td.positions.emplace_back(conv(i.second.negPositions));
-			}
+			td.gene = geneCounts.names[i];
+			td.length = geneCounts.lengths[i];
+			td.positions.emplace_back(conv(geneCounts.at(td.gene).posPositions));
+			td.positions.emplace_back(conv(geneCounts.at(td.gene).negPositions));
 		}
 		coreParameterEstimation();
 
@@ -344,7 +337,7 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 		}
 		progMessage("Best model is model ", bestModel);
 
-		normaliseExpression(bestModel, bestResults[bestModel], lengths);
+		normaliseExpression(bestModel, bestResults[bestModel], geneCounts.lengths);
 		size_t j = 1;
 		for (auto i : geneCounts)
 		{
@@ -393,7 +386,7 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 }
 
 
-
+/*
 bool LiBiCount::outputGeneCounts(const string & filename, bool withDetails)
 {
 	TsvFile output;
@@ -422,6 +415,7 @@ bool LiBiCount::outputGeneCounts(const string & filename, bool withDetails)
 	geneCounts.print(output, "__alignment_not_unique");
 	return true;
 }
+*/
 
 bool LiBiCount::outputRNApositions(const stringEx & filename)
 {
@@ -431,7 +425,7 @@ bool LiBiCount::outputRNApositions(const stringEx & filename)
 	if (!output.open(filename))
 		exitFail("Unable to open ", filename, " for position data"); 
 
-	if (genomeDef.geneList.size())
+/*	if (genomeDef.geneList.size())
 	{
 		for (auto gene : genomeDef.geneList)
 		{
@@ -450,7 +444,7 @@ bool LiBiCount::outputRNApositions(const stringEx & filename)
 			}
 		}
 	}
-	else
+	else*/
 	{
 		for (auto i : geneCounts)
 		{
@@ -779,7 +773,7 @@ void LiBiCount::addRead(const regionLists & segments,const featureFileEx & gtfDa
 								//	a single fragment
 								if (outputFile.is_open())
 									outputFile.printEnd(*mode,*result,*type,location,segments.name);
-								geneCounts.at(*result)++;
+								geneCounts[*result]++;
 								geneCounts.at(*result).posPositions.emplace_back(RNAstartPos);
 								result = &gene.first;
 								type = &regionType.first;
@@ -896,7 +890,7 @@ void LiBiCount::addRead(const regionLists & segments,const featureFileEx & gtfDa
 	if (outputFile.is_open())
 		outputFile.printEnd(*mode,*result,*type,location,segments.name);
 
-	geneCounts.at(*result)++;
+	geneCounts[*result]++;
 
 	if (type != &blankString)
 	{
