@@ -22,6 +22,12 @@
 #define DEFAULT_GTF_ID_ATTRIBUTE "gene_id"
 #define DEFAULT_GFF_ID_ATTRIBUTE "Genbank"
 
+//	Use this to add the mode which creates fastq files based on bam files with artificial problems
+// #define MAKE_FASTQ_MODE
+
+//	Use this to add the mode where duplicates in bam files can be removed
+// #define DEDUP_MODE
+
 
 class LiBiNormCore
 {
@@ -59,7 +65,6 @@ public:
 	void printAllMcmcRunData();
 	void printConsolidatedMcmcRunData();
 
-//	transcriptDataMap transData;
 	std::map<size_t, bestResult> bestResults;
 
 protected:

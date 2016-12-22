@@ -23,7 +23,7 @@ int LiBiConv::main(int argc, char **argv)
 	else if ((argc == 1) || ((argc == 2) && ((strcmp(argv[1], "-h") == 0) || (strcmp(argv[1], "--help") == 0))))
 	{
 		printf("Usage: LiBiNorm conv alignment_file gff_file\n");
-		printf("This program takes an alignment file in SAM/BAM format and a feature file in\n");
+		printf("This program takes an alignment file in BAM format and a feature file in\n");
 		printf("GFF format and creates a feature file with the chromosome names converted to the names\n");
 		printf("used for the chromosomes in the bam file\n");
 		return EXIT_SUCCESS;

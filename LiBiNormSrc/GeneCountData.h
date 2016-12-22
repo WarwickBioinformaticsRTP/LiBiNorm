@@ -24,7 +24,6 @@ public:
 
 	//	Test code takes the first N samples rather than randomly picks samples, and uses the same 
 	//	algorithm as the MATLAB code for excluding invalid calues.   Used for comparing the two outputs
-	// #define TEST_CODE
 	void selectAtMost(size_t s);
 };
 

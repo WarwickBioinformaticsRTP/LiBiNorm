@@ -19,16 +19,11 @@
 
 using namespace std;
 
-//#define TEST_CODE
-#ifdef TEST_CODE
-extern map<thread::id,map<size_t,vector<vector<VEC_DATA_TYPE> > > > cache;
-#endif
-
 #ifdef _DEBUG
 //	use this to test the calculations based on a specific result of the parameter derivation
 // #define FIXED_RESULTS log10(3.9644),log10(147.39),log10(0.0079),log10(2.0128E-4),0
+//	And this presets a specific model
 #define M_FIXED_RESULTS 5
-
 #endif
 
 int main(int argc, char **argv)
@@ -39,14 +34,21 @@ int main(int argc, char **argv)
 	_DBG( _CrtSetDbgFlag ( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF ));
 #endif
 
-	if (argc == 1)
+	if ((argc == 1) || ((argc == 2) && ((strcmp(argv[1], "-h") == 0) || (strcmp(argv[1], "--help") == 0))))
 	{
 		printf("Usage: LiBiNorm <command> [options]\n");	
 		printf("Commands:\n");	
-		printf("     count            htseq-count replacement\n");
-		printf("     dedup            removes duplicates\n");
+		printf("     count            htseq-count replacement with optional bias correction\n");
+		printf("     model            further bias correction analysis\n");
 		printf("     conv	          renames chromosomes in a .gff3 file to match those in a bam file\n");
+#ifdef DEDUP_MODE
+		printf("     dedup            removes duplicates\n");
+#endif
+#ifdef MAKE_FASTQ_MODE
 		printf("     makefastq        makes a fastq file from the bam file\n");
+#endif
+		printf("     -v, --version    version\n");
+		printf("     -h, --help       this help\n");
 	}
 	else if (argc > 1)
 	{
@@ -55,16 +57,6 @@ int main(int argc, char **argv)
 		{
 			LiBiCount libiC;
 			return libiC.main(argc-1,argv+1);
-		}
-		else if (command == "dedup")
-		{
-			LiBiDedup libiD;
-			return libiD.main(argc-1,argv+1);
-		}
-		else if (command == "makefastq")
-		{
-			MakeFastq makeFastq;
-			return makeFastq.main(argc-1,argv+1);
 		}
 		else if (command == "model")
 		{
@@ -76,9 +68,23 @@ int main(int argc, char **argv)
 			LiBiConv conv;
 			return conv.main(argc - 1, argv + 1);
 		}
-		if (command == "--version")
+#ifdef DEDUP_MODE
+		else if (command == "dedup")
 		{
-			cout << "LiBiNorm version 1.0.3" << endl;
+			LiBiDedup libiD;
+			return libiD.main(argc - 1, argv + 1);
+		}
+#endif
+#ifdef MAKE_FASTQ_MODE
+		else if (command == "makefastq")
+		{
+			MakeFastq makeFastq;
+			return makeFastq.main(argc - 1, argv + 1);
+		}
+#endif
+		if ((command == "--version") || (command == "-v"))
+		{
+			cout << "LiBiNorm version 1.1.0" << endl;
 			return EXIT_SUCCESS;
 		}
 		else
@@ -138,7 +144,7 @@ void LiBiNorm::mcmcThread(paramSet params, optionsType options, modelType model)
 		}
 
 
-
+//	Use this to run the model with a specific set of parameters
 // #define _TEST
 #ifdef _TEST
 		vectorEx<double> p0{ {1.5, 1.6,-3.1, -3.2,0.6}};
@@ -151,10 +157,10 @@ void LiBiNorm::mcmcThread(paramSet params, optionsType options, modelType model)
 		case 2: case 4: case 5:
 			options.qcov = dataVec(4,options.jumpSize);
 
-			params = { paramType("d", p0[0], -1 , 2)    // average length of fragments
-			,paramType("h",  p0[1], 0 , 3)   // the minimum length of fragmenation
-			,paramType("t1", p0[2], -5 , -1)   // theta1
-			,paramType("t2", p0[3], -5, -1) // theta2
+			params = { {"d", p0[0], -1 , 2}    // average length of fragments
+			,{"h",  p0[1], 0 , 3}   // the minimum length of fragmenation
+			,{ "t1", p0[2], -5 , -1}   // theta1
+			,{ "t2", p0[3], -5, -1} // theta2
 			//				,paramType("sig", p0[4], 0, 3) // sigma
 			};
 
@@ -162,12 +168,6 @@ void LiBiNorm::mcmcThread(paramSet params, optionsType options, modelType model)
 		case 3:
 			options.qcov = dataVec(3,options.jumpSize);
 
-/*			params = { paramType("d", p0[0], -1 , 2)    // average length of fragments
-				,paramType("h",  p0[1], 0 , 3)   // the minimum length of fragmenation
-				//				,paramType("t1", p0[2], -5 , -1)   // theta1
-				,paramType("t2", p0[3], -5, -1) // theta2
-				//				,paramType("sig", p0[4], 0, 3) // sigma
-			};*/
 			params = { {"d", p0[0], -1 , 2}    // average length of fragments
 			, {"h",  p0[1], 0 , 3 }   // the minimum length of fragmenation
 			//				,paramType("t1", p0[2], -5 , -1)   // theta1
@@ -178,8 +178,8 @@ void LiBiNorm::mcmcThread(paramSet params, optionsType options, modelType model)
 		case 1:
 			options.qcov = dataVec(2,options.jumpSize);
 
-			params = { paramType("d", p0[0], -1 , 2)    // average length of fragments
-				,paramType("h",  p0[1], 0 , 3)   // the minimum length of fragmenation
+			params = { {"d", p0[0], -1 , 2}    // average length of fragments
+				,{"h",  p0[1], 0 , 3 }   // the minimum length of fragmenation
 				//				,paramType("t1", p0[2], -5 , -1)   // theta1
 				//				,paramType("t2", p0[3], -5, -1) // theta2
 			};
@@ -187,11 +187,11 @@ void LiBiNorm::mcmcThread(paramSet params, optionsType options, modelType model)
 		case 6:
 			options.qcov = dataVec(6,options.jumpSize);
 
-			params = { paramType("d", p0[0], -1 , 2)    // average length of fragments
-				,paramType("h",  p0[1], 0 , 3)   // the minimum length of fragmenation
-				,paramType("t1", p0[2], -5 , -1)   // theta1
-				,paramType("t2", p0[3], -5, -1) // theta2
-				,paramType("a", p0[4], 0, 1) // alpha strength of model B
+			params = { {"d", p0[0], -1 , 2}    // average length of fragments
+				,{"h",  p0[1], 0 , 3}   // the minimum length of fragmenation
+				,{"t1", p0[2], -5 , -1}   // theta1
+				,{"t2", p0[3], -5, -1} // theta2
+				,{"a", p0[4], 0, 1} // alpha strength of model B
 			};
 			break;
 
@@ -425,8 +425,8 @@ bool LiBiNorm::coreParameterEstimation()
 
 
 #ifdef FIXED_RESULTS
-	maxModel = M_FIXED_RESULTS;
-	bestResults[maxModel].params = dataVec{ FIXED_RESULTS };
+	theModel = M_FIXED_RESULTS;
+	bestResults[theModel].params = dataVec{ FIXED_RESULTS };
 #else
 	//	And then set the threads running
 	vector<thread> threads;
