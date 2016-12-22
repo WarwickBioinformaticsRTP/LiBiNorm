@@ -11,7 +11,6 @@
 #include "LiBiCount.h"
 #include "LiBiNorm.h"
 #include "parser.h"
-#include "transcriptData.h"
 
 //#define MATCH_USING_POSITION
 
@@ -269,7 +268,7 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 		progMessage("Unable to output genome data to :",countsFilename.replaceSuffix("_genome.txt"));
 #endif
 
-	geneCounts.addEntry("reference", 1000);
+	geneCounts.addEntry("reference", DEFAULT_NORMALISATION_GENE_LENGTH);
 	if (geneListFilename)
 	{
 		progMessage("Using genes/transcripts listed in ", geneListFilename);
@@ -348,38 +347,6 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 
 	return EXIT_SUCCESS;
 }
-
-
-/*
-bool LiBiCount::outputGeneCounts(const string & filename, bool withDetails)
-{
-	TsvFile output;
-	
-	if (!output.open(filename))
-		return false;
-
-	for(auto i : geneCounts)
-	{
-		if (i.first.substr(0, 2) != "__")
-		{
-			double norm = genomeDef.genes[i.first].normFactor;
-			if (withDetails)
-			{
-				size_t length = genomeDef.genes[i.first].length;
-				geneCounts.print(output, i.first,norm,length);
-			}
-			else
-				geneCounts.print(output, i.first, norm);
-		}
-	}
-	geneCounts.print(output,"__no_feature");
-	geneCounts.print(output, "__ambiguous");
-	geneCounts.print(output, "__too_low_aQual");
-	geneCounts.print(output, "__not_aligned");
-	geneCounts.print(output, "__alignment_not_unique");
-	return true;
-}
-*/
 
 
 

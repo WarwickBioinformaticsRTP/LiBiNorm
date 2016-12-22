@@ -1,9 +1,9 @@
 #ifndef LIBINORM_H
 #define LIBINORM_H
 
+#include <map>
 #include "stringEx.h"
-#include "transcriptData.h"
-#include "mcmc.h"
+#include "GeneCountData.h"
 #include "LogLiklihoods.h"
 
 
@@ -54,13 +54,13 @@ public:
 	int main(int argc, char **argv);
 	bool coreParameterEstimation();
 	size_t getBestModel();
-	void printResults(const string & lastGene);
+	void printResults(const std::string & lastGene);
 	void printBias();
 	void printAllMcmcRunData();
 	void printConsolidatedMcmcRunData();
 
 //	transcriptDataMap transData;
-	map<size_t, bestResult> bestResults;
+	std::map<size_t, bestResult> bestResults;
 
 protected:
 	GeneCountData geneCounts;
@@ -76,18 +76,18 @@ private:
 	//	For each model the results for each mcmc run is stored as a map indexd by run number
 	//	This is because the runs are done on separate threads and we want to store the results by the run
 	//	identifier and not the order that they finished
-	vector<map<size_t,vector <dataVec > > >fullResultChain;
-	vector<map<size_t,dataVec> >fullResultSSChain;
+	std::vector<std::map<size_t, std::vector <dataVec > > >fullResultChain;
+	std::vector<std::map<size_t,dataVec> >fullResultSSChain;
 
 	dataVec RejectionRate;
 
-	map<size_t, vector<string> > headers;
+	std::map<size_t, std::vector<std::string> > headers;
 
 	//	Counts of the number of mcmc runs that will be done for each model
-	map<size_t,int> threadLoopCounts;
+	std::map<size_t,int> threadLoopCounts;
 
 	//	The results data
-	map<size_t, multimap <double, dataVec *> > allOrderedResults;
+	std::map<size_t, std::multimap <double, dataVec *> > allOrderedResults;
 
 };
 

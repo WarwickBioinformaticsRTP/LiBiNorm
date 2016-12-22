@@ -120,7 +120,6 @@
     <ClCompile Include="LogLiklihoods.cpp" />
     <ClCompile Include="MakeFastq.cpp" />
     <ClCompile Include="Regions.cpp" />
-    <ClCompile Include="transcriptData.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FeatureFileEx.h" />
@@ -132,7 +131,6 @@
     <ClInclude Include="LogLiklihoods.h" />
     <ClInclude Include="MakeFastq.h" />
     <ClInclude Include="Regions.h" />
-    <ClInclude Include="transcriptData.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\bamtools\api.vcxproj">
