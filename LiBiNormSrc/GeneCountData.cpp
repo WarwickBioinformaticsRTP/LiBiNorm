@@ -41,12 +41,23 @@ bool GeneCountData::outputGeneCounts(const string & filename, bool withDetails)
 	if (!output.open(filename))
 		return false;
 
-	for (size_t i = 1; i < names.size(); i++)
+	if (norm.size())
 	{
-		if (withDetails)
-			output.print(names[i], (int)floor(rawCounts[i] / ((lengths[i] == 0) ? 1 : norm[i]) +0.5), rawCounts[i], lengths[i], (lengths[i] == 0) ? 1 : norm[i]);
-		else
-			output.print(names[i], (int)floor(rawCounts[i] / ((lengths[i] == 0)?1:norm[i]) + 0.5));
+		//	Dont start at 0 as 0 is the reference for normalisation
+		for (size_t i = 1; i < names.size(); i++)
+		{
+			output.printStart(names[i], (int)floor(rawCounts[i] / ((lengths[i] == 0) ? 1 : norm[i]) + 0.5));
+
+			if (withDetails)
+				output.printMiddle(rawCounts[i], lengths[i], (lengths[i] == 0) ? 1 : norm[i]);
+
+			output.printEnd();
+		}
+	}
+	else
+	{
+		for (size_t i = 1; i < names.size(); i++)
+			output.print(names[i], rawCounts[i]);
 	}
 	return true;
 }

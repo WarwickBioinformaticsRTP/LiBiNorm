@@ -382,6 +382,10 @@ int LiBiNorm::main(int argc, char **argv)
 		printConsolidatedMcmcRunData();
 	}
 
+	//	The basic count data in htseq-count format
+	if (!geneCounts.outputGeneCounts(countsFilename))
+		exitFail("Unable to output counts to :", countsFilename);
+
 	progMessage("Data modelled");
 	elapsedTime();
 
