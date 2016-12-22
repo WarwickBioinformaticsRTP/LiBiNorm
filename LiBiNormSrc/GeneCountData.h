@@ -7,8 +7,6 @@
 
 typedef long rna_pos_type;
 
-dataVec conv(const std::vector<rna_pos_type> a);
-
 static std::string blankString = "";
 
 //	Result options
@@ -22,57 +20,12 @@ static std::string notUnique = "__alignment_not_unique";
 class rnaPosVec : public std::vector<rna_pos_type>
 {
 public:
-	rnaPosVec & removeInvalidValues(rna_pos_type maxVal)
-	{
-		//	Sort in place for maximum efficiency, if we find an invalid value, replace with one from the end;
-		//	Note that if we swap with a value from the end we have to check it as well to see if it is invalid
-#ifdef TEST_CODE
-		size_t offset = 0;
-		for (size_t i = 0; i + offset < size();)
-		{
-			if ((at(i + offset) < 0) || (at(i + offset) >= maxVal))
-				offset++;
-			else
-			{
-				if (offset)
-					at(i) = at(i + offset);
-				i++;
-			}
-		}
-		if (offset)
-			resize(size() - offset);
-#else
-		iterator i = begin(), j = end();
-		while (i != j)
-		{
-			if ((*i < 0) || (*i >= maxVal))
-				std::swap(*i, *--j);
-			else
-				i++;
-		}
-		resize(j - begin());
-#endif
-		return *this;
-	}
+	rnaPosVec & removeInvalidValues(rna_pos_type maxVal);
 
 	//	Test code takes the first N samples rather than randomly picks samples, and uses the same 
 	//	algorithm as the MATLAB code for excluding invalid calues.   Used for comparing the two outputs
 	// #define TEST_CODE
-	void selectAtMost(size_t s)
-	{
-		if (s > size())
-			return;
-		//	Swap the first s entries with the entry at some other position, then resize to just have the s entries
-#ifndef TEST_CODE
-		iterator i = begin();
-		for (size_t j = 0; j < s; j++)
-		{
-			std::swap(*(i++), *(begin() + rand() % size()));
-		}
-#endif
-		resize(s);
-	}
-
+	void selectAtMost(size_t s);
 };
 
 inline bool printVal(outputDataFile * f, rnaPosVec value)
@@ -91,20 +44,22 @@ public:
 		swap(negPos, positions[1]);
 	};
 
+
+	void reset() {
+		positions[0].clear();
+		positions[1].clear();
+	}
+
 	//	Number of associated reads
 	size_t index;
 	//	and their locations
 	rnaPosVec positions[2];
 
-	void reset() {
-		positions[0].clear();
-		positions[1].clear();
-
-	}
 
 };
 
-
+//	This class holds and processes all of the count information associated with the set of genes
+//	or transcripts
 class GeneCountData : public std::map<const std::string, geneAttribute >
 {
 public:
@@ -129,21 +84,24 @@ public:
 	void outputGeneCount(TsvFile & output, const std::string name);
 	bool outputRNApositions(const std::string & filename);
 
-
 	void useSelectedGenes(const std::string & filename);
 
 	std::vector<std::string> names;
 	dataVec lengths;
-	dataVec rawCounts;
 	dataVec bias;
 
+	//	The first entry is for the raw data, and the second for the normalised data
+	dataVec counts[2];
+	dataVec RPM[2], RKPM[2], RPK[2], TPM[2];
+
+
+	//	For data associated with reads that do not map
 	std::map<const std::string, geneAttribute > errorCounts;
 	std::vector<std::string> errorNames;
 	dataVec errCounts;
 
 	std::vector<double> freq;
 	std::vector<int> histoGram_ind;
-
 };
 
 #endif

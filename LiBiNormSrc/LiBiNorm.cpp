@@ -353,12 +353,12 @@ int LiBiNorm::main(int argc, char **argv)
 	string lastGene = geneCounts.loadData(landscapeFilename, Ngenes);
 	coreParameterEstimation();
 
+	//	And then the counts and the bias for the genes themselves
 	size_t bestModel = getBestModel();
 	progMessage("Best model is model ", bestModel);
-
 	getBias(bestModel, bestResults[bestModel].params, geneCounts.lengths, geneCounts.bias);
-	//	And then the counts and the bias for the genes themselves
 	string filename = normaliseResultsFilename.replaceSuffix("_expression.txt");
+
 	if (!geneCounts.outputGeneCounts(filename, true))
 		exitFail("Unable to output counts to :", filename);
 
