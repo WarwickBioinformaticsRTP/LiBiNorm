@@ -34,7 +34,7 @@ class LiBiCount : private LiBiNorm
 public:
 	bool useStrand,reverseStrand,nameOrder;
 	mode countMode;
-	stringEx outputFilename,countsFilename,tempDirectory;
+	stringEx outputFilename,tempDirectory;
 
 //	geneCountsClass geneCounts;
 
@@ -53,7 +53,7 @@ public:
 	void processCachedReads(size_t cacheFileCount);
 
 //	bool outputGeneCounts(const std::string & filename,bool withDetails = false);
-	bool outputRNApositions(const stringEx & filename);
+//	bool outputRNApositions(const stringEx & filename);
 	
 	void addRead(const regionLists & segments,const featureFileEx & gtfData);
 

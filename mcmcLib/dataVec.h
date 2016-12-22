@@ -130,57 +130,6 @@ public:
 		return *this;
 	}
 
-//	Test code takes the first N samples rather than randomly picks samples, and uses the same 
-//	algorithm as the MATLAB code for excluding invalid calues.   Used for comparing the two outputs
-// #define TEST_CODE
-	void selectAtMost(size_t s)
-	{
-		if (s > size())
-			return;
-		//	Swap the first s entries with the entry at some other position, then resize to just have the s entries
-#ifndef TEST_CODE
-		iterator i = begin();
-		for (size_t j = 0;j < s;j++)
-		{
-			std::swap (*(i++),*(begin() + rand() % size()));
-		}
-#endif
-		resize(s);
-	}
-
-	dataVec & removeInvalidValues(VEC_DATA_TYPE maxVal)
-	{
-		//	Sort in place for maximum efficiency, if we find an invalid value, replace with one from the end;
-		//	Note that if we swap with a value from the end we have to check it as well to see if it is invalid
-#ifdef TEST_CODE
-		size_t offset = 0;
-		for (size_t i = 0;i+offset < size();)
-		{
-			if ((at(i+offset) < 0) || (at(i+offset) >= maxVal))
-				offset++;
-			else
-			{
-				if (offset)
-					at(i) = at(i+offset);
-				i++;
-			}
-		}
-		if (offset)
-			resize(size()-offset);
-#else
-		iterator i = begin(), j = end();
-		while (i != j)
-		{
-			if ((*i < 0) || (*i >= maxVal))
-				std::swap(*i,*--j);
-			else
-				i++;
-		}
-		resize(j - begin());
-#endif
-		return *this;
-	}
-
 	dataVec diagchol();
 
 	dataVec operator () (const vector<int> & i) const

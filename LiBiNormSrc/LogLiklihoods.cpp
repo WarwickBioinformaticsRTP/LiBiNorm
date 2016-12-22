@@ -32,7 +32,7 @@ double FLL_ModelA(const dataVec & param, const dataType & data)
 
 	const vector<int> & geneIndex = data.geneIndex;
 	const dataVec L = data.geneData[0](geneIndex);
-	const dataVec & Freq_l = data.geneData[1](geneIndex);
+	const dataVec Freq_l = data.geneData[1](geneIndex);
 
 	double last_l = 0;
 	double norm=0;
@@ -404,27 +404,27 @@ double FLL_ModelBD(const dataVec & param, const dataType & data)
 }
 
 
-void normaliseExpression(size_t m,bestResult & result,const dataVec & l, dataVec & norm)
+void normaliseExpression(size_t m,dataVec & params,const dataVec & l, dataVec & norm)
 {
-	double d = pow(10, result.params[0]);
-	double h = pow(10, result.params[1]);
+	double d = pow(10, params[0]);
+	double h = pow(10, params[1]);
 	double t1, t2, a;
 	switch (m)
 	{
 	case 2:
 	case 4:
 	case 5:
-		t1 = pow(10, result.params[2]);
-		t2 = pow(10, result.params[3]);
+		t1 = pow(10, params[2]);
+		t2 = pow(10, params[3]);
 		break;
 	case 3:
 		t1 = 0;
-		t2 = pow(10, result.params[2]);
+		t2 = pow(10, params[2]);
 		break;
 	case 6:
-		t1 = pow(10, result.params[2]);
-		t2 = pow(10, result.params[3]);
-		a = result.params[4];
+		t1 = pow(10, params[2]);
+		t2 = pow(10, params[3]);
+		a = params[4];
 		break;
 	}
 

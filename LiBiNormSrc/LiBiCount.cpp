@@ -108,8 +108,6 @@ printf(_s("                        default for GFF3 files: ", DEFAULT_GFF_ID_ATT
 printf("  -m MODE, --mode=MODE  mode to handle reads overlapping more than one feature\n");
 printf("                        (choices: union, intersection-strict, intersection-\n");
 printf("                        nonempty; default: union)\n");
-printf("  -c FILENAME, --counts=FILENAME\n");
-printf("                        Name of output file. default: writes to stdout)\n");
 printf("  -z, --htseq-compatible\n");
 printf("                        Run in htseq-compatible mode\n");
 
@@ -189,11 +187,6 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 			else
 				exitFail("Invalid mode: ",mode);
 		}
-		else if ((strcmp(argv[ni], "-c") == 0) || (opt2 = (strncmp(argv[ni], "--counts=", 9) == 0)))
-		{
-			countsFilename = opt2 ? argv[++ni] + 9 : argv[++ni];
-			tempDirectory = countsFilename.replaceSuffix("_tempFiles");
-		}
 		else if((strcmp(argv[ni], "-q") == 0) || (strcmp(argv[ni], "--quiet") == 0))
 		{
 			verbose = false;
@@ -226,6 +219,9 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 
 	bamFileName = argv[argc-2];
 	featureFileName = argv[argc-1];
+
+	if(countsFilename)
+		tempDirectory = countsFilename.replaceSuffix("_tempFiles");
 
 
 	if (feature_type.size() == 0)
@@ -306,12 +302,17 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 	else
 		processPositionOrderedBamData();
 
+	//	Need to output landscape file now because the data will be modified during the process
+	//	of selecting reads for normalisation
+	if ((landscapeFilename) && !geneCounts.outputRNApositions(landscapeFilename))
+		exitFail("Unable to output RNA positions to :", landscapeFilename);
+
 	if (normalise)
 	{
 		//	If we are outputting results then we are doing all models
 		NrunsOtherModels = normaliseResultsFilename ? Nruns : 0;
 
-		for (size_t i = 0; i < geneCounts.names.size();i++)
+/*		for (size_t i = 0; i < geneCounts.names.size();i++)
 		{
 			transData.emplace_back(transcriptData());
 
@@ -319,9 +320,9 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 
 			td.gene = geneCounts.names[i];
 			td.length = geneCounts.lengths[i];
-			td.positions.emplace_back(conv(geneCounts.at(td.gene).posPositions));
-			td.positions.emplace_back(conv(geneCounts.at(td.gene).negPositions));
-		}
+			td.positions.emplace_back(conv(geneCounts.at(td.gene).positions[0]));
+			td.positions.emplace_back(conv(geneCounts.at(td.gene).positions[1]));
+		}*/
 		coreParameterEstimation();
 
 		elapsedTime("Parameter estimation complete");
@@ -338,8 +339,8 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 		}
 		progMessage("Best model is model ", bestModel);
 
-		normaliseExpression(bestModel, bestResults[bestModel], geneCounts.lengths, geneCounts.norm);
-		size_t j = 1;
+		normaliseExpression(bestModel, bestResults[bestModel].params, geneCounts.lengths, geneCounts.norm);
+//		size_t j = 1;
 //		for (auto i : geneCounts)
 //		{
 //			if ((i.second.posPositions.size()) || (i.second.negPositions.size()))
@@ -352,12 +353,6 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 			printResults("Results");
 
 			//	And then the bias predicted by all 6 models
-/*			dataVec lengths;
-			lengths.push_back(DEFAULT_NORMALISATION_GENE_LENGTH);
-			for (size_t i = 100; i <= MAX_GENE_LENGTH_FOR_NORM_PLOT; i += 100)
-				lengths.push_back(i);
-			for (size_t i = 1; i <= DEFAULT_MODEL; i++)
-				normaliseExpression(i, norm.bestResults[i], lengths);*/
 			printBias();
 
 			//	And then the counts and the bias for the genes themselves
@@ -370,13 +365,7 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 	if(!geneCounts.outputGeneCounts(countsFilename))
 		exitFail("Unable to output counts to :",countsFilename);
 
-	if ((landscapeFilename) && !outputRNApositions(landscapeFilename))
-		progMessage("Unable to output RNA positions to :", landscapeFilename);
-
 	elapsedTime("All results output");
-
-	if (!nameOrder)
-		rmdir(tempDirectory.c_str());
 
 #ifdef _DEBUG
 	string test;
@@ -417,51 +406,6 @@ bool LiBiCount::outputGeneCounts(const string & filename, bool withDetails)
 	return true;
 }
 */
-
-bool LiBiCount::outputRNApositions(const stringEx & filename)
-{
-
-	TsvFile output;
-
-	if (!output.open(filename))
-		exitFail("Unable to open ", filename, " for position data"); 
-
-/*	if (genomeDef.geneList.size())
-	{
-		for (auto gene : genomeDef.geneList)
-		{
-			GeneCountData::iterator j = geneCounts.find(gene);
-			if (j == geneCounts.end())
-			{
-				output.print(gene, "0 plus");
-				output.print(gene, "0 minus");
-			}
-			else
-			{
-
-				long len = genomeDef.genes[gene].length;
-				output.print(gene, _s(len, " plus"), j->second.posPositions);
-				output.print(gene, _s(len, " minus"), j->second.negPositions);
-			}
-		}
-	}
-	else*/
-	{
-		for (auto i : geneCounts)
-		{
-			if ((i.second.posPositions.size()) || (i.second.negPositions.size()))
-			{
-//				long len = genomeDef.genes[i.first].length;
-				long len = geneCounts.lengths[geneCounts.at(i.first).index];
-				output.print(i.first, _s(len, " plus"), i.second.posPositions);
-				output.print(i.first, _s(len, " minus"), i.second.negPositions);
-			}
-		}
-	}
-
-	return true;
-
-}
 
 
 
@@ -506,12 +450,12 @@ void LiBiCount::addRead(const regionLists & segments,const featureFileEx & gtfDa
 {
 	if (segments.NH > 1)
 	{
-		geneCounts[notUnique]++;
+		geneCounts(notUnique)++;
 		return;
 	}
 	else if (segments.qual < minqual)
 	{
-		geneCounts[lowQualString]++;
+		geneCounts(lowQualString)++;
 		return;
 	}
 
@@ -775,8 +719,8 @@ void LiBiCount::addRead(const regionLists & segments,const featureFileEx & gtfDa
 								//	a single fragment
 								if (outputFile.is_open())
 									outputFile.printEnd(*mode,*result,*type,location,segments.name);
-								geneCounts[*result]++;
-								geneCounts.at(*result).posPositions.emplace_back(RNAstartPos);
+								geneCounts(*result)++;
+								geneCounts[*result].positions[0].emplace_back(RNAstartPos);
 								result = &gene.first;
 								type = &regionType.first;
 								RNAstartPos = regionType.second.RNAstartPos;
@@ -892,7 +836,7 @@ void LiBiCount::addRead(const regionLists & segments,const featureFileEx & gtfDa
 	if (outputFile.is_open())
 		outputFile.printEnd(*mode,*result,*type,location,segments.name);
 
-	geneCounts[*result]++;
+	geneCounts(*result)++;
 
 	if (type != &blankString)
 	{
@@ -903,16 +847,16 @@ void LiBiCount::addRead(const regionLists & segments,const featureFileEx & gtfDa
 			if (genomeDef.genes[*result].strand == '+')
 			{
 				if (segments.strands[0] == '+')
-					geneCounts.at(*result).posPositions.emplace_back(max(min(RNAstartPos, geneLen - 1),(rna_pos_type)1));
+					geneCounts.at(*result).positions[0].emplace_back(max(min(RNAstartPos, geneLen - 1),(rna_pos_type)1));
 				else
-					geneCounts.at(*result).negPositions.emplace_back(max(min(RNAendPos,geneLen-1), (rna_pos_type)1));
+					geneCounts.at(*result).positions[1].emplace_back(max(min(RNAendPos,geneLen-1), (rna_pos_type)1));
 			}
 			else
 			{
 				if (segments.strands[0] == '+')
-					geneCounts.at(*result).negPositions.emplace_back(max(geneLen - RNAstartPos + 1,(rna_pos_type)1));
+					geneCounts.at(*result).positions[1].emplace_back(max(geneLen - RNAstartPos + 1,(rna_pos_type)1));
 				else
-					geneCounts.at(*result).posPositions.emplace_back(max(geneLen - RNAendPos + 1,(rna_pos_type)1));
+					geneCounts.at(*result).positions[0].emplace_back(max(geneLen - RNAendPos + 1,(rna_pos_type)1));
 			}
 		}
 		else
@@ -923,8 +867,8 @@ void LiBiCount::addRead(const regionLists & segments,const featureFileEx & gtfDa
 			{
 				if (segments.strands[0] == segments.strands[1])
 				{
-					geneCounts.at(*result).posPositions.emplace_back(max(min(RNAstartPos, geneLen - 1), (rna_pos_type)1));
-					geneCounts.at(*result).negPositions.emplace_back(max(min(RNAendPos, geneLen - 1), (rna_pos_type)1));
+					geneCounts.at(*result).positions[0].emplace_back(max(min(RNAstartPos, geneLen - 1), (rna_pos_type)1));
+					geneCounts.at(*result).positions[1].emplace_back(max(min(RNAendPos, geneLen - 1), (rna_pos_type)1));
 				}
 				else
 				{
@@ -937,8 +881,8 @@ void LiBiCount::addRead(const regionLists & segments,const featureFileEx & gtfDa
 			{
 				if (segments.strands[0] == segments.strands[1])
 				{
-					geneCounts.at(*result).negPositions.emplace_back(max(geneLen - RNAstartPos + 1,(rna_pos_type)1));
-					geneCounts.at(*result).posPositions.emplace_back(max(geneLen - RNAendPos + 1,(rna_pos_type)1));
+					geneCounts.at(*result).positions[1].emplace_back(max(geneLen - RNAstartPos + 1,(rna_pos_type)1));
+					geneCounts.at(*result).positions[0].emplace_back(max(geneLen - RNAendPos + 1,(rna_pos_type)1));
 				}
 				else
 				{
@@ -981,13 +925,13 @@ bool LiBiCount::AReadIsMapped(const BamAlignment & ba)
 			if (!ba.IsMateMapped())
 			{
 				if (ba.IsFirstMate())
-					geneCounts[notAlignedString]++;
+					geneCounts(notAlignedString)++;
 				return false;
 			}
 		}
 		else
 		{
-			geneCounts[notAlignedString]++;
+			geneCounts(notAlignedString)++;
 			return false;
 		}
 	}

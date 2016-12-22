@@ -162,11 +162,17 @@ void LiBiNorm::mcmcThread(paramSet params, optionsType options, modelType model)
 		case 3:
 			options.qcov = dataVec(3,options.jumpSize);
 
-			params = { paramType("d", p0[0], -1 , 2)    // average length of fragments
+/*			params = { paramType("d", p0[0], -1 , 2)    // average length of fragments
 				,paramType("h",  p0[1], 0 , 3)   // the minimum length of fragmenation
 				//				,paramType("t1", p0[2], -5 , -1)   // theta1
 				,paramType("t2", p0[3], -5, -1) // theta2
 				//				,paramType("sig", p0[4], 0, 3) // sigma
+			};*/
+			params = { {"d", p0[0], -1 , 2}    // average length of fragments
+			, {"h",  p0[1], 0 , 3 }   // the minimum length of fragmenation
+			//				,paramType("t1", p0[2], -5 , -1)   // theta1
+			,{"t2", p0[3], -5, -1} // theta2
+			//				,paramType("sig", p0[4], 0, 3) // sigma
 			};
 			break;
 		case 1:
@@ -240,6 +246,9 @@ void LiBiNormCore::helpCommon()
 	printf("  -d N, --reads=N       Maximum number of reads using for normalisation\n");
 	printf(_s("                        parameter determination (", DEF_MAX_READS_FOR_PARAM_ESTIMATION, ")\n"));
 	printf("  -q, --quiet           suppress progress report\n");
+	printf("  -c FILENAME, --counts=FILENAME\n");
+	printf("                        Name of output file. default: writes to stdout)\n");
+
 }
 
 bool LiBiNormCore::commandParseCommon(int & ni, char **argv)
@@ -266,6 +275,12 @@ bool LiBiNormCore::commandParseCommon(int & ni, char **argv)
 			maxReads = atoi(opt2 ? argv[ni] + 8 : argv[++ni]);
 			return true;
 		}
+		if ((strcmp(argv[ni], "-c") == 0) || (opt2 = (strncmp(argv[ni], "--counts=", 9) == 0)))
+		{
+			countsFilename = opt2 ? argv[++ni] + 9 : argv[++ni];
+			return true;
+		}
+
 		return false;
 }
 
@@ -273,6 +288,7 @@ int LiBiNorm::main(int argc, char **argv)
 {
 	int Ngenes = -1;
 	normalise = true;
+	NrunsOtherModels = Nruns;
 
 	initClock();
 	if(argc < 1)
@@ -334,8 +350,26 @@ int LiBiNorm::main(int argc, char **argv)
 	if (!normaliseResultsFilename)
 		normaliseResultsFilename = landscapeFilename;
 
-	string lastGene = transData.loadData(landscapeFilename,geneCounts, Ngenes);
+	string lastGene = geneCounts.loadData(landscapeFilename, Ngenes);
 	coreParameterEstimation();
+
+	size_t bestModel = 0;
+	double bestLL = 1E99;
+	for (size_t m = 1; m <= N_MODELS; m++)
+	{
+		if (bestResults[m].minLL < bestLL)
+		{
+			bestModel = m;
+			bestLL = bestResults[m].minLL;
+		}
+	}
+	progMessage("Best model is model ", bestModel);
+
+	normaliseExpression(bestModel, bestResults[bestModel].params, geneCounts.lengths, geneCounts.norm);
+	//	And then the counts and the bias for the genes themselves
+	string filename = normaliseResultsFilename.replaceSuffix("_expression.txt");
+	if (!geneCounts.outputGeneCounts(filename, true))
+		exitFail("Unable to output counts to :", filename);
 
 	printResults(lastGene);
 	printBias();
@@ -360,8 +394,8 @@ int LiBiNorm::main(int argc, char **argv)
 
 bool LiBiNorm::coreParameterEstimation()
 {
-	transData.remove_invalid_values();
-	transData.transferTo(consData, MAX_READS_GENE,maxReads);
+	geneCounts.remove_invalid_values();
+	geneCounts.transferTo(consData, MAX_READS_GENE,maxReads);
 
 	elapsedTime("Data loaded");
 
@@ -486,8 +520,8 @@ bool LiBiNorm::coreParameterEstimation()
 			}
 		}
 		br.minLL_dev = sqrt(LL_dev / N);
-		br.param_dev.emplace_back(sqrt(param_dev[0] / p_N[0]));
-		br.param_dev.emplace_back(sqrt(param_dev[1] / p_N[1]));
+		br.param_dev[0] = sqrt(param_dev[0] / p_N[0]);
+		br.param_dev[1] = sqrt(param_dev[1] / p_N[1]);
 	}
 #endif
 
@@ -566,19 +600,21 @@ void LiBiNorm::printBias()
 	for (size_t i = 100; i <= MAX_GENE_LENGTH_FOR_NORM_PLOT; i += 100)
 		lengths.push_back(i);
 
+	map<size_t, dataVec> norms;
+
 	for (size_t m = 1; m <= N_MODELS; m++)
 	{
 		if (bestResults[m])
-			normaliseExpression(m, bestResults[m], lengths,bestResults[m].norm);
+			normaliseExpression(m, bestResults[m].params, lengths,norms[m]);
 	}
 
 	for (size_t m = 1; m <= N_MODELS; m++)
 	{
 		mcmcResult.print(m, bestResults[m].minLL, bestResults[m].run, bestResults[m].pos, bestResults[m].params);
-		if (bestResults[m].norm.size())
+		if (norms[m].size())
 		{
 			mcmcResult.print(m, lengths);
-			mcmcResult.print(m, bestResults[m].norm);
+			mcmcResult.print(m, norms[m]);
 		}
 		else
 		{

@@ -7,7 +7,7 @@
 
 
 using namespace std;
-
+/*
 class transcriptData
 {
 public:
@@ -34,14 +34,14 @@ public:
 class transcriptDataMap : public vector<transcriptData>
 {
 public:
-	std::string loadData(const string filename, GeneCountData & countData, int Nlines = -1);
-	void remove_invalid_values();
-	void histc (const vector<int> E);
-	void transferTo(dataType & mcmcData,size_t maxLength,int maxTotReads);
+//	std::string loadData(const string filename, GeneCountData & countData, int Nlines = -1);
+//	void remove_invalid_values();
+//	void histc (const vector<int> E);
+//	void transferTo(dataType & mcmcData,size_t maxLength,int maxTotReads);
 
-	vector<double> freq;
+//	vector<double> freq;
 };
-
+*/
 #endif
 
 

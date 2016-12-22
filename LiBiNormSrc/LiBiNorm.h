@@ -40,7 +40,7 @@ protected:
 	bool normalise;
 	size_t maxReads, Nthreads,Nsimu,Nruns,NrunsOtherModels;
 
-	stringEx landscapeFilename, normaliseResultsFilename;
+	stringEx landscapeFilename, normaliseResultsFilename, countsFilename;
 };
 
 
@@ -58,7 +58,7 @@ public:
 	void printAllMcmcRunData();
 	void printConsolidatedMcmcRunData();
 
-	transcriptDataMap transData;
+//	transcriptDataMap transData;
 	map<size_t, bestResult> bestResults;
 
 protected:

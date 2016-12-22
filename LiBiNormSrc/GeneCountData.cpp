@@ -1,6 +1,7 @@
-#include "GeneCountData.h"
-#include "parser.h"
 #include <fstream>
+#include "GeneCountData.h"
+#include "stringEx.h"
+#include "parser.h"
 
 using namespace std;
 
@@ -47,5 +48,23 @@ bool GeneCountData::outputGeneCounts(const string & filename, bool withDetails)
 		else
 			output.print(names[i], (int)floor(rawCounts[i] / ((lengths[i] == 0)?1:norm[i]) + 0.5));
 	}
+	return true;
+}
+
+bool GeneCountData::outputRNApositions(const string & filename)
+{
+	TsvFile output;
+
+	if (!output.open(filename))
+		exitFail("Unable to open ", filename, " for position data");
+
+	for (size_t i = 1;i < names.size();i++)
+	{
+		long len = lengths[i];
+		long count = rawCounts[i];
+		output.print(names[i], _s(len,":",count," plus"), This[names[i]].positions[0]);
+		output.print(names[i], _s(len,":", count," minus"), This[names[i]].positions[1]);
+	}
+
 	return true;
 }
