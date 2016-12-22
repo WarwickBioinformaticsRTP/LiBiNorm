@@ -18,7 +18,7 @@ struct bestResult
 	dataVec param_dev[2];
 };
 
-void normaliseExpression(size_t m, dataVec & params, const dataVec & l,dataVec & norm);
+void getBias(size_t m, dataVec & params, const dataVec & l,dataVec & bias);
 
 #ifdef _DEBUG
 #define VERIFY_SPEEDUP

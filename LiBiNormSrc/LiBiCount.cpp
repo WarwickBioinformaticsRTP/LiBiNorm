@@ -318,7 +318,7 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 		size_t bestModel = getBestModel();
 		progMessage("Best model is model ", bestModel);
 
-		normaliseExpression(bestModel, bestResults[bestModel].params, geneCounts.lengths, geneCounts.norm);
+		getBias(bestModel, bestResults[bestModel].params, geneCounts.lengths, geneCounts.bias);
 
 		if (normaliseResultsFilename)
 		{
@@ -781,7 +781,6 @@ void LiBiCount::addRead(const regionLists & segments,const featureFileEx & gtfDa
 
 	if (type != &blankString)
 	{
-//		rna_pos_type geneLen = genomeDef.genes[*result].length;
 		rna_pos_type geneLen = geneCounts.lengths[geneCounts.at(*result).index];
 		if (segments.strands.size() == 1)
 		{

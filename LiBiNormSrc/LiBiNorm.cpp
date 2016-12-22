@@ -356,7 +356,7 @@ int LiBiNorm::main(int argc, char **argv)
 	size_t bestModel = getBestModel();
 	progMessage("Best model is model ", bestModel);
 
-	normaliseExpression(bestModel, bestResults[bestModel].params, geneCounts.lengths, geneCounts.norm);
+	getBias(bestModel, bestResults[bestModel].params, geneCounts.lengths, geneCounts.bias);
 	//	And then the counts and the bias for the genes themselves
 	string filename = normaliseResultsFilename.replaceSuffix("_expression.txt");
 	if (!geneCounts.outputGeneCounts(filename, true))
@@ -611,21 +611,21 @@ void LiBiNorm::printBias()
 	for (size_t i = 100; i <= MAX_GENE_LENGTH_FOR_NORM_PLOT; i += 100)
 		lengths.push_back(i);
 
-	map<size_t, dataVec> norms;
+	map<size_t, dataVec> biases;
 
 	for (size_t m = 1; m <= N_MODELS; m++)
 	{
 		if (bestResults[m])
-			normaliseExpression(m, bestResults[m].params, lengths,norms[m]);
+			getBias(m, bestResults[m].params, lengths, biases[m]);
 	}
 
 	for (size_t m = 1; m <= N_MODELS; m++)
 	{
 		mcmcResult.print(m, bestResults[m].minLL, bestResults[m].run, bestResults[m].pos, bestResults[m].params);
-		if (norms[m].size())
+		if (biases[m].size())
 		{
 			mcmcResult.print(m, lengths);
-			mcmcResult.print(m, norms[m]);
+			mcmcResult.print(m, biases[m]);
 		}
 		else
 		{

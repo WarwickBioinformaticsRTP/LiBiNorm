@@ -404,7 +404,7 @@ double FLL_ModelBD(const dataVec & param, const dataType & data)
 }
 
 
-void normaliseExpression(size_t m,dataVec & params,const dataVec & l, dataVec & norm)
+void getBias(size_t m,dataVec & params,const dataVec & l, dataVec & bias)
 {
 	double d = pow(10, params[0]);
 	double h = pow(10, params[1]);
@@ -428,15 +428,15 @@ void normaliseExpression(size_t m,dataVec & params,const dataVec & l, dataVec & 
 		break;
 	}
 
-	norm.resize(l.size());
+	bias.resize(l.size());
 
 	switch (m)
 	{
 	case 1:
-		norm = (2 * h < l)*(l - 2 * h) + l / d;
+		bias = (2 * h < l)*(l - 2 * h) + l / d;
 		break;
 	case 2:
-		norm = ((2 * h < l)*(t1*(exp(-2 * h*(t1 + t2)) - exp(-l*(t1 + t2))) + t2*(t1 + t2)*(l - 2 * h)*exp(-l*(t1 + t2))) / ((t1 + t2)*(t1 + t2)) +
+		bias = ((2 * h < l)*(t1*(exp(-2 * h*(t1 + t2)) - exp(-l*(t1 + t2))) + t2*(t1 + t2)*(l - 2 * h)*exp(-l*(t1 + t2))) / ((t1 + t2)*(t1 + t2)) +
 			exp(-l*(t1 + t2))*(l*t2*t2 + t1*(exp(l*(t1 + t2)) + l*t2 - 1)) / ((t1 + t2)*(t1 + t2)) / d);
 		break;
 	case 3:
@@ -450,7 +450,7 @@ void normaliseExpression(size_t m,dataVec & params,const dataVec & l, dataVec & 
 		*/
 	{
 		dataVec exp_ml_t2 = exp(-l*(t2));
-		norm = (2 * h < l)*(exp(-2 * h*t2) - exp_ml_t2) / t2 + (1 - exp_ml_t2) / t2 / d;
+		bias = (2 * h < l)*(exp(-2 * h*t2) - exp_ml_t2) / t2 + (1 - exp_ml_t2) / t2 / d;
 	}
 
 	break;
@@ -458,9 +458,9 @@ void normaliseExpression(size_t m,dataVec & params,const dataVec & l, dataVec & 
 		for (size_t i = 0; i < l.size(); i++)
 		{
 			if (2 * h < l[i])
-				norm[i] = (exp(-2 * h*(t1 + t2)) - exp(-l[i] * (t1 + t2))) / (t1 + t2) + (1 - exp(-l[i] * (t1 + t2))) / (t1 + t2) / d;
+				bias[i] = (exp(-2 * h*(t1 + t2)) - exp(-l[i] * (t1 + t2))) / (t1 + t2) + (1 - exp(-l[i] * (t1 + t2))) / (t1 + t2) / d;
 			else
-				norm[i] = (1 - exp(-l[i] * (t1 + t2))) / (t1 + t2) / d;
+				bias[i] = (1 - exp(-l[i] * (t1 + t2))) / (t1 + t2) / d;
 		}
 		break;
 	case 5:
@@ -487,15 +487,15 @@ void normaliseExpression(size_t m,dataVec & params,const dataVec & l, dataVec & 
 		(l-1/(t1 + t2) - 1/t1 - t1/t2/(t1+t2)*exp(-l*(t1 + t2))+(t1 + t2)/t1/t2*exp(-l*t1))/(t1 + t2)/t1/d;
 		*/
 
-		norm = (2 * h < l)*(exp(-l*t1 - 2 * h*t2)*(t1 + t2)*(t1 + t2) - exp(-l*(t1 + t2))*t1*t1 + t1*t2*exp(-2 * h*(t1 + t2))*(l*t2 - 2 * h*t1 - 2 * h*t2 + l*t1 - t2 / t1 - 2)) / ((t1 + t2) * (t1 + t2)) / (t1 * t1) / t2 +
+		bias = (2 * h < l)*(exp(-l*t1 - 2 * h*t2)*(t1 + t2)*(t1 + t2) - exp(-l*(t1 + t2))*t1*t1 + t1*t2*exp(-2 * h*(t1 + t2))*(l*t2 - 2 * h*t1 - 2 * h*t2 + l*t1 - t2 / t1 - 2)) / ((t1 + t2) * (t1 + t2)) / (t1 * t1) / t2 +
 			(l - 1 / (t1 + t2) - 1 / t1 - t1 / t2 / (t1 + t2)*exp(-l*(t1 + t2)) + (t1 + t2) / t1 / t2*exp(-l*t1)) / (t1 + t2) / t1 / d;
 
-		norm /= t1;
+		bias /= t1;
 
 		break;
 	case 6:
 	{
-		norm = a*((2 * h < l)*(t1*(exp(-2 * h*(t1 + t2)) - exp(-l*(t1 + t2))) + t2*(t1 + t2)*(l - 2 * h)*exp(-l*(t1 + t2))) / ((t1 + t2) * (t1 + t2)) +
+		bias = a*((2 * h < l)*(t1*(exp(-2 * h*(t1 + t2)) - exp(-l*(t1 + t2))) + t2*(t1 + t2)*(l - 2 * h)*exp(-l*(t1 + t2))) / ((t1 + t2) * (t1 + t2)) +
 			(exp(-l*(t1 + t2))*(l*t2 *t2 + l*t2*t1 - t1) + t1) / ((t1 + t2) *(t1 + t2)) / d) +
 			(1 - a)*((2 * h < l)*(exp(-2 * h*(t1 + t2)) - exp(-l*(t1 + t2))) / (t1 + t2) +
 			(1 - exp(-l*(t1 + t2))) / (t1 + t2) / d);
@@ -508,6 +508,6 @@ void normaliseExpression(size_t m,dataVec & params,const dataVec & l, dataVec & 
 		break;
 	}
 	}
-	norm = norm * l[0] / norm[0];
-	norm /= l;
+	bias = bias * l[0] / bias[0];
+	bias /= l;
 }

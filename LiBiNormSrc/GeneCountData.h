@@ -108,70 +108,41 @@ public:
 class GeneCountData : public std::map<const std::string, geneAttribute >
 {
 public:
+
+	VEC_DATA_TYPE & operator()(const std::string gene);
+	//	Needed if we decide the data is not name ordered and have to restart
+	void reset() { for (auto & gene : This)	gene.second.reset(); };
+
+	void addEntry(std::string name, VEC_DATA_TYPE length = 0);
+	void addEntry(std::string name, VEC_DATA_TYPE length, VEC_DATA_TYPE count, rnaPosVec & posPositions, rnaPosVec & negPositions);
+	void addErrorEntry(std::string name);
+
+
 	std::string loadData(const std::string filename, int Nlines = -1);
 	void remove_invalid_values();
 	void histc (const std::vector<int> E);
 	void transferTo(dataType & mcmcData,size_t maxLength,int maxTotReads);
 
-	std::vector<double> freq;
-	std::vector<int> histoGram_ind;
-
-
-	VEC_DATA_TYPE & operator()(const std::string gene) 
-	{
-		static VEC_DATA_TYPE dummy;
-		auto i = find(gene);
-		if (i == end())
-		{
-			_ASSERT_EXPR(false, "Looking for gene that was not in the reference genome");
-			return dummy;
-		}
-		else
-			return rawCounts.at((*i).second.index); 
-	}
-
-
-
+	void calculateOtherExpressionMeasures();
 
 	bool outputGeneCounts(const std::string & filename, bool withDetails = false);
 	void outputGeneCount(TsvFile & output, const std::string name);
 	bool outputRNApositions(const std::string & filename);
 
-	//	Needed if we decide the data is not name ordered and have to restart
-	void reset() {
-		for (auto & gene : This)
-			gene.second.reset();
-	};
-
-	void addEntry(std::string name, VEC_DATA_TYPE length = 0)
-	{
-		auto geneData = find(name);
-		if (geneData == end())
-		{
-			rawCounts.push_back(0);
-			names.push_back(name);
-			lengths.push_back(length);
-			emplace(name, rawCounts.size() - 1);
-		}
-	}
-	void addEntry(std::string name, VEC_DATA_TYPE length,VEC_DATA_TYPE count,rnaPosVec & posPositions,rnaPosVec & negPositions)
-	{
-		auto geneData = find(name);
-		if (geneData == end())
-		{
-			rawCounts.push_back(count);
-			names.push_back(name);
-			lengths.push_back(length);
-			emplace(name, geneAttribute(rawCounts.size() - 1,posPositions,negPositions));
-		}
-	}
 
 	void useSelectedGenes(const std::string & filename);
 
 	std::vector<std::string> names;
 	dataVec lengths;
 	dataVec rawCounts;
-	dataVec norm;
+	dataVec bias;
+
+	std::map<const std::string, geneAttribute > errorCounts;
+	std::vector<std::string> errorNames;
+	dataVec errCounts;
+
+	std::vector<double> freq;
+	std::vector<int> histoGram_ind;
 
 };
 

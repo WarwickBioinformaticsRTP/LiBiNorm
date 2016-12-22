@@ -150,17 +150,11 @@ void featureFileEx::index(GeneCountData & geneCounts)
 		}
 
 	}
-/*	for (size_t i = 0;i < geneCounts.names.size();i++)
-	{
-		geneCounts.lengths.at(i) = genes.at(geneCounts.names.at(i)).length;
-	}*/
-
-
-	geneCounts.addEntry(noFeatureString);
-	geneCounts.addEntry(ambiguousString);
-	geneCounts.addEntry(lowQualString);
-	geneCounts.addEntry(notAlignedString);
-	geneCounts.addEntry(notUnique);
+	geneCounts.addErrorEntry(noFeatureString);
+	geneCounts.addErrorEntry(ambiguousString);
+	geneCounts.addErrorEntry(lowQualString);
+	geneCounts.addErrorEntry(notAlignedString);
+	geneCounts.addErrorEntry(notUnique);
 
 }
 

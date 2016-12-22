@@ -7,13 +7,23 @@
 
 using namespace std;
 
-dataVec conv(const std::vector<rna_pos_type> a)
+VEC_DATA_TYPE & GeneCountData::operator()(const std::string gene)
 {
-	dataVec retVal(a.size());
-	for (size_t i = 0; i < a.size(); i++)
-		retVal.at(i) = a.at(i);
-	return retVal;
-};
+	static VEC_DATA_TYPE dummy;
+	auto i = find(gene);
+	if (i == end())
+	{
+		i = errorCounts.find(gene);
+		if (i == errorCounts.end())
+		{
+			_ASSERT_EXPR(false, "Looking for gene that was not in the reference genome");
+			return dummy;
+		}
+		return errCounts.at((*i).second.index);
+	}
+	return rawCounts.at((*i).second.index);
+}
+
 
 
 void GeneCountData::useSelectedGenes(const std::string & filename)
@@ -49,18 +59,18 @@ bool GeneCountData::outputGeneCounts(const string & filename, bool withDetails)
 	if (!output.open(filename))
 		return false;
 
-	if (withDetails && (norm.size()))
+	if (withDetails && (bias.size()))
 		output.print("Gene", "Normalised count","Raw count","RNA length","Raw count","Bias");
 
-	if (norm.size())
+	if (bias.size())
 	{
 		//	Dont start at 0 as 0 is the reference for normalisation
 		for (size_t i = 1; i < names.size(); i++)
 		{
-			output.printStart(names[i], (int)floor(rawCounts[i] / ((lengths[i] == 0) ? 1 : norm[i]) + 0.5));
+			output.printStart(names[i], (int)floor(rawCounts[i] / ((lengths[i] == 0) ? 1 : bias[i]) + 0.5));
 
 			if (withDetails)
-				output.printMiddle(rawCounts[i], lengths[i], (lengths[i] == 0) ? 1 : norm[i]);
+				output.printMiddle(rawCounts[i], lengths[i], (lengths[i] == 0) ? 1 : bias[i]);
 
 			output.printEnd();
 		}
@@ -69,17 +79,14 @@ bool GeneCountData::outputGeneCounts(const string & filename, bool withDetails)
 	{
 		for (auto i : This)
 		{
-			if ((i.first.substr(0, 2) != "__") && (i.second.index != 0))
+			if (i.second.index != 0)
 			{
-				output.print(i.first, rawCounts[i.second.index]);
+				output.print(i.first, (int)rawCounts[i.second.index]);
 			}
 		}
-		outputGeneCount(output, "__no_feature");
-		outputGeneCount(output, "__ambiguous");
-		outputGeneCount(output, "__too_low_aQual");
-		outputGeneCount(output, "__not_aligned");
-		outputGeneCount(output, "__alignment_not_unique");
 	}
+	for (size_t i = 0;i < errorNames.size();i++)
+		output.print(errorNames[i], (int)errCounts[i]);
 	return true;
 }
 
@@ -110,27 +117,24 @@ void GeneCountData::histc(const vector<int> E)
 	histoGram_ind.assign(lengths.size(), -1);
 	for (size_t i = 0; i < names.size(); i++)
 	{
-		if (names[i].substr(0, 2) != "__")
+		double v = lengths[i];
+		size_t l = 0;
+		size_t h = E.size() - 1;
+		size_t k = l;
+		while ((h - l) > 1)
 		{
-			double v = lengths[i];
-			size_t l = 0;
-			size_t h = E.size() - 1;
-			size_t k = l;
-			while ((h - l) > 1)
-			{
-				k = (h + l) / 2;
-				if (v < E[k])
-					h = k;
-				else
-					l = k;
-			}
-			if (v == E[h])
-				k = h;
+			k = (h + l) / 2;
+			if (v < E[k])
+				h = k;
 			else
-				k = l;
-			histoGram_ind[i] = k;
-			freq[k]++;
+				l = k;
 		}
+		if (v == E[h])
+			k = h;
+		else
+			k = l;
+		histoGram_ind[i] = k;
+		freq[k]++;
 	}
 }
 
@@ -142,6 +146,41 @@ void GeneCountData::remove_invalid_values()
 			This[names[i]].positions[j].removeInvalidValues(lengths[i]);
 	}
 }
+
+void GeneCountData::addEntry(string name, VEC_DATA_TYPE length)
+{
+	auto geneData = find(name);
+	if (geneData == end())
+	{
+		rawCounts.push_back(0);
+		names.push_back(name);
+		lengths.push_back(length);
+		emplace(name, rawCounts.size() - 1);
+	}
+}
+void GeneCountData::addEntry(string name, VEC_DATA_TYPE length, VEC_DATA_TYPE count, rnaPosVec & posPositions, rnaPosVec & negPositions)
+{
+	auto geneData = find(name);
+	if (geneData == end())
+	{
+		rawCounts.push_back(count);
+		names.push_back(name);
+		lengths.push_back(length);
+		emplace(name, geneAttribute(rawCounts.size() - 1, posPositions, negPositions));
+	}
+}
+
+void GeneCountData::addErrorEntry(string name)
+{
+	auto geneData = errorCounts.find(name);
+	if (geneData == errorCounts.end())
+	{
+		errCounts.push_back(0);
+		errorNames.push_back(name);
+		errorCounts.emplace(name, errCounts.size() - 1);
+	}
+}
+
 
 string GeneCountData::loadData(const string filename, int Ngenes)
 {
@@ -222,7 +261,7 @@ void GeneCountData::transferTo(dataType & mcmcData, size_t maxLength, int maxTot
 	//	in the reference gene so this makes no difference
 	for (size_t i = 1; i < names.size(); i++)
 	{
-		if ((lengths[i] < MAX_LENGTH_OF_GENE_FOR_PARAM_ESTIMATION) && (names[i].substr(0, 2) != "__"))
+		if (lengths[i] < MAX_LENGTH_OF_GENE_FOR_PARAM_ESTIMATION)
 		{
 			//	For the forward and the reverse counts
 			for (size_t j = 0; j < 2; j++)
@@ -249,4 +288,11 @@ void GeneCountData::transferTo(dataType & mcmcData, size_t maxLength, int maxTot
 
 	optMessage(Nreads, " reads used for parameter determination");
 }
+
+
+void GeneCountData::calculateOtherExpressionMeasures()
+{
+
+}
+
 
