@@ -17,7 +17,17 @@ public:
 	dataVec(size_t s = 0,VEC_DATA_TYPE v = 0);
 	dataVec(const std::vector<VEC_DATA_TYPE> & a);
 	dataVec(const dataVec & a);
+	dataVec(dataVec && a) : std::vector<VEC_DATA_TYPE>(move(a)) 
+	{
+	};
 	dataVec(std::initializer_list<VEC_DATA_TYPE> a) : std::vector<VEC_DATA_TYPE>(a) {};
+
+	dataVec & operator = (const dataVec & a)
+	{
+		std::vector<VEC_DATA_TYPE>::operator=(a);
+		return This;
+	}
+
 
 	static void clearCache();
 
@@ -119,10 +129,20 @@ public:
 		return true;
 	}
 
+
 	dataVec & append(const dataVec a)
 	{
-		insert(end(),a.begin(),a.end());
+		insert(end(), a.begin(), a.end());
 		return *this;
+	}
+	template<class _Ty>
+	dataVec & append(const std::vector< _Ty> a)
+	{
+		size_t len = size();
+		resize(len + a.size());
+		for (size_t i = 0; i < a.size(); i++)
+			at(len + i) = a.at(i);
+		return This;
 	}
 	dataVec & append(size_t N,VEC_DATA_TYPE value)
 	{

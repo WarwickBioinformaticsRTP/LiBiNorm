@@ -42,26 +42,34 @@ featureRegion::~featureRegion() {
 
 void featureFileEx::index(GeneCountData & geneCounts)
 {
-	for (auto & chrom : entryMap)
+	//	If there are already entries in the geneCounts data at this stage it is because
+	//	we have preloaded them with a set of genes/transcripts that we are specifically
+	//	interested in.  At this point we then get rid of the rest
+	if (geneCounts.size() > 1)
 	{
-		//	If there are already entries in the geneCounts data at this stage it is because
-		//	we have preloaded them with a set of genes/transcripts that we are specifically
-		//	interested in.  At this point we then get rid of the rest
-		if (geneCounts.size() > 1)
+		for (auto & chrom : entryMap)
 		{
-			//	First get rid of entries associated with genes that we are not interested in 
-			for (auto i = chrom.second.begin(); i != chrom.second.end();)
 			{
-				if (geneCounts.find(i->second.tags[0].val) == geneCounts.end())
+				//	First get rid of entries associated with genes that we are not interested in 
+				for (auto i = chrom.second.begin(); i != chrom.second.end();)
 				{
-					//			if (!geneList.contains(i->second.tags[0].val))
-					auto j = i++;
-					chrom.second.erase(j);
+					if (geneCounts.find(i->second.tags[0].val) == geneCounts.end())
+					{
+						//			if (!geneList.contains(i->second.tags[0].val))
+						auto j = i++;
+						chrom.second.erase(j);
+					}
+					else
+						i++;
 				}
-				else
-					i++;
 			}
 		}
+	}
+
+
+
+	for (auto & chrom : entryMap)
+	{
 		//	In each chromosome go through all of the regions to see what regions can be amalgamated
 		chromosomeFeatureData & thisChromData = genomeGtfData[chrom.first];
 		for (auto i = chrom.second.begin(); i != chrom.second.end();i++)

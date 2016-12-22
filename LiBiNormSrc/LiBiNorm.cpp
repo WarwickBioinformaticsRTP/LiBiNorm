@@ -353,16 +353,7 @@ int LiBiNorm::main(int argc, char **argv)
 	string lastGene = geneCounts.loadData(landscapeFilename, Ngenes);
 	coreParameterEstimation();
 
-	size_t bestModel = 0;
-	double bestLL = 1E99;
-	for (size_t m = 1; m <= N_MODELS; m++)
-	{
-		if (bestResults[m].minLL < bestLL)
-		{
-			bestModel = m;
-			bestLL = bestResults[m].minLL;
-		}
-	}
+	size_t bestModel = getBestModel();
 	progMessage("Best model is model ", bestModel);
 
 	normaliseExpression(bestModel, bestResults[bestModel].params, geneCounts.lengths, geneCounts.norm);
@@ -532,6 +523,22 @@ bool LiBiNorm::coreParameterEstimation()
 	return true;
 }
 
+
+
+size_t LiBiNorm::getBestModel()
+{
+	size_t bestModel = 0;
+	double bestLL = 1E99;
+	for (size_t m = 1; m <= N_MODELS; m++)
+	{
+		if (bestResults[m].minLL < bestLL)
+		{
+			bestModel = m;
+			bestLL = bestResults[m].minLL;
+		}
+	}
+	return bestModel;
+}
 
 
 void LiBiNorm::printResults(const string & lastGene)

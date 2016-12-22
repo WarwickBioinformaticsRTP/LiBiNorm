@@ -53,6 +53,7 @@ public:
 	void mcmcThread(paramSet params, optionsType options, modelType model);
 	int main(int argc, char **argv);
 	bool coreParameterEstimation();
+	size_t getBestModel();
 	void printResults(const string & lastGene);
 	void printBias();
 	void printAllMcmcRunData();

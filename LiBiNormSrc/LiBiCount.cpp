@@ -312,40 +312,14 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 		//	If we are outputting results then we are doing all models
 		NrunsOtherModels = normaliseResultsFilename ? Nruns : 0;
 
-/*		for (size_t i = 0; i < geneCounts.names.size();i++)
-		{
-			transData.emplace_back(transcriptData());
-
-			transcriptData & td = transData.back();
-
-			td.gene = geneCounts.names[i];
-			td.length = geneCounts.lengths[i];
-			td.positions.emplace_back(conv(geneCounts.at(td.gene).positions[0]));
-			td.positions.emplace_back(conv(geneCounts.at(td.gene).positions[1]));
-		}*/
 		coreParameterEstimation();
 
 		elapsedTime("Parameter estimation complete");
 
-		size_t bestModel = 0;
-		double bestLL = 1E99;
-		for (size_t m = 1; m <= N_MODELS; m++)
-		{
-			if (bestResults[m].minLL < bestLL)
-			{
-				bestModel = m;
-				bestLL = bestResults[m].minLL;
-			}
-		}
+		size_t bestModel = getBestModel();
 		progMessage("Best model is model ", bestModel);
 
 		normaliseExpression(bestModel, bestResults[bestModel].params, geneCounts.lengths, geneCounts.norm);
-//		size_t j = 1;
-//		for (auto i : geneCounts)
-//		{
-//			if ((i.second.posPositions.size()) || (i.second.negPositions.size()))
-//				genomeDef.genes[i.first].normFactor = 1.0 / bestResults[bestModel].norm[j++];
-//		}
 
 		if (normaliseResultsFilename)
 		{

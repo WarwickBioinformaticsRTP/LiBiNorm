@@ -137,7 +137,7 @@ void GeneCountData::transferTo(dataType & mcmcData, size_t maxLength, int maxTot
 				positions.selectAtMost(maxLength);
 
 				//	fragData contains the count 
-				mcmcData.fragData.append(conv(positions));
+				mcmcData.fragData.append(positions);
 
 				mcmcData.geneIndex.insert(mcmcData.geneIndex.end(), positions.size(), geneIndex);//gene.length);
 				Nreads += positions.size();

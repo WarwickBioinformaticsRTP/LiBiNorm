@@ -34,6 +34,12 @@ void GeneCountData::useSelectedGenes(const std::string & filename)
 	};
 }
 
+void GeneCountData::outputGeneCount(TsvFile & output, const string name)
+{
+	output.print(name, rawCounts[find(name)->second.index]);
+}
+
+
 bool GeneCountData::outputGeneCounts(const string & filename, bool withDetails)
 {
 	TsvFile output;
@@ -56,8 +62,18 @@ bool GeneCountData::outputGeneCounts(const string & filename, bool withDetails)
 	}
 	else
 	{
-		for (size_t i = 1; i < names.size(); i++)
-			output.print(names[i], rawCounts[i]);
+		for (auto i : This)
+		{
+			if ((i.first.substr(0, 2) != "__") && (i.second.index != 0))
+			{
+				output.print(i.first, rawCounts[i.second.index]);
+			}
+		}
+		outputGeneCount(output, "__no_feature");
+		outputGeneCount(output, "__ambiguous");
+		outputGeneCount(output, "__too_low_aQual");
+		outputGeneCount(output, "__not_aligned");
+		outputGeneCount(output, "__alignment_not_unique");
 	}
 	return true;
 }

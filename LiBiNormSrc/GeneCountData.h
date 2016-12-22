@@ -134,6 +134,7 @@ public:
 
 
 	bool outputGeneCounts(const std::string & filename, bool withDetails = false);
+	void outputGeneCount(TsvFile & output, const std::string name);
 	bool outputRNApositions(const std::string & filename);
 
 	//	Needed if we decide the data is not name ordered and have to restart
