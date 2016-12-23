@@ -68,6 +68,8 @@ int LiBiCount::main(int argc, char **argv)
 	countMode = DEFAULT_COUNT_MODE;
 	maxCacheSize = READ_CACHE_SIZE;
 
+	bool pauseAtEnd = false;
+
 	if(argc < 1)
 	{
 		exitFail("Error: parameter wrong!");
@@ -209,6 +211,10 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 		{
 			geneListFilename = opt2 ? argv[++ni] + 8 : argv[++ni];
 		}
+		else if (strcmp(argv[ni], "-x") == 0)
+		{
+			pauseAtEnd = true;
+		}
 		else
 		{
 			exitFail("Invalid parameter: ",string(argv[ni]));
@@ -340,10 +346,11 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 
 	elapsedTime("All results output");
 
-#ifdef _DEBUG
-	string test;
-	cin >> test;
-#endif
+	if (pauseAtEnd)
+	{
+		string test;
+		cin >> test;
+	}
 
 	return EXIT_SUCCESS;
 }

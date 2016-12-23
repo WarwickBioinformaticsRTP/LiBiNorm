@@ -360,7 +360,7 @@ void GeneCountData::calculateOtherExpressionMeasures()
 {
 
 	// Definitions taken from http://www.rna-seqblog.com/rpkm-fpkm-and-tpm-clearly-explained/
-	for (size_t i = 0; i < 2; i++)
+	for (size_t i = 0; i < ((bias.size())?2:1); i++)
 	{
 		VEC_DATA_TYPE scalingFactor = sum(counts[i]) / 1000000;
 
