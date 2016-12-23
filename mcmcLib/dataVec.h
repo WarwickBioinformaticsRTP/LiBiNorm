@@ -17,17 +17,17 @@ public:
 	dataVec(size_t s = 0,VEC_DATA_TYPE v = 0);
 	dataVec(const std::vector<VEC_DATA_TYPE> & a);
 	dataVec(const dataVec & a);
-	dataVec(dataVec && a) : std::vector<VEC_DATA_TYPE>(move(a)) 
+/*	dataVec(dataVec && a) : std::vector<VEC_DATA_TYPE>(move(a)) 
 	{
-	};
+	};*/
 	dataVec(std::initializer_list<VEC_DATA_TYPE> a) : std::vector<VEC_DATA_TYPE>(a) {};
 
-	dataVec & operator = (const dataVec & a)
+/*	dataVec & operator = (const dataVec & a)
 	{
 		std::vector<VEC_DATA_TYPE>::operator=(a);
 		return This;
 	}
-
+*/
 
 	static void clearCache();
 

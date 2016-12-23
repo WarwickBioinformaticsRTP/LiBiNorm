@@ -62,7 +62,7 @@ void rnaPosVec::selectAtMost(size_t s)
 
 
 
-VEC_DATA_TYPE & GeneCountData::operator()(const std::string gene)
+VEC_DATA_TYPE & GeneCountData::count(const std::string gene)
 {
 	static VEC_DATA_TYPE dummy;
 	auto i = find(gene);
@@ -114,16 +114,18 @@ bool GeneCountData::outputGeneCounts(const string & filename, bool withDetails)
 	if (!output.open(filename))
 		return false;
 
-	if (withDetails)
-		calculateOtherExpressionMeasures();
-
-	if (withDetails && (bias.size()))
-		output.print("", "Normalised", "Raw", "RNA", "", "Normalised", "", "", "","Raw");
-	    output.print("Gene", "count","count","length","Bias", "RPM", "RKPM", "RPK", "TPM", "RPM", "RKPM", "RPK", "TPM");
-		output.print();
-
 	if (bias.size())
 	{
+		counts[1] = counts[0] / bias;
+
+		if (withDetails)
+		{
+			calculateOtherExpressionMeasures();
+			output.print("", "Normalised", "Raw", "RNA", "", "Normalised", "", "", "", "Raw");
+			output.print("Gene", "count", "count", "length", "Bias", "RPM", "RKPM", "RPK", "TPM", "RPM", "RKPM", "RPK", "TPM");
+			output.print();
+		}
+
 		//	Dont start at 0 as 0 is the reference for normalisation
 		for (size_t i = 1; i < names.size(); i++)
 		{
@@ -357,10 +359,7 @@ void GeneCountData::transferTo(dataType & mcmcData, size_t maxLength, int maxTot
 void GeneCountData::calculateOtherExpressionMeasures()
 {
 
-	// TAken from http://www.rna-seqblog.com/rpkm-fpkm-and-tpm-clearly-explained/
-
-	counts[1] = counts[0] / bias;
-
+	// Definitions taken from http://www.rna-seqblog.com/rpkm-fpkm-and-tpm-clearly-explained/
 	for (size_t i = 0; i < 2; i++)
 	{
 		VEC_DATA_TYPE scalingFactor = sum(counts[i]) / 1000000;
@@ -372,8 +371,6 @@ void GeneCountData::calculateOtherExpressionMeasures()
 		scalingFactor = sum(RPK[i]) / 1000000;
 		TPM[i] = RPK[i] / scalingFactor;
 	}
-
-
 }
 
 

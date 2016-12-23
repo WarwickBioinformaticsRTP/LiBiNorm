@@ -63,7 +63,7 @@ class GeneCountData : public std::map<const std::string, geneAttribute >
 {
 public:
 
-	VEC_DATA_TYPE & operator()(const std::string gene);
+	VEC_DATA_TYPE & count(const std::string gene);
 	//	Needed if we decide the data is not name ordered and have to restart
 	void reset() { for (auto & gene : This)	gene.second.reset(); };
 

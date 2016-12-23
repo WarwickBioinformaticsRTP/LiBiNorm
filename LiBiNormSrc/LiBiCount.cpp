@@ -391,12 +391,12 @@ void LiBiCount::addRead(const regionLists & segments,const featureFileEx & gtfDa
 {
 	if (segments.NH > 1)
 	{
-		geneCounts(notUnique)++;
+		geneCounts.count(notUnique)++;
 		return;
 	}
 	else if (segments.qual < minqual)
 	{
-		geneCounts(lowQualString)++;
+		geneCounts.count(lowQualString)++;
 		return;
 	}
 
@@ -660,7 +660,7 @@ void LiBiCount::addRead(const regionLists & segments,const featureFileEx & gtfDa
 								//	a single fragment
 								if (outputFile.is_open())
 									outputFile.printEnd(*mode,*result,*type,location,segments.name);
-								geneCounts(*result)++;
+								geneCounts.count(*result)++;
 								geneCounts[*result].positions[0].emplace_back(RNAstartPos);
 								result = &gene.first;
 								type = &regionType.first;
@@ -777,7 +777,7 @@ void LiBiCount::addRead(const regionLists & segments,const featureFileEx & gtfDa
 	if (outputFile.is_open())
 		outputFile.printEnd(*mode,*result,*type,location,segments.name);
 
-	geneCounts(*result)++;
+	geneCounts.count(*result)++;
 
 	if (type != &blankString)
 	{
@@ -865,13 +865,13 @@ bool LiBiCount::AReadIsMapped(const BamAlignment & ba)
 			if (!ba.IsMateMapped())
 			{
 				if (ba.IsFirstMate())
-					geneCounts(notAlignedString)++;
+					geneCounts.count(notAlignedString)++;
 				return false;
 			}
 		}
 		else
 		{
-			geneCounts(notAlignedString)++;
+			geneCounts.count(notAlignedString)++;
 			return false;
 		}
 	}
