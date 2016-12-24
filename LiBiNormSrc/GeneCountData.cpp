@@ -79,6 +79,16 @@ VEC_DATA_TYPE & GeneCountData::count(const std::string gene)
 	return counts[0].at((*i).second.index);
 }
 
+VEC_DATA_TYPE & GeneCountData::length(const std::string gene)
+{
+	static VEC_DATA_TYPE zeroLength =0;
+	auto i = find(gene);
+	if (i == end())
+	{
+		return zeroLength;
+	}
+	return lengths.at((*i).second.index);
+}
 
 
 void GeneCountData::useSelectedGenes(const std::string & filename)

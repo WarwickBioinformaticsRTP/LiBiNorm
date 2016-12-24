@@ -254,7 +254,6 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 	if (!nameOrder)
 		tempDirectory = tempDirectory::get(tempDirectory);
 
-
 	// retrieve 'metadata' from BAM files.
 	references = reader.GetReferenceData();
 	for(auto & i : references)
@@ -371,18 +370,22 @@ struct overlapCounts
 };
 
 //	Contains information on the overlaps between a region of the read and featureRegions
-//	The nested map is indexed first by gene and then by region type (e.g. exon) allowing data to be 
+//	The nested map is indexed first by gene /* and then by region type (e.g. exon) */ allowing data to be 
 //	accumlated for multiple region types if required.
-struct chromosomeGeneInfo: public map<string,map <string,overlapCounts> >
+struct chromosomeGeneInfo: public map<string,overlapCounts> 
 {
 	size_t noMatch;
 	size_t nSegments;
 	chromosomeGeneInfo():noMatch(0),nSegments(0){};
+	~chromosomeGeneInfo()
+	{
+
+	};
 
 	//	Returns the number of independent gene/region type combinations
 	//	It is possible that this is incorrect and it should be returning the number of genes associated with a particular region type
 	//	This needs to be checked
-	size_t size()
+/*	size_t size()
 	{
 		size_t _s = 0;
 		for (auto & i : This)
@@ -390,7 +393,7 @@ struct chromosomeGeneInfo: public map<string,map <string,overlapCounts> >
 			_s += i.second.size();
 		}
 		return _s;
-	}
+	}*/
 };
 
 
@@ -506,7 +509,7 @@ void LiBiCount::addRead(const regionLists & segments,const featureFileEx & gtfDa
 						_DBG(dbgFound = (overlap.geneName == "NM_001115075.1"));
 
 						//	This will create an entry for the combination if it does not exist before, which is needed later on
-						overlapCounts & GeneAttributeCombo1 = genes[overlap.geneName][overlap.featType];
+						overlapCounts & GeneAttributeCombo1 = genes[overlap.geneName];
 						GeneAttributeCombo1.RNAstartPos = min(overlap.RNAstartPos, GeneAttributeCombo1.RNAstartPos);
 						GeneAttributeCombo1.RNAendPos = max(overlap.RNAendPos, GeneAttributeCombo1.RNAendPos);
 
@@ -526,15 +529,13 @@ void LiBiCount::addRead(const regionLists & segments,const featureFileEx & gtfDa
 
 							// More than one region.  If the gtf regions identify separate sections of the read then keep both, 
 							//	If they overlap then only keep the largest if it fully overlaps the other.  If they are identical then keep both
-							//	
-
 							for (size_t i = 1; i < overlaps.size(); i++)
 							{
 								featureOverlap & overlap = overlaps[i];
 
 								//	Create dummy entry for every region type that the read overlapped;
 
-								overlapCounts & GeneAttributeCombo2 = genes[overlap.geneName][overlap.featType];
+								overlapCounts & GeneAttributeCombo2 = genes[overlap.geneName];
 
 								if (overlap.strict)
 									GeneAttributeCombo2.strict++;
@@ -583,32 +584,32 @@ void LiBiCount::addRead(const regionLists & segments,const featureFileEx & gtfDa
 
 							//	We now have one or more regions within the read, each one of which matches regions in the gtf file
 							//	
-								for (gtfId & g : segRegions.at(0).geneSet)
+							for (gtfId & g : segRegions.at(0).geneSet)
+							{
+								bool matchesInAllRegions = true;
+								int size = segRegions.at(0).max - segRegions.at(0).min;
+								for (size_t i = 1; i < segRegions.size(); i++)
 								{
-									bool matchesInAllRegions = true;
-									int size = segRegions.at(0).max - segRegions.at(0).min;
-									for (size_t i = 1; i < segRegions.size(); i++)
+									bool found = false;
+									for (auto & j : segRegions.at(i).geneSet)
 									{
-										bool found = false;
-										for (auto & j : segRegions.at(i).geneSet)
+										if ((g.name == j.name) && (g.type == j.type))
 										{
-											if ((g.name == j.name) && (g.type == j.type))
-											{
-												size += (segRegions.at(i).max - segRegions.at(i).min);
-												found = true;
-												break;
-											}
+											size += (segRegions.at(i).max - segRegions.at(i).min);
+											found = true;
+											break;
 										}
-										if (!found)
-											matchesInAllRegions = false;
 									}
-									if (matchesInAllRegions)
-									{
-										//	Use at() rather than [] as it is more efficient: assumes the entry is already in place
-										genes.at(g.name).at(g.type).partial++;
-										genes.at(g.name).at(g.type).length += size;
-									}
+									if (!found)
+										matchesInAllRegions = false;
 								}
+								if (matchesInAllRegions)
+								{
+									//	Use at() rather than [] as it is more efficient: assumes the entry is already in place
+									genes.at(g.name).partial++;
+									genes.at(g.name).length += size;
+								}
+							}
 						}
 					}
 				}
@@ -639,7 +640,6 @@ void LiBiCount::addRead(const regionLists & segments,const featureFileEx & gtfDa
 	//	Use pointers to strings rather than the strings themselves for efficiency as the it avoids
 	// creating and deleting copies of strings
 	const string * result = nullptr;
-	const string * type = &blankString;		//
 	const string * mode = &blankString;		//The mode that selected the region
 
 	rna_pos_type RNAstartPos = 0, RNAendPos = 0;
@@ -655,9 +655,9 @@ void LiBiCount::addRead(const regionLists & segments,const featureFileEx & gtfDa
 			//	For a strict match, all of the read segments must lie inside an annotated region of the same gene
 			for (auto & gene : genes)
 			{
-				for (auto & regionType : gene.second)
+//				for (auto & regionType : gene.second)
 				{
-					if (regionType.second.strict == genes.nSegments)
+					if (gene.second.strict == genes.nSegments)
 					{
 						if (result)
 						{
@@ -666,19 +666,17 @@ void LiBiCount::addRead(const regionLists & segments,const featureFileEx & gtfDa
 								//	In intersect all we include all of the options, ie there will be multiple counts associated with
 								//	a single fragment
 								if (outputFile.is_open())
-									outputFile.printEnd(*mode,*result,*type,location,segments.name);
+									outputFile.printEnd(*mode,*result,location,segments.name);
 								geneCounts.count(*result)++;
 								geneCounts[*result].positions[0].emplace_back(RNAstartPos);
 								result = &gene.first;
-								type = &regionType.first;
-								RNAstartPos = regionType.second.RNAstartPos;
-								RNAendPos = regionType.second.RNAendPos;
+								RNAstartPos = gene.second.RNAstartPos;
+								RNAendPos = gene.second.RNAendPos;
 							}
 							else
 							{
 								//	If we have two strict matches then the result is ambigous, no need to look any further
 								result = &ambiguousString;
-								type = &blankString;
 								break;
 							}
 						}
@@ -686,9 +684,8 @@ void LiBiCount::addRead(const regionLists & segments,const featureFileEx & gtfDa
 						{
 							//	A strict match, keep looking as there may be more
 							result = &gene.first;
-							type = &regionType.first;
-							RNAstartPos = regionType.second.RNAstartPos;
-							RNAendPos = regionType.second.RNAendPos;
+							RNAstartPos = gene.second.RNAstartPos;
+							RNAendPos = gene.second.RNAendPos;
 						}
 					}
 				}
@@ -723,9 +720,8 @@ void LiBiCount::addRead(const regionLists & segments,const featureFileEx & gtfDa
 			{
 				//	If we only match to one gene then the answer is simple
 				result = &genes.begin()->first;
-				type = &genes.begin()->second.begin()->first;
-				RNAstartPos = genes.begin()->second.begin()->second.RNAstartPos;
-				RNAendPos = genes.begin()->second.begin()->second.RNAendPos;
+				RNAstartPos = genes.begin()->second.RNAstartPos;
+				RNAendPos = genes.begin()->second.RNAendPos;
 			}
 			else if (Ngenes > 1)
 			{
@@ -746,22 +742,20 @@ void LiBiCount::addRead(const regionLists & segments,const featureFileEx & gtfDa
 
 					for (auto & gene : genes)
 					{
-						for (auto & regionType : gene.second)
+//						for (auto & regionType : gene.second)
 						{
-							if (regionType.second.partial == (genes.nSegments - genes.noMatch))
+							if (gene.second.partial == (genes.nSegments - genes.noMatch))
 							{
-								if (regionType.second.length > bestLength)
+								if (gene.second.length > bestLength)
 								{
 									result = &gene.first;
-									type = &regionType.first;
 
-									bestLength = regionType.second.length;
+									bestLength = gene.second.length;
 								}
-								else if (regionType.second.length == bestLength)
+								else if (gene.second.length == bestLength)
 								{
 									//	Two genes with the same match length
 									result = &ambiguousString;
-									type = &blankString;
 								}
 							}
 						}
@@ -782,11 +776,13 @@ void LiBiCount::addRead(const regionLists & segments,const featureFileEx & gtfDa
 	}
 
 	if (outputFile.is_open())
-		outputFile.printEnd(*mode,*result,*type,location,segments.name);
+		outputFile.printEnd(*mode,*result,location,segments.name);
 
 	geneCounts.count(*result)++;
 
-	if (type != &blankString)
+	rna_pos_type geneLen = geneCounts.length(*result);
+	
+	if (geneLen != 0)
 	{
 		rna_pos_type geneLen = geneCounts.lengths[geneCounts.at(*result).index];
 		if (segments.strands.size() == 1)
@@ -840,7 +836,6 @@ void LiBiCount::addRead(const regionLists & segments,const featureFileEx & gtfDa
 			}
 		}
 	}
-
 }
 
 
@@ -914,11 +909,11 @@ bool LiBiCount::processNameOrderedBamData()
 		//	This is a fairly direct implementation of the htseq logic in __init_.py line 570 onwards
 		//	There are potential issues with the ability of the code to cope with datasets where there are multiple
 		//	alignments
-
 		if (AReadIsMapped(ba[0]))
 		{
 			if ((Nreads == 1) && (!ba[0].IsPaired()))
 			{
+				//
 				addRead(regionLists(readData(move(ba[0])),name),genomeDef);
 				incBamCounter();
 			}
@@ -964,9 +959,7 @@ bool LiBiCount::processNameOrderedBamData()
 				}
 			}
 		}
-
 		swap(ba[0],ba[Nreads]);
-
 	}
 	return true;
 }
