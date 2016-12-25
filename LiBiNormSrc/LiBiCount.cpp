@@ -655,38 +655,35 @@ void LiBiCount::addRead(const regionLists & segments,const featureFileEx & gtfDa
 			//	For a strict match, all of the read segments must lie inside an annotated region of the same gene
 			for (auto & gene : genes)
 			{
-//				for (auto & regionType : gene.second)
+				if (gene.second.strict == genes.nSegments)
 				{
-					if (gene.second.strict == genes.nSegments)
+					if (result)
 					{
-						if (result)
+						if (countMode == intersect_all)
 						{
-							if (countMode == intersect_all)
-							{
-								//	In intersect all we include all of the options, ie there will be multiple counts associated with
-								//	a single fragment
-								if (outputFile.is_open())
-									outputFile.printEnd(*mode,*result,location,segments.name);
-								geneCounts.count(*result)++;
-								geneCounts[*result].positions[0].emplace_back(RNAstartPos);
-								result = &gene.first;
-								RNAstartPos = gene.second.RNAstartPos;
-								RNAendPos = gene.second.RNAendPos;
-							}
-							else
-							{
-								//	If we have two strict matches then the result is ambigous, no need to look any further
-								result = &ambiguousString;
-								break;
-							}
-						}
-						else
-						{
-							//	A strict match, keep looking as there may be more
+							//	In intersect all we include all of the options, ie there will be multiple counts associated with
+							//	a single fragment
+							if (outputFile.is_open())
+								outputFile.printEnd(*mode, *result, location, segments.name);
+							geneCounts.count(*result)++;
+							geneCounts[*result].positions[0].emplace_back(RNAstartPos);
 							result = &gene.first;
 							RNAstartPos = gene.second.RNAstartPos;
 							RNAendPos = gene.second.RNAendPos;
 						}
+						else
+						{
+							//	If we have two strict matches then the result is ambigous, no need to look any further
+							result = &ambiguousString;
+							break;
+						}
+					}
+					else
+					{
+						//	A strict match, keep looking as there may be more
+						result = &gene.first;
+						RNAstartPos = gene.second.RNAstartPos;
+						RNAendPos = gene.second.RNAendPos;
 					}
 				}
 			}
@@ -742,21 +739,18 @@ void LiBiCount::addRead(const regionLists & segments,const featureFileEx & gtfDa
 
 					for (auto & gene : genes)
 					{
-//						for (auto & regionType : gene.second)
+						if (gene.second.partial == (genes.nSegments - genes.noMatch))
 						{
-							if (gene.second.partial == (genes.nSegments - genes.noMatch))
+							if (gene.second.length > bestLength)
 							{
-								if (gene.second.length > bestLength)
-								{
-									result = &gene.first;
+								result = &gene.first;
 
-									bestLength = gene.second.length;
-								}
-								else if (gene.second.length == bestLength)
-								{
-									//	Two genes with the same match length
-									result = &ambiguousString;
-								}
+								bestLength = gene.second.length;
+							}
+							else if (gene.second.length == bestLength)
+							{
+								//	Two genes with the same match length
+								result = &ambiguousString;
 							}
 						}
 					}
@@ -784,7 +778,6 @@ void LiBiCount::addRead(const regionLists & segments,const featureFileEx & gtfDa
 	
 	if (geneLen != 0)
 	{
-		rna_pos_type geneLen = geneCounts.lengths[geneCounts.at(*result).index];
 		if (segments.strands.size() == 1)
 		{
 			if (genomeDef.genes[*result].strand == '+')

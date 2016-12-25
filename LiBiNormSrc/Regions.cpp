@@ -44,6 +44,7 @@ void regionList::combineRegion(const region & r1)
 			}
 		}
 	}
+	//	If this is a new region then add it to the map
 	if (!combined)
 		data.emplace(r1.start,r1);
 }
@@ -59,22 +60,20 @@ void regionList::combine(const regionList & rl)
 regionList::regionList(const readData & read)
 {
 	// initialize alignment end to starting position
-
 	size_t start = read.position;
 	size_t end = start;
 
 	// iterate over cigar operations
-	vector<CigarOp>::const_iterator cigarEnd  = read.cigar.end();
-	for (vector<CigarOp>::const_iterator cigarIter = read.cigar.begin() ; cigarIter != cigarEnd; ++cigarIter) {
+	for (const CigarOp & co : read.cigar) {
 
-		switch ( cigarIter->Type ) {
+		switch ( co.Type ) {
 
 			// increase end position on CIGAR chars [DMXN=]
 			case Constants::BAM_CIGAR_DEL_CHAR      :
 			case Constants::BAM_CIGAR_MATCH_CHAR    :
 			case Constants::BAM_CIGAR_MISMATCH_CHAR :
 			case Constants::BAM_CIGAR_SEQMATCH_CHAR :
-				end += cigarIter->Length;
+				end += co.Length;
 				break;
 
 			case Constants::BAM_CIGAR_INS_CHAR :
@@ -83,16 +82,14 @@ regionList::regionList(const readData & read)
 			case Constants::BAM_CIGAR_REFSKIP_CHAR  :
 				{
 					combineRegion(region(start,end-1,read.strand));
-					start = (end + cigarIter->Length);
+					start = (end + co.Length);
 					end = start;
 					break;
 				}
-
 			default :
 				break;
 		}
 	}
-
 	combineRegion(region(start,end-1,read.strand));
 }
 

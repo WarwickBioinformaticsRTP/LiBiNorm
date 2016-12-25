@@ -140,7 +140,6 @@ public:
 	//	regionList can be efficiently placed straight into the map.
 	regionLists(const readData & read,const std::string & name) :name(name),NH(read.NH),qual(read.qual), strands(1,read.strand){
 		data.emplace(read.refId,regionList(read));
-//		strands.emplace_back(read.strand);
 	};
 
 	//	Adds the information associated with the second read, which will be placed in the existing chromosome

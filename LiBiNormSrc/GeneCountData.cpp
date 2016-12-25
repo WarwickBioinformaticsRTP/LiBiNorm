@@ -79,9 +79,9 @@ VEC_DATA_TYPE & GeneCountData::count(const std::string gene)
 	return counts[0].at((*i).second.index);
 }
 
-VEC_DATA_TYPE & GeneCountData::length(const std::string gene)
+const VEC_DATA_TYPE & GeneCountData::length(const std::string gene)
 {
-	static VEC_DATA_TYPE zeroLength =0;
+	static const VEC_DATA_TYPE zeroLength =0;
 	auto i = find(gene);
 	if (i == end())
 	{
