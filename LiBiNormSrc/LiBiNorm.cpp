@@ -19,6 +19,37 @@
 
 using namespace std;
 
+//	First some standard methods for handling the model enumeration
+
+//	Returns a list of all the models, which is used to iterate through the list
+const std::vector<modelType> & allModels()
+{
+	static std::vector<modelType> list{ ModelA ,ModelB ,ModelC,ModelD,ModelE,ModelBD };
+	return list;
+};
+
+//  Selects a model based on a string, exits if the string is not valid
+modelType model(const std::string & desc)
+{
+	static std::map<std::string, modelType> mappings{
+		{ "A",ModelA },{ "B",ModelB },{ "C",ModelC },{ "D",ModelD },{ "E",ModelE },{ "BD",ModelBD } };
+	auto iter = mappings.find(desc);
+	if (iter == mappings.end())
+		exitFail("Unknown model description:", desc);
+	return (*iter).second;
+}
+
+//	Allows the model to be output to a stream such as std::out as appropriate text
+inline bool printVal(outputDataFile * f, modelType m)
+{
+	fputs(conv(m).c_str(),f->fout);
+	return true;
+};
+
+
+
+
+
 #ifdef _DEBUG
 //	use this to test the calculations based on a specific result of the parameter derivation
 // #define FIXED_RESULTS log10(3.9644),log10(147.39),log10(0.0079),log10(2.0128E-4),0
@@ -29,6 +60,9 @@ using namespace std;
 int main(int argc, char **argv)
 {
 
+	modelType m = ModelC;
+
+	stringEx test("123:", m);
 
 #ifdef _WIN32
 	_DBG( _CrtSetDbgFlag ( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF ));
@@ -93,10 +127,10 @@ int main(int argc, char **argv)
 	return EXIT_SUCCESS;
 }
 
-
-void LiBiNorm::mcmcThread(paramSet params, optionsType options, modelType model)
+void LiBiNorm::mcmcThread(paramSet params, optionsType options)
 {
-	map<size_t,int>::iterator model_iterator = threadLoopCounts.begin();
+	map<modelType,int>::iterator model_iterator = threadLoopCounts.begin();
+	modelType currentModel;
 	size_t loop;
 	while (true)
 	{
@@ -117,29 +151,29 @@ void LiBiNorm::mcmcThread(paramSet params, optionsType options, modelType model)
 			}
 			loop = model_iterator->second--;
 			if (loop != 0)
-				progMessage("Starting Model:",model_iterator->first," iteration:",loop);
-			options.Model = model_iterator->first;
+				progMessage("Starting ",model_iterator->first,", iteration:",loop);
+			currentModel = model_iterator->first;
 		}
 
-		switch (options.Model)
+		switch (currentModel)
 		{
-		case 1:
-			model.ssfun = &FLL_ModelA;
+		case ModelA:
+			options.ssfun = &FLL_ModelA;
 			break;
-		case 2:
-			model.ssfun = &FLL_ModelB;
+		case ModelB:
+			options.ssfun = &FLL_ModelB;
 			break;
-		case 3:
-			model.ssfun = &FLL_ModelC;
+		case ModelC:
+			options.ssfun = &FLL_ModelC;
 			break;
-		case 4:
-			model.ssfun = &FLL_ModelD;
+		case ModelD:
+			options.ssfun = &FLL_ModelD;
 			break;
-		case 5:
-			model.ssfun = &FLL_ModelE;
+		case ModelE:
+			options.ssfun = &FLL_ModelE;
 			break;
-		case 6:
-			model.ssfun = &FLL_ModelBD;
+		case ModelBD:
+			options.ssfun = &FLL_ModelBD;
 			break;
 		}
 
@@ -152,9 +186,9 @@ void LiBiNorm::mcmcThread(paramSet params, optionsType options, modelType model)
 		vectorEx<double> p0{ {rand(3) - 1, rand(3), rand(4) - 5, rand(4) - 5, rand(1)} };
 #endif
 
-		switch (options.Model)
+		switch (currentModel)
 		{
-		case 2: case 4: case 5:
+		case ModelB: case ModelD: case ModelE:
 			options.qcov = dataVec(4,options.jumpSize);
 
 			params = { {"d", p0[0], -1 , 2}    // average length of fragments
@@ -165,7 +199,7 @@ void LiBiNorm::mcmcThread(paramSet params, optionsType options, modelType model)
 			};
 
 			break;
-		case 3:
+		case ModelC:
 			options.qcov = dataVec(3,options.jumpSize);
 
 			params = { {"d", p0[0], -1 , 2}    // average length of fragments
@@ -175,7 +209,7 @@ void LiBiNorm::mcmcThread(paramSet params, optionsType options, modelType model)
 			//				,paramType("sig", p0[4], 0, 3) // sigma
 			};
 			break;
-		case 1:
+		case ModelA:
 			options.qcov = dataVec(2,options.jumpSize);
 
 			params = { {"d", p0[0], -1 , 2}    // average length of fragments
@@ -184,7 +218,7 @@ void LiBiNorm::mcmcThread(paramSet params, optionsType options, modelType model)
 				//				,paramType("t2", p0[3], -5, -1) // theta2
 			};
 			break;
-		case 6:
+		case ModelBD:
 			options.qcov = dataVec(6,options.jumpSize);
 
 			params = { {"d", p0[0], -1 , 2}    // average length of fragments
@@ -200,35 +234,35 @@ void LiBiNorm::mcmcThread(paramSet params, optionsType options, modelType model)
 		if (loop == 0)
 		{
 			for (size_t i = 0; i < params.size(); i++)
-				headers[options.Model].push_back(params[i].name);
+				headers[currentModel].push_back(params[i].name);
 		}
 		else
 		{
 			mcmc mcmcEngine;
-			mcmcEngine.mcmcrun(model, consData, params, options);
+			mcmcEngine.mcmcrun(consData, params, options);
 
 			static mutex mtx;
 			lock_guard<mutex> lock(mtx);
 
-			progMessage("Finishing Model:",model_iterator->first," iteration:",loop);
+			progMessage("Finishing ",model_iterator->first,", iteration:",loop);
 
 #ifdef STORE_ENDPOINTS
-			Chain[options.Model].emplace(loop, mcmcEngine.chain().back());
-			SSChain[options.Model].emplace(loop, mcmcEngine.sschain().back());
+			Chain[currentModel].emplace(loop, mcmcEngine.chain().back());
+			SSChain[currentModel].emplace(loop, mcmcEngine.sschain().back());
 #endif
 
 			//	Always store full set of results as these are needed to calculate the optimal parameters
-			fullResultChain[options.Model].emplace(loop, mcmcEngine.chain());
-			fullResultSSChain[options.Model].emplace(loop, mcmcEngine.sschain());
+			fullResultChain[currentModel].emplace(loop, mcmcEngine.chain());
+			fullResultSSChain[currentModel].emplace(loop, mcmcEngine.sschain());
 
-			RejectionRate[options.Model] += mcmcEngine.rejected();
+			RejectionRate[currentModel] += mcmcEngine.rejected();
 		}
 	}
 }
 
-void runThread(LiBiNorm * root,	paramSet params, optionsType options, modelType model)
+void runThread(LiBiNorm * root,	paramSet params, optionsType options)
 {
-	root->mcmcThread(params, options,model);
+	root->mcmcThread(params, options);
 }
 
 
@@ -332,7 +366,7 @@ int LiBiNorm::main(int argc, char **argv)
 		}
 		else if ((strcmp(argv[ni], "-m") == 0) || (opt2 = (strncmp(argv[ni], "--model=", 8) == 0)))
 		{
-			theModel = atoi(opt2 ? argv[ni] + 8 : argv[++ni]);
+			theModel = model(opt2 ? argv[ni] + 8 : argv[++ni]);
 			NrunsOtherModels = 1;
 		}
 		else if ((strcmp(argv[ni], "-f") == 0) || (opt2 = (strncmp(argv[ni], "--full", 6) == 0)))
@@ -354,15 +388,15 @@ int LiBiNorm::main(int argc, char **argv)
 	coreParameterEstimation();
 
 	//	And then the counts and the bias for the genes themselves
-	size_t bestModel = getBestModel();
-	progMessage("Best model is model ", bestModel);
+	modelType bestModel = getBestModel();
+	progMessage("Best model is ", bestModel);
 	getBias(bestModel, bestResults[bestModel].params, geneCounts.lengths, geneCounts.bias);
+	
 	string filename = normaliseResultsFilename.replaceSuffix("_expression.txt");
-
-	if (!geneCounts.outputGeneCounts(filename, true))
+		if (!geneCounts.outputGeneCounts(filename, conv(bestModel),true))
 		exitFail("Unable to output counts to :", filename);
 
-	printResults(lastGene);
+	printResults(conv(bestModel));
 	printBias();
 
 	//********************************************************************************************
@@ -396,7 +430,6 @@ bool LiBiNorm::coreParameterEstimation()
 
 	paramSet params;
 	optionsType options;
-	modelType model;
 
 	options.jumpSize = 0.01;
 	options.nsimu = Nsimu;
@@ -407,15 +440,10 @@ bool LiBiNorm::coreParameterEstimation()
 
 	options.updatesigma = 0;
 	options.method = "mh";
-	model.sigma2 = 1;
-
-	fullResultSSChain.resize(N_MODELS + 1);
-	fullResultChain.resize(N_MODELS + 1);
-
-	RejectionRate.resize(N_MODELS + 1);
+	options.sigma2 = 1;
 
 	//	Set the number of iterations required of each of the models.
-	for (size_t m = 1; m <= N_MODELS; m++)
+	for (modelType m : allModels())
 	{
 		if (m == theModel)
 			threadLoopCounts[m] = options.Nruns;
@@ -431,7 +459,7 @@ bool LiBiNorm::coreParameterEstimation()
 	//	And then set the threads running
 	vector<thread> threads;
 	for (size_t i = 0; i < Nthreads; i++)
-		threads.emplace_back(thread(runThread, this, params, options, model));
+		threads.emplace_back(thread(runThread, this, params, options));
 
 	for (auto & i : threads)
 		i.join();
@@ -457,7 +485,7 @@ bool LiBiNorm::coreParameterEstimation()
 	//	Find the optimal parameter values, which are associated with the lowest likelihood value found in the last
 	//	1000 iterations of all of the runs.
 
-	for (size_t m = 1; m <= N_MODELS; m++)
+	for (modelType m  : allModels())
 	{
 		multimap <double, dataVec *> & orderedResults = allOrderedResults[m];
 
@@ -482,7 +510,7 @@ bool LiBiNorm::coreParameterEstimation()
 
 	//******************************************************************************************
 	//	And then find the standard deviation
-	for (size_t m = 1; m <= N_MODELS; m++)
+	for (modelType m :allModels())
 	{
 		bestResult & br = bestResults[m];
 		VEC_DATA_TYPE LL_dev = 0;
@@ -525,11 +553,11 @@ bool LiBiNorm::coreParameterEstimation()
 
 
 
-size_t LiBiNorm::getBestModel()
+modelType LiBiNorm::getBestModel()
 {
-	size_t bestModel = 0;
+	modelType bestModel = noModel;
 	double bestLL = 1E99;
-	for (size_t m = 1; m <= N_MODELS; m++)
+	for (modelType m : allModels())
 	{
 		if (bestResults[m].minLL < bestLL)
 		{
@@ -552,13 +580,13 @@ void LiBiNorm::printResults(const string & lastGene)
 	//	First headers up to and including the maximum model that is run.   Always leave space
 	//	for the intermediate models so the layout of the results is consistent
 	mcmcResult.printStart(lastGene);
-	for (size_t m = 1; m <= N_MODELS; m++)
+	for (modelType m : allModels())
 		mcmcResult.printMiddle(headers[m], "chain", "");
 	mcmcResult.printEnd();
 
 	//	A row for the optimal parameters that were found for each model
 	mcmcResult.printStart("Best");
-	for (size_t m = 1; m <= N_MODELS; m++)
+	for (modelType m : allModels())
 	{
 		if (bestResults[m].params.size())
 			mcmcResult.printMiddle(bestResults[m].params, bestResults[m].minLL, "");
@@ -570,7 +598,7 @@ void LiBiNorm::printResults(const string & lastGene)
 	for (size_t i = 0; i < 2; i++)
 	{
 		mcmcResult.printStart((i == 0) ? "Pos Dev" : "Neg Dev");
-		for (size_t m = 1; m <= N_MODELS; m++)
+		for (modelType m : allModels())
 		{
 			if (bestResults[m].param_dev[i].size())
 				mcmcResult.printMiddle(bestResults[m].param_dev[i], bestResults[m].minLL_dev, "");
@@ -583,7 +611,7 @@ void LiBiNorm::printResults(const string & lastGene)
 	for (size_t i = 1; i <= Nruns; i++)
 	{
 		mcmcResult.printStart(_s("Chain end ", i));
-		for (size_t m = 1; m <= N_MODELS; m++)
+		for (modelType m : allModels())
 		{
 			//	Was there a jth run of this model?  If so then print the end points
 			if (fullResultSSChain[m].size() && (i <= fullResultSSChain[m].rbegin()->first))
@@ -613,13 +641,13 @@ void LiBiNorm::printBias()
 
 	map<size_t, dataVec> biases;
 
-	for (size_t m = 1; m <= N_MODELS; m++)
+	for (modelType m : allModels())
 	{
 		if (bestResults[m])
 			getBias(m, bestResults[m].params, lengths, biases[m]);
 	}
 
-	for (size_t m = 1; m <= N_MODELS; m++)
+	for (modelType m : allModels())
 	{
 		mcmcResult.print(m, bestResults[m].minLL, bestResults[m].run, bestResults[m].pos, bestResults[m].params);
 		if (biases[m].size())
@@ -640,9 +668,9 @@ void LiBiNorm::printBias()
 void LiBiNorm::printAllMcmcRunData()
 {
 	TsvFile mcmcResult;
-	for (size_t modl = 1; modl <= N_MODELS; modl++)
+	for (modelType modl : allModels())
 	{
-		string filename = normaliseResultsFilename.replaceSuffix("_model_", modl, ".txt");
+		string filename = normaliseResultsFilename.replaceSuffix("_", modl, ".txt");
 		if (!mcmcResult.open(filename))
 			exitFail("Unable to open output file ", filename);
 
@@ -679,7 +707,7 @@ void LiBiNorm::printConsolidatedMcmcRunData()
 
 	map<size_t, multimap <double, dataVec *>::iterator > iterators;
 	mcmcResult.printStart("");
-	for (size_t m = 1; m <= N_MODELS; m++)
+	for (modelType m : allModels())
 	{
 		mcmcResult.printMiddle(headers[m], "chain", "");
 		iterators[m] = allOrderedResults[m].begin();
@@ -690,7 +718,7 @@ void LiBiNorm::printConsolidatedMcmcRunData()
 	{
 		found = false;
 		mcmcResult.printStart(i);
-		for (size_t m = 1; m <= N_MODELS; m++)
+		for (modelType m  : allModels())
 		{
 			if (iterators[m] != allOrderedResults[m].end())
 			{

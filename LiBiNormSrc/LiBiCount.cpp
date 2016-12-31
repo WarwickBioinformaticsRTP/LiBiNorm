@@ -320,7 +320,7 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 
 		elapsedTime("Parameter estimation complete");
 
-		size_t bestModel = getBestModel();
+		modelType bestModel = getBestModel();
 		progMessage("Best model is model ", bestModel);
 
 		getBias(bestModel, bestResults[bestModel].params, geneCounts.lengths, geneCounts.bias);
@@ -335,7 +335,7 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 
 			//	And then the counts and the bias for the genes themselves
 			string filename = normaliseResultsFilename.replaceSuffix("_expression.txt");
-			if (!geneCounts.outputGeneCounts(filename, true))
+			if (!geneCounts.outputGeneCounts(filename, conv(bestModel),true))
 				exitFail("Unable to output counts to :", filename);
 		}
 	}

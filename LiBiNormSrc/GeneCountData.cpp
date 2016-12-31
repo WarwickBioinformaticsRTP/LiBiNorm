@@ -117,7 +117,7 @@ void GeneCountData::outputGeneCount(TsvFile & output, const string name)
 }
 
 
-bool GeneCountData::outputGeneCounts(const string & filename, bool withDetails)
+bool GeneCountData::outputGeneCounts(const string & filename, const string & title,bool withDetails)
 {
 	TsvFile output;
 
@@ -131,7 +131,7 @@ bool GeneCountData::outputGeneCounts(const string & filename, bool withDetails)
 		if (withDetails)
 		{
 			calculateOtherExpressionMeasures();
-			output.print("", "Normalised", "Raw", "RNA", "", "Normalised", "", "", "", "Raw");
+			output.print(title, "Normalised", "Raw", "RNA", "", "Normalised", "", "", "", "Raw");
 			output.print("Gene", "count", "count", "length", "Bias", "RPM", "RKPM", "RPK", "TPM", "RPM", "RKPM", "RPK", "TPM");
 			output.print();
 		}

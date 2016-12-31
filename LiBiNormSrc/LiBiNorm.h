@@ -12,8 +12,7 @@
 #define MAX_READS_GENE 100
 #define DEF_THREADS 3
 #define MCMC_ITERATIONS 2000
-#define N_MODELS 6
-#define DEFAULT_MODEL 6
+#define DEFAULT_MODEL ModelBD
 #define NUMBER_OF_MCMC_RUNS 3
 #define DEFAULT_NORMALISATION_GENE_LENGTH 1000
 #define MAX_GENE_LENGTH_FOR_NORM_PLOT 20000
@@ -27,7 +26,6 @@
 
 //	Use this to add the mode where duplicates in bam files can be removed
 // #define DEDUP_MODE
-
 
 class LiBiNormCore
 {
@@ -56,10 +54,10 @@ public:
 	LiBiNorm() :
 		theModel(DEFAULT_MODEL), outputFull(false) {};
 
-	void mcmcThread(paramSet params, optionsType options, modelType model);
+	void mcmcThread(paramSet params, optionsType options);
 	int main(int argc, char **argv);
 	bool coreParameterEstimation();
-	size_t getBestModel();
+	modelType getBestModel();
 	void printResults(const std::string & lastGene);
 	void printBias();
 	void printAllMcmcRunData();
@@ -71,7 +69,7 @@ protected:
 	GeneCountData geneCounts;
 
 private:
-	size_t theModel;
+	modelType theModel;
 	bool outputFull;
 
 	dataType consData;
@@ -81,15 +79,15 @@ private:
 	//	For each model the results for each mcmc run is stored as a map indexd by run number
 	//	This is because the runs are done on separate threads and we want to store the results by the run
 	//	identifier and not the order that they finished
-	std::vector<std::map<size_t, std::vector <dataVec > > >fullResultChain;
-	std::vector<std::map<size_t,dataVec> >fullResultSSChain;
+	std::map<modelType,std::map<size_t, std::vector <dataVec > > >fullResultChain;
+	std::map<modelType,std::map<size_t,dataVec> >fullResultSSChain;
 
-	dataVec RejectionRate;
+	std::map<modelType,VEC_DATA_TYPE> RejectionRate;
 
-	std::map<size_t, std::vector<std::string> > headers;
+	std::map<modelType, std::vector<std::string> > headers;
 
 	//	Counts of the number of mcmc runs that will be done for each model
-	std::map<size_t,int> threadLoopCounts;
+	std::map<modelType,int> threadLoopCounts;
 
 	//	The results data
 	std::map<size_t, std::multimap <double, dataVec *> > allOrderedResults;

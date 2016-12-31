@@ -41,7 +41,7 @@ double mcmc::priorfun(const dataVec & th, const dataVec & mu, const dataVec & si
 {
 	  return sum(((th-mu)/sig)^2);
 }
-void mcmc::mcmcrun(const modelType & model,const dataType & data,const paramSet & params,const optionsType & options)
+void mcmc::mcmcrun(const dataType & data,const paramSet & params,const optionsType & options)
 {
 
 	dataVec qcov = options.qcov;
@@ -67,7 +67,7 @@ void mcmc::mcmcrun(const modelType & model,const dataType & data,const paramSet 
 	dataVec R = qcov.diagchol();
 
 
-	double ss = model.ssfun(oldpar,data);
+	double ss = options.ssfun(oldpar,data);
 //	ss = sseval(ssfun,ssstyle,oldpar,parind,value,local,data,modelfun);
 
 //	printf("%12.7f",ss);
@@ -77,7 +77,7 @@ void mcmc::mcmcrun(const modelType & model,const dataType & data,const paramSet 
 
 	double oldprior = priorfun(oldpar,thetamu,thetasig);
 
-	double sigma2 = model.sigma2;
+	double sigma2 = options.sigma2;
 
 	_chain.resize(options.nsimu);
 	_sschain.resize(options.nsimu);
@@ -215,7 +215,7 @@ for isimu=2:nsimu % simulation loop
 		newprior = priorfun(newpar,thetamu,thetasig);
 
 		ss2 = ss;             //old ss
-		ss1 = model.ssfun(newpar,data);
+		ss1 = options.ssfun(newpar,data);
 
 		tst = exp(-0.5*( (ss1-ss2)/sigma2) + newprior-oldprior); //???????????????
 		if (tst <= 0)

@@ -26,23 +26,17 @@ double rand(double a);
 %    model.N0       prior accuracy for S20
 %    model.nbatch   number of datasets
 */
-class modelType
-{
-public:
-	double sigma2;
-	double (*ssfun)(const dataVec & param, const dataType & data);
-};
-
-
 
 class optionsType
 {
 public:
 	optionsType():nsimu(100){};
+
+	double sigma2;
+	double(*ssfun)(const dataVec & param, const dataType & data);
 	size_t nsimu,Nruns;
 	double updatesigma;
 	double jumpSize;
-	size_t Model;
 	std::string method;
 	dataVec qcov;
 };
@@ -64,7 +58,7 @@ public:
 	mcmc(void);
 	~mcmc(void);
 
-	void mcmcrun(const modelType & model, const dataType & data,const paramSet & params,const optionsType & options);
+	void mcmcrun(const dataType & data,const paramSet & params,const optionsType & options);
 	double priorfun(const dataVec & th, const dataVec & mu, const dataVec & sig);
 
 };

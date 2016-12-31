@@ -23,6 +23,18 @@ can be performed for each read.
 
 */
 
+namespace std
+{
+	string to_string(const modelType & m)
+	{
+		return conv(m);
+	}
+}
+ostream& operator<< (ostream &out, const modelType & m)
+{
+	out << conv(m);
+	return out;
+}
 
 
 double FLL_ModelA(const dataVec & param, const dataType & data)
@@ -404,24 +416,24 @@ double FLL_ModelBD(const dataVec & param, const dataType & data)
 }
 
 
-void getBias(size_t m,dataVec & params,const dataVec & l, dataVec & bias)
+void getBias(modelType m,dataVec & params,const dataVec & l, dataVec & bias)
 {
 	double d = pow(10, params[0]);
 	double h = pow(10, params[1]);
 	double t1, t2, a;
 	switch (m)
 	{
-	case 2:
-	case 4:
-	case 5:
+	case ModelB:
+	case ModelD:
+	case ModelE:
 		t1 = pow(10, params[2]);
 		t2 = pow(10, params[3]);
 		break;
-	case 3:
+	case ModelC:
 		t1 = 0;
 		t2 = pow(10, params[2]);
 		break;
-	case 6:
+	case ModelBD:
 		t1 = pow(10, params[2]);
 		t2 = pow(10, params[3]);
 		a = params[4];
@@ -432,14 +444,14 @@ void getBias(size_t m,dataVec & params,const dataVec & l, dataVec & bias)
 
 	switch (m)
 	{
-	case 1:
+	case ModelA:
 		bias = (2 * h < l)*(l - 2 * h) + l / d;
 		break;
-	case 2:
+	case ModelB:
 		bias = ((2 * h < l)*(t1*(exp(-2 * h*(t1 + t2)) - exp(-l*(t1 + t2))) + t2*(t1 + t2)*(l - 2 * h)*exp(-l*(t1 + t2))) / ((t1 + t2)*(t1 + t2)) +
 			exp(-l*(t1 + t2))*(l*t2*t2 + t1*(exp(l*(t1 + t2)) + l*t2 - 1)) / ((t1 + t2)*(t1 + t2)) / d);
 		break;
-	case 3:
+	case ModelC:
 		/*				for (size_t i = 0; i < l.size(); i++)
 		{
 		if (2 * h < l[i])
@@ -454,7 +466,7 @@ void getBias(size_t m,dataVec & params,const dataVec & l, dataVec & bias)
 	}
 
 	break;
-	case 4:
+	case ModelD:
 		for (size_t i = 0; i < l.size(); i++)
 		{
 			if (2 * h < l[i])
@@ -463,7 +475,7 @@ void getBias(size_t m,dataVec & params,const dataVec & l, dataVec & bias)
 				bias[i] = (1 - exp(-l[i] * (t1 + t2))) / (t1 + t2) / d;
 		}
 		break;
-	case 5:
+	case ModelE:
 		/*  MATLAB
 		if (2 * h<l(i))
 		norm(i) = (exp(-l(i)*t1 - 2 * h*t2)*(t1 + t2) ^ 2 - exp(-l(i)*(t1 + t2))*t1 ^ 2 + t1*t2*exp(-2 * h*(t1 + t2))*(l(i)*t2 - 2 * h*t1 - 2 * h*t2 + l(i)*t1 - t2 / t1 - 2)) / (t1 + t2) ^ 2 / t1 ^ 2 / t2 + ...
@@ -493,7 +505,7 @@ void getBias(size_t m,dataVec & params,const dataVec & l, dataVec & bias)
 		bias /= t1;
 
 		break;
-	case 6:
+	case ModelBD:
 	{
 		bias = a*((2 * h < l)*(t1*(exp(-2 * h*(t1 + t2)) - exp(-l*(t1 + t2))) + t2*(t1 + t2)*(l - 2 * h)*exp(-l*(t1 + t2))) / ((t1 + t2) * (t1 + t2)) +
 			(exp(-l*(t1 + t2))*(l*t2 *t2 + l*t2*t1 - t1) + t1) / ((t1 + t2) *(t1 + t2)) / d) +
