@@ -1,6 +1,6 @@
 
-#include <algorithm>
 #include "LogLiklihoods.h"
+#include <map>
 using namespace std;
 
 
@@ -23,6 +23,22 @@ can be performed for each read.
 
 */
 
+std::string conv(const modelType m)
+{
+	switch (m)
+	{
+	case noModel: return "No Model";
+	case ModelA: return "Model A";
+	case ModelB: return "Model B";
+	case ModelC: return "Model C";
+	case ModelD: return "Model D";
+	case ModelE: return "Model E";
+	case ModelBD: return "Model BD";
+	}
+	return "";
+}
+
+
 namespace std
 {
 	string to_string(const modelType & m)
@@ -36,7 +52,26 @@ ostream& operator<< (ostream &out, const modelType & m)
 	return out;
 }
 
+//  Selects a model based on a string, exits if the string is not valid
+modelType modelFromString(const string & desc)
+{
+	static map<string, modelType> mappings{
+		{ "A",ModelA },{ "B",ModelB },{ "C",ModelC },{ "D",ModelD },{ "E",ModelE },{ "BD",ModelBD }, 
+		{ "a",ModelA },{ "b",ModelB },{ "c",ModelC },{ "d",ModelD },{ "e",ModelE },{ "bd",ModelBD } };
+	auto iter = mappings.find(desc);
+	if (iter == mappings.end())
+		exitFail("Unknown model description:", desc);
+	return (*iter).second;
+}
 
+bool printVal(outputDataFile * f, modelType m)
+{
+	fputs(conv(m).c_str(), f->fout);
+	return true;
+};
+
+
+//	The log liklyhood calculations for each of the models
 double FLL_ModelA(const dataVec & param, const dataType & data)
 {
 	double d = pow(10,param[0]);
@@ -423,6 +458,9 @@ void getBias(modelType m,dataVec & params,const dataVec & l, dataVec & bias)
 	double t1, t2, a;
 	switch (m)
 	{
+	case noModel:	//This should not happen
+	case ModelA:
+		break;
 	case ModelB:
 	case ModelD:
 	case ModelE:
@@ -444,6 +482,8 @@ void getBias(modelType m,dataVec & params,const dataVec & l, dataVec & bias)
 
 	switch (m)
 	{
+	case noModel:
+		break;
 	case ModelA:
 		bias = (2 * h < l)*(l - 2 * h) + l / d;
 		break;

@@ -28,25 +28,6 @@ const std::vector<modelType> & allModels()
 	return list;
 };
 
-//  Selects a model based on a string, exits if the string is not valid
-modelType model(const std::string & desc)
-{
-	static std::map<std::string, modelType> mappings{
-		{ "A",ModelA },{ "B",ModelB },{ "C",ModelC },{ "D",ModelD },{ "E",ModelE },{ "BD",ModelBD } };
-	auto iter = mappings.find(desc);
-	if (iter == mappings.end())
-		exitFail("Unknown model description:", desc);
-	return (*iter).second;
-}
-
-//	Allows the model to be output to a stream such as std::out as appropriate text
-inline bool printVal(outputDataFile * f, modelType m)
-{
-	fputs(conv(m).c_str(),f->fout);
-	return true;
-};
-
-
 
 
 
@@ -59,10 +40,6 @@ inline bool printVal(outputDataFile * f, modelType m)
 
 int main(int argc, char **argv)
 {
-
-	modelType m = ModelC;
-
-	stringEx test("123:", m);
 
 #ifdef _WIN32
 	_DBG( _CrtSetDbgFlag ( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF ));
@@ -127,7 +104,7 @@ int main(int argc, char **argv)
 	return EXIT_SUCCESS;
 }
 
-void LiBiNorm::mcmcThread(paramSet params, optionsType options)
+void LiBiNorm::mcmcThread(optionsType options)
 {
 	map<modelType,int>::iterator model_iterator = threadLoopCounts.begin();
 	modelType currentModel;
@@ -157,6 +134,7 @@ void LiBiNorm::mcmcThread(paramSet params, optionsType options)
 
 		switch (currentModel)
 		{
+		case noModel: break;
 		case ModelA:
 			options.ssfun = &FLL_ModelA;
 			break;
@@ -186,45 +164,40 @@ void LiBiNorm::mcmcThread(paramSet params, optionsType options)
 		vectorEx<double> p0{ {rand(3) - 1, rand(3), rand(4) - 5, rand(4) - 5, rand(1)} };
 #endif
 
+		paramSet params;
+		
 		switch (currentModel)
 		{
+		case noModel:
+			break;
 		case ModelB: case ModelD: case ModelE:
 			options.qcov = dataVec(4,options.jumpSize);
-
-			params = { {"d", p0[0], -1 , 2}    // average length of fragments
-			,{"h",  p0[1], 0 , 3}   // the minimum length of fragmenation
-			,{ "t1", p0[2], -5 , -1}   // theta1
-			,{ "t2", p0[3], -5, -1} // theta2
-			//				,paramType("sig", p0[4], 0, 3) // sigma
+			params = { { "log d", p0[0], -1 , 2 }    // average length of fragments
+				,{"log h",  p0[1], 0 , 3}   // the minimum length of fragmenation
+				,{ "log t1", p0[2], -5 , -1}   // theta1
+				,{ "log t2", p0[3], -5, -1} // theta2
 			};
 
 			break;
 		case ModelC:
 			options.qcov = dataVec(3,options.jumpSize);
-
-			params = { {"d", p0[0], -1 , 2}    // average length of fragments
-			, {"h",  p0[1], 0 , 3 }   // the minimum length of fragmenation
-			//				,paramType("t1", p0[2], -5 , -1)   // theta1
-			,{"t2", p0[3], -5, -1} // theta2
-			//				,paramType("sig", p0[4], 0, 3) // sigma
+			params = { { "log d", p0[0], -1 , 2 }    // average length of fragments
+				, {"log h",  p0[1], 0 , 3 }   // the minimum length of fragmenation
+				,{"log t2", p0[3], -5, -1} // theta2
 			};
 			break;
 		case ModelA:
 			options.qcov = dataVec(2,options.jumpSize);
-
-			params = { {"d", p0[0], -1 , 2}    // average length of fragments
-				,{"h",  p0[1], 0 , 3 }   // the minimum length of fragmenation
-				//				,paramType("t1", p0[2], -5 , -1)   // theta1
-				//				,paramType("t2", p0[3], -5, -1) // theta2
+			params = { { "log d", p0[0], -1 , 2 }    // average length of fragments
+				,{"log h",  p0[1], 0 , 3 }   // the minimum length of fragmenation
 			};
 			break;
 		case ModelBD:
-			options.qcov = dataVec(6,options.jumpSize);
-
-			params = { {"d", p0[0], -1 , 2}    // average length of fragments
-				,{"h",  p0[1], 0 , 3}   // the minimum length of fragmenation
-				,{"t1", p0[2], -5 , -1}   // theta1
-				,{"t2", p0[3], -5, -1} // theta2
+			options.qcov = dataVec(5,options.jumpSize);
+			params = { { "log d", p0[0], -1 , 2 }    // average length of fragments
+				,{"log h",  p0[1], 0 , 3}   // the minimum length of fragmenation
+				,{"log t1", p0[2], -5 , -1}   // theta1
+				,{"log t2", p0[3], -5, -1} // theta2
 				,{"a", p0[4], 0, 1} // alpha strength of model B
 			};
 			break;
@@ -233,6 +206,7 @@ void LiBiNorm::mcmcThread(paramSet params, optionsType options)
 
 		if (loop == 0)
 		{
+			//	The 0th loop of the parameter estimation is a dummy loop for setting the headers
 			for (size_t i = 0; i < params.size(); i++)
 				headers[currentModel].push_back(params[i].name);
 		}
@@ -254,15 +228,13 @@ void LiBiNorm::mcmcThread(paramSet params, optionsType options)
 			//	Always store full set of results as these are needed to calculate the optimal parameters
 			fullResultChain[currentModel].emplace(loop, mcmcEngine.chain());
 			fullResultSSChain[currentModel].emplace(loop, mcmcEngine.sschain());
-
-			RejectionRate[currentModel] += mcmcEngine.rejected();
 		}
 	}
 }
 
-void runThread(LiBiNorm * root,	paramSet params, optionsType options)
+void runThread(LiBiNorm * root,	 optionsType options)
 {
-	root->mcmcThread(params, options);
+	root->mcmcThread(options);
 }
 
 
@@ -270,11 +242,13 @@ void LiBiNormCore::helpCommon()
 {
 	printf("  -l FILENAME, --landscape=FILENAME\n");
 	printf("                        Name of file for landscape data)\n");
-	printf("  -n, --normalise       Normalise rna-seq data using model 6 to correct for\n");
-	printf("                        length related bias\n");
+	printf("  -n <m>, --normalise   Normalise rna-seq data to correct for length related\n");
+	printf("                        bias.  Model BD used by sdefault. Optional m allows other\n");
+	printf("                         models to be specified (A,B,C,D,E,BD)\n");
 	printf("  -N FILENAME, --Normalise=FILENAME\n");
 	printf("                        Normalise data trying all 6 models and output summary\n");
-	printf("                        info to files with root FILENAME\n");
+	printf("                        info to files with root FILENAME.  Best model selected\n");
+	printf("                        unless overridden by -n\n");
 	printf("  -p N, --threads=N     Number of threads for normalisation parameter\n");
 	printf(_s("                        determination (", DEF_THREADS, ")\n"));
 	printf("  -d N, --reads=N       Maximum number of reads using for normalisation\n");
@@ -285,7 +259,7 @@ void LiBiNormCore::helpCommon()
 
 }
 
-bool LiBiNormCore::commandParseCommon(int & ni, char **argv)
+bool LiBiNormCore::commandParseCommon(int & ni, int argc,char **argv)
 {
 		bool opt2 = false;
 		if ((strcmp(argv[ni], "-l") == 0) || (opt2 = (strncmp(argv[ni], "--landscape=", 12) == 0)))
@@ -299,14 +273,41 @@ bool LiBiNormCore::commandParseCommon(int & ni, char **argv)
 			normaliseResultsFilename = opt2 ? argv[++ni] + 11 : argv[++ni];
 			return true;
 		}
+		if ((strcmp(argv[ni], "-n") == 0) || (opt2 = (strncmp(argv[ni], "--normalise", 11) == 0)))
+		{
+			normalise = true;
+			//	Was a specific model specified?
+			if (opt2)
+			{
+				string command(argv[ni]);
+				if (command.size() > 11)
+				{
+					if (command[11] == '=')
+					{
+						theModel = modelFromString(command.substr(12));
+					}
+					else
+						exitFail("Invalid parameter:", command);
+				}
+			}
+			else if ((ni < (argc - 1)) && (argv[ni + 1][0] != '-'))
+			{
+				theModel = modelFromString(argv[++ni]);
+			}
+			return true;
+		}
 		if ((strcmp(argv[ni], "-p") == 0) || (opt2 = (strncmp(argv[ni], "--threads=", 10) == 0)))
 		{
 			Nthreads = atoi(opt2 ? argv[ni] + 10 : argv[++ni]);
+			if (Nthreads < 1)
+				exitFail("At least 1 thread must be specified");
 			return true;
 		}
 		if ((strcmp(argv[ni], "-d") == 0) || (opt2 = (strncmp(argv[ni], "--reads=", 8) == 0)))
 		{
 			maxReads = atoi(opt2 ? argv[ni] + 8 : argv[++ni]);
+			if (maxReads < 1000)
+				exitFail("At least 1000 reads must be specified");
 			return true;
 		}
 		if ((strcmp(argv[ni], "-c") == 0) || (opt2 = (strncmp(argv[ni], "--counts=", 9) == 0)))
@@ -322,7 +323,7 @@ int LiBiNorm::main(int argc, char **argv)
 {
 	int Ngenes = -1;
 	normalise = true;
-	NrunsOtherModels = Nruns;
+	bool pauseAtEnd = false;
 
 	initClock();
 	if(argc < 1)
@@ -340,7 +341,6 @@ int LiBiNorm::main(int argc, char **argv)
 		printf("  -g N, --genes=N       Number of genes to be included in calculations\n");
 		printf(_s("  -r N, --runs=N        Number of mcmc runs (", NUMBER_OF_MCMC_RUNS,")\n"));
 		printf(_s("  -s N, --mcmc=N        Length of each simulation (", MCMC_ITERATIONS,")\n"));
-		printf("  -m N, --model=N       Just run for model N -r times.  All other models run once\n");
 		printf("  -f, --full            Output complete set of montecarlo data\n");
 		return EXIT_SUCCESS;
 	}
@@ -348,29 +348,33 @@ int LiBiNorm::main(int argc, char **argv)
 	while(ni < argc)
 	{
 		bool opt2 = false;
-		if (commandParseCommon(ni, argv))
+		if (commandParseCommon(ni, argc,argv))
 		{
 		}
 		else if ((strcmp(argv[ni], "-g") == 0) || (opt2 = (strncmp(argv[ni], "--genes=", 8) == 0)))
 		{
 			Ngenes = atoi(opt2 ? argv[ni] + 8 : argv[++ni]);
+			if (Ngenes < 10)
+				exitFail("At least 10 genes must be specified");
 		}
 		else if ((strcmp(argv[ni], "-r") == 0) || (opt2 = (strncmp(argv[ni], "--runs=", 7) == 0)))
 		{
 			Nruns = atoi(opt2 ? argv[ni] + 7 : argv[++ni]);
-			NrunsOtherModels = (theModel) ? 1 : Nruns;
+			if ((Nruns < 1) || (Nruns > 20))
+				exitFail("-r values must lie between 1 and 20");
 		}
 		else if ((strcmp(argv[ni], "-s") == 0) || (opt2 = (strncmp(argv[ni], "--mcmc=", 7) == 0)))
 		{
 			Nsimu = atoi(opt2 ? argv[ni] + 7 : argv[++ni]);
-		}
-		else if ((strcmp(argv[ni], "-m") == 0) || (opt2 = (strncmp(argv[ni], "--model=", 8) == 0)))
-		{
-			theModel = model(opt2 ? argv[ni] + 8 : argv[++ni]);
-			NrunsOtherModels = 1;
+			if ((Nsimu < 500) || (Nsimu > 10000))
+				exitFail("-r values must lie between 500 and 10000");
 		}
 		else if ((strcmp(argv[ni], "-f") == 0) || (opt2 = (strncmp(argv[ni], "--full", 6) == 0)))
 			outputFull = true;
+		else if (strcmp(argv[ni], "-x") == 0)
+		{
+			pauseAtEnd = true;
+		}
 		else
 		{
 			exitFail("Invalid parameter: ",argv[ni]);
@@ -384,19 +388,37 @@ int LiBiNorm::main(int argc, char **argv)
 	if (!normaliseResultsFilename)
 		normaliseResultsFilename = landscapeFilename;
 
+	//	If we specifiy the model then run the other models just once 
+	if (theModel == noModel)
+		NrunsOtherModels = Nruns;
+	else
+		NrunsOtherModels = 1;
+
+
 	string lastGene = geneCounts.loadData(landscapeFilename, Ngenes);
 	coreParameterEstimation();
 
 	//	And then the counts and the bias for the genes themselves
-	modelType bestModel = getBestModel();
-	progMessage("Best model is ", bestModel);
-	getBias(bestModel, bestResults[bestModel].params, geneCounts.lengths, geneCounts.bias);
+
+	//	If we have explicitly specified the model then use it instead
+	if (theModel == noModel)
+	{
+		bestModel = getBestModel();
+		progMessage("Best model is ", bestModel);
+		theModel = bestModel;
+	}
+	else
+	{
+		progMessage("Model selected by command line is ", theModel);
+	}
+
+	getBias(theModel, bestResults[theModel].params, geneCounts.lengths, geneCounts.bias);
 	
 	string filename = normaliseResultsFilename.replaceSuffix("_expression.txt");
-		if (!geneCounts.outputGeneCounts(filename, conv(bestModel),true))
+		if (!geneCounts.outputGeneCounts(filename, conv(theModel),true))
 		exitFail("Unable to output counts to :", filename);
 
-	printResults(conv(bestModel));
+	printResults();
 	printBias();
 
 	//********************************************************************************************
@@ -414,10 +436,12 @@ int LiBiNorm::main(int argc, char **argv)
 	progMessage("Data modelled");
 	elapsedTime();
 
-#ifdef _WIN32
-	string x;
-	cin >> x;
-#endif
+	if (pauseAtEnd)
+	{
+		string test;
+		cin >> test;
+	}
+
 	return EXIT_SUCCESS;
 }
 
@@ -428,18 +452,12 @@ bool LiBiNorm::coreParameterEstimation()
 
 	elapsedTime("Data loaded");
 
-	paramSet params;
 	optionsType options;
 
 	options.jumpSize = 0.01;
 	options.nsimu = Nsimu;
 	options.Nruns = Nruns;
 
-//	double drscale  = 0;
-//	double adaptint = 0;
-
-	options.updatesigma = 0;
-	options.method = "mh";
 	options.sigma2 = 1;
 
 	//	Set the number of iterations required of each of the models.
@@ -459,7 +477,7 @@ bool LiBiNorm::coreParameterEstimation()
 	//	And then set the threads running
 	vector<thread> threads;
 	for (size_t i = 0; i < Nthreads; i++)
-		threads.emplace_back(thread(runThread, this, params, options));
+		threads.emplace_back(thread(runThread, this, options));
 
 	for (auto & i : threads)
 		i.join();
@@ -569,7 +587,7 @@ modelType LiBiNorm::getBestModel()
 }
 
 
-void LiBiNorm::printResults(const string & lastGene)
+void LiBiNorm::printResults()
 {
 	string filename(normaliseResultsFilename.replaceSuffix("_results.txt"));
 	TsvFile mcmcResult;
@@ -579,7 +597,15 @@ void LiBiNorm::printResults(const string & lastGene)
 
 	//	First headers up to and including the maximum model that is run.   Always leave space
 	//	for the intermediate models so the layout of the results is consistent
-	mcmcResult.printStart(lastGene);
+	mcmcResult.printStart("");
+	for (modelType m : allModels())
+	{
+		mcmcResult.printMiddle(m);
+		mcmcResult.printGaps(headers[m].size() + 1);
+	}
+	mcmcResult.printEnd();
+
+	mcmcResult.printStart("");
 	for (modelType m : allModels())
 		mcmcResult.printMiddle(headers[m], "chain", "");
 	mcmcResult.printEnd();
@@ -594,7 +620,7 @@ void LiBiNorm::printResults(const string & lastGene)
 			mcmcResult.printGaps(headers[m].size() + 2);
 	}
 	mcmcResult.printEnd();
-	//	A row for the standard deviations for each model
+	//	A row for the deviations for each model
 	for (size_t i = 0; i < 2; i++)
 	{
 		mcmcResult.printStart((i == 0) ? "Pos Dev" : "Neg Dev");
@@ -625,6 +651,13 @@ void LiBiNorm::printResults(const string & lastGene)
 }
 
 
+// #define BEST_RESULT_LOCATION  Use this to print out locations where best loglilihood is obtained in mcmc run
+#ifdef BEST_RESULT_LOCATION
+#define _BRL(A,B) A,B,
+#else
+#define _BRL(A,B)
+#endif
+
 void LiBiNorm::printBias()
 {
 	TsvFile mcmcResult;
@@ -649,16 +682,17 @@ void LiBiNorm::printBias()
 
 	for (modelType m : allModels())
 	{
-		mcmcResult.print(m, bestResults[m].minLL, bestResults[m].run, bestResults[m].pos, bestResults[m].params);
+		mcmcResult.print("","","Log likelihood",_BRL("mcmc run","mcmc iteration")headers[m]);
+		mcmcResult.print(m,"Parameters",bestResults[m].minLL,_BRL(bestResults[m].run, bestResults[m].pos) bestResults[m].params);
 		if (biases[m].size())
 		{
-			mcmcResult.print(m, lengths);
-			mcmcResult.print(m, biases[m]);
+			mcmcResult.print("","Frequency", lengths);
+			mcmcResult.print("","Bias",biases[m]);
 		}
 		else
 		{
-			mcmcResult.print(m);
-			mcmcResult.print(m);
+			mcmcResult.print("");
+			mcmcResult.print("");
 		}
 		mcmcResult.print();
 	}

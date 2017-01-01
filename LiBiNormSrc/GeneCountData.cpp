@@ -132,7 +132,7 @@ bool GeneCountData::outputGeneCounts(const string & filename, const string & tit
 		{
 			calculateOtherExpressionMeasures();
 			output.print(title, "Normalised", "Raw", "RNA", "", "Normalised", "", "", "", "Raw");
-			output.print("Gene", "count", "count", "length", "Bias", "RPM", "RKPM", "RPK", "TPM", "RPM", "RKPM", "RPK", "TPM");
+			output.print("Gene", "count", "count", "length", "Bias", "RPM", "RPKM", "RPK", "TPM", "RPM", "RPKM", "RPK", "TPM");
 			output.print();
 		}
 
@@ -144,8 +144,8 @@ bool GeneCountData::outputGeneCounts(const string & filename, const string & tit
 			if (withDetails)
 			{
 				output.printMiddle(counts[0][i], lengths[i], bias[i],
-					RPM[1][i], RKPM[1][i], RPK[1][i], TPM[1][i],
-					RPM[0][i], RKPM[0][i], RPK[0][i], TPM[0][i]);
+					RPM[1][i], RPKM[1][i], RPK[1][i], TPM[1][i],
+					RPM[0][i], RPKM[0][i], RPK[0][i], TPM[0][i]);
 			}
 
 			output.printEnd();
@@ -375,7 +375,7 @@ void GeneCountData::calculateOtherExpressionMeasures()
 		VEC_DATA_TYPE scalingFactor = sum(counts[i]) / 1000000;
 
 		RPM[i] = counts[i] / scalingFactor;
-		RKPM[i] = RPM[i] / lengths;
+		RPKM[i] = RPM[i] / lengths;
 
 		RPK[i] = counts[i] / lengths;
 		scalingFactor = sum(RPK[i]) / 1000000;

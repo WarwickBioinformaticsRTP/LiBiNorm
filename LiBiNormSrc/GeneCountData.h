@@ -92,7 +92,7 @@ public:
 
 	//	The first entry is for the raw data, and the second for the normalised data
 	dataVec counts[2];
-	dataVec RPM[2], RKPM[2], RPK[2], TPM[2];
+	dataVec RPM[2], RPKM[2], RPK[2], TPM[2];
 
 
 	//	For data associated with reads that do not map

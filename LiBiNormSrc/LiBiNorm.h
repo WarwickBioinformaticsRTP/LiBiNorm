@@ -30,7 +30,8 @@
 class LiBiNormCore
 {
 protected:
-	LiBiNormCore() :normalise(false), 
+	LiBiNormCore() :normalise(false),
+		theModel(noModel),
 		maxReads(DEF_MAX_READS_FOR_PARAM_ESTIMATION),
 		Nthreads(DEF_THREADS),
 		Nsimu(MCMC_ITERATIONS),
@@ -39,9 +40,10 @@ protected:
 	{};
 
 	void helpCommon();
-	bool commandParseCommon(int & ni, char **argv);
+	bool commandParseCommon(int & ni, int argc, char **argv);
 
 	bool normalise;
+	modelType theModel;
 	size_t maxReads, Nthreads,Nsimu,Nruns,NrunsOtherModels;
 
 	stringEx landscapeFilename, normaliseResultsFilename, countsFilename;
@@ -52,13 +54,13 @@ class LiBiNorm : protected LiBiNormCore
 {
 public:
 	LiBiNorm() :
-		theModel(DEFAULT_MODEL), outputFull(false) {};
+		bestModel(noModel),outputFull(false) {};
 
-	void mcmcThread(paramSet params, optionsType options);
+	void mcmcThread(optionsType options);
 	int main(int argc, char **argv);
 	bool coreParameterEstimation();
 	modelType getBestModel();
-	void printResults(const std::string & lastGene);
+	void printResults();
 	void printBias();
 	void printAllMcmcRunData();
 	void printConsolidatedMcmcRunData();
@@ -67,9 +69,8 @@ public:
 
 protected:
 	GeneCountData geneCounts;
-
+	modelType bestModel;
 private:
-	modelType theModel;
 	bool outputFull;
 
 	dataType consData;
@@ -81,8 +82,6 @@ private:
 	//	identifier and not the order that they finished
 	std::map<modelType,std::map<size_t, std::vector <dataVec > > >fullResultChain;
 	std::map<modelType,std::map<size_t,dataVec> >fullResultSSChain;
-
-	std::map<modelType,VEC_DATA_TYPE> RejectionRate;
 
 	std::map<modelType, std::vector<std::string> > headers;
 

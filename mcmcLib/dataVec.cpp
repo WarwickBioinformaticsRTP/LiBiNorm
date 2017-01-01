@@ -137,7 +137,7 @@ void dataVec::clearCache() {};
 
 
 //	Cholesky_Decomposition returns the Cholesky Decomposition Matrix. 
-dataVec dataVec::diagchol()
+dataVec dataVec::diagchol() const
 {
 
 	dataArray L(size());

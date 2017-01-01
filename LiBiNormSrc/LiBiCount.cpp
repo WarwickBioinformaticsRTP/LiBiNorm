@@ -196,15 +196,7 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 		{
 			htSeqCompatible = true;
 		}
-		/*		else if((strcmp(argv[ni], "-o") == 0) || (strcmp(argv[ni], "--samout") == 0))
-		{
-			outputFilename = argv[++ni];
-		}*/
-		else if ((strcmp(argv[ni], "-n") == 0) || (opt2 = (strncmp(argv[ni], "--normalise", 11) == 0)))
-		{
-			normalise = true;
-		}
-		else if (commandParseCommon(ni, argv))
+		else if (commandParseCommon(ni, argc-2, argv)) //argc -2 to allow for the two fixed end parameters
 		{
 		}
 		else if ((strcmp(argv[ni], "-g") == 0) || (opt2 = (strncmp(argv[ni], "--genes=", 8) == 0)))
@@ -224,6 +216,20 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 
 	bamFileName = argv[argc-2];
 	featureFileName = argv[argc-1];
+
+	//	If we have specified -N then we run all of the models for preset number of runs.
+	if (normaliseResultsFilename)
+	{
+		//	Unless specified we find the best model
+		NrunsOtherModels = Nruns;
+	
+	}
+	else
+	{
+		if (theModel == noModel)
+			theModel = DEFAULT_MODEL;
+	}
+	
 
 	if(countsFilename)
 		tempDirectory = countsFilename.replaceSuffix("_tempFiles");
@@ -313,29 +319,39 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 
 	if (normalise)
 	{
-		//	If we are outputting results then we are doing all models
-		NrunsOtherModels = normaliseResultsFilename ? Nruns : 0;
-
 		coreParameterEstimation();
 
 		elapsedTime("Parameter estimation complete");
 
-		modelType bestModel = getBestModel();
-		progMessage("Best model is model ", bestModel);
+		if (normaliseResultsFilename)
+		{
+			if (theModel == noModel)
+			{
+				bestModel = getBestModel();
+				progMessage("Best model is ", bestModel);
+				theModel = bestModel;
+			}
+			else
+				progMessage("Model selected by command line is ", theModel);
+		}
+		else
+		{
+			progMessage("Model used is ", theModel);
+		}
 
-		getBias(bestModel, bestResults[bestModel].params, geneCounts.lengths, geneCounts.bias);
+		getBias(theModel, bestResults[theModel].params, geneCounts.lengths, geneCounts.bias);
 
 		if (normaliseResultsFilename)
 		{
 			//	Output the results of the mcmc analysis
-			printResults("Results");
+			printResults();
 
 			//	And then the bias predicted by all 6 models
 			printBias();
 
 			//	And then the counts and the bias for the genes themselves
 			string filename = normaliseResultsFilename.replaceSuffix("_expression.txt");
-			if (!geneCounts.outputGeneCounts(filename, conv(bestModel),true))
+			if (!geneCounts.outputGeneCounts(filename, conv(theModel),true))
 				exitFail("Unable to output counts to :", filename);
 		}
 	}

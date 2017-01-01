@@ -5,6 +5,9 @@
 #include "dataVec.h"
 #include "params.h"
 
+
+#define MAX_DOUBLE std::numeric_limits<double>::max()
+
 class dataType
 {
 public:
@@ -17,11 +20,12 @@ public:
 double rand(double a);
 
 /*
-% MODEL   model options structure
-%    model.ssfun    -2*log(likelihood) function
-%    model.priorfun -2*log(pior) prior function
-%    model.sigma2   initial error variance
-%    model.N        total number of observations
+% options structure
+%    options.ssfun    -2*log(likelihood) function
+%    options.priorfun -2*log(pior) prior function
+%    options.sigma2   initial error variance
+%    options.Nsimu    number of mcmc cycles in a run
+%    options.Nruns    total number of runs/observations
 %    model.S20      prior for sigma2
 %    model.N0       prior accuracy for S20
 %    model.nbatch   number of datasets
@@ -32,34 +36,31 @@ class optionsType
 public:
 	optionsType():nsimu(100){};
 
-	double sigma2;
 	double(*ssfun)(const dataVec & param, const dataType & data);
+	double sigma2;
 	size_t nsimu,Nruns;
-	double updatesigma;
 	double jumpSize;
-	std::string method;
 	dataVec qcov;
 };
 
 
-
+//	The class that manages the Monte Carlo Markov Chain determintaion of parameters
 class mcmc
 {
-	std::vector<dataVec> _chain;
-	dataVec _sschain;
-
-	double rej,reju,ii,rejl;
-	size_t nsimu;
 public:
 
 	const std::vector<dataVec> & chain() {return _chain;};
 	const dataVec & sschain() {return _sschain;};
-	double rejected() {return reju/nsimu;};
-	mcmc(void);
-	~mcmc(void);
 
 	void mcmcrun(const dataType & data,const paramSet & params,const optionsType & options);
 	double priorfun(const dataVec & th, const dataVec & mu, const dataVec & sig);
+
+private:
+	std::vector<dataVec> _chain;
+	dataVec _sschain;
+
+	double rej, reju, ii, rejl;
+	size_t nsimu;
 
 };
 

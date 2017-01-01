@@ -2,6 +2,7 @@
 #define LOG_LIKLIHOODS_H
 
 #include <float.h>
+#include <algorithm>
 #include "mcmc.h"
 
 
@@ -16,20 +17,14 @@ enum modelType
 	ModelBD = 6
 };
 
-inline std::string conv(const modelType m)
-{
-	switch (m)
-	{
-	case noModel: return "No Model";
-	case ModelA: return "Model A";
-	case ModelB: return "Model B";
-	case ModelC: return "Model C";
-	case ModelD: return "Model D";
-	case ModelE: return "Model E";
-	case ModelBD: return "Model BD";
-	}
-	return "";
-}
+std::string conv(const modelType m);
+
+//  Selects a model based on a string, exits if the string is not valid
+modelType modelFromString(const std::string & desc);
+
+//	Allows the model to be output to a stream such as std::out as appropriate text
+bool printVal(outputDataFile * f, modelType m);
+
 
 //	Allows genomicPositions to be placed into StringEx's
 namespace std

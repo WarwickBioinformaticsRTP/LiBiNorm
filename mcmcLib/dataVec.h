@@ -154,7 +154,7 @@ public:
 		return *this;
 	}
 
-	dataVec diagchol();
+	dataVec diagchol() const;
 
 	dataVec operator () (const vector<int> & i) const
 	{
