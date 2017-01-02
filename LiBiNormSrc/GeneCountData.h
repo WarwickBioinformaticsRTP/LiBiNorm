@@ -64,7 +64,7 @@ class GeneCountData : public std::map<const std::string, geneAttribute >
 public:
 
 	VEC_DATA_TYPE & count(const std::string gene);
-	const VEC_DATA_TYPE & length(const std::string gene);
+	VEC_DATA_TYPE length(const std::string gene);
 	//	Needed if we decide the data is not name ordered and have to restart
 	void reset() { for (auto & gene : This)	gene.second.reset(); };
 
@@ -78,20 +78,19 @@ public:
 	void histc (const std::vector<int> E);
 	void transferTo(dataType & mcmcData,size_t maxLength,int maxTotReads);
 
-	void calculateOtherExpressionMeasures();
+//	void calculateOtherExpressionMeasures();
 
-	bool outputGeneCounts(const std::string & filename, const std::string & title = "", bool withDetails = false);
-	void outputGeneCount(TsvFile & output, const std::string name);
+	bool outputGeneCounts(const std::string & filename, stringEx title = "", int detailLevel = 0);
 	bool outputRNApositions(const std::string & filename);
 
 	void useSelectedGenes(const std::string & filename);
 
 	std::vector<std::string> names;
-	dataVec lengths;
 	dataVec bias;
+	//	The first entry is for the raw lengths, and the second for the normalised lengths
+	dataVec lengths[2];
 
-	//	The first entry is for the raw data, and the second for the normalised data
-	dataVec counts[2];
+	dataVec counts;
 	dataVec RPM[2], RPKM[2], RPK[2], TPM[2];
 
 

@@ -133,7 +133,7 @@ void featureFileEx::index(GeneCountData & geneCounts)
 		}
 		for (chromosomeFeatureData::iterator i = thisChromData.begin(); i != thisChromData.end();i++)
 		{
-			VEC_DATA_TYPE & length = geneCounts.lengths.at(geneCounts.at(i->second.name).index);
+			VEC_DATA_TYPE & length = geneCounts.lengths[0].at(geneCounts.at(i->second.name).index);
 			auto j = tempMap.find(&i->second);
 
 			if (j == tempMap.end())

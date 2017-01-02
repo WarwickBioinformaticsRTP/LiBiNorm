@@ -21,14 +21,6 @@ using namespace std;
 
 //	First some standard methods for handling the model enumeration
 
-//	Returns a list of all the models, which is used to iterate through the list
-const std::vector<modelType> & allModels()
-{
-	static std::vector<modelType> list{ ModelA ,ModelB ,ModelC,ModelD,ModelE,ModelBD };
-	return list;
-};
-
-
 
 
 #ifdef _DEBUG
@@ -106,29 +98,25 @@ int main(int argc, char **argv)
 
 void LiBiNorm::mcmcThread(optionsType options)
 {
-	map<modelType,int>::iterator model_iterator = threadLoopCounts.begin();
+	map<modelType,pair<int,int> >::iterator model_iterator = threadLoopCounts.begin();
 	modelType currentModel;
 	size_t loop;
+	static mutex mtx;
 	while (true)
 	{
 		//  Look for an iteration of a loop that is yet to be done.
-		//	The iteration with the counter set to zero is not used for an mcmc run but is a dummy
-		//	to ensure that the header information is set even if we are not running any iterations of this
-		//	model
 		{
-			static mutex mtx; 
 			lock_guard<mutex> lock(mtx);
-			while(model_iterator->second == -1)
+			while(model_iterator->second.first > model_iterator->second.second)
 			{
-				dataVec::clearCache();
 				if (++model_iterator ==threadLoopCounts.end())
 				{
 					return;
 				}
 			}
-			loop = model_iterator->second--;
-			if (loop != 0)
-				progMessage("Starting ",model_iterator->first,", iteration:",loop);
+			loop = model_iterator->second.first++;
+
+			progMessage("Starting ",model_iterator->first,", iteration:",loop);
 			currentModel = model_iterator->first;
 		}
 
@@ -156,69 +144,15 @@ void LiBiNorm::mcmcThread(optionsType options)
 		}
 
 
-//	Use this to run the model with a specific set of parameters
-// #define _TEST
-#ifdef _TEST
-		vectorEx<double> p0{ {1.5, 1.6,-3.1, -3.2,0.6}};
-#else
-		vectorEx<double> p0{ {rand(3) - 1, rand(3), rand(4) - 5, rand(4) - 5, rand(1)} };
-#endif
-
-		paramSet params;
+		paramSet params = GetModelParams(currentModel,options);
 		
-		switch (currentModel)
+		mcmc mcmcEngine;
+		mcmcEngine.mcmcrun(consData, params, options);
+
 		{
-		case noModel:
-			break;
-		case ModelB: case ModelD: case ModelE:
-			options.qcov = dataVec(4,options.jumpSize);
-			params = { { "log d", p0[0], -1 , 2 }    // average length of fragments
-				,{"log h",  p0[1], 0 , 3}   // the minimum length of fragmenation
-				,{ "log t1", p0[2], -5 , -1}   // theta1
-				,{ "log t2", p0[3], -5, -1} // theta2
-			};
-
-			break;
-		case ModelC:
-			options.qcov = dataVec(3,options.jumpSize);
-			params = { { "log d", p0[0], -1 , 2 }    // average length of fragments
-				, {"log h",  p0[1], 0 , 3 }   // the minimum length of fragmenation
-				,{"log t2", p0[3], -5, -1} // theta2
-			};
-			break;
-		case ModelA:
-			options.qcov = dataVec(2,options.jumpSize);
-			params = { { "log d", p0[0], -1 , 2 }    // average length of fragments
-				,{"log h",  p0[1], 0 , 3 }   // the minimum length of fragmenation
-			};
-			break;
-		case ModelBD:
-			options.qcov = dataVec(5,options.jumpSize);
-			params = { { "log d", p0[0], -1 , 2 }    // average length of fragments
-				,{"log h",  p0[1], 0 , 3}   // the minimum length of fragmenation
-				,{"log t1", p0[2], -5 , -1}   // theta1
-				,{"log t2", p0[3], -5, -1} // theta2
-				,{"a", p0[4], 0, 1} // alpha strength of model B
-			};
-			break;
-
-		};
-
-		if (loop == 0)
-		{
-			//	The 0th loop of the parameter estimation is a dummy loop for setting the headers
-			for (size_t i = 0; i < params.size(); i++)
-				headers[currentModel].push_back(params[i].name);
-		}
-		else
-		{
-			mcmc mcmcEngine;
-			mcmcEngine.mcmcrun(consData, params, options);
-
-			static mutex mtx;
 			lock_guard<mutex> lock(mtx);
 
-			progMessage("Finishing ",model_iterator->first,", iteration:",loop);
+			progMessage("Finishing ", model_iterator->first, ", iteration:", loop);
 
 #ifdef STORE_ENDPOINTS
 			Chain[currentModel].emplace(loop, mcmcEngine.chain().back());
@@ -244,7 +178,8 @@ void LiBiNormCore::helpCommon()
 	printf("                        Name of file for landscape data)\n");
 	printf("  -n <m>, --normalise   Normalise rna-seq data to correct for length related\n");
 	printf("                        bias.  Model BD used by sdefault. Optional m allows other\n");
-	printf("                         models to be specified (A,B,C,D,E,BD)\n");
+	printf("                        models to be specified (A or SMART,B or polyA,C,D,\n");
+	printf("                        E or random,BD)\n");
 	printf("  -N FILENAME, --Normalise=FILENAME\n");
 	printf("                        Normalise data trying all 6 models and output summary\n");
 	printf("                        info to files with root FILENAME.  Best model selected\n");
@@ -367,7 +302,7 @@ int LiBiNorm::main(int argc, char **argv)
 		{
 			Nsimu = atoi(opt2 ? argv[ni] + 7 : argv[++ni]);
 			if ((Nsimu < 500) || (Nsimu > 10000))
-				exitFail("-r values must lie between 500 and 10000");
+				exitFail("-s values must lie between 500 and 10000");
 		}
 		else if ((strcmp(argv[ni], "-f") == 0) || (opt2 = (strncmp(argv[ni], "--full", 6) == 0)))
 			outputFull = true;
@@ -412,10 +347,10 @@ int LiBiNorm::main(int argc, char **argv)
 		progMessage("Model selected by command line is ", theModel);
 	}
 
-	getBias(theModel, bestResults[theModel].params, geneCounts.lengths, geneCounts.bias);
+	getBias(theModel, bestResults[theModel].params, geneCounts.lengths[0], geneCounts.bias);
 	
 	string filename = normaliseResultsFilename.replaceSuffix("_expression.txt");
-		if (!geneCounts.outputGeneCounts(filename, conv(theModel),true))
+		if (!geneCounts.outputGeneCounts(filename, conv(theModel), outputFull?2:1))
 		exitFail("Unable to output counts to :", filename);
 
 	printResults();
@@ -463,10 +398,11 @@ bool LiBiNorm::coreParameterEstimation()
 	//	Set the number of iterations required of each of the models.
 	for (modelType m : allModels())
 	{
+		threadLoopCounts[m].first = 1;
 		if (m == theModel)
-			threadLoopCounts[m] = options.Nruns;
+			threadLoopCounts[m].second = options.Nruns;
 		else
-			threadLoopCounts[m] = NrunsOtherModels;
+			threadLoopCounts[m].second = NrunsOtherModels;
 	}
 
 

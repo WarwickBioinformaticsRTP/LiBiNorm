@@ -76,18 +76,18 @@ VEC_DATA_TYPE & GeneCountData::count(const std::string gene)
 		}
 		return errCounts.at((*i).second.index);
 	}
-	return counts[0].at((*i).second.index);
+	return counts.at((*i).second.index);
 }
 
-const VEC_DATA_TYPE & GeneCountData::length(const std::string gene)
+VEC_DATA_TYPE GeneCountData::length(const std::string gene)
 {
 	static const VEC_DATA_TYPE zeroLength =0;
 	auto i = find(gene);
 	if (i == end())
 	{
-		return zeroLength;
+		return 0;
 	}
-	return lengths.at((*i).second.index);
+	return lengths[0].at((*i).second.index);
 }
 
 
@@ -111,41 +111,65 @@ void GeneCountData::useSelectedGenes(const std::string & filename)
 	};
 }
 
-void GeneCountData::outputGeneCount(TsvFile & output, const string name)
-{
-	output.print(name, counts[0][find(name)->second.index]);
-}
-
-
-bool GeneCountData::outputGeneCounts(const string & filename, const string & title,bool withDetails)
+bool GeneCountData::outputGeneCounts(const string & filename, stringEx title, int detailLevel)
 {
 	TsvFile output;
+
+	title.replace(" ", "");
 
 	if (!output.open(filename))
 		return false;
 
 	if (bias.size())
 	{
-		counts[1] = counts[0] / bias;
+		lengths[1] = lengths[0] * bias;
 
-		if (withDetails)
+		if (detailLevel > 0)
 		{
-			calculateOtherExpressionMeasures();
-			output.print(title, "Normalised", "Raw", "RNA", "", "Normalised", "", "", "", "Raw");
-			output.print("Gene", "count", "count", "length", "Bias", "RPM", "RPKM", "RPK", "TPM", "RPM", "RPKM", "RPK", "TPM");
-			output.print();
+			// Definitions taken from http://www.rna-seqblog.com/rpkm-fpkm-and-tpm-clearly-explained/
+			for (size_t i = 0; i < ((bias.size()) ? 2 : 1); i++)
+			{
+				VEC_DATA_TYPE scalingFactor = sum(counts) / 1000000;
+
+				RPM[i] = counts / scalingFactor;
+				RPKM[i] = RPM[i] / lengths[i];
+
+				RPK[i] = counts / lengths[i];
+				scalingFactor = sum(RPK[i]) / 1000000;
+				TPM[i] = RPK[i] / scalingFactor;
+			}
+
+			switch (detailLevel)
+			{
+			case 1:
+				output.print("", "", "RNA", "", title + " +", title + " +");
+				output.print("Gene", "count", "length", "Bias", "FPKM", "TPM");
+				output.print();
+				break;
+			case 2:
+				output.print("", "", "RNA", "", title + " +", title + " +", title + " +", title + " +", "Raw", "Raw", "Raw", "Raw");
+				output.print("Gene", "count", "length", "Bias", "RPM", "RPKM", "RPK", "TPM", "RPM", "RPKM", "RPK", "TPM");
+				output.print();
+				break;
+			}
 		}
 
 		//	Dont start at 0 as 0 is the reference for normalisation
 		for (size_t i = 1; i < names.size(); i++)
 		{
-			output.printStart(names[i], (int)floor(counts[1][i] + 0.5));
+			output.printStart(names[i], counts[i]);
 
-			if (withDetails)
+			switch (detailLevel)
 			{
-				output.printMiddle(counts[0][i], lengths[i], bias[i],
+			case 0: break;
+			case 1:
+				output.printMiddle(lengths[0][i], bias[i],RPKM[1][i], TPM[1][i]);
+				break;
+			case 2:
+				output.printMiddle(lengths[0][i], bias[i],
 					RPM[1][i], RPKM[1][i], RPK[1][i], TPM[1][i],
 					RPM[0][i], RPKM[0][i], RPK[0][i], TPM[0][i]);
+				break;
 			}
 
 			output.printEnd();
@@ -157,7 +181,7 @@ bool GeneCountData::outputGeneCounts(const string & filename, const string & tit
 		{
 			if (i.second.index != 0)
 			{
-				output.print(i.first, (int)counts[0][i.second.index]);
+				output.print(i.first, (int)counts[i.second.index]);
 			}
 		}
 	}
@@ -175,8 +199,8 @@ bool GeneCountData::outputRNApositions(const string & filename)
 
 	for (size_t i = 1;i < names.size();i++)
 	{
-		long len = lengths[i];
-		long count = counts[0][i];
+		long len = lengths[0][i];
+		long count = counts[i];
 		output.print(names[i], _s(len,":",count," plus"), This[names[i]].positions[0]);
 		output.print(names[i], _s(len,":", count," minus"), This[names[i]].positions[1]);
 	}
@@ -190,10 +214,10 @@ bool GeneCountData::outputRNApositions(const string & filename)
 void GeneCountData::histc(const vector<int> E)
 {
 	freq.assign(E.size(), 0);
-	histoGram_ind.assign(lengths.size(), -1);
+	histoGram_ind.assign(lengths[0].size(), -1);
 	for (size_t i = 0; i < names.size(); i++)
 	{
-		double v = lengths[i];
+		double v = lengths[0][i];
 		size_t l = 0;
 		size_t h = E.size() - 1;
 		size_t k = l;
@@ -219,7 +243,7 @@ void GeneCountData::remove_invalid_values()
 	for (size_t i = 0; i < names.size(); i++)
 	{
 		for (size_t j = 0; j < 2; j++)
-			This[names[i]].positions[j].removeInvalidValues(lengths[i]);
+			This[names[i]].positions[j].removeInvalidValues(lengths[0][i]);
 	}
 }
 
@@ -228,10 +252,10 @@ void GeneCountData::addEntry(string name, VEC_DATA_TYPE length)
 	auto geneData = find(name);
 	if (geneData == end())
 	{
-		counts[0].push_back(0);
+		counts.push_back(0);
 		names.push_back(name);
-		lengths.push_back(length);
-		emplace(name, counts[0].size() - 1);
+		lengths[0].push_back(length);
+		emplace(name, counts.size() - 1);
 	}
 }
 void GeneCountData::addEntry(string name, VEC_DATA_TYPE length, VEC_DATA_TYPE count, rnaPosVec & posPositions, rnaPosVec & negPositions)
@@ -239,10 +263,10 @@ void GeneCountData::addEntry(string name, VEC_DATA_TYPE length, VEC_DATA_TYPE co
 	auto geneData = find(name);
 	if (geneData == end())
 	{
-		counts[0].push_back(count);
+		counts.push_back(count);
 		names.push_back(name);
-		lengths.push_back(length);
-		emplace(name, geneAttribute(counts[0].size() - 1, posPositions, negPositions));
+		lengths[0].push_back(length);
+		emplace(name, geneAttribute(counts.size() - 1, posPositions, negPositions));
 	}
 }
 
@@ -337,7 +361,7 @@ void GeneCountData::transferTo(dataType & mcmcData, size_t maxLength, int maxTot
 	//	in the reference gene so this makes no difference
 	for (size_t i = 1; i < names.size(); i++)
 	{
-		if (lengths[i] < MAX_LENGTH_OF_GENE_FOR_PARAM_ESTIMATION)
+		if (lengths[0][i] < MAX_LENGTH_OF_GENE_FOR_PARAM_ESTIMATION)
 		{
 			//	For the forward and the reverse counts
 			for (size_t j = 0; j < 2; j++)
@@ -351,7 +375,7 @@ void GeneCountData::transferTo(dataType & mcmcData, size_t maxLength, int maxTot
 				mcmcData.geneIndex.insert(mcmcData.geneIndex.end(), positions.size(), geneIndex);//gene.length);
 				Nreads += positions.size();
 			}
-			mcmcData.geneData[0][geneIndex] = lengths[i];
+			mcmcData.geneData[0][geneIndex] = lengths[0][i];
 			mcmcData.geneData[1][geneIndex] = freq[histoGram_ind[i]];
 
 			geneIndex++;
@@ -365,7 +389,7 @@ void GeneCountData::transferTo(dataType & mcmcData, size_t maxLength, int maxTot
 	optMessage(Nreads, " reads used for parameter determination");
 }
 
-
+/*
 void GeneCountData::calculateOtherExpressionMeasures()
 {
 
@@ -382,5 +406,5 @@ void GeneCountData::calculateOtherExpressionMeasures()
 		TPM[i] = RPK[i] / scalingFactor;
 	}
 }
-
+*/
 

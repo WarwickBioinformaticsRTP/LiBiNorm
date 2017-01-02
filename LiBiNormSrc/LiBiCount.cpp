@@ -339,7 +339,7 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 			progMessage("Model used is ", theModel);
 		}
 
-		getBias(theModel, bestResults[theModel].params, geneCounts.lengths, geneCounts.bias);
+		getBias(theModel, bestResults[theModel].params, geneCounts.lengths[0], geneCounts.bias);
 
 		if (normaliseResultsFilename)
 		{
@@ -351,7 +351,7 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 
 			//	And then the counts and the bias for the genes themselves
 			string filename = normaliseResultsFilename.replaceSuffix("_expression.txt");
-			if (!geneCounts.outputGeneCounts(filename, conv(theModel),true))
+			if (!geneCounts.outputGeneCounts(filename, conv(theModel),1))
 				exitFail("Unable to output counts to :", filename);
 		}
 	}

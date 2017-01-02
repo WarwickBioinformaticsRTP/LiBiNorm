@@ -2,6 +2,7 @@
 #define LOG_LIKLIHOODS_H
 
 #include <float.h>
+#include <map>
 #include <algorithm>
 #include "mcmc.h"
 
@@ -17,10 +18,18 @@ enum modelType
 	ModelBD = 6
 };
 
+const std::vector<modelType> & allModels();
+
 std::string conv(const modelType m);
 
 //  Selects a model based on a string, exits if the string is not valid
 modelType modelFromString(const std::string & desc);
+
+//  Returns mcmc paremetyers associated with a model
+paramSet GetModelParams(modelType model, optionsType & options);
+
+typedef std::map<modelType, std::vector<std::string> > headerType;
+headerType getHeaders();
 
 //	Allows the model to be output to a stream such as std::out as appropriate text
 bool printVal(outputDataFile * f, modelType m);
@@ -47,12 +56,10 @@ struct bestResult
 	dataVec param_dev[2];
 };
 
-void getBias(modelType m, dataVec & params, const dataVec & l,dataVec & bias);
+//	Gets the bias for a selection of lengths
+void getBias(modelType m, dataVec & params, const dataVec & lengths,dataVec & bias);
 
-#ifdef _DEBUG
-#define VERIFY_SPEEDUP
-#endif
-
+//	Calulates the log liklyhoods for each model
 double FLL_ModelA(const dataVec & param, const dataType & data);
 double FLL_ModelB(const dataVec & param, const dataType & data);
 double FLL_ModelC(const dataVec & param, const dataType & data);

@@ -49,15 +49,20 @@ protected:
 	stringEx landscapeFilename, normaliseResultsFilename, countsFilename;
 };
 
+typedef std::map<modelType, std::vector<std::string> > headerType;
 
 class LiBiNorm : protected LiBiNormCore
 {
 public:
-	LiBiNorm() :
-		bestModel(noModel),outputFull(false) {};
+	LiBiNorm() : bestModel(noModel),outputFull(false) 
+	{
+		headers = getHeaders();
+	};
 
-	void mcmcThread(optionsType options);
 	int main(int argc, char **argv);
+	void mcmcThread(optionsType options);
+
+protected:
 	bool coreParameterEstimation();
 	modelType getBestModel();
 	void printResults();
@@ -65,9 +70,8 @@ public:
 	void printAllMcmcRunData();
 	void printConsolidatedMcmcRunData();
 
-	std::map<size_t, bestResult> bestResults;
-
 protected:
+	std::map<modelType, bestResult> bestResults;
 	GeneCountData geneCounts;
 	modelType bestModel;
 private:
@@ -83,10 +87,10 @@ private:
 	std::map<modelType,std::map<size_t, std::vector <dataVec > > >fullResultChain;
 	std::map<modelType,std::map<size_t,dataVec> >fullResultSSChain;
 
-	std::map<modelType, std::vector<std::string> > headers;
+	headerType headers;
 
 	//	Counts of the number of mcmc runs that will be done for each model
-	std::map<modelType,int> threadLoopCounts;
+	std::map<modelType,std::pair<int,int> > threadLoopCounts;
 
 	//	The results data
 	std::map<size_t, std::multimap <double, dataVec *> > allOrderedResults;

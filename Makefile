@@ -251,6 +251,7 @@ $(BUILD)/LiBiNormSrc/LogLiklihoods.o: ../bioinformaticsLib/libCommon.h
 $(BUILD)/LiBiNormSrc/LogLiklihoods.o: ../bioinformaticsLib/printEx.h
 $(BUILD)/LiBiNormSrc/LogLiklihoods.o: ../bioinformaticsLib/inQuotes.h
 $(BUILD)/LiBiNormSrc/LogLiklihoods.o: mcmcLib/params.h
+$(BUILD)/LiBiNormSrc/LogLiklihoods.o: ../bioinformaticsLib/containerEx.h
 $(BUILD)/LiBiNormSrc/FeatureFileEx.o: LiBiNormSrc/FeatureFileEx.h
 $(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bioinformaticsLib/containerEx.h
 $(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bioinformaticsLib/libCommon.h

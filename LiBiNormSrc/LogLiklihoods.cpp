@@ -1,5 +1,6 @@
 
 #include "LogLiklihoods.h"
+#include "containerEx.h"
 #include <map>
 using namespace std;
 
@@ -22,6 +23,13 @@ to be calculated per gene.  The (x) method uses the geneIndex to expand the one 
 can be performed for each read.
 
 */
+
+//	Returns a list of all the models, which is used to iterate through the list
+const std::vector<modelType> & allModels()
+{
+	static std::vector<modelType> list{ ModelA ,ModelB ,ModelC,ModelD,ModelE,ModelBD };
+	return list;
+};
 
 std::string conv(const modelType m)
 {
@@ -56,8 +64,11 @@ ostream& operator<< (ostream &out, const modelType & m)
 modelType modelFromString(const string & desc)
 {
 	static map<string, modelType> mappings{
-		{ "A",ModelA },{ "B",ModelB },{ "C",ModelC },{ "D",ModelD },{ "E",ModelE },{ "BD",ModelBD }, 
-		{ "a",ModelA },{ "b",ModelB },{ "c",ModelC },{ "d",ModelD },{ "e",ModelE },{ "bd",ModelBD } };
+		{"A",ModelA },{"B",ModelB },{"C",ModelC },{"D",ModelD },{"E",ModelE },{"BD",ModelBD }, 
+		{"a",ModelA },{"b",ModelB },{"c",ModelC },{"d",ModelD },{"e",ModelE },{"bd",ModelBD }, 
+		{"SMART",ModelA},{ "smart",ModelA },{"polya",ModelB },{ "POLYA",ModelB },{ "polyA",ModelB },
+		{"random",ModelE},{ "RANDOM",ModelE }
+	};
 	auto iter = mappings.find(desc);
 	if (iter == mappings.end())
 		exitFail("Unknown model description:", desc);
@@ -69,6 +80,75 @@ bool printVal(outputDataFile * f, modelType m)
 	fputs(conv(m).c_str(), f->fout);
 	return true;
 };
+
+paramSet GetModelParams(modelType model, optionsType & options)
+{
+
+	//	Use this to run the model with a specific set of parameters
+	// #define _TEST
+#ifdef _TEST
+	vectorEx<double> p0{ { 1.5, 1.6,-3.1, -3.2,0.6 } };
+#else
+	vectorEx<double> p0{ { rand(3) - 1, rand(3), rand(4) - 5, rand(4) - 5, rand(1) } };
+#endif
+
+	paramSet params;
+
+	switch (model)
+	{
+	case noModel:
+		break;
+	case ModelB: case ModelD: case ModelE:
+		options.qcov = dataVec(4, options.jumpSize);
+		params = { { "log d", p0[0], -1 , 2 }    // average length of fragments
+			,{ "log h",  p0[1], 0 , 3 }   // the minimum length of fragmenation
+			,{ "log t1", p0[2], -5 , -1 }   // theta1
+			,{ "log t2", p0[3], -5, -1 } // theta2
+		};
+
+		break;
+	case ModelC:
+		options.qcov = dataVec(3, options.jumpSize);
+		params = { { "log d", p0[0], -1 , 2 }    // average length of fragments
+			,{ "log h",  p0[1], 0 , 3 }   // the minimum length of fragmenation
+			,{ "log t2", p0[3], -5, -1 } // theta2
+		};
+		break;
+	case ModelA:
+		options.qcov = dataVec(2, options.jumpSize);
+		params = { { "log d", p0[0], -1 , 2 }    // average length of fragments
+			,{ "log h",  p0[1], 0 , 3 }   // the minimum length of fragmenation
+		};
+		break;
+	case ModelBD:
+		options.qcov = dataVec(5, options.jumpSize);
+		params = { { "log d", p0[0], -1 , 2 }    // average length of fragments
+			,{ "log h",  p0[1], 0 , 3 }   // the minimum length of fragmenation
+			,{ "log t1", p0[2], -5 , -1 }   // theta1
+			,{ "log t2", p0[3], -5, -1 } // theta2
+			,{ "a", p0[4], 0, 1 } // alpha strength of model B
+		};
+		break;
+
+	};
+
+	return params;
+}
+
+headerType getHeaders()
+{
+	optionsType options;
+	headerType _retVal;
+	for (modelType m : allModels())
+	{
+		paramSet params = GetModelParams(m, options);
+		for (auto i : params)
+			_retVal[m].push_back(i.name);
+	}
+	return _retVal;
+}
+
+
 
 
 //	The log liklyhood calculations for each of the models
