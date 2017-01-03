@@ -356,7 +356,7 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 		}
 	}
 
-	if(!geneCounts.outputGeneCounts(countsFilename,normalise?1:0))
+	if(!geneCounts.outputGeneCounts(countsFilename,normalise?1:0,conv(theModel)))
 		exitFail("Unable to output counts to :",countsFilename);
 
 	elapsedTime("All results output");

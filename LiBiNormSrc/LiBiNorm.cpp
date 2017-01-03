@@ -343,7 +343,7 @@ int LiBiNorm::main(int argc, char **argv)
 	}
 
 	//	The basic count data in htseq-count format
-	if (!geneCounts.outputGeneCounts(countsFilename,1))
+	if (!geneCounts.outputGeneCounts(countsFilename,1, conv(theModel)))
 		exitFail("Unable to output counts to :", countsFilename);
 
 	progMessage("Data modelled");

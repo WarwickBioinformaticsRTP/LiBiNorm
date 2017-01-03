@@ -147,6 +147,9 @@ bool GeneCountData::outputGeneCounts(const string & filename, int detailLevel, s
 
 		switch (detailLevel)
 		{
+		case 1:
+			output.print("Gene", "count", "length", "Bias", _s("FPKM_", model), _s("TPM_", model));
+			break;
 		case 2:
 			output.print("", "", "RNA", "Bias:", model + " +", model + " +");
 			output.print("Gene", "count", "length", model, "FPKM", "TPM");
@@ -400,22 +403,4 @@ void GeneCountData::transferTo(dataType & mcmcData, size_t maxLength, int maxTot
 	optMessage(Nreads, " reads used for parameter determination");
 }
 
-/*
-void GeneCountData::calculateOtherExpressionMeasures()
-{
-
-	// Definitions taken from http://www.rna-seqblog.com/rpkm-fpkm-and-tpm-clearly-explained/
-	for (size_t i = 0; i < ((bias.size())?2:1); i++)
-	{
-		VEC_DATA_TYPE scalingFactor = sum(counts[i]) / 1000000;
-
-		RPM[i] = counts[i] / scalingFactor;
-		RPKM[i] = RPM[i] / lengths;
-
-		RPK[i] = counts[i] / lengths;
-		scalingFactor = sum(RPK[i]) / 1000000;
-		TPM[i] = RPK[i] / scalingFactor;
-	}
-}
-*/
 
