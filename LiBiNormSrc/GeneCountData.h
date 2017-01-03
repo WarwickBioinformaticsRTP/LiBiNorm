@@ -16,7 +16,8 @@ static std::string lowQualString = "__too_low_aQual";
 static std::string notAlignedString = "__not_aligned";
 static std::string notUnique = "__alignment_not_unique";
 
-
+//
+//	The rnaPosVec class holds the set of rna positions associated with one strand direction of a gene
 class rnaPosVec : public std::vector<rna_pos_type>
 {
 public:
@@ -32,41 +33,41 @@ inline bool printVal(outputDataFile * f, rnaPosVec value)
 	return printVal(f, (std::vector<rna_pos_type>)value);
 };
 
-
+//	Holds the read position information associated with a specific gene.
 class geneAttribute 
 {
 public:
 	geneAttribute(size_t index = 0) :index(index) {};
-	geneAttribute(size_t index, rnaPosVec & posPos, rnaPosVec & negPos) :index(index)
+
+	//	Used by the copy constructor in GeneCountData::addEntry.  Provides a more efficient way of copying the
+	//	position vectors as they are just about to be discarded
+	geneAttribute(size_t index, rnaPosVec && posPos, rnaPosVec && negPos) :index(index)
 	{
 		swap(posPos, positions[0]);
 		swap(negPos, positions[1]);
 	};
-
 
 	void reset() {
 		positions[0].clear();
 		positions[1].clear();
 	}
 
-	//	Number of associated reads
+	//	Index to the position where the associated name length and count information is held for this gene
 	size_t index;
 	//	and their locations
 	rnaPosVec positions[2];
-
-
 };
 
 //	This class holds and processes all of the count information associated with the set of genes
 //	or transcripts
-class GeneCountData : public std::map<const std::string, geneAttribute >
+class GeneCountData
 {
 public:
 
-	VEC_DATA_TYPE & count(const std::string gene);
-	VEC_DATA_TYPE length(const std::string gene);
+	VEC_DATA_TYPE & count(const std::string & gene);
+	VEC_DATA_TYPE length(const std::string & gene);
 	//	Needed if we decide the data is not name ordered and have to restart
-	void reset() { for (auto & gene : This)	gene.second.reset(); };
+	void reset() { for (auto & gene : readPositionData)	gene.second.reset(); };
 
 	void addEntry(std::string name, VEC_DATA_TYPE length = 0);
 	void addEntry(std::string name, VEC_DATA_TYPE length, VEC_DATA_TYPE count, rnaPosVec & posPositions, rnaPosVec & negPositions);
@@ -78,21 +79,21 @@ public:
 	void histc (const std::vector<int> E);
 	void transferTo(dataType & mcmcData,size_t maxLength,int maxTotReads);
 
-//	void calculateOtherExpressionMeasures();
-
-	bool outputGeneCounts(const std::string & filename, stringEx title = "", int detailLevel = 0);
+	bool outputGeneCounts(const std::string & filename, int detailLevel = 0, stringEx model = "");
 	bool outputRNApositions(const std::string & filename);
 
 	void useSelectedGenes(const std::string & filename);
 
+	//	Names, bias, lengths and RPM data are held in a series of vectors sharing a common gene order
 	std::vector<std::string> names;
 	dataVec bias;
 	//	The first entry is for the raw lengths, and the second for the normalised lengths
 	dataVec lengths[2];
-
 	dataVec counts;
 	dataVec RPM[2], RPKM[2], RPK[2], TPM[2];
 
+	//	Read position data for all of the genes
+	std::map<const std::string, geneAttribute > readPositionData;
 
 	//	For data associated with reads that do not map
 	std::map<const std::string, geneAttribute > errorCounts;

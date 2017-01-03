@@ -30,7 +30,7 @@
 class LiBiNormCore
 {
 protected:
-	LiBiNormCore() :normalise(false),
+	LiBiNormCore() :normalise(true), pauseAtEnd(false),
 		theModel(noModel),
 		maxReads(DEF_MAX_READS_FOR_PARAM_ESTIMATION),
 		Nthreads(DEF_THREADS),
@@ -42,7 +42,7 @@ protected:
 	void helpCommon();
 	bool commandParseCommon(int & ni, int argc, char **argv);
 
-	bool normalise;
+	bool normalise, pauseAtEnd;
 	modelType theModel;
 	size_t maxReads, Nthreads,Nsimu,Nruns,NrunsOtherModels;
 

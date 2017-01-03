@@ -87,7 +87,7 @@ int main(int argc, char **argv)
 #endif
 		if ((command == "--version") || (command == "-v"))
 		{
-			cout << "LiBiNorm version 1.1.1" << endl;
+			cout << "LiBiNorm version 1.2.0" << endl;
 			return EXIT_SUCCESS;
 		}
 		else
@@ -176,11 +176,10 @@ void LiBiNormCore::helpCommon()
 {
 	printf("  -l FILENAME, --landscape=FILENAME\n");
 	printf("                        Name of file for landscape data)\n");
-	printf("  -n <m>, --normalise   Normalise rna-seq data to correct for length related\n");
-	printf("                        bias.  Model BD used by sdefault. Optional m allows other\n");
-	printf("                        models to be specified (A or SMART,B or polyA,C,D,\n");
-	printf("                        E or random,BD)\n");
-	printf("  -N FILENAME, --Normalise=FILENAME\n");
+	printf("  -n M, --normModel=M  Specifies that model M should be used rather than the default\n");
+	printf("                        Model BD. M options: A or SMART,B or polyA,C,D,\n");
+	printf("                        E or random,BD\n");
+	printf("  -N FILENAME, --normFilename=FILENAME\n");
 	printf("                        Normalise data trying all 6 models and output summary\n");
 	printf("                        info to files with root FILENAME.  Best model selected\n");
 	printf("                        unless overridden by -n\n");
@@ -202,33 +201,14 @@ bool LiBiNormCore::commandParseCommon(int & ni, int argc,char **argv)
 			landscapeFilename = opt2 ? argv[++ni] + 12 : argv[++ni];
 			return true;
 		}
-		if ((strcmp(argv[ni], "-N") == 0) || (opt2 = (strncmp(argv[ni], "--Normalise", 11) == 0)))
+		if ((strcmp(argv[ni], "-N") == 0) || (opt2 = (strncmp(argv[ni], "--normFilename=", 15) == 0)))
 		{
-			normalise = true;
-			normaliseResultsFilename = opt2 ? argv[++ni] + 11 : argv[++ni];
+			normaliseResultsFilename = opt2 ? argv[++ni] + 15 : argv[++ni];
 			return true;
 		}
-		if ((strcmp(argv[ni], "-n") == 0) || (opt2 = (strncmp(argv[ni], "--normalise", 11) == 0)))
+		if ((strcmp(argv[ni], "-n") == 0) || (opt2 = (strncmp(argv[ni], "--normModel=", 12) == 0)))
 		{
-			normalise = true;
-			//	Was a specific model specified?
-			if (opt2)
-			{
-				string command(argv[ni]);
-				if (command.size() > 11)
-				{
-					if (command[11] == '=')
-					{
-						theModel = modelFromString(command.substr(12));
-					}
-					else
-						exitFail("Invalid parameter:", command);
-				}
-			}
-			else if ((ni < (argc - 1)) && (argv[ni + 1][0] != '-'))
-			{
-				theModel = modelFromString(argv[++ni]);
-			}
+			theModel = modelFromString(opt2 ? argv[++ni] + 12 : argv[++ni]);
 			return true;
 		}
 		if ((strcmp(argv[ni], "-p") == 0) || (opt2 = (strncmp(argv[ni], "--threads=", 10) == 0)))
@@ -257,8 +237,6 @@ bool LiBiNormCore::commandParseCommon(int & ni, int argc,char **argv)
 int LiBiNorm::main(int argc, char **argv)
 {
 	int Ngenes = -1;
-	normalise = true;
-	bool pauseAtEnd = false;
 
 	initClock();
 	if(argc < 1)
@@ -350,7 +328,7 @@ int LiBiNorm::main(int argc, char **argv)
 	getBias(theModel, bestResults[theModel].params, geneCounts.lengths[0], geneCounts.bias);
 	
 	string filename = normaliseResultsFilename.replaceSuffix("_expression.txt");
-		if (!geneCounts.outputGeneCounts(filename, conv(theModel), outputFull?2:1))
+		if (!geneCounts.outputGeneCounts(filename, outputFull?3:2, conv(theModel)))
 		exitFail("Unable to output counts to :", filename);
 
 	printResults();
@@ -365,7 +343,7 @@ int LiBiNorm::main(int argc, char **argv)
 	}
 
 	//	The basic count data in htseq-count format
-	if (!geneCounts.outputGeneCounts(countsFilename))
+	if (!geneCounts.outputGeneCounts(countsFilename,1))
 		exitFail("Unable to output counts to :", countsFilename);
 
 	progMessage("Data modelled");

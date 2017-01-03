@@ -45,7 +45,7 @@ void featureFileEx::index(GeneCountData & geneCounts)
 	//	If there are already entries in the geneCounts data at this stage it is because
 	//	we have preloaded them with a set of genes/transcripts that we are specifically
 	//	interested in.  At this point we then get rid of the rest
-	if (geneCounts.size() > 1)
+	if (geneCounts.readPositionData.size() > 1)
 	{
 		for (auto & chrom : entryMap)
 		{
@@ -53,7 +53,7 @@ void featureFileEx::index(GeneCountData & geneCounts)
 				//	First get rid of entries associated with genes that we are not interested in 
 				for (auto i = chrom.second.begin(); i != chrom.second.end();)
 				{
-					if (geneCounts.find(i->second.tags[0].val) == geneCounts.end())
+					if (geneCounts.readPositionData.find(i->second.tags[0].val) == geneCounts.readPositionData.end())
 					{
 						//			if (!geneList.contains(i->second.tags[0].val))
 						auto j = i++;
@@ -133,7 +133,7 @@ void featureFileEx::index(GeneCountData & geneCounts)
 		}
 		for (chromosomeFeatureData::iterator i = thisChromData.begin(); i != thisChromData.end();i++)
 		{
-			VEC_DATA_TYPE & length = geneCounts.lengths[0].at(geneCounts.at(i->second.name).index);
+			VEC_DATA_TYPE & length = geneCounts.lengths[0].at(geneCounts.readPositionData.at(i->second.name).index);
 			auto j = tempMap.find(&i->second);
 
 			if (j == tempMap.end())

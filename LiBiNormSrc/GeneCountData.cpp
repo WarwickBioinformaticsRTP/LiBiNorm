@@ -60,13 +60,14 @@ void rnaPosVec::selectAtMost(size_t s)
 }
 
 
+//	Returns the address of the counter associated with a gene or error condition
+//	such that the value can be incremened when an associated error if found
 
-
-VEC_DATA_TYPE & GeneCountData::count(const std::string gene)
+VEC_DATA_TYPE & GeneCountData::count(const std::string & gene)
 {
 	static VEC_DATA_TYPE dummy;
-	auto i = find(gene);
-	if (i == end())
+	auto i = readPositionData.find(gene);
+	if (i == readPositionData.end())
 	{
 		i = errorCounts.find(gene);
 		if (i == errorCounts.end())
@@ -79,18 +80,19 @@ VEC_DATA_TYPE & GeneCountData::count(const std::string gene)
 	return counts.at((*i).second.index);
 }
 
-VEC_DATA_TYPE GeneCountData::length(const std::string gene)
+//	Returns the actual length of a gene (rather than the normalised length) given the name  
+VEC_DATA_TYPE GeneCountData::length(const std::string & gene)
 {
-	static const VEC_DATA_TYPE zeroLength =0;
-	auto i = find(gene);
-	if (i == end())
+	auto i = readPositionData.find(gene);
+	if (i == readPositionData.end())
 	{
 		return 0;
 	}
 	return lengths[0].at((*i).second.index);
 }
 
-
+//	Reads in a file contain a list of gene names.  Only these genes will then be used
+//	in the subsequent analysis
 void GeneCountData::useSelectedGenes(const std::string & filename)
 {
 	ifstream file;
@@ -111,47 +113,50 @@ void GeneCountData::useSelectedGenes(const std::string & filename)
 	};
 }
 
-bool GeneCountData::outputGeneCounts(const string & filename, stringEx title, int detailLevel)
+//	Print the results to varying levels of detail
+//	0 = htseq-count compatible
+//	1 = basic normalised results
+//	2 = As 1 but with header
+//	3 = As 2 but more columns
+
+bool GeneCountData::outputGeneCounts(const string & filename, int detailLevel, stringEx model)
 {
 	TsvFile output;
 
-	title.replace(" ", "");
+	model.replace(" ", "");
 
 	if (!output.open(filename))
 		return false;
 
-	if (bias.size())
+	if ((bias.size()) && (detailLevel > 0))
 	{
 		lengths[1] = lengths[0] * bias;
 
-		if (detailLevel > 0)
+		// Definitions taken from http://www.rna-seqblog.com/rpkm-fpkm-and-tpm-clearly-explained/
+		for (size_t i = 0; i < ((bias.size()) ? 2 : 1); i++)
 		{
-			// Definitions taken from http://www.rna-seqblog.com/rpkm-fpkm-and-tpm-clearly-explained/
-			for (size_t i = 0; i < ((bias.size()) ? 2 : 1); i++)
-			{
-				VEC_DATA_TYPE scalingFactor = sum(counts) / 1000000;
+			VEC_DATA_TYPE scalingFactor = sum(counts) / 1000000;
 
-				RPM[i] = counts / scalingFactor;
-				RPKM[i] = RPM[i] / lengths[i];
+			RPM[i] = counts / scalingFactor;
+			RPKM[i] = RPM[i] / lengths[i];
 
-				RPK[i] = counts / lengths[i];
-				scalingFactor = sum(RPK[i]) / 1000000;
-				TPM[i] = RPK[i] / scalingFactor;
-			}
+			RPK[i] = counts / lengths[i];
+			scalingFactor = sum(RPK[i]) / 1000000;
+			TPM[i] = RPK[i] / scalingFactor;
+		}
 
-			switch (detailLevel)
-			{
-			case 1:
-				output.print("", "", "RNA", "", title + " +", title + " +");
-				output.print("Gene", "count", "length", "Bias", "FPKM", "TPM");
-				output.print();
-				break;
-			case 2:
-				output.print("", "", "RNA", "", title + " +", title + " +", title + " +", title + " +", "Raw", "Raw", "Raw", "Raw");
-				output.print("Gene", "count", "length", "Bias", "RPM", "RPKM", "RPK", "TPM", "RPM", "RPKM", "RPK", "TPM");
-				output.print();
-				break;
-			}
+		switch (detailLevel)
+		{
+		case 2:
+			output.print("", "", "RNA", "Bias:", model + " +", model + " +");
+			output.print("Gene", "count", "length", model, "FPKM", "TPM");
+			output.print();
+			break;
+		case 3:
+			output.print("", "", "RNA", "Bias:", model + " +", model + " +", model + " +", model + " +", "Raw", "Raw", "Raw", "Raw");
+			output.print("Gene", "count", "length", model, "RPM", "RPKM", "RPK", "TPM", "RPM", "RPKM", "RPK", "TPM");
+			output.print();
+			break;
 		}
 
 		//	Dont start at 0 as 0 is the reference for normalisation
@@ -161,32 +166,37 @@ bool GeneCountData::outputGeneCounts(const string & filename, stringEx title, in
 
 			switch (detailLevel)
 			{
-			case 0: break;
 			case 1:
+			case 2:
 				output.printMiddle(lengths[0][i], bias[i],RPKM[1][i], TPM[1][i]);
 				break;
-			case 2:
+			case 3:
 				output.printMiddle(lengths[0][i], bias[i],
 					RPM[1][i], RPKM[1][i], RPK[1][i], TPM[1][i],
 					RPM[0][i], RPKM[0][i], RPK[0][i], TPM[0][i]);
 				break;
 			}
-
 			output.printEnd();
 		}
 	}
 	else
 	{
-		for (auto i : This)
+		//	We are just printing the counts in htseq-count mode, which means that they
+		//	need to be in name order, and not in the order they are found 
+		for (auto i : readPositionData)
 		{
 			if (i.second.index != 0)
-			{
 				output.print(i.first, (int)counts[i.second.index]);
-			}
 		}
 	}
-	for (size_t i = 0;i < errorNames.size();i++)
-		output.print(errorNames[i], (int)errCounts[i]);
+
+	//	Print the error counts at the end
+	if (detailLevel != 1)
+	{
+		for (size_t i = 0; i < errorNames.size(); i++)
+			output.print(errorNames[i], (int)errCounts[i]);
+	}
+
 	return true;
 }
 
@@ -201,8 +211,9 @@ bool GeneCountData::outputRNApositions(const string & filename)
 	{
 		long len = lengths[0][i];
 		long count = counts[i];
-		output.print(names[i], _s(len,":",count," plus"), This[names[i]].positions[0]);
-		output.print(names[i], _s(len,":", count," minus"), This[names[i]].positions[1]);
+		string & name = names[i];
+		output.print(name, _s(len,":",count," plus"), readPositionData[name].positions[0]);
+		output.print(name, _s(len,":", count," minus"), readPositionData[name].positions[1]);
 	}
 
 	return true;
@@ -243,30 +254,30 @@ void GeneCountData::remove_invalid_values()
 	for (size_t i = 0; i < names.size(); i++)
 	{
 		for (size_t j = 0; j < 2; j++)
-			This[names[i]].positions[j].removeInvalidValues(lengths[0][i]);
+			readPositionData[names[i]].positions[j].removeInvalidValues(lengths[0][i]);
 	}
 }
 
 void GeneCountData::addEntry(string name, VEC_DATA_TYPE length)
 {
-	auto geneData = find(name);
-	if (geneData == end())
+	auto geneData = readPositionData.find(name);
+	if (geneData == readPositionData.end())
 	{
 		counts.push_back(0);
 		names.push_back(name);
 		lengths[0].push_back(length);
-		emplace(name, counts.size() - 1);
+		readPositionData.emplace(name, counts.size() - 1);
 	}
 }
 void GeneCountData::addEntry(string name, VEC_DATA_TYPE length, VEC_DATA_TYPE count, rnaPosVec & posPositions, rnaPosVec & negPositions)
 {
-	auto geneData = find(name);
-	if (geneData == end())
+	auto geneData = readPositionData.find(name);
+	if (geneData == readPositionData.end())
 	{
 		counts.push_back(count);
 		names.push_back(name);
 		lengths[0].push_back(length);
-		emplace(name, geneAttribute(counts.size() - 1, posPositions, negPositions));
+		readPositionData.emplace(name, geneAttribute(counts.size() - 1, move(posPositions), move(negPositions)));
 	}
 }
 
@@ -350,8 +361,8 @@ void GeneCountData::transferTo(dataType & mcmcData, size_t maxLength, int maxTot
 	freq[24] = freq[24] / 6;
 
 	size_t geneIndex = 0;
-	mcmcData.geneData[0].resize(size());
-	mcmcData.geneData[1].resize(size());
+	mcmcData.geneData[0].resize(readPositionData.size());
+	mcmcData.geneData[1].resize(readPositionData.size());
 
 	srand((unsigned)time(NULL));
 
@@ -366,7 +377,7 @@ void GeneCountData::transferTo(dataType & mcmcData, size_t maxLength, int maxTot
 			//	For the forward and the reverse counts
 			for (size_t j = 0; j < 2; j++)
 			{
-				rnaPosVec & positions = at(names[i]).positions[j];
+				rnaPosVec & positions = readPositionData.at(names[i]).positions[j];
 				positions.selectAtMost(maxLength);
 
 				//	fragData contains the count 
