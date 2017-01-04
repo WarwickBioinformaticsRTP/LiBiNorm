@@ -81,17 +81,8 @@ bool printVal(outputDataFile * f, modelType m)
 	return true;
 };
 
-paramSet GetModelParams(modelType model, optionsType & options)
+paramSet GetModelParams(modelType model)
 {
-
-	//	Use this to run the model with a specific set of parameters
-	// #define _TEST
-#ifdef _TEST
-	vectorEx<double> p0{ { 1.5, 1.6,-3.1, -3.2,0.6 } };
-#else
-	vectorEx<double> p0{ { rand(3) - 1, rand(3), rand(4) - 5, rand(4) - 5, rand(1) } };
-#endif
-
 	paramSet params;
 
 	switch (model)
@@ -99,49 +90,41 @@ paramSet GetModelParams(modelType model, optionsType & options)
 	case noModel:
 		break;
 	case ModelB: case ModelD: case ModelE:
-		options.qcov = dataVec(4, options.jumpSize);
-		params = { { "log d", p0[0], -1 , 2 }    // average length of fragments
-			,{ "log h",  p0[1], 0 , 3 }   // the minimum length of fragmenation
-			,{ "log t1", p0[2], -5 , -1 }   // theta1
-			,{ "log t2", p0[3], -5, -1 } // theta2
+		params = { { "log10 d", -1 , 2 }    // average length of fragments
+			,{ "log10 h", 0 , 3 }   // the minimum length of fragmenation
+			,{ "log10 t1", -5 , -1 }   // theta1
+			,{ "log10 t2", -5, -1 } // theta2
 		};
-
 		break;
 	case ModelC:
-		options.qcov = dataVec(3, options.jumpSize);
-		params = { { "log d", p0[0], -1 , 2 }    // average length of fragments
-			,{ "log h",  p0[1], 0 , 3 }   // the minimum length of fragmenation
-			,{ "log t2", p0[3], -5, -1 } // theta2
+		params = { { "log10 d", -1 , 2 }    // average length of fragments
+			,{ "log10 h", 0 , 3 }   // the minimum length of fragmenation
+			,{ "log10 t2", -5, -1 } // theta2
 		};
 		break;
 	case ModelA:
-		options.qcov = dataVec(2, options.jumpSize);
-		params = { { "log d", p0[0], -1 , 2 }    // average length of fragments
-			,{ "log h",  p0[1], 0 , 3 }   // the minimum length of fragmenation
+		params = { { "log10 d", -1 , 2 }    // average length of fragments
+			,{ "log10 h", 0 , 3 }   // the minimum length of fragmenation
 		};
 		break;
 	case ModelBD:
-		options.qcov = dataVec(5, options.jumpSize);
-		params = { { "log d", p0[0], -1 , 2 }    // average length of fragments
-			,{ "log h",  p0[1], 0 , 3 }   // the minimum length of fragmenation
-			,{ "log t1", p0[2], -5 , -1 }   // theta1
-			,{ "log t2", p0[3], -5, -1 } // theta2
-			,{ "a", p0[4], 0, 1 } // alpha strength of model B
+		params = { { "log10 d", -1 , 2 }    // average length of fragments
+			,{ "log10 h", 0 , 3 }   // the minimum length of fragmenation
+			,{ "log10 t1", -5 , -1 }   // theta1
+			,{ "log10 t2", -5, -1 } // theta2
+			,{ "a", 0, 1 } // alpha strength of model B
 		};
 		break;
-
 	};
-
 	return params;
 }
 
 headerType getHeaders()
 {
-	optionsType options;
 	headerType _retVal;
 	for (modelType m : allModels())
 	{
-		paramSet params = GetModelParams(m, options);
+		paramSet params = GetModelParams(m);
 		for (auto i : params)
 			_retVal[m].push_back(i.name);
 	}

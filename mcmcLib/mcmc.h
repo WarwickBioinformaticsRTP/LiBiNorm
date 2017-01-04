@@ -6,8 +6,6 @@
 #include "params.h"
 
 
-#define MAX_DOUBLE std::numeric_limits<double>::max()
-
 class dataType
 {
 public:
@@ -15,9 +13,6 @@ public:
 	std::vector<int> geneIndex;
 	dataVec geneData[2];
 };
-
-
-double rand(double a);
 
 /*
 % options structure

@@ -144,8 +144,9 @@ void LiBiNorm::mcmcThread(optionsType options)
 		}
 
 
-		paramSet params = GetModelParams(currentModel,options);
-		
+		paramSet params = GetModelParams(currentModel);
+		options.qcov = dataVec(params.size(), options.jumpSize);
+
 		mcmc mcmcEngine;
 		mcmcEngine.mcmcrun(consData, params, options);
 

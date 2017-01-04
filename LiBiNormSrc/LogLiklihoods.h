@@ -26,7 +26,7 @@ std::string conv(const modelType m);
 modelType modelFromString(const std::string & desc);
 
 //  Returns mcmc paremetyers associated with a model
-paramSet GetModelParams(modelType model, optionsType & options);
+paramSet GetModelParams(modelType model);
 
 typedef std::map<modelType, std::vector<std::string> > headerType;
 headerType getHeaders();

@@ -5,10 +5,16 @@
 #include <string>
 #include "dataVec.h"
 
+
+#define MAX_DOUBLE std::numeric_limits<double>::max()
+#define MIN_DOUBLE std::numeric_limits<double>::min()
+double rand(double a);
+dataVec randn(size_t x);
+
 class paramType
 {
 public:
-	paramType(std::string name,double initial,double min = std::numeric_limits<double>::min(),double max = std::numeric_limits<double>::max());
+	paramType(std::string name,double min = MIN_DOUBLE, double max = MAX_DOUBLE);
 	std::string name;
 	double value, min, max, pri_mu, pri_sig;
 	bool targetflag, localflag;

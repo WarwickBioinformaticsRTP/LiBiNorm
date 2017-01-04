@@ -1,31 +1,7 @@
-#include <random>
 #include <iostream>
 #include "mcmc.h"
 
 using namespace std;
-
-double rand(double a)
-{
-	// Static members generate distribution in range 0 to 1.   This is scaled by input parameter for each call
-	static std::random_device rd;
-	static std::mt19937 gen(rd());
-	static std::uniform_real_distribution<> dis(0, 1);
-
-	return dis(gen) * a;
-}
-
-
-dataVec randn(size_t x)
-{
-	//	Sets up a vector of values with a normal distribution
-	static	std::default_random_engine generator;
-	static	std::normal_distribution<double> distribution;
-
-	dataVec retVal(x);
-	for (auto & i : retVal)
-		i = distribution(generator);
-	return retVal;
-}
 
 
 double mcmc::priorfun(const dataVec & th, const dataVec & mu, const dataVec & sig)
