@@ -3,24 +3,23 @@
 
 using namespace std;
 
-
+//	The default prior function used in teh chain.  The original code allowed a custom function
+//	to be defined but this was not being used for this application.
 double mcmc::priorfun(const dataVec & th, const dataVec & mu, const dataVec & sig)
 {
 	  return sum(((th-mu)/sig)^2);
 }
-void mcmc::mcmcrun(const dataType & data,const paramSet & params,const optionsType & options)
+
+//	Performs a monte carl markov chain run
+void mcmc::mcmcrun(const mcmcGeneData & data,const paramSet & params,const optionsType & options)
 {
-
-	dataVec qcov = options.qcov;
-	nsimu = options.nsimu;
-
 	const dataVec & thetamu = params.getMus();
 	const dataVec & thetasig = params.getSigmas();
 
 	dataVec oldpar = params.getvalues();
 
-	dataVec R = qcov.diagchol();
-
+	dataVec R = options.qcov.diagchol();
+	double sigma2 = options.sigma2;
 
 	double ss = options.ssfun(oldpar,data);
 
@@ -29,15 +28,12 @@ void mcmc::mcmcrun(const dataType & data,const paramSet & params,const optionsTy
 
 	double oldprior = priorfun(oldpar,thetamu,thetasig);
 
-	double sigma2 = options.sigma2;
-
 	_chain.resize(options.nsimu);
 	_sschain.resize(options.nsimu);
 	_chain[0] = oldpar;
 	_sschain[0] = ss;
 
-	rej=0; reju=0; ii=1; rejl = 0;
-	bool accept,outbound;
+	bool accept;
 	double newprior,tst;
 	int chainind = 0;
 	for (size_t isimu = 1; isimu < options.nsimu; isimu++)
@@ -46,25 +42,20 @@ void mcmc::mcmcrun(const dataType & data,const paramSet & params,const optionsTy
 		dataVec u = randn(params.size());
 		dataVec newpar = oldpar + u*R;
 
+		//	If the parameters go out of range, reject them
 		if (!params.isValid(newpar))
 		{
 			accept = false;
 			newprior = 0;
-			tst = 0;
 			ss1 = MAX_DOUBLE;
 			ss2 = ss;
-			outbound = true;
-
 		}
 		else
 		{
-			outbound = false;
 			newprior = priorfun(newpar, thetamu, thetasig);
-
-			ss2 = ss;             //old ss
 			ss1 = options.ssfun(newpar, data);
-
-			tst = exp(-0.5*((ss1 - ss2) / sigma2) + newprior - oldprior); //???????????????
+			ss2 = ss;             //old ss
+			tst = exp(-0.5*((ss1 - ss2) / sigma2) + newprior - oldprior); 
 			if (tst <= 0)
 				accept = false;
 			else if (tst >= 1)
@@ -73,7 +64,6 @@ void mcmc::mcmcrun(const dataType & data,const paramSet & params,const optionsTy
 				accept = true;
 			else
 				accept = false;
-
 		}
 
 		if (accept)
@@ -86,10 +76,6 @@ void mcmc::mcmcrun(const dataType & data,const paramSet & params,const optionsTy
 		else
 		{
 			_chain[chainind] = oldpar;
-			rej++;
-			reju++;
-			if (outbound)
-				rejl++;
 		}
 
 		_sschain[chainind] = ss;

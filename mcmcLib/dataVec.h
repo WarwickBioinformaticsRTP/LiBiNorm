@@ -9,6 +9,7 @@
 #include "printEx.h"
 
 #define VEC_DATA_TYPE double
+#define RVALUE_CONSTRUCTORS
 
 class dataVec: public std::vector<VEC_DATA_TYPE>
 {
@@ -17,22 +18,35 @@ public:
 	dataVec(size_t s = 0,VEC_DATA_TYPE v = 0);
 //	dataVec(const std::vector<VEC_DATA_TYPE> & a);
 //	dataVec(const dataVec & a);
-/*	dataVec(dataVec && a) : std::vector<VEC_DATA_TYPE>(move(a)) 
-	{
-	};
-	dataVec(std::initializer_list<VEC_DATA_TYPE> a) : std::vector<VEC_DATA_TYPE>(a) {};
+/*	dataVec(std::initializer_list<VEC_DATA_TYPE> a) : std::vector<VEC_DATA_TYPE>(a) {};
 
 	dataVec & operator = (const dataVec & a)
 	{
 		std::vector<VEC_DATA_TYPE>::operator=(a);
 		return This;
 	}
+	*/
+#ifdef RVALUE_CONSTRUCTORS
+	dataVec(const dataVec & a) : std::vector<VEC_DATA_TYPE>(a)
+	{
+	};
+
+	dataVec(dataVec && a) : std::vector<VEC_DATA_TYPE>(move(a))
+	{
+	};
+
 	dataVec & operator = (dataVec && a)
 	{
-		swap(a);
+		std::vector<VEC_DATA_TYPE>::operator = (move(a));
 		return This;
 	}
-*/
+	dataVec & operator = (const dataVec & a)
+	{
+		std::vector<VEC_DATA_TYPE>::operator = (a);
+		return This;
+	}
+#endif
+
 	static void clearCache();
 
 	~dataVec();

@@ -18,9 +18,6 @@
     <ClCompile Include="LiBiNorm.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="LogLiklihoods.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="LiBiCount.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -42,12 +39,12 @@
     <ClCompile Include="GeneCountData.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ModelData.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="LiBiNorm.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LogLiklihoods.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="LiBiCount.h">
@@ -69,6 +66,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="GeneCountData.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ModelData.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

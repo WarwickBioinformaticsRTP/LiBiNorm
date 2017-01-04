@@ -4,7 +4,7 @@
 #include <map>
 #include "stringEx.h"
 #include "GeneCountData.h"
-#include "LogLiklihoods.h"
+#include "ModelData.h"
 
 
 #define DEF_MAX_READS_FOR_PARAM_ESTIMATION 1000000
@@ -77,7 +77,7 @@ protected:
 private:
 	bool outputFull;
 
-	dataType consData;
+	mcmcGeneData consData;
 
 	//	These vector holds the full results for each of the models, which are needed for identifying
 	//	the optimal parameters and the variation that is seen.

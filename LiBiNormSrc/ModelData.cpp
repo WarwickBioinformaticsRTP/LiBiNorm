@@ -1,5 +1,5 @@
 
-#include "LogLiklihoods.h"
+#include "ModelData.h"
 #include "containerEx.h"
 #include <map>
 using namespace std;
@@ -74,13 +74,16 @@ modelType modelFromString(const string & desc)
 		exitFail("Unknown model description:", desc);
 	return (*iter).second;
 }
-
+//	Used by the printTSV class to print modelTypes to files
 bool printVal(outputDataFile * f, modelType m)
 {
 	fputs(conv(m).c_str(), f->fout);
 	return true;
 };
 
+
+//	Loads the paremeter information associated with each of the models and sets the value to a random value within the allowed
+//	range for the parameter. 
 paramSet GetModelParams(modelType model)
 {
 	paramSet params;
@@ -135,14 +138,14 @@ headerType getHeaders()
 
 
 //	The log liklyhood calculations for each of the models
-double FLL_ModelA(const dataVec & param, const dataType & data)
+double FLL_ModelA(const dataVec & param, const mcmcGeneData & data)
 {
 	double d = pow(10,param[0]);
 	double h = pow(10,param[1]);
 
 	const vector<int> & geneIndex = data.geneIndex;
-	const dataVec L = data.geneData[0](geneIndex);
-	const dataVec Freq_l = data.geneData[1](geneIndex);
+	const dataVec L = data.geneLengths(geneIndex);
+	const dataVec Freq_l = data.geneFrequencies(geneIndex);
 
 	double last_l = 0;
 	double norm=0;
@@ -187,7 +190,7 @@ double FLL_ModelA(const dataVec & param, const dataType & data)
 }
 
 
-double FLL_ModelB(const dataVec & param, const dataType & data)
+double FLL_ModelB(const dataVec & param, const mcmcGeneData & data)
 {
 
 	double d = pow(10,param[0]);
@@ -196,8 +199,8 @@ double FLL_ModelB(const dataVec & param, const dataType & data)
 	double t2 = pow(10,param[3]);
 
 	const vector<int> & geneIndex = data.geneIndex;
-	const dataVec L = data.geneData[0](geneIndex);
-	const dataVec & Freq_l = data.geneData[1](geneIndex);
+	const dataVec L = data.geneLengths(geneIndex);
+	const dataVec Freq_l = data.geneFrequencies(geneIndex);
 
 	double last_l = 0;
 	double norm=0;
@@ -247,7 +250,7 @@ double FLL_ModelB(const dataVec & param, const dataType & data)
 	return -2*LogL;
 }
 
-double FLL_ModelC(const dataVec & param, const dataType & data)
+double FLL_ModelC(const dataVec & param, const mcmcGeneData & data)
 {
 	//	function [LogL] = FLL_Deng(param, data)
 
@@ -256,8 +259,8 @@ double FLL_ModelC(const dataVec & param, const dataType & data)
 	double t2 = pow(10,param[2]);
 
 	const vector<int> & geneIndex = data.geneIndex;
-	const dataVec L = data.geneData[0](geneIndex);
-	const dataVec & Freq_l = data.geneData[1](geneIndex);
+	const dataVec L = data.geneLengths(geneIndex);
+	const dataVec Freq_l = data.geneFrequencies(geneIndex);
 
 	double last_l = 0;
 	double norm=0;
@@ -306,7 +309,7 @@ double FLL_ModelC(const dataVec & param, const dataType & data)
 }
 
 
-double FLL_ModelD(const dataVec & param, const dataType & data)
+double FLL_ModelD(const dataVec & param, const mcmcGeneData & data)
 {
 
 /*function [LogL] = FLL_Tang(param, data)
@@ -327,8 +330,8 @@ freq_l = data(3, :);
 	double LogL = 1E20;
 
 	const vector<int> & geneIndex = data.geneIndex;
-	const dataVec L = data.geneData[0](geneIndex);
-	const dataVec & Freq_l = data.geneData[1](geneIndex);
+	const dataVec L = data.geneLengths(geneIndex);
+	const dataVec Freq_l = data.geneFrequencies(geneIndex);
 
 	double last_l = 0;
 	double norm=0;
@@ -380,7 +383,7 @@ freq_l = data(3, :);
 	return LogL;
 }
 
-double FLL_ModelE(const dataVec & param, const dataType & data)
+double FLL_ModelE(const dataVec & param, const mcmcGeneData & data)
 {
 //	function [LogL] = FLL_Dan(param, data)
 
@@ -390,8 +393,8 @@ double FLL_ModelE(const dataVec & param, const dataType & data)
 	double t2 = pow(10,param[3]);
 
 	const vector<int> & geneIndex = data.geneIndex;
-	const dataVec L = data.geneData[0](geneIndex);
-	const dataVec & Freq_l = data.geneData[1](geneIndex);
+	const dataVec L = data.geneLengths(geneIndex);
+	const dataVec Freq_l = data.geneFrequencies(geneIndex);
 
 	double last_l = 0;
 	double norm=0;
@@ -437,7 +440,7 @@ double FLL_ModelE(const dataVec & param, const dataType & data)
 }
 
 
-double FLL_ModelBD(const dataVec & param, const dataType & data)
+double FLL_ModelBD(const dataVec & param, const mcmcGeneData & data)
 {
 
 	double d = pow(10,param[0]);
@@ -447,8 +450,8 @@ double FLL_ModelBD(const dataVec & param, const dataType & data)
 	double a = param[4];
 
 	const vector<int> & geneIndex = data.geneIndex;
-	const dataVec L = data.geneData[0](geneIndex);
-	const dataVec & Freq_l = data.geneData[1](geneIndex);
+	const dataVec L = data.geneLengths(geneIndex);
+	const dataVec Freq_l = data.geneFrequencies(geneIndex);
 
 	double last_l = 0;
 	double norm=0;

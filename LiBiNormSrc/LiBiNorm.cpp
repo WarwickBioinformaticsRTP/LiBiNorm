@@ -61,25 +61,25 @@ int main(int argc, char **argv)
 			LiBiCount libiC;
 			return libiC.main(argc-1,argv+1);
 		}
-		else if (command == "model")
+		if (command == "model")
 		{
 			LiBiNorm norm;
 			return norm.main(argc-1,argv+1);
 		}
-		else if (command == "conv")
+		if (command == "conv")
 		{
 			LiBiConv conv;
 			return conv.main(argc - 1, argv + 1);
 		}
 #ifdef DEDUP_MODE
-		else if (command == "dedup")
+		if (command == "dedup")
 		{
 			LiBiDedup libiD;
 			return libiD.main(argc - 1, argv + 1);
 		}
 #endif
 #ifdef MAKE_FASTQ_MODE
-		else if (command == "makefastq")
+		if (command == "makefastq")
 		{
 			MakeFastq makeFastq;
 			return makeFastq.main(argc - 1, argv + 1);
@@ -87,11 +87,10 @@ int main(int argc, char **argv)
 #endif
 		if ((command == "--version") || (command == "-v"))
 		{
-			cout << "LiBiNorm version 1.2.0" << endl;
+			cout << "LiBiNorm version 1.2.1" << endl;
 			return EXIT_SUCCESS;
 		}
-		else
-			exitFail("Invalid commmand:",command);
+		exitFail("Invalid commmand:",command);
 	}
 	return EXIT_SUCCESS;
 }
@@ -161,8 +160,8 @@ void LiBiNorm::mcmcThread(optionsType options)
 #endif
 
 			//	Always store full set of results as these are needed to calculate the optimal parameters
-			fullResultChain[currentModel].emplace(loop, mcmcEngine.chain());
-			fullResultSSChain[currentModel].emplace(loop, mcmcEngine.sschain());
+			fullResultChain[currentModel].emplace(loop, move(mcmcEngine._chain));
+			fullResultSSChain[currentModel].emplace(loop, move(mcmcEngine._sschain));
 		}
 	}
 }
@@ -601,7 +600,7 @@ void LiBiNorm::printBias()
 		mcmcResult.print(m,"Parameters",bestResults[m].minLL,_BRL(bestResults[m].run, bestResults[m].pos) bestResults[m].params);
 		if (biases[m].size())
 		{
-			mcmcResult.print("","Frequency", lengths);
+			mcmcResult.print("","Length", lengths);
 			mcmcResult.print("","Bias",biases[m]);
 		}
 		else

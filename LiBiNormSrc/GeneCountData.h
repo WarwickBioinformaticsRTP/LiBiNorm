@@ -77,7 +77,7 @@ public:
 	std::string loadData(const std::string filename, int Nlines = -1);
 	void remove_invalid_values();
 	void histc (const std::vector<int> E);
-	void transferTo(dataType & mcmcData,size_t maxLength,int maxTotReads);
+	void transferTo(mcmcGeneData & mcmcData,size_t maxLength,int maxTotReads);
 
 	bool outputGeneCounts(const std::string & filename, int detailLevel = 0, stringEx model = "");
 	bool outputRNApositions(const std::string & filename);

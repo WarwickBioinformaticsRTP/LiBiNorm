@@ -57,7 +57,7 @@ LIBPATH     =
 LIBINORMSRC = LiBiNormSrc/LiBiNorm.cpp
 
 LIBINORMSRCEX = $(addprefix $(LIBINORMSRCDIR), \
-	LiBiDedup.cpp LiBiCount.cpp LogLiklihoods.cpp FeatureFileEx.cpp \
+	LiBiDedup.cpp LiBiCount.cpp ModelData.cpp FeatureFileEx.cpp \
 	Regions.cpp MakeFastq.cpp LiBiConv.cpp GeneCountData.cpp) 
 
 MCMCLIBSRC =  $(shell find $(MCMCLIBDIR) -name *.cpp)
@@ -151,14 +151,15 @@ depend :
 
 $(BUILD)/LiBiNormSrc/LiBiNorm.o: ../bioinformaticsLib/libCommon.h
 $(BUILD)/LiBiNormSrc/LiBiNorm.o: ../bioinformaticsLib/containerEx.h
-$(BUILD)/LiBiNormSrc/LiBiNorm.o: mcmcLib/mcmc.h mcmcLib/dataVec.h
+$(BUILD)/LiBiNormSrc/LiBiNorm.o: mcmcLib/mcmc.h mcmcLib/params.h
+$(BUILD)/LiBiNormSrc/LiBiNorm.o: mcmcLib/dataVec.h
 $(BUILD)/LiBiNormSrc/LiBiNorm.o: ../bioinformaticsLib/printEx.h
 $(BUILD)/LiBiNormSrc/LiBiNorm.o: ../bioinformaticsLib/inQuotes.h
-$(BUILD)/LiBiNormSrc/LiBiNorm.o: mcmcLib/params.h LiBiNormSrc/LiBiNorm.h
+$(BUILD)/LiBiNormSrc/LiBiNorm.o: LiBiNormSrc/LiBiNorm.h
 $(BUILD)/LiBiNormSrc/LiBiNorm.o: ../bioinformaticsLib/stringEx.h
 $(BUILD)/LiBiNormSrc/LiBiNorm.o: LiBiNormSrc/GeneCountData.h
 $(BUILD)/LiBiNormSrc/LiBiNorm.o: ../bioinformaticsLib/parser.h
-$(BUILD)/LiBiNormSrc/LiBiNorm.o: LiBiNormSrc/LogLiklihoods.h
+$(BUILD)/LiBiNormSrc/LiBiNorm.o: LiBiNormSrc/ModelData.h
 $(BUILD)/LiBiNormSrc/LiBiNorm.o: LiBiNormSrc/LiBiCount.h
 $(BUILD)/LiBiNormSrc/LiBiNorm.o: LiBiNormSrc/FeatureFileEx.h
 $(BUILD)/LiBiNormSrc/LiBiNorm.o: LiBiNormSrc/Regions.h
@@ -185,10 +186,10 @@ $(BUILD)/mcmcLib/dataVec.o: mcmcLib/dataVec.h
 $(BUILD)/mcmcLib/dataVec.o: ../bioinformaticsLib/libCommon.h
 $(BUILD)/mcmcLib/dataVec.o: ../bioinformaticsLib/printEx.h
 $(BUILD)/mcmcLib/dataVec.o: ../bioinformaticsLib/inQuotes.h
-$(BUILD)/mcmcLib/mcmc.o: mcmcLib/mcmc.h mcmcLib/dataVec.h
+$(BUILD)/mcmcLib/mcmc.o: mcmcLib/mcmc.h mcmcLib/params.h mcmcLib/dataVec.h
 $(BUILD)/mcmcLib/mcmc.o: ../bioinformaticsLib/libCommon.h
 $(BUILD)/mcmcLib/mcmc.o: ../bioinformaticsLib/printEx.h
-$(BUILD)/mcmcLib/mcmc.o: ../bioinformaticsLib/inQuotes.h mcmcLib/params.h
+$(BUILD)/mcmcLib/mcmc.o: ../bioinformaticsLib/inQuotes.h
 $(BUILD)/mcmcLib/params.o: mcmcLib/params.h mcmcLib/dataVec.h
 $(BUILD)/mcmcLib/params.o: ../bioinformaticsLib/libCommon.h
 $(BUILD)/mcmcLib/params.o: ../bioinformaticsLib/printEx.h
@@ -244,14 +245,13 @@ $(BUILD)/LiBiNormSrc/LiBiCount.o: LiBiNormSrc/GeneCountData.h
 $(BUILD)/LiBiNormSrc/LiBiCount.o: ../bioinformaticsLib/parser.h
 $(BUILD)/LiBiNormSrc/LiBiCount.o: mcmcLib/mcmc.h mcmcLib/params.h
 $(BUILD)/LiBiNormSrc/LiBiCount.o: LiBiNormSrc/LiBiNorm.h
-$(BUILD)/LiBiNormSrc/LiBiCount.o: LiBiNormSrc/LogLiklihoods.h
-$(BUILD)/LiBiNormSrc/LogLiklihoods.o: LiBiNormSrc/LogLiklihoods.h
-$(BUILD)/LiBiNormSrc/LogLiklihoods.o: mcmcLib/mcmc.h mcmcLib/dataVec.h
-$(BUILD)/LiBiNormSrc/LogLiklihoods.o: ../bioinformaticsLib/libCommon.h
-$(BUILD)/LiBiNormSrc/LogLiklihoods.o: ../bioinformaticsLib/printEx.h
-$(BUILD)/LiBiNormSrc/LogLiklihoods.o: ../bioinformaticsLib/inQuotes.h
-$(BUILD)/LiBiNormSrc/LogLiklihoods.o: mcmcLib/params.h
-$(BUILD)/LiBiNormSrc/LogLiklihoods.o: ../bioinformaticsLib/containerEx.h
+$(BUILD)/LiBiNormSrc/LiBiCount.o: LiBiNormSrc/ModelData.h
+$(BUILD)/LiBiNormSrc/ModelData.o: LiBiNormSrc/ModelData.h mcmcLib/params.h
+$(BUILD)/LiBiNormSrc/ModelData.o: mcmcLib/dataVec.h
+$(BUILD)/LiBiNormSrc/ModelData.o: ../bioinformaticsLib/libCommon.h
+$(BUILD)/LiBiNormSrc/ModelData.o: ../bioinformaticsLib/printEx.h
+$(BUILD)/LiBiNormSrc/ModelData.o: ../bioinformaticsLib/inQuotes.h
+$(BUILD)/LiBiNormSrc/ModelData.o: ../bioinformaticsLib/containerEx.h
 $(BUILD)/LiBiNormSrc/FeatureFileEx.o: LiBiNormSrc/FeatureFileEx.h
 $(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bioinformaticsLib/containerEx.h
 $(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bioinformaticsLib/libCommon.h
@@ -351,10 +351,10 @@ $(BUILD)/LiBiNormSrc/GeneCountData.o: ../bioinformaticsLib/inQuotes.h
 $(BUILD)/LiBiNormSrc/GeneCountData.o: LiBiNormSrc/GeneCountData.h
 $(BUILD)/LiBiNormSrc/GeneCountData.o: ../bioinformaticsLib/parser.h
 $(BUILD)/LiBiNormSrc/GeneCountData.o: ../bioinformaticsLib/libCommon.h
-$(BUILD)/LiBiNormSrc/GeneCountData.o: mcmcLib/mcmc.h mcmcLib/dataVec.h
+$(BUILD)/LiBiNormSrc/GeneCountData.o: mcmcLib/mcmc.h mcmcLib/params.h
+$(BUILD)/LiBiNormSrc/GeneCountData.o: mcmcLib/dataVec.h
 $(BUILD)/LiBiNormSrc/GeneCountData.o: ../bioinformaticsLib/printEx.h
-$(BUILD)/LiBiNormSrc/GeneCountData.o: mcmcLib/params.h
-$(BUILD)/LiBiNormSrc/GeneCountData.o: LiBiNormSrc/LogLiklihoods.h
+$(BUILD)/LiBiNormSrc/GeneCountData.o: LiBiNormSrc/ModelData.h
 $(BUILD)/LiBiNormSrc/GeneCountData.o: ../bioinformaticsLib/containerEx.h
 
 $(BUILD)/bioinformaticsLib/codFile.o: ../bioinformaticsLib/codFile.h

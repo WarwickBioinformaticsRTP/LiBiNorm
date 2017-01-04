@@ -347,7 +347,7 @@ string GeneCountData::loadData(const string filename, int Ngenes)
 
 //	Transfers information for up to maxLength reads from up to Ngenes genes or transcripts
 //	into the form which can be used by the mcmc chain
-void GeneCountData::transferTo(dataType & mcmcData, size_t maxLength, int maxTotReads)
+void GeneCountData::transferTo(mcmcGeneData & mcmcData, size_t maxLength, int maxTotReads)
 {
 	vectorEx<int> bins{ { 0,300 } };
 	for (size_t i = 500; i <= 10000; i += 500)
@@ -364,8 +364,8 @@ void GeneCountData::transferTo(dataType & mcmcData, size_t maxLength, int maxTot
 	freq[24] = freq[24] / 6;
 
 	size_t geneIndex = 0;
-	mcmcData.geneData[0].resize(readPositionData.size());
-	mcmcData.geneData[1].resize(readPositionData.size());
+	mcmcData.geneLengths.resize(readPositionData.size());
+	mcmcData.geneFrequencies.resize(readPositionData.size());
 
 	srand((unsigned)time(NULL));
 
@@ -389,16 +389,16 @@ void GeneCountData::transferTo(dataType & mcmcData, size_t maxLength, int maxTot
 				mcmcData.geneIndex.insert(mcmcData.geneIndex.end(), positions.size(), geneIndex);//gene.length);
 				Nreads += positions.size();
 			}
-			mcmcData.geneData[0][geneIndex] = lengths[0][i];
-			mcmcData.geneData[1][geneIndex] = freq[histoGram_ind[i]];
+			mcmcData.geneLengths[geneIndex] = lengths[0][i];
+			mcmcData.geneFrequencies[geneIndex] = freq[histoGram_ind[i]];
 
 			geneIndex++;
 			if ((maxTotReads) && (Nreads > maxTotReads))
 				break;
 		}
 	}
-	mcmcData.geneData[0].resize(geneIndex);
-	mcmcData.geneData[1].resize(geneIndex);
+	mcmcData.geneLengths.resize(geneIndex);
+	mcmcData.geneFrequencies.resize(geneIndex);
 
 	optMessage(Nreads, " reads used for parameter determination");
 }
