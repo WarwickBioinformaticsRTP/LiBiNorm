@@ -273,8 +273,8 @@ int LiBiNorm::main(int argc, char **argv)
 		else if ((strcmp(argv[ni], "-r") == 0) || (opt2 = (strncmp(argv[ni], "--runs=", 7) == 0)))
 		{
 			Nruns = atoi(opt2 ? argv[ni] + 7 : argv[++ni]);
-			if ((Nruns < 1) || (Nruns > 20))
-				exitFail("-r values must lie between 1 and 20");
+			if ((Nruns < 1) || (Nruns > 200))
+				exitFail("-r values must lie between 1 and 200");
 		}
 		else if ((strcmp(argv[ni], "-s") == 0) || (opt2 = (strncmp(argv[ni], "--mcmc=", 7) == 0)))
 		{
