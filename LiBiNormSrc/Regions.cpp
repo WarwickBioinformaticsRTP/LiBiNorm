@@ -5,6 +5,49 @@
 using namespace std;
 using namespace BamTools;
 
+
+//	This constructor creates the readData from the bam file entry.  This means that methods expecting 
+//	readData can be passed a bamAlignment.  Use an rValue constructor so that we can 'swallow up' the cigar data 
+//	rather than making a copy of it as once the readData has been created we will have no further use
+//	for the cigar data
+readData::readData(BamTools::BamAlignment && ba) :
+	refId(ba.RefID),
+	position(ba.Position + 1),
+	qual(ba.MapQuality),
+	cigar(move(ba.CigarData))
+{
+	//	This simulates line 155 in count py.  If there is no optional NH field in the first read
+	//	then the pythin throws an error, which we simulate by setting NH to zero
+	if (!ba.GetTag("NH", NH))
+		NH = ba.IsFirstMate() ? 0 : -1;
+	if (ba.IsPaired())
+	{
+		if (ba.IsReverseStrand() == ba.IsFirstMate())
+			strand = '-';
+		else
+			strand = '+';
+	}
+	else
+		strand = ba.IsReverseStrand() ? '-' : '+';
+};
+
+readData::readData(const BamTools::BamAlignment & ba) :
+	refId(ba.RefID),
+	position(ba.Position + 1),
+	qual(ba.MapQuality),
+	cigar(ba.CigarData)
+{
+	//	This simulates line 155 in count py.  If there is no optional NH field in the first read
+	//	then the pythin throws an error, which we simulate by setting NH to zero
+	if (!ba.GetTag("NH", NH))
+		NH = ba.IsFirstMate() ? 0 : -1;
+	if (ba.IsPaired())
+		strand = (ba.IsReverseStrand() == ba.IsFirstMate()) ? '-' : '+';
+	else
+		strand = ba.IsReverseStrand() ? '-' : '+';
+};
+
+
 //	Combines a region with an existing set of regions
 void regionList::combineRegion(const region & r1)
 {
@@ -56,7 +99,7 @@ void regionList::combine(const regionList & rl)
 		combineRegion(r.second);
 }
 
-
+//	Constructs a set of regions from the information in a read, ie bam object
 regionList::regionList(const readData & read)
 {
 	// initialize alignment end to starting position
@@ -79,6 +122,7 @@ regionList::regionList(const readData & read)
 			case Constants::BAM_CIGAR_INS_CHAR :
 				break;
 
+			//	If there is a skip then the region after the skip is a new region
 			case Constants::BAM_CIGAR_REFSKIP_CHAR  :
 				{
 					combineRegion(region(start,end-1,read.strand));
@@ -92,6 +136,33 @@ regionList::regionList(const readData & read)
 	}
 	combineRegion(region(start,end-1,read.strand));
 }
+
+//	Creates a regionList from one of the reads, either from a bam entry or from cachedData.  Use emplace so that the
+//	regionList can be efficiently placed straight into the map.
+regionLists::regionLists(const readData & read, const std::string & name) :
+	name(name), NH(read.NH),
+	qual(read.qual),
+	strands(1, read.strand)
+{
+	data.emplace(read.refId, regionList(read));
+};
+
+//	Adds the information associated with the second read, which will be placed in the existing chromosome
+//  or added to a new.
+void regionLists::combine(const readData & read) 
+{
+	data[read.refId].combine(regionList(read));
+	if ((read.NH == 0) || (NH == 0))
+		NH = 0;
+	else if (read.NH > NH)
+		NH = read.NH;
+	if (read.qual < qual)
+		qual = read.qual;
+	strands.emplace_back(read.strand);
+};
+
+
+
 
 //	Parse a text string and convert it into a cigar value.  Used when retrieving entries from cache files
 void parserInternal::parseval(const char *& start,Cigar & co,size_t & len)
@@ -107,7 +178,7 @@ void parserInternal::parseval(const char *& start,Cigar & co,size_t & len)
 	}
 }
 
-//	Prints out cigar information
+//	Prints out cigar information, used by the printTsv class
 bool printVal(outputDataFile * f,const Cigar & cigar)
 {
 	for (auto & i: cigar)

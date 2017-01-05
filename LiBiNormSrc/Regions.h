@@ -21,53 +21,14 @@ public:
 class readData
 {
 	public:
-		int refId;
-		int position;
-		char strand;
-		int NH;
-		int qual;
-		Cigar cigar;
-		readData(void){}
+		readData(void) {}
+		readData(BamTools::BamAlignment && ba);
+		readData(const BamTools::BamAlignment & ba);
 
-		//	This constructor creates the readData from the bam file entry.  This means that methods expecting 
-		//	readData can be passed a bamAlignment.  Use an rValue constructor so that we can 'swallow up' the cigar data 
-		//	rather than making a copy of it as once the readData has been created we will have no further use
-		//	for the cigar data
-		readData(BamTools::BamAlignment && ba):
-			refId(ba.RefID),
-			position(ba.Position+1),
-			qual(ba.MapQuality),
-			cigar(move(ba.CigarData))
-		{
-			//	This simulates line 155 in count py.  If there is no optional NH field in the first read
-			//	then the pythin throws an error, which we simulate by setting NH to zero
-			if (!ba.GetTag("NH",NH))
-				NH = ba.IsFirstMate()?0:-1;
-			if (ba.IsPaired())
-			{
-				if (ba.IsReverseStrand() == ba.IsFirstMate())
-					strand = '-';
-				else
-					strand = '+';
-			}
-			else
-				strand = ba.IsReverseStrand() ? '-' : '+';
-		};
-		readData(const BamTools::BamAlignment & ba):
-			refId(ba.RefID),
-			position(ba.Position+1),
-			qual(ba.MapQuality),
-			cigar(ba.CigarData)
-		{
-			//	This simulates line 155 in count py.  If there is no optional NH field in the first read
-			//	then the pythin throws an error, which we simulate by setting NH to zero
-			if (!ba.GetTag("NH",NH))
-				NH = ba.IsFirstMate()?0:-1;
-			if (ba.IsPaired())
-				strand = (ba.IsReverseStrand() == ba.IsFirstMate())?'-':'+';
-			else
-				strand = ba.IsReverseStrand() ? '-' : '+';
-		};
+		int refId, position;
+		char strand;
+		int NH, qual;
+		Cigar cigar;
 };
 
 //	A reagion within a chromosome
@@ -117,24 +78,12 @@ public:
 	int qual;
 	std::vector<char> strands;
 
-	//	Creates a regionList from one of the reads, either from a bam entry or from cachedData.  Use emplace so that the
-	//	regionList can be efficiently placed straight into the map.
-	regionLists(const readData & read,const std::string & name) :name(name),NH(read.NH),qual(read.qual), strands(1,read.strand){
-		data.emplace(read.refId,regionList(read));
-	};
-
-	//	Adds the information associated with the second read, which will be placed in the existing chromosome
-	//  or added to a new.
-	void combine(const readData & read){
-			data[read.refId].combine(regionList(read));
-			if ((read.NH == 0) || (NH == 0))
-				NH = 0;
-			else if (read.NH > NH)
-				NH = read.NH;
-			if (read.qual < qual)
-				qual = read.qual;
-			strands.emplace_back(read.strand);
-	};
+	//	Creates a regionList from one of the reads, either from a bam entry or from cachedData.  
+	regionLists(const readData & read, const std::string & name);
+	
+	//	Adds the information associated with the second read
+	void combine(const readData & read);
+	
 };
 
 //	Declare the availability of methods that are used by parser for parseing cigar strings

@@ -618,7 +618,7 @@ void LiBiNorm::printAllMcmcRunData()
 	TsvFile mcmcResult;
 	for (modelType modl : allModels())
 	{
-		string filename = normaliseResultsFilename.replaceSuffix("_", modl, ".txt");
+		string filename = normaliseResultsFilename.replaceSuffix("_", conv(modl,true), ".txt");
 		if (!mcmcResult.open(filename))
 			exitFail("Unable to open output file ", filename);
 

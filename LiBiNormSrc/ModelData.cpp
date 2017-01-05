@@ -1,5 +1,6 @@
 
 #include "ModelData.h"
+#include "stringEx.h"
 #include "containerEx.h"
 #include <map>
 using namespace std;
@@ -16,19 +17,22 @@ const std::vector<modelType> & allModels()
 };
 
 //	Converts a modelType to a string
-std::string conv(const modelType m)
+string conv(const modelType m, bool removeGaps)
 {
+	stringEx retVal;
 	switch (m)
 	{
-	case noModel: return "No Model";
-	case ModelA: return "Model A";
-	case ModelB: return "Model B";
-	case ModelC: return "Model C";
-	case ModelD: return "Model D";
-	case ModelE: return "Model E";
-	case ModelBD: return "Model BD";
+	case noModel: retVal = "No Model"; break;
+	case ModelA: retVal = "Model A"; break;
+	case ModelB: retVal = "Model B"; break;
+	case ModelC: retVal = "Model C"; break;
+	case ModelD: retVal = "Model D"; break;
+	case ModelE: retVal = "Model E"; break;
+	case ModelBD: retVal = "Model BD"; break;
 	}
-	return "";
+	if (removeGaps)
+		retVal.replace(" ", "");
+	return retVal;
 }
 
 //namespace std

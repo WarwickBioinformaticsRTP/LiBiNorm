@@ -28,7 +28,7 @@ enum modelType
 const std::vector<modelType> & allModels();
 
 //	Routines for converting between model identifier and equivalent strings
-std::string conv(const modelType m);
+std::string conv(const modelType m,bool removeGaps = false);
 modelType modelFromString(const std::string & desc);
 //	Allows the model to be output to a stream such as std::out as appropriate text
 bool printVal(outputDataFile * f, modelType m);

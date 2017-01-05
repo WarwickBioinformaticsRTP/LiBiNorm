@@ -20,7 +20,7 @@ enum mode {
 class LiBiCount : private LiBiNorm
 {
 	//	Used for reading back cached read information from cache files
-	class cacheEntry 
+	class cacheEntry
 	{
 	public:
 		cacheEntry() : file(0) {};
@@ -37,6 +37,7 @@ class LiBiCount : private LiBiNorm
 		std::string fname;
 		std::ifstream * file;
 	};
+
 
 
 public:

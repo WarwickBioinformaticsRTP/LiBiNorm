@@ -58,7 +58,7 @@ int LiBiCount::main(int argc, char **argv)
 	stringEx bamFileName,featureFileName,outputFilename,geneListFilename,
 		id_attribute = "gene_id";
 
-	string feature_type;
+	stringEx feature_type;
 
 	reverseStrand = false;
 	useStrand = true;
@@ -235,7 +235,7 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 		tempDirectory = countsFilename.replaceSuffix("_tempFiles");
 
 
-	if (feature_type.size() == 0)
+	if (!feature_type)
 		feature_type = DEFAULT_FEATURE_TYPE_EXON;
 
 	if (!id_attribute)
@@ -959,11 +959,12 @@ bool LiBiCount::processPositionOrderedBamData()
 	bamCounter = 0;
 	int cacheCounter = 0;
 
-
+	//	A class for caching the reads for which we have not yet found a pair.  When it exceeds a certain size
+	//	it gets saved to disk
 	class readCacheClass : public map<string,vector<readData> >
 	{
 	public:
-		void save(const string & filename)
+		void save(const stringEx & filename)
 		{
 			TsvFile outFile;
 			outFile.open(filename);
@@ -1043,7 +1044,7 @@ bool LiBiCount::processPositionOrderedBamData()
 		if (readCache.size() > maxCacheSize)
 		{
 			optMessage("Outputting cache data ",cacheCounter+1);
-			readCache.save(stringEx(tempDirectory,"file",cacheCounter++));
+			readCache.save({tempDirectory,"file",cacheCounter++});
 		}
 
 		OK = reader.GetNextAlignment(ba,false);
@@ -1088,6 +1089,7 @@ bool LiBiCount::processPositionOrderedBamData()
 //	as a pair
 void LiBiCount::processCachedReads(size_t cacheFileCount)
 {
+
 	vector<cacheEntry> cacheReads(cacheFileCount);
 
 	//	readIndex has a lits of the current reads, ordered by name.
@@ -1285,7 +1287,7 @@ void LiBiCount::fileCompare(int argc, char **argv)
 	to disk
 */
 
-LiBiCount::cacheEntry::~cacheEntry() 
+LiBiCount::cacheEntry::~cacheEntry()
 {
 	close();
 };

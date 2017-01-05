@@ -50,10 +50,12 @@ public:
 	chromosomeFeatureData::iterator * overlaps;
 };
 
-
+//	A map of the features associated with each gene
 typedef std::map<std::string,chromosomeFeatureData> genomeFeatureRegions;
-typedef std::multimap<size_t,chromosomeFeatureData::iterator> chromosomeEndIndexMap;
 
+//	For each region in the genome where a read starts we store a reference to an iterator that 
+//	points to the first region that overlaps the region 
+typedef std::multimap<size_t,chromosomeFeatureData::iterator> chromosomeEndIndexMap;
 typedef std::map<std::string,chromosomeEndIndexMap > genomeEndIndexMap;
 
 typedef std::vector<featureRegion *> featureRegionList;
@@ -82,28 +84,21 @@ public:
 	char strand;
 };
 
-
+//
+//	The featureFile class does the basic parsing of a gtf or gff class.  This extends this to 
+//	provide the specific information required for identifying reads with genes in LiBiNorm count
 class featureFileEx : public featureFile
 {
 public: 
 	void index(GeneCountData & geneCounts);
 	void outputChromData(const std::string & filename);
 
-
 	//	A container of all the consolidated feature regions
 	genomeFeatureRegions genomeGtfData; 
 	//	A map of the ends of the feature regions.   Used for finding overlaps
 	genomeEndIndexMap genomeEndIndex;
-
-	//	For doing comparison run with a specific set of genes
-//	setEx<std::string> geneSet;
-//	std::vector<std::string> geneList;
-
-
-	//	A map of the regions associated with a gene
+	//	A map of the regions associated with a gene, indexed by the name of the gene (which could be a transcript)
 	std::map<std::string,geneData> genes;
-
-
 };
 
 #endif
