@@ -112,7 +112,7 @@ static mutex mtx;
 					//	All models have been done
 					return;
 			}
-			mcmcRun = model_iterator->second.requested++;
+			mcmcRun = model_iterator->second.counter++;
 
 			currentModel = model_iterator->first;
 			progMessage("Starting ", currentModel,", iteration:", mcmcRun);
