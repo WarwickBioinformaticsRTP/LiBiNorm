@@ -4,24 +4,8 @@
 #include <map>
 using namespace std;
 
-
 /*
-
-This code implements the six different models for the bias within an RNA transcript.
-
-In each case the parameters (between 2 and 5 ) are passed in with param and the data, ie the information about the reads
-and the genes are passed in in data.
-
-data.fragData contains the information about the individual reads, one entry per read
-data.geneIndex indeicates which gene a read is associated with, one entry per read
-data.geneData gives inforation about each gene
-data.genedata[0] is the lengths of the genes
-data.geneData[1] are the frequencies
-
-One modification arises from teh fact that the normalisation values are the same for all reads in the gene so only need
-to be calculated per gene.  The (x) method uses the geneIndex to expand the one per gene vector to a one per read vector so that the normalisation 
-can be performed for each read.
-
+	Support functions of the modelType enumerated values
 */
 
 //	Returns a list of all the models, which is used to iterate through the list
@@ -31,6 +15,7 @@ const std::vector<modelType> & allModels()
 	return list;
 };
 
+//	Converts a modelType to a string
 std::string conv(const modelType m)
 {
 	switch (m)
@@ -46,14 +31,13 @@ std::string conv(const modelType m)
 	return "";
 }
 
-
-namespace std
-{
-	string to_string(const modelType & m)
+//namespace std
+//{
+	string std::to_string(const modelType & m)
 	{
 		return conv(m);
 	}
-}
+//}
 ostream& operator<< (ostream &out, const modelType & m)
 {
 	out << conv(m);
@@ -135,6 +119,25 @@ headerType getHeaders()
 }
 
 
+/*
+
+This code implements the six different models for the bias within an RNA transcript.
+
+In each case the parameters (between 2 and 5 ) are passed in with param and the data, 
+ie the information about the reads and the genes are passed in in data.
+
+data.fragData contains the information about the individual reads, one entry per read
+data.geneIndex indeicates which gene a read is associated with, one entry per read
+data.geneData gives inforation about each gene
+data.geneLengths is the lengths of the genes
+data.geneFrequencies are the frequencies
+
+One modification from the original matlab code arises from the fact that the normalisation 
+values are the same for all reads in the gene so only need to be calculated per gene.  
+The (x) method uses the geneIndex to expand the one per gene vector to a one per read vector
+so that the normalisation can be performed for each read.
+
+*/
 
 
 //	The log liklyhood calculations for each of the models

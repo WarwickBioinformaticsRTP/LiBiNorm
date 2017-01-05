@@ -19,10 +19,6 @@
 
 using namespace std;
 
-//	First some standard methods for handling the model enumeration
-
-
-
 #ifdef _DEBUG
 //	use this to test the calculations based on a specific result of the parameter derivation
 // #define FIXED_RESULTS log10(3.9644),log10(147.39),log10(0.0079),log10(2.0128E-4),0
@@ -95,28 +91,31 @@ int main(int argc, char **argv)
 	return EXIT_SUCCESS;
 }
 
+//	Multiple instances of this are called, each works through the requested mcmc runs as 
+//	listed in threadLoopCounts which has a pair of integers associated with each 
 void LiBiNorm::mcmcThread(optionsType options)
 {
-	map<modelType,pair<int,int> >::iterator model_iterator = threadLoopCounts.begin();
+	map<modelType, loop_counts >::iterator model_iterator = threadLoopCounts.begin();
 	modelType currentModel;
-	size_t loop;
-	static mutex mtx;
+	mcmcRunId mcmcRun;
+static mutex mtx;
 	while (true)
 	{
 		//  Look for an iteration of a loop that is yet to be done.
 		{
 			lock_guard<mutex> lock(mtx);
-			while(model_iterator->second.first > model_iterator->second.second)
+			//	Check to see if we have done all the runs associated with this model
+			//	if so then move on to the next
+			while(model_iterator->second.counter > model_iterator->second.requested)
 			{
 				if (++model_iterator ==threadLoopCounts.end())
-				{
+					//	All models have been done
 					return;
-				}
 			}
-			loop = model_iterator->second.first++;
+			mcmcRun = model_iterator->second.requested++;
 
-			progMessage("Starting ",model_iterator->first,", iteration:",loop);
 			currentModel = model_iterator->first;
+			progMessage("Starting ", currentModel,", iteration:", mcmcRun);
 		}
 
 		switch (currentModel)
@@ -152,7 +151,7 @@ void LiBiNorm::mcmcThread(optionsType options)
 		{
 			lock_guard<mutex> lock(mtx);
 
-			progMessage("Finishing ", model_iterator->first, ", iteration:", loop);
+			progMessage("Finishing ", currentModel, ", iteration:", mcmcRun);
 
 #ifdef STORE_ENDPOINTS
 			Chain[currentModel].emplace(loop, mcmcEngine.chain().back());
@@ -160,8 +159,9 @@ void LiBiNorm::mcmcThread(optionsType options)
 #endif
 
 			//	Always store full set of results as these are needed to calculate the optimal parameters
-			fullResultChain[currentModel].emplace(loop, move(mcmcEngine._chain));
-			fullResultSSChain[currentModel].emplace(loop, move(mcmcEngine._sschain));
+			//	emplace/move them for efficiency
+			fullResultChain[currentModel].emplace(mcmcRun, move(mcmcEngine._chain));
+			fullResultSSChain[currentModel].emplace(mcmcRun, move(mcmcEngine._sschain));
 		}
 	}
 }
@@ -376,11 +376,11 @@ bool LiBiNorm::coreParameterEstimation()
 	//	Set the number of iterations required of each of the models.
 	for (modelType m : allModels())
 	{
-		threadLoopCounts[m].first = 1;
+		threadLoopCounts[m].counter = 1;
 		if (m == theModel)
-			threadLoopCounts[m].second = options.Nruns;
+			threadLoopCounts[m].requested = options.Nruns;
 		else
-			threadLoopCounts[m].second = NrunsOtherModels;
+			threadLoopCounts[m].requested = NrunsOtherModels;
 	}
 
 
@@ -422,7 +422,7 @@ bool LiBiNorm::coreParameterEstimation()
 		multimap <double, dataVec *> & orderedResults = allOrderedResults[m];
 
 		bestResult & br = bestResults[m];
-		for (size_t i = 1; i <= fullResultSSChain[m].size(); i++)
+		for (mcmcRunId i = 1; i <= fullResultSSChain[m].size(); i++)
 		{
 			for (size_t j = fullResultSSChain[m][i].size() - 1; j > fullResultSSChain[m][i].size() / 2; j--)
 			{
@@ -451,7 +451,7 @@ bool LiBiNorm::coreParameterEstimation()
 		vector<dataVec> p_N(2, dataVec(size));
 		int N = 0;
 
-		for (size_t i = 1; i <= fullResultSSChain[m].size(); i++)
+		for (mcmcRunId i = 1; i <= fullResultSSChain[m].size(); i++)
 		{
 			for (size_t j = fullResultSSChain[m][i].size() - 1; j > fullResultSSChain[m][i].size() / 2; j--)
 			{
@@ -548,7 +548,7 @@ void LiBiNorm::printResults()
 		mcmcResult.printEnd();
 	}
 	//	The number of rows is set by the maximum number of runs, which may be for one or all models
-	for (size_t i = 1; i <= Nruns; i++)
+	for (mcmcRunId i = 1; i <= Nruns; i++)
 	{
 		mcmcResult.printStart(_s("Chain end ", i));
 		for (modelType m : allModels())
@@ -633,7 +633,7 @@ void LiBiNorm::printAllMcmcRunData()
 		//	For each of the mcmc runs print out the results.  Each run is a column
 		for (size_t i = 0; i < fullResultChain[modl][1].size(); i++)
 		{
-			for (size_t j = 1; j <= fullResultChain[modl].rbegin()->first; j++)
+			for (mcmcRunId j = 1; j <= fullResultChain[modl].rbegin()->first; j++)
 			{
 				// fullResultChain[modl][j][i] is a vector of N values which are printed out as N tab separated values
 				//	using the TsvFile support for printing vectors.

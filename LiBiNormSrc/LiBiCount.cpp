@@ -314,8 +314,8 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 
 	//	Need to output landscape file now because the data will be modified during the process
 	//	of selecting reads for normalisation
-	if ((landscapeFilename) && !geneCounts.outputRNApositions(landscapeFilename))
-		exitFail("Unable to output RNA positions to :", landscapeFilename);
+	if ((landscapeFilename) && !geneCounts.outputLandscape(landscapeFilename))
+		exitFail("Unable to output landscape data to :", landscapeFilename);
 
 	if (normalise)
 	{
@@ -374,8 +374,6 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 
 //	overlapCounts and chromosomeInfo would have been declared inside addRead as they are local to addRead.  
 //	However this produces a C++ warning that the decorated name is too long, which can cause problems with debugging
-
-//	
 struct overlapCounts
 {
 	size_t partial; // A count of the number of partial matches for this gene/region type combination
@@ -393,23 +391,6 @@ struct chromosomeGeneInfo: public map<string,overlapCounts>
 	size_t noMatch;
 	size_t nSegments;
 	chromosomeGeneInfo():noMatch(0),nSegments(0){};
-	~chromosomeGeneInfo()
-	{
-
-	};
-
-	//	Returns the number of independent gene/region type combinations
-	//	It is possible that this is incorrect and it should be returning the number of genes associated with a particular region type
-	//	This needs to be checked
-/*	size_t size()
-	{
-		size_t _s = 0;
-		for (auto & i : This)
-		{
-			_s += i.second.size();
-		}
-		return _s;
-	}*/
 };
 
 
@@ -705,7 +686,6 @@ void LiBiCount::addRead(const regionLists & segments,const featureFileEx & gtfDa
 			}
 
 			//  If this is strict mode then the only option is a strict match
-
 			if (result == nullptr)
 			{
 				if ((countMode == intersect_strict) || (countMode == intersect_all))
@@ -721,8 +701,8 @@ void LiBiCount::addRead(const regionLists & segments,const featureFileEx & gtfDa
 			}
 
 			//   ***************   BEWARE******************
-			//	If the mode is intersection_nonempty we purposly move through to the
-			// intersection union case to see whether the read is a 'union' type of match
+			//	If the mode is intersection_nonempty we purposely move through to the
+			//  intersection union case to see whether the read is a 'union' type of match
 			//	so, no break between case statements
 		}
 	case intersect_union:
@@ -847,7 +827,7 @@ void LiBiCount::addRead(const regionLists & segments,const featureFileEx & gtfDa
 	}
 }
 
-
+//	Increments counter as reads are read from the file
 void LiBiCount::incBamCounter(const BamAlignment * ba,int size)
 {
 	if ((++bamCounter % REP_LEN) == 0)
@@ -868,7 +848,6 @@ void LiBiCount::incBamCounter(const BamAlignment * ba,int size)
 
 bool LiBiCount::AReadIsMapped(const BamAlignment & ba)
 {
-
 	if (!ba.IsMapped())
 	{
 		if (ba.IsPaired())
@@ -886,7 +865,6 @@ bool LiBiCount::AReadIsMapped(const BamAlignment & ba)
 			return false;
 		}
 	}
-
 	return true;
 }
 
@@ -1105,17 +1083,14 @@ bool LiBiCount::processPositionOrderedBamData()
 	return true;
 }
 
+//	Go through the reads in the file caches.  The read pairs associated with the same fragment will be in different files
+//	and the files are ordered by read name so we only need to look at the next reads in each file to spot pairs that can be processed
+//	as a pair
 void LiBiCount::processCachedReads(size_t cacheFileCount)
 {
-/*	Go through the reads in the file caches.  The read pairs associated with the same fragment will be in different files
-	and the files are ordered by read name so we only need to look at the next reads in each file to spot pairs that can be processed
-	as a pair
-	*/
-
 	vector<cacheEntry> cacheReads(cacheFileCount);
 
 	//	readIndex has a lits of the current reads, ordered by name.
-
 	class readCache : public map<string,map<int,vector<readData> > > 
 	{
 	public:
@@ -1135,7 +1110,7 @@ void LiBiCount::processCachedReads(size_t cacheFileCount)
 			}
 
 			if(cacheReads[index].readNext())
-				This[cacheReads[index].name][index].emplace_back(cacheReads[index]);
+				This[cacheReads[index].name][index].emplace_back(cacheReads[index].currentRead);
 
 		}
 	} reads;
@@ -1143,10 +1118,10 @@ void LiBiCount::processCachedReads(size_t cacheFileCount)
 	for (size_t i = 0;i < cacheFileCount;i++)
 	{
 		cacheReads[i].open(stringEx(tempDirectory,"file",i));
-		reads[cacheReads[i].name][i].emplace_back(cacheReads[i]);
+		reads[cacheReads[i].name][i].emplace_back(cacheReads[i].currentRead);
 		for (int j = 0;(j < 10) && (cacheReads[i].readNext());j++)
 		{
-			reads[cacheReads[i].name][i].emplace_back(cacheReads[i]);
+			reads[cacheReads[i].name][i].emplace_back(cacheReads[i].currentRead);
 		}
 	}
 
@@ -1303,15 +1278,20 @@ void LiBiCount::fileCompare(int argc, char **argv)
 
 }
 
+/*
+	The methods associated with a cache file.  The cache is used for storing reads in 
+	position ordered bam files until the mates turn up. Entries are added and removed 
+	from the in memory cache until it reaches a certain size, when it is then written
+	to disk
+*/
 
-
-cacheEntry::~cacheEntry() 
+LiBiCount::cacheEntry::~cacheEntry() 
 {
 	close();
 };
 
 
-bool cacheEntry::open(const std::string filename)
+bool LiBiCount::cacheEntry::open(const std::string filename)
 {
 	file = new std::ifstream();
 	file ->open(filename);
@@ -1320,17 +1300,18 @@ bool cacheEntry::open(const std::string filename)
 	readNext();
 	return true;
 }
-bool cacheEntry::readNext()
+bool LiBiCount::cacheEntry::readNext()
 {
 	if (file->eof())
 		return false;
-	cigar.clear();
+	currentRead.cigar.clear();
 	std::string line;
 	getline(*file,line);
-	parseTsv(line,name,refId,position,strand,cigar,NH,qual);
+	parseTsv(line,name, currentRead.refId, currentRead.position, currentRead.strand, 
+		currentRead.cigar, currentRead.NH, currentRead.qual);
 	return true;
 }
-void cacheEntry::close()
+void LiBiCount::cacheEntry::close()
 {
 	if (file)
 	{

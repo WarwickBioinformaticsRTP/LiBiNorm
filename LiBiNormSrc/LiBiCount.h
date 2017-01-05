@@ -15,8 +15,30 @@ enum mode {
 	intersect_all
 };
 
+
+
 class LiBiCount : private LiBiNorm
 {
+	//	Used for reading back cached read information from cache files
+	class cacheEntry 
+	{
+	public:
+		cacheEntry() : file(0) {};
+		~cacheEntry();
+
+		bool open(const std::string filename);
+		bool readNext();
+		void close();
+
+		//	Holds the name of the read, which is not in the readData class
+		readData currentRead;
+		std::string name;
+	private:
+		std::string fname;
+		std::ifstream * file;
+	};
+
+
 public:
 	int main(int argc, char **argv);
 

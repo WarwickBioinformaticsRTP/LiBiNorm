@@ -3,12 +3,14 @@
 
 #include <map>
 #include "stringEx.h"
+#include "containerEx.h"
 #include "GeneCountData.h"
 #include "ModelData.h"
 
 
 #define DEF_MAX_READS_FOR_PARAM_ESTIMATION 1000000
-#define MAX_LENGTH_OF_GENE_FOR_PARAM_ESTIMATION 20000
+//#define MAX_LENGTH_OF_GENE_FOR_PARAM_ESTIMATION 20000
+#define MAX_LENGTH_OF_GENE_FOR_PARAM_ESTIMATION 200000000
 #define MAX_READS_GENE 100
 #define DEF_THREADS 3
 #define MCMC_ITERATIONS 2000
@@ -27,6 +29,8 @@
 //	Use this to add the mode where duplicates in bam files can be removed
 // #define DEDUP_MODE
 
+typedef size_t mcmcRunId;
+
 class LiBiNormCore
 {
 protected:
@@ -44,7 +48,8 @@ protected:
 
 	bool normalise, pauseAtEnd;
 	modelType theModel;
-	size_t maxReads, Nthreads,Nsimu,Nruns,NrunsOtherModels;
+	size_t maxReads, Nthreads, Nsimu;
+	mcmcRunId Nruns,NrunsOtherModels;
 
 	stringEx landscapeFilename, normaliseResultsFilename, countsFilename;
 };
@@ -61,10 +66,11 @@ public:
 
 	int main(int argc, char **argv);
 	void mcmcThread(optionsType options);
-
 protected:
 	bool coreParameterEstimation();
 	modelType getBestModel();
+
+	//	For outputting results
 	void printResults();
 	void printBias();
 	void printAllMcmcRunData();
@@ -84,13 +90,14 @@ private:
 	//	For each model the results for each mcmc run is stored as a map indexd by run number
 	//	This is because the runs are done on separate threads and we want to store the results by the run
 	//	identifier and not the order that they finished
-	std::map<modelType,std::map<size_t, std::vector <dataVec > > >fullResultChain;
-	std::map<modelType,std::map<size_t,dataVec> >fullResultSSChain;
+	std::map<modelType,std::map<mcmcRunId, std::vector <dataVec > > >fullResultChain;
+	std::map<modelType,std::map<mcmcRunId,dataVec> >fullResultSSChain;
 
 	headerType headers;
 
 	//	Counts of the number of mcmc runs that will be done for each model
-	std::map<modelType,std::pair<int,int> > threadLoopCounts;
+	struct loop_counts { mcmcRunId requested, counter; };
+	std::map<modelType, loop_counts> threadLoopCounts;
 
 	//	The results data
 	std::map<size_t, std::multimap <double, dataVec *> > allOrderedResults;

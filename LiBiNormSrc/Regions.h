@@ -16,8 +16,8 @@ public:
 };
 
 //	This holds the data from a bam entry that we are actually interested in.  It is the basis
-//	of 'in program' persisted data and also data that is persisted to cache files.  Does not include the
-//	 read name as this is stored elesewhere (e.g as the index of a map of readData
+//	of 'in program' persisted data and also data that is persisted to cache files.  Does not 
+//	include the read name as this is stored eleswhere (e.g as the index of a map of readData)
 class readData
 {
 	public:
@@ -29,7 +29,7 @@ class readData
 		Cigar cigar;
 		readData(void){}
 
-		//	This constructor creates the readData from the bam file entry.  This means that methos expecting 
+		//	This constructor creates the readData from the bam file entry.  This means that methods expecting 
 		//	readData can be passed a bamAlignment.  Use an rValue constructor so that we can 'swallow up' the cigar data 
 		//	rather than making a copy of it as once the readData has been created we will have no further use
 		//	for the cigar data
@@ -67,26 +67,7 @@ class readData
 				strand = (ba.IsReverseStrand() == ba.IsFirstMate())?'-':'+';
 			else
 				strand = ba.IsReverseStrand() ? '-' : '+';
-
 		};
-};
-
-//	Used for reading back cached read information from cache files
-class cacheEntry : public readData
-{
-	std::string fname;
-	std::ifstream * file;
-public:
-	//	Holds the name of the read, which is not in the readData class
-	std::string name;
-
-	cacheEntry() : file (0) {};
-	~cacheEntry(); 
-
-
-	bool open(const std::string filename);
-	bool readNext();
-	void close();
 };
 
 //	A reagion within a chromosome
@@ -156,7 +137,7 @@ public:
 	};
 };
 
-//	Declare the availability of methods that are used by parser for parser cigar strings
+//	Declare the availability of methods that are used by parser for parseing cigar strings
 //	and also the methods used for printing a cacheentry and the cigar data
 //	These are both used for the temporary cache data that is placed on disk
 namespace parserInternal

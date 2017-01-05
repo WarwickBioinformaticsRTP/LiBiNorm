@@ -80,7 +80,7 @@ public:
 	void transferTo(mcmcGeneData & mcmcData,size_t maxLength,int maxTotReads);
 
 	bool outputGeneCounts(const std::string & filename, int detailLevel = 0, stringEx model = "");
-	bool outputRNApositions(const std::string & filename);
+	bool outputLandscape(const std::string & filename);
 
 	void useSelectedGenes(const std::string & filename);
 

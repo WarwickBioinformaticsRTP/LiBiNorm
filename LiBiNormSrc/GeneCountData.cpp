@@ -148,11 +148,11 @@ bool GeneCountData::outputGeneCounts(const string & filename, int detailLevel, s
 		switch (detailLevel)
 		{
 		case 1:
-			output.print("Gene", "count", "length", "Bias", _s("FPKM_", model), _s("TPM_", model));
+			output.print("Gene", "count", "length", "Bias", _s("TPM_", model));
 			break;
 		case 2:
-			output.print("", "", "RNA", "Bias:", model + " +", model + " +");
-			output.print("Gene", "count", "length", model, "FPKM", "TPM");
+			output.print("", "", "RNA", "Bias:", model + " +");
+			output.print("Gene", "count", "length", model, "TPM");
 			output.print();
 			break;
 		case 3:
@@ -171,7 +171,7 @@ bool GeneCountData::outputGeneCounts(const string & filename, int detailLevel, s
 			{
 			case 1:
 			case 2:
-				output.printMiddle(lengths[0][i], bias[i],RPKM[1][i], TPM[1][i]);
+				output.printMiddle(lengths[0][i], bias[i], TPM[1][i]);
 				break;
 			case 3:
 				output.printMiddle(lengths[0][i], bias[i],
@@ -203,12 +203,13 @@ bool GeneCountData::outputGeneCounts(const string & filename, int detailLevel, s
 	return true;
 }
 
-bool GeneCountData::outputRNApositions(const string & filename)
+
+bool GeneCountData::outputLandscape(const string & filename)
 {
 	TsvFile output;
 
 	if (!output.open(filename))
-		exitFail("Unable to open ", filename, " for position data");
+		exitFail("Unable to open ", filename, " for landscape data");
 
 	for (size_t i = 1;i < names.size();i++)
 	{
