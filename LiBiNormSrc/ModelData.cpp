@@ -5,6 +5,12 @@
 #include <map>
 using namespace std;
 
+//	The original MATLAB code had an error in setting the initial values for mcmc runs which this simulates
+// #define SIMULATE_MATLAB_BUG
+//	Allows LL to be calculated with a specific set of values
+// #define PRESET_VALUES { 0.1,0.6,-3.1,-3.1} 
+
+
 /*
 	Support functions of the modelType enumerated values
 */
@@ -35,13 +41,14 @@ string conv(const modelType m, bool removeGaps)
 	return retVal;
 }
 
-//namespace std
-//{
-	string std::to_string(const modelType & m)
-	{
-		return conv(m);
-	}
-//}
+//	The following are needed by the stringEx class, but are useful in other contexts
+//	Used by microsoft stringEx
+string std::to_string(const modelType & m)
+{
+	return conv(m);
+}
+
+//	Used by gcc stringEx
 ostream& operator<< (ostream &out, const modelType & m)
 {
 	out << conv(m);
@@ -107,6 +114,13 @@ paramSet GetModelParams(modelType model)
 		};
 		break;
 	};
+
+#ifdef PRESET_VALUES
+	params.setValues(PRESET_VALUES);
+#endif
+#ifdef SIMULATE_MATLAB_BUG
+	params[0].value = rand(3);
+#endif
 	return params;
 }
 
@@ -141,6 +155,7 @@ values are the same for all reads in the gene so only need to be calculated per 
 The (x) method uses the geneIndex to expand the one per gene vector to a one per read vector
 so that the normalisation can be performed for each read.
 
+The original MATLAB code is shown in comments
 */
 
 
@@ -165,7 +180,6 @@ double FLL_ModelA(const dataVec & param, const mcmcGeneData & data)
 		const double & freq_l = Freq_l[i];
 
 //	f_frag = (x> h).*(x < l-h) + 1/d;
-
 		double f_frag = 1.0/d;
 		if ((x> h) && (x < (l-h)))
 			f_frag += 1.0;
@@ -177,21 +191,16 @@ double FLL_ModelA(const dataVec & param, const mcmcGeneData & data)
 		if (l != last_l)
 		{
 
-
 //	norm =  (2*h<l).*(l-2*h) + l/d;
-
 			norm =  l/d;
 			if (2*h<l)
 				norm +=  (l-(2*h));
 			last_l = l;
 		}
 
+//LogL = -2*sum(log(f_frag./norm)./freq_l);
 		LogL += log(f_frag/norm)/freq_l;
 	}
-
-
-//LogL = -2*sum(log(f_frag./norm)./freq_l);
-
 	LogL = -2*LogL;
 	return LogL;
 }
@@ -213,9 +222,8 @@ double FLL_ModelB(const dataVec & param, const mcmcGeneData & data)
 	double norm=0;
 	double LogL = 0;
 
-	//	f_frag = (x> h).*(x < l-h)./(t1+ t2) .* (t1.*exp(-2*l*(t1+t2)+(t1+t2)*(l-h+x)) + t2*exp(-l*(t1+t2))) + ...
-	//         1./(t1+ t2) .* (t1.*exp(-2*l*(t1+t2)+(t1+t2)*(l+x)) + t2*exp(-l*(t1+t2)))/d;
-
+//	f_frag = (x> h).*(x < l-h)./(t1+ t2) .* (t1.*exp(-2*l*(t1+t2)+(t1+t2)*(l-h+x)) + t2*exp(-l*(t1+t2))) + ...
+//         1./(t1+ t2) .* (t1.*exp(-2*l*(t1+t2)+(t1+t2)*(l+x)) + t2*exp(-l*(t1+t2)))/d;
 	double t1_p_t2 = t1+t2;
 
 	for (size_t i = 0;i < data.fragData.size(); i++)
@@ -240,9 +248,8 @@ double FLL_ModelB(const dataVec & param, const mcmcGeneData & data)
 		if (l != last_l)
 		{
 
-		//	    norm =  (2*h<l).*(t1.*(exp(-2*h*(t1+t2))-exp(-l*(t1+t2)))+t2*(t1+t2).*(l-2*h).*exp(-l*(t1+t2)))/(t1 + t2)^2 + ...
-		//        (exp(-l*(t1+t2)).*(l.*t2^2+l.*t2*t1-t1)+t1)/(t1 + t2)^2/d;
-
+//	    norm =  (2*h<l).*(t1.*(exp(-2*h*(t1+t2))-exp(-l*(t1+t2)))+t2*(t1+t2).*(l-2*h).*exp(-l*(t1+t2)))/(t1 + t2)^2 + ...
+//        (exp(-l*(t1+t2)).*(l.*t2^2+l.*t2*t1-t1)+t1)/(t1 + t2)^2/d;
 			norm = ((exp_l_t1_t2*(l*t2*t1_p_t2-t1)+t1)/d);
 			if ((2*h)<l)
 				norm += (t1*(exp(-2*h*t1_p_t2)-exp_l_t1_t2)+t2*t1_p_t2*(l-(2*h))*exp_l_t1_t2);
@@ -275,7 +282,6 @@ double FLL_ModelC(const dataVec & param, const mcmcGeneData & data)
 
 //    f_frag = (x> h).*(x < l-h).*exp(-t2*(x+h)) + ...
 //    exp(-t2*(x))/d;
-
 	for (size_t i = 0;i < data.fragData.size(); i++)
 	{
 		const double & x = data.fragData[i];
@@ -293,22 +299,19 @@ double FLL_ModelC(const dataVec & param, const mcmcGeneData & data)
 		if (l != last_l)
 		{
 
-
 //    norm =  (2*h<l).*(exp(-2*h*t2) - exp(-l*( t2)))/t2 + ...
 //        (1-exp(-l*( t2)))/t2/d;
-
 			double exp_ml_t2 = exp(-l*( t2));
-//			dataVec normX =  (2*h<L)*(exp(-2*h*t2) - exp_mL_t2)/t2 + (1-exp_mL_t2)/t2/d;
 
 			norm = (1-exp_ml_t2)/t2/d;
 			if (2*h<l)
 				norm += (exp(-2*h*t2) - exp_ml_t2)/t2;
 
-//		LogL = -2*sum(log(f_frag/norm(geneIndex))/freq_l(geneIndex));
 
 			last_l = l;
 		}
 
+//		LogL = -2*sum(log(f_frag/norm(geneIndex))/freq_l(geneIndex));
 		LogL += log(f_frag/norm)/freq_l;
 	}
 
@@ -346,10 +349,7 @@ freq_l = data(3, :);
 
 //f_frag = (x> h).*(x < l-h)./(t1+ t2) .* (t1.*exp(-t1*(l-x) - 2*t2*h - t1*h) + t2.*exp(-t1*l-t2*(x+h))) + ...
 //         1./(t1+ t2) .* (t1.*exp(-t1*(l-x)) + t2.*exp(-t1*l-t2*(x)))/d;
-
 	double t1_p_t2 = t1+t2;
-//	double t1_p_t2_sq = t1_p_t2*t1_p_t2;
-
 
 	for (size_t i = 0;i < data.fragData.size(); i++)
 	{
@@ -362,17 +362,14 @@ freq_l = data(3, :);
 		if ((x > h) && (x < l-h))
 			f_frag += (t1*exp(-t1*(l-x) - 2*t2*h - t1*h) + t2*exp(-t1*l-t2*(x+h)))/t1_p_t2;
 
-		//if (isempty(find(f_frag == 0, 1)))
 		if (f_frag == 0)
 			return 1E20;
-
 
 		if (l != last_l)
 		{
 
-			//    norm =  (2*h<l).*(exp(-2*h*(t1 + t2)) - exp(-l*(t1 + t2)))/(t1 + t2) + ...
-			//    (1-exp(-l*(t1 + t2)))/(t1 + t2)/d;
-
+//    norm =  (2*h<l).*(exp(-2*h*(t1 + t2)) - exp(-l*(t1 + t2)))/(t1 + t2) + ...
+//    (1-exp(-l*(t1 + t2)))/(t1 + t2)/d;
 			double exp_ml_t1_p_t2 = exp(-l*t1_p_t2);
 			norm =  (2*h<l)*(exp(-2*h*t1_p_t2) - exp_ml_t1_p_t2)/t1_p_t2 + 
 				(1-exp_ml_t1_p_t2)/t1_p_t2/d;
@@ -382,10 +379,8 @@ freq_l = data(3, :);
 
 //			LogL = -2*sum(log(f_frag/norm(geneIndex))/Freq_l(geneIndex));
 		}
-
 		temp_l += log(f_frag/norm)/freq_l;
 	}
-
 	LogL = -2*temp_l;
 	return LogL;
 }
@@ -409,7 +404,6 @@ double FLL_ModelE(const dataVec & param, const mcmcGeneData & data)
 
 //	f_frag = (x> h).*(x < l-h)./t1/(t1+ t2).*(exp(-2*h*(t1+ t2))-exp(-(h +x)*(t1+t2)) - exp(-t1*h-2*h*t2-(l-x)*t1) + exp(-h*t2-l*t1-x*t2)) + ...
 //     1./t1/(t1+ t2) .*(1 - exp(-x*(t1+t2)) - exp(-(l-x)*t1) + exp(-l*t1-x*t2))/d;
-
 	double t1_p_t2 = t1+t2;
 	double t1_p_t2_sq = t1_p_t2*t1_p_t2;
 	double exp_m2_h_t1_p_t2 = exp(-2*h*t1_p_t2);
@@ -433,7 +427,6 @@ double FLL_ModelE(const dataVec & param, const mcmcGeneData & data)
 
 //		   norm =  (2*h<l).*(exp(-l*t1 - 2*h*t2)*(t1 + t2)^2 - exp(-l*(t1 + t2))*t1^2 + t1*t2*exp(-2*h*(t1 + t2))*(l*t2 -2*h*t1 -2*h*t2+l*t1 - t2/t1 - 2))/(t1 + t2)^2/t1^2/t2 + ...
 //        (l-1/(t1 + t2) - 1/t1 - t1/t2/(t1+t2)*exp(-l*(t1 + t2))+(t1 + t2)/t1/t2*exp(-l*t1))/(t1 + t2)/t1/d;
-
 			norm = 	(l-1/t1_p_t2 - 1/t1 - t1/t2/t1_p_t2*exp(-l*t1_p_t2)+t1_p_t2/t1/t2*exp(-l*t1))/t1_p_t2/t1/d;
 
 			if (2*h < l)
@@ -468,7 +461,6 @@ double FLL_ModelBD(const dataVec & param, const mcmcGeneData & data)
 //         1./(t1+ t2) .* (t1.*exp(-2*l*(t1+t2)+(t1+t2)*(l+x)) + t2*exp(-l*(t1+t2)))/d) + ...
 //         (1-a)*( (x> h).*(x < l-h)./(t1+ t2) .* (t1.*exp(-t1*(l-x) - 2*t2*h - t1*h) + t2.*exp(-t1*l-t2*(x+h))) + ...
 //         1./(t1+ t2) .* (t1.*exp(-t1*(l-x)) + t2.*exp(-t1*l-t2*(x)))/d);
-
 	double t1_p_t2 = t1+t2;
 	double t1_p_t2_sq = t1_p_t2*t1_p_t2;
 
@@ -502,7 +494,6 @@ double FLL_ModelBD(const dataVec & param, const mcmcGeneData & data)
 //        (exp(-l.*(t1+t2)).*(l.*t2^2+l.*t2*t1-t1)+t1)/(t1 + t2)^2/d) + ...
 //        (1-a)*( (2*h<l).*(exp(-2*h*(t1 + t2)) - exp(-l*(t1 + t2)))/(t1 + t2) + ...
 //        (1-exp(-l.*(t1 + t2)))/(t1 + t2)/d);
-
 			norm = (exp_ml_t1_p_t2*(l*t2*t2+l*t2*t1-t1)+t1)/t1_p_t2_sq/d;
 			double norm_pt2 = (1-exp_ml_t1_p_t2)/t1_p_t2/d;
 
@@ -512,14 +503,10 @@ double FLL_ModelBD(const dataVec & param, const mcmcGeneData & data)
 				norm += (t1*(exp_m2_h_t1_p_t2-exp_ml_t1_p_t2)+t2*t1_p_t2*(l-2*h)*exp_ml_t1_p_t2)/t1_p_t2_sq;
 				norm_pt2 += (exp_m2_h_t1_p_t2 - exp_ml_t1_p_t2)/t1_p_t2;
 			}
-
 			norm = a*norm +(1-a) * norm_pt2;
-
 		}
-
 		LogL += log(f_frag/norm)/freq_l;
 	}
-
 	return -2*LogL;
 }
 
@@ -565,14 +552,6 @@ void getBias(modelType m,dataVec & params,const dataVec & l, dataVec & bias)
 			exp(-l*(t1 + t2))*(l*t2*t2 + t1*(exp(l*(t1 + t2)) + l*t2 - 1)) / ((t1 + t2)*(t1 + t2)) / d);
 		break;
 	case ModelC:
-		/*				for (size_t i = 0; i < l.size(); i++)
-		{
-		if (2 * h < l[i])
-		norm[i] = (exp(-2 * h*t2 - l[i] * t1) - exp(-l[i] * (t1 + t2))) / t2 + (exp(-l[i] * t1) - exp(-l[i] * (t1 + t2))) / t2 / d;
-		else
-		norm[i] = (exp(-l[i] * t1) - exp(-l[i] * (t1 + t2))) / t2 / d;
-		}
-		*/
 	{
 		dataVec exp_ml_t2 = exp(-l*(t2));
 		bias = (2 * h < l)*(exp(-2 * h*t2) - exp_ml_t2) / t2 + (1 - exp_ml_t2) / t2 / d;
@@ -589,34 +568,10 @@ void getBias(modelType m,dataVec & params,const dataVec & l, dataVec & bias)
 		}
 		break;
 	case ModelE:
-		/*  MATLAB
-		if (2 * h<l(i))
-		norm(i) = (exp(-l(i)*t1 - 2 * h*t2)*(t1 + t2) ^ 2 - exp(-l(i)*(t1 + t2))*t1 ^ 2 + t1*t2*exp(-2 * h*(t1 + t2))*(l(i)*t2 - 2 * h*t1 - 2 * h*t2 + l(i)*t1 - t2 / t1 - 2)) / (t1 + t2) ^ 2 / t1 ^ 2 / t2 + ...
-		(l(i) - 1 / (t1 + t2) - 1 / t1 - t1 / t2 / (t1 + t2)*exp(-l(i)*(t1 + t2)) + (t1 + t2) / t1 / t2*exp(-l(i)*t1)) / (t1 + t2) / t1 / d;
-		else
-		norm(i) = (l(i) - 1 / (t1 + t2) - 1 / t1 - t1 / t2 / (t1 + t2)*exp(-l(i)*(t1 + t2)) + (t1 + t2) / t1 / t2*exp(-l(i)*t1)) / (t1 + t2) / t1 / d;
-		*/
-		/*				for (size_t i = 0; i < l.size(); i++)
-		{
-		if (2 * h < l[i])
-		norm[i] = (exp(-l[i]*t1 - 2 * h*t2)*(t1 + t2)*(t1 + t2) - exp(-l[i]*(t1 + t2))*t1*t1 + t1*t2*exp(-2 * h*(t1 + t2))*(l[i]*t2 - 2 * h*t1 - 2 * h*t2 + l[i]*t1 - t2 / t1 - 2)) / ((t1 + t2)*(t1 + t2)) / (t1 *t1)/ t2 +
-		(l[i] - 1 / (t1 + t2) - 1 / t1 - t1 / t2 / (t1 + t2)*exp(-l[i]*(t1 + t2)) + (t1 + t2) / t1 / t2*exp(-l[i]*t1)) / (t1 + t2) / t1 / d;
-		else
-
-		norm[i] = (l[i] - 1 / (t1 + t2) - 1 / t1 - t1 / t2 / (t1 + t2)*exp(-l[i]*(t1 + t2)) + (t1 + t2) / t1 / t2*exp(-l[i]*t1)) / (t1 + t2) / t1 / d;
-		}
-		*/
-
-		/*	MATLAB
-		norm =  (2*h<l).*(exp(-l*t1 - 2*h*t2)*(t1 + t2)^2 - exp(-l*(t1 + t2))*t1^2 + t1*t2*exp(-2*h*(t1 + t2))*(l*t2 -2*h*t1 -2*h*t2+l*t1 - t2/t1 - 2))/(t1 + t2)^2/t1^2/t2 + ...
-		(l-1/(t1 + t2) - 1/t1 - t1/t2/(t1+t2)*exp(-l*(t1 + t2))+(t1 + t2)/t1/t2*exp(-l*t1))/(t1 + t2)/t1/d;
-		*/
-
 		bias = (2 * h < l)*(exp(-l*t1 - 2 * h*t2)*(t1 + t2)*(t1 + t2) - exp(-l*(t1 + t2))*t1*t1 + t1*t2*exp(-2 * h*(t1 + t2))*(l*t2 - 2 * h*t1 - 2 * h*t2 + l*t1 - t2 / t1 - 2)) / ((t1 + t2) * (t1 + t2)) / (t1 * t1) / t2 +
 			(l - 1 / (t1 + t2) - 1 / t1 - t1 / t2 / (t1 + t2)*exp(-l*(t1 + t2)) + (t1 + t2) / t1 / t2*exp(-l*t1)) / (t1 + t2) / t1 / d;
 
 		bias /= t1;
-
 		break;
 	case ModelBD:
 	{
@@ -624,12 +579,6 @@ void getBias(modelType m,dataVec & params,const dataVec & l, dataVec & bias)
 			(exp(-l*(t1 + t2))*(l*t2 *t2 + l*t2*t1 - t1) + t1) / ((t1 + t2) *(t1 + t2)) / d) +
 			(1 - a)*((2 * h < l)*(exp(-2 * h*(t1 + t2)) - exp(-l*(t1 + t2))) / (t1 + t2) +
 			(1 - exp(-l*(t1 + t2))) / (t1 + t2) / d);
-
-
-		//					norm = a*((2 * h<l).*(t1.*(exp(-2 * h*(t1 + t2)) - exp(-l.*(t1 + t2))) + t2*(t1 + t2).*(l - 2 * h).*exp(-l.*(t1 + t2))) / (t1 + t2) ^ 2 + ...
-		//						(exp(-l.*(t1 + t2)).*(l.*t2 ^ 2 + l.*t2*t1 - t1) + t1) / (t1 + t2) ^ 2 / d) + ...
-		//						(1 - a)*((2 * h<l).*(exp(-2 * h*(t1 + t2)) - exp(-l.*(t1 + t2))) / (t1 + t2) + ...
-		//						(1 - exp(-l.*(t1 + t2))) / (t1 + t2) / d);
 		break;
 	}
 	}

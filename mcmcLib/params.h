@@ -42,6 +42,7 @@ public:
 	paramSet & operator = (std::vector<paramType>(a)) { std::vector<paramType>::operator = (a); return *this; };
 
 	bool isValid(const dataVec & data) const;
+	void setValues(const dataVec & vals);
 
 	dataVec getvalues() const;
 	dataVec getSigmas() const;

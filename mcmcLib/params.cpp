@@ -1,4 +1,5 @@
 #include <random>
+#include <algorithm>
 #include "params.h"
 
 using namespace std;
@@ -51,6 +52,11 @@ bool paramSet::isValid(const dataVec & data) const
 	return true;
 }
 
+void paramSet::setValues(const dataVec & vals)
+{
+	for (size_t i = 0; i < min(size(), vals.size()); i++)
+		at(i).value = vals[i];
+}
 
 dataVec paramSet::getvalues() const
 {
