@@ -1,15 +1,13 @@
 
-#include "ModelData.h"
 #include "stringEx.h"
 #include "containerEx.h"
 #include <map>
+#include "LiBiNorm.h"
 using namespace std;
 
 //	The original MATLAB code had an error in setting the initial values for mcmc runs which this simulates
 // #define SIMULATE_MATLAB_BUG
 //	Allows LL to be calculated with a specific set of values
-// #define PRESET_VALUES { 0.1,0.6,-3.1,-3.1} 
-
 
 /*
 	Support functions of the modelType enumerated values
@@ -457,10 +455,34 @@ double FLL_ModelBD(const dataVec & param, const mcmcGeneData & data)
 	double norm=0;
 	double LogL = 0;
 
+//	Original MATLAB code for reference
 //	f_frag = a*( (x> h).*(x < l-h)./(t1+ t2) .* (t1.*exp(-2*l*(t1+t2)+(t1+t2)*(l-h+x)) + t2*exp(-l*(t1+t2))) + ...
 //         1./(t1+ t2) .* (t1.*exp(-2*l*(t1+t2)+(t1+t2)*(l+x)) + t2*exp(-l*(t1+t2)))/d) + ...
 //         (1-a)*( (x> h).*(x < l-h)./(t1+ t2) .* (t1.*exp(-t1*(l-x) - 2*t2*h - t1*h) + t2.*exp(-t1*l-t2*(x+h))) + ...
 //         1./(t1+ t2) .* (t1.*exp(-t1*(l-x)) + t2.*exp(-t1*l-t2*(x)))/d);
+/*
+Example code using full dataVec arithmatic.  Slower but closer to the original MATLAB code
+	double LogL_test;
+	{
+		const dataVec & x = data.fragData;
+		const dataVec & l = L;
+		const dataVec & freq_l = Freq_l;
+
+		dataVec f_frag_test = a*((x > h)*(x < l - h) / (t1 + t2) * (t1*exp(-2 * l*(t1 + t2) + (t1 + t2)*(l - h + x)) + t2*exp(-l*(t1 + t2))) +
+			1 / (t1 + t2) * (t1*exp(-2 * l*(t1 + t2) + (t1 + t2)*(l + x)) + t2*exp(-l*(t1 + t2))) / d) +
+			(1 - a)*((x > h)*(x < l - h) / (t1 + t2) * (t1*exp(-t1*(l - x) - 2 * t2*h - t1*h) + t2*exp(-t1*l - t2*(x + h))) +
+				1 / (t1 + t2) * (t1*exp(-t1*(l - x)) + t2*exp(-t1*l - t2*(x))) / d);
+
+		dataVec norm_test = a*((2 * h < l)*(t1*(exp(-2 * h*(t1 + t2)) - exp(-l*(t1 + t2))) + t2*(t1 + t2)*(l - 2 * h)*exp(-l*(t1 + t2))) / ((t1 + t2) * (t1 + t2)) +
+			(exp(-l*(t1 + t2))*(l*(t2 *t2) + l*t2*t1 - t1) + t1) / ((t1 + t2) * (t1 + t2)) / d) +
+			(1 - a)*((2 * h < l)*(exp(-2 * h*(t1 + t2)) - exp(-l*(t1 + t2))) / (t1 + t2) +
+			(1 - exp(-l*(t1 + t2))) / (t1 + t2) / d);
+
+		LogL_test = sum(log(f_frag_test / norm_test) / freq_l);
+		LogL_test = -2 * LogL_test;
+	}
+*/
+
 	double t1_p_t2 = t1+t2;
 	double t1_p_t2_sq = t1_p_t2*t1_p_t2;
 
@@ -507,7 +529,9 @@ double FLL_ModelBD(const dataVec & param, const mcmcGeneData & data)
 		}
 		LogL += log(f_frag/norm)/freq_l;
 	}
-	return -2*LogL;
+
+	LogL = -2 * LogL;
+	return LogL;
 }
 
 

@@ -10,9 +10,8 @@ using namespace std;
 
 rnaPosVec & rnaPosVec::removeInvalidValues(rna_pos_type maxVal)
 {
-	//	Sort in place for maximum efficiency, if we find an invalid value, replace with one from the end;
-	//	Note that if we swap with a value from the end we have to check it as well to see if it is invalid
-#ifdef TEST_CODE
+#ifdef PRESET_VALUES
+	// Reproduce the matlab code so that results can be compared
 	size_t offset = 0;
 	for (size_t i = 0; i + offset < size();)
 	{
@@ -28,6 +27,8 @@ rnaPosVec & rnaPosVec::removeInvalidValues(rna_pos_type maxVal)
 	if (offset)
 		resize(size() - offset);
 #else
+	//	Sort in place for maximum efficiency, if we find an invalid value, replace with one from the end;
+	//	Note that if we swap with a value from the end we have to check it as well to see if it is invalid
 	iterator i = begin(), j = end();
 	while (i != j)
 	{
@@ -41,15 +42,15 @@ rnaPosVec & rnaPosVec::removeInvalidValues(rna_pos_type maxVal)
 	return *this;
 }
 
-//	Test code takes the first N samples rather than randomly picks samples, and uses the same 
-//	algorithm as the MATLAB code for excluding invalid calues.   Used for comparing the two outputs
-// #define TEST_CODE
+//	Test mode as set by PRESET_VALUES takes the first N samples rather than randomly picks samples,
+//	and uses the same algorithm as the MATLAB code for excluding invalid calues.   Used for comparing the two outputs
 void rnaPosVec::selectAtMost(size_t s)
 {
 	if (s > size())
 		return;
+	//For reproducibility in test mode just use the first N values
+#ifndef PRESET_VALUES
 	//	Swap the first s entries with the entry at some other position, then resize to just have the s entries
-#ifndef TEST_CODE
 	iterator i = begin();
 	for (size_t j = 0; j < s; j++)
 	{
@@ -230,7 +231,8 @@ void GeneCountData::histc(const vector<int> E)
 {
 	freq.assign(E.size(), 0);
 	histoGram_ind.assign(lengths[0].size(), -1);
-	for (size_t i = 0; i < names.size(); i++)
+	//	Increment from 1 because the first entry is the reference length
+	for (size_t i = 1; i < names.size(); i++)
 	{
 		double v = lengths[0][i];
 		size_t l = 0;

@@ -55,7 +55,7 @@ bool paramSet::isValid(const dataVec & data) const
 void paramSet::setValues(const dataVec & vals)
 {
 	for (size_t i = 0; i < min(size(), vals.size()); i++)
-		at(i).value = vals[i];
+			at(i).value = vals[i];
 }
 
 dataVec paramSet::getvalues() const

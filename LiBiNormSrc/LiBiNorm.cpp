@@ -3,14 +3,8 @@
 #include <crtdbg.h>
 #endif
 
-#include <stdlib.h>
-#include <vector>
 #include <mutex>
-#include <chrono>
 #include <thread>
-#include "libCommon.h"
-#include "containerEx.h"
-#include "mcmc.h"
 #include "LiBiNorm.h"
 #include "LiBiCount.h"
 #include "LiBiDedup.h"
@@ -83,7 +77,7 @@ int main(int argc, char **argv)
 #endif
 		if ((command == "--version") || (command == "-v"))
 		{
-			cout << "LiBiNorm version 1.2.1" << endl;
+			cout << "LiBiNorm version 1.2.2" << endl;
 			return EXIT_SUCCESS;
 		}
 		exitFail("Invalid commmand:",command);
@@ -146,7 +140,7 @@ static mutex mtx;
 		options.qcov = dataVec(params.size(), options.jumpSize);
 
 		mcmc mcmcEngine;
-		mcmcEngine.mcmcrun(consData, params, options);
+		mcmcEngine.mcmcrun(geneData, params, options);
 
 		{
 			lock_guard<mutex> lock(mtx);
@@ -164,11 +158,6 @@ static mutex mtx;
 			fullResultSSChain[currentModel].emplace(mcmcRun, move(mcmcEngine._sschain));
 		}
 	}
-}
-
-void runThread(LiBiNorm * root,	 optionsType options)
-{
-	root->mcmcThread(options);
 }
 
 
@@ -305,10 +294,9 @@ int LiBiNorm::main(int argc, char **argv)
 	if (theModel == noModel)
 		NrunsOtherModels = Nruns;
 	else
-		NrunsOtherModels = 1;
+		NrunsOtherModels = (Nruns ==1)?0:1;
 
-
-	string lastGene = geneCounts.loadData(landscapeFilename, Ngenes);
+	geneCounts.loadData(landscapeFilename, Ngenes);
 	coreParameterEstimation();
 
 	//	And then the counts and the bias for the genes themselves
@@ -361,7 +349,7 @@ int LiBiNorm::main(int argc, char **argv)
 bool LiBiNorm::coreParameterEstimation()
 {
 	geneCounts.remove_invalid_values();
-	geneCounts.transferTo(consData, MAX_READS_GENE,maxReads);
+	geneCounts.transferTo(geneData, MAX_READS_GENE,maxReads);
 
 	elapsedTime("Data loaded");
 
@@ -383,19 +371,26 @@ bool LiBiNorm::coreParameterEstimation()
 			threadLoopCounts[m].requested = NrunsOtherModels;
 	}
 
-
 #ifdef FIXED_RESULTS
 	theModel = M_FIXED_RESULTS;
 	bestResults[theModel].params = dataVec{ FIXED_RESULTS };
 #else
+
 	//	And then set the threads running
-	vector<thread> threads;
-	for (size_t i = 0; i < Nthreads; i++)
-		threads.emplace_back(thread(runThread, this, options));
+	if (Nthreads == 1)
+	{
+		//	Dont make additional threads if single threaded.  Makes debugging easier
+		mcmcThread(options);
+	}
+	else
+	{
+		vector<thread> threads;
+		for (size_t i = 0; i < Nthreads; i++)
+			threads.emplace_back(&LiBiNorm::mcmcThread, this, options);
 
-	for (auto & i : threads)
-		i.join();
-
+		for (auto & i : threads)
+			i.join();
+	}
 
 #ifdef XXXX
 	Unfinished code for
@@ -415,8 +410,7 @@ bool LiBiNorm::coreParameterEstimation()
 
 	//********************************************************************************************
 	//	Find the optimal parameter values, which are associated with the lowest likelihood value found in the last
-	//	1000 iterations of all of the runs.
-
+	//	half of the iterations of all of the runs.
 	for (modelType m  : allModels())
 	{
 		multimap <double, dataVec *> & orderedResults = allOrderedResults[m];
@@ -483,12 +477,11 @@ bool LiBiNorm::coreParameterEstimation()
 	return true;
 }
 
-
-
+//	Find which model performed best based on the Log Liklihood
 modelType LiBiNorm::getBestModel()
 {
 	modelType bestModel = noModel;
-	double bestLL = 1E99;
+	double bestLL = MAX_DOUBLE;
 	for (modelType m : allModels())
 	{
 		if (bestResults[m].minLL < bestLL)
@@ -500,7 +493,7 @@ modelType LiBiNorm::getBestModel()
 	return bestModel;
 }
 
-
+//	The top level summary of the results, showing best LL and associated paremeters for each model
 void LiBiNorm::printResults()
 {
 	string filename(normaliseResultsFilename.replaceSuffix("_results.txt"));
@@ -547,13 +540,14 @@ void LiBiNorm::printResults()
 		}
 		mcmcResult.printEnd();
 	}
-	//	The number of rows is set by the maximum number of runs, which may be for one or all models
+	
+	//	Print out the enpoints of all of the mcmcruns
 	for (mcmcRunId i = 1; i <= Nruns; i++)
 	{
 		mcmcResult.printStart(_s("Chain end ", i));
 		for (modelType m : allModels())
 		{
-			//	Was there a jth run of this model?  If so then print the end points
+			//	Was there a jth run of this model?  If so then print the end points.  *...rbegin() gets the last entry in the list.
 			if (fullResultSSChain[m].size() && (i <= fullResultSSChain[m].rbegin()->first))
 				mcmcResult.printMiddle(*fullResultChain[m][i].rbegin(), *fullResultSSChain[m][i].rbegin(), "");
 			else

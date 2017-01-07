@@ -29,6 +29,12 @@
 //	Use this to add the mode where duplicates in bam files can be removed
 // #define DEDUP_MODE
 
+//	Use this mode to run a model with specific parameters.  This affects how the values are set
+//	in ModelParameters.cpp and also ensures that the first N reads are use in data are loaded
+//	in void rnaPosVec::selectAtMost(size_t s) in GeneCountData.cpp
+//#define PRESET_VALUES {-0.060374433,	1.944021977,	-4.434270212,	-3.367865765,	0.877799}
+
+//	For identifying the mcmc run for a specific model.  Numbered from 1.
 typedef size_t mcmcRunId;
 
 class LiBiNormCore
@@ -83,7 +89,8 @@ protected:
 private:
 	bool outputFull;
 
-	mcmcGeneData consData;
+	//	The specific data that will be used for the mcmc parameter determination
+	mcmcGeneData geneData;
 
 	//	These vector holds the full results for each of the models, which are needed for identifying
 	//	the optimal parameters and the variation that is seen.
@@ -99,8 +106,8 @@ private:
 	struct loop_counts { mcmcRunId requested, counter; };
 	std::map<modelType, loop_counts> threadLoopCounts;
 
-	//	The results data
-	std::map<size_t, std::multimap <double, dataVec *> > allOrderedResults;
+	//	Holds the results from multiple chains combined into a single ordered list
+	std::map<modelType, std::multimap <double, dataVec *> > allOrderedResults;
 
 };
 
