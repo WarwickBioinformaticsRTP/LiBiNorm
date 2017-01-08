@@ -5,6 +5,7 @@
 #include <vector>
 #include <string>
 #include <valarray>
+
 #include "libCommon.h"
 #include "printEx.h"
 
@@ -171,7 +172,7 @@ public:
 
 	dataVec diagchol() const;
 
-	dataVec operator () (const vector<int> & i) const
+	dataVec expand (const vector<int> & i) const
 	{
 		size_t s(i.size());
 		dataVec retVal(s);

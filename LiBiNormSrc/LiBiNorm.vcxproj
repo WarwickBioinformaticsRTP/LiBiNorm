@@ -132,6 +132,7 @@
     <ClInclude Include="LiBiNorm.h" />
     <ClInclude Include="MakeFastq.h" />
     <ClInclude Include="ModelData.h" />
+    <ClInclude Include="Options.h" />
     <ClInclude Include="Regions.h" />
   </ItemGroup>
   <ItemGroup>

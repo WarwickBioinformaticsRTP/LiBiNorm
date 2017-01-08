@@ -1,13 +1,11 @@
 
+#include <map>
 #include "stringEx.h"
 #include "containerEx.h"
-#include <map>
-#include "LiBiNorm.h"
+#include "ModelData.h"
+#include "Options.h"
 using namespace std;
 
-//	The original MATLAB code had an error in setting the initial values for mcmc runs which this simulates
-// #define SIMULATE_MATLAB_BUG
-//	Allows LL to be calculated with a specific set of values
 
 /*
 	Support functions of the modelType enumerated values
@@ -150,8 +148,6 @@ data.geneFrequencies are the frequencies
 
 One modification from the original matlab code arises from the fact that the normalisation 
 values are the same for all reads in the gene so only need to be calculated per gene.  
-The (x) method uses the geneIndex to expand the one per gene vector to a one per read vector
-so that the normalisation can be performed for each read.
 
 The original MATLAB code is shown in comments
 */
@@ -164,8 +160,8 @@ double FLL_ModelA(const dataVec & param, const mcmcGeneData & data)
 	double h = pow(10,param[1]);
 
 	const vector<int> & geneIndex = data.geneIndex;
-	const dataVec L = data.geneLengths(geneIndex);
-	const dataVec Freq_l = data.geneFrequencies(geneIndex);
+	const dataVec L = data.geneLengths.expand(geneIndex);
+	const dataVec Freq_l = data.geneFrequencies.expand(geneIndex);
 
 	double last_l = 0;
 	double norm=0;
@@ -213,8 +209,8 @@ double FLL_ModelB(const dataVec & param, const mcmcGeneData & data)
 	double t2 = pow(10,param[3]);
 
 	const vector<int> & geneIndex = data.geneIndex;
-	const dataVec L = data.geneLengths(geneIndex);
-	const dataVec Freq_l = data.geneFrequencies(geneIndex);
+	const dataVec L = data.geneLengths.expand(geneIndex);
+	const dataVec Freq_l = data.geneFrequencies.expand(geneIndex);
 
 	double last_l = 0;
 	double norm=0;
@@ -271,8 +267,8 @@ double FLL_ModelC(const dataVec & param, const mcmcGeneData & data)
 	double t2 = pow(10,param[2]);
 
 	const vector<int> & geneIndex = data.geneIndex;
-	const dataVec L = data.geneLengths(geneIndex);
-	const dataVec Freq_l = data.geneFrequencies(geneIndex);
+	const dataVec L = data.geneLengths.expand(geneIndex);
+	const dataVec Freq_l = data.geneFrequencies.expand(geneIndex);
 
 	double last_l = 0;
 	double norm=0;
@@ -338,8 +334,8 @@ freq_l = data(3, :);
 	double LogL = 1E20;
 
 	const vector<int> & geneIndex = data.geneIndex;
-	const dataVec L = data.geneLengths(geneIndex);
-	const dataVec Freq_l = data.geneFrequencies(geneIndex);
+	const dataVec L = data.geneLengths.expand(geneIndex);
+	const dataVec Freq_l = data.geneFrequencies.expand(geneIndex);
 
 	double last_l = 0;
 	double norm=0;
@@ -393,8 +389,8 @@ double FLL_ModelE(const dataVec & param, const mcmcGeneData & data)
 	double t2 = pow(10,param[3]);
 
 	const vector<int> & geneIndex = data.geneIndex;
-	const dataVec L = data.geneLengths(geneIndex);
-	const dataVec Freq_l = data.geneFrequencies(geneIndex);
+	const dataVec L = data.geneLengths.expand(geneIndex);
+	const dataVec Freq_l = data.geneFrequencies.expand(geneIndex);
 
 	double last_l = 0;
 	double norm=0;
@@ -437,7 +433,6 @@ double FLL_ModelE(const dataVec & param, const mcmcGeneData & data)
 	return -2*LogL;
 }
 
-
 double FLL_ModelBD(const dataVec & param, const mcmcGeneData & data)
 {
 
@@ -448,51 +443,49 @@ double FLL_ModelBD(const dataVec & param, const mcmcGeneData & data)
 	double a = param[4];
 
 	const vector<int> & geneIndex = data.geneIndex;
-	const dataVec L = data.geneLengths(geneIndex);
-	const dataVec Freq_l = data.geneFrequencies(geneIndex);
 
-	double last_l = 0;
-	double norm=0;
 	double LogL = 0;
-
 //	Original MATLAB code for reference
 //	f_frag = a*( (x> h).*(x < l-h)./(t1+ t2) .* (t1.*exp(-2*l*(t1+t2)+(t1+t2)*(l-h+x)) + t2*exp(-l*(t1+t2))) + ...
 //         1./(t1+ t2) .* (t1.*exp(-2*l*(t1+t2)+(t1+t2)*(l+x)) + t2*exp(-l*(t1+t2)))/d) + ...
 //         (1-a)*( (x> h).*(x < l-h)./(t1+ t2) .* (t1.*exp(-t1*(l-x) - 2*t2*h - t1*h) + t2.*exp(-t1*l-t2*(x+h))) + ...
 //         1./(t1+ t2) .* (t1.*exp(-t1*(l-x)) + t2.*exp(-t1*l-t2*(x)))/d);
-/*
-Example code using full dataVec arithmatic.  Slower but closer to the original MATLAB code
-	double LogL_test;
-	{
-		const dataVec & x = data.fragData;
-		const dataVec & l = L;
-		const dataVec & freq_l = Freq_l;
+//	 norm = a*( (2*h<l).*(t1.*(exp(-2*h*(t1+t2))-exp(-l*(t1+t2)))+t2*(t1+t2).*(l-2*h).*exp(-l*(t1+t2)))/(t1 + t2)^2 + ...
+//        (exp(-l.*(t1+t2)).*(l.*t2^2+l.*t2*t1-t1)+t1)/(t1 + t2)^2/d) + ...
+//        (1-a)*( (2*h<l).*(exp(-2*h*(t1 + t2)) - exp(-l*(t1 + t2)))/(t1 + t2) + ...
+//        (1-exp(-l.*(t1 + t2)))/(t1 + t2)/d);
 
-		dataVec f_frag_test = a*((x > h)*(x < l - h) / (t1 + t2) * (t1*exp(-2 * l*(t1 + t2) + (t1 + t2)*(l - h + x)) + t2*exp(-l*(t1 + t2))) +
-			1 / (t1 + t2) * (t1*exp(-2 * l*(t1 + t2) + (t1 + t2)*(l + x)) + t2*exp(-l*(t1 + t2))) / d) +
-			(1 - a)*((x > h)*(x < l - h) / (t1 + t2) * (t1*exp(-t1*(l - x) - 2 * t2*h - t1*h) + t2*exp(-t1*l - t2*(x + h))) +
-				1 / (t1 + t2) * (t1*exp(-t1*(l - x)) + t2*exp(-t1*l - t2*(x))) / d);
+#ifdef VECTOR_MATHS
+//	Example code using full dataVec arithmatic.  Slower but closer to the original MATLAB code
+	const dataVec & x = data.fragData;
+	const dataVec l = data.geneLengths.expand(geneIndex);
+	const dataVec freq_l = data.geneFrequencies.expand(geneIndex);
 
-		dataVec norm_test = a*((2 * h < l)*(t1*(exp(-2 * h*(t1 + t2)) - exp(-l*(t1 + t2))) + t2*(t1 + t2)*(l - 2 * h)*exp(-l*(t1 + t2))) / ((t1 + t2) * (t1 + t2)) +
-			(exp(-l*(t1 + t2))*(l*(t2 *t2) + l*t2*t1 - t1) + t1) / ((t1 + t2) * (t1 + t2)) / d) +
-			(1 - a)*((2 * h < l)*(exp(-2 * h*(t1 + t2)) - exp(-l*(t1 + t2))) / (t1 + t2) +
-			(1 - exp(-l*(t1 + t2))) / (t1 + t2) / d);
+	dataVec f_frag = a*((x > h)*(x < l - h) / (t1 + t2) * (t1*exp(-2 * l*(t1 + t2) + (t1 + t2)*(l - h + x)) + t2*exp(-l*(t1 + t2))) +
+		1 / (t1 + t2) * (t1*exp(-2 * l*(t1 + t2) + (t1 + t2)*(l + x)) + t2*exp(-l*(t1 + t2))) / d) +
+		(1 - a)*((x > h)*(x < l - h) / (t1 + t2) * (t1*exp(-t1*(l - x) - 2 * t2*h - t1*h) + t2*exp(-t1*l - t2*(x + h))) +
+			1 / (t1 + t2) * (t1*exp(-t1*(l - x)) + t2*exp(-t1*l - t2*(x))) / d);
 
-		LogL_test = sum(log(f_frag_test / norm_test) / freq_l);
-		LogL_test = -2 * LogL_test;
-	}
-*/
+	dataVec norm = a*((2 * h < l)*(t1*(exp(-2 * h*(t1 + t2)) - exp(-l*(t1 + t2))) + t2*(t1 + t2)*(l - 2 * h)*exp(-l*(t1 + t2))) / ((t1 + t2) * (t1 + t2)) +
+		(exp(-l*(t1 + t2))*(l*(t2 *t2) + l*t2*t1 - t1) + t1) / ((t1 + t2) * (t1 + t2)) / d) +
+		(1 - a)*((2 * h < l)*(exp(-2 * h*(t1 + t2)) - exp(-l*(t1 + t2))) / (t1 + t2) +
+		(1 - exp(-l*(t1 + t2))) / (t1 + t2) / d);
+
+	LogL = sum(log(f_frag / norm) / freq_l);
+	LogL = -2 * LogL;
+
+#else
+	double last_l = 0;
+	double norm = 0;
 
 	double t1_p_t2 = t1+t2;
 	double t1_p_t2_sq = t1_p_t2*t1_p_t2;
 
-
 	for (size_t i = 0;i < data.fragData.size(); i++)
 	{
-		const double & x = data.fragData[i];
-		const double & l = L[i];
-		const double & freq_l = Freq_l[i];
-
+		const VEC_DATA_TYPE & x = data.fragData[i];
+		const VEC_DATA_TYPE & l = data.geneLengths[geneIndex[i]];
+		const VEC_DATA_TYPE & freq_l = data.geneFrequencies[geneIndex[i]];
 
 		double exp_ml_t1_p_t2 = exp(-l*t1_p_t2);
 		double f_frag = 1/t1_p_t2 * (t1*exp(-2*l*t1_p_t2+t1_p_t2*(l+x)) + t2*exp_ml_t1_p_t2)/d;
@@ -511,11 +504,6 @@ Example code using full dataVec arithmatic.  Slower but closer to the original M
 
 		if (l != last_l)
 		{
-
-//		    norm = a*( (2*h<l).*(t1.*(exp(-2*h*(t1+t2))-exp(-l*(t1+t2)))+t2*(t1+t2).*(l-2*h).*exp(-l*(t1+t2)))/(t1 + t2)^2 + ...
-//        (exp(-l.*(t1+t2)).*(l.*t2^2+l.*t2*t1-t1)+t1)/(t1 + t2)^2/d) + ...
-//        (1-a)*( (2*h<l).*(exp(-2*h*(t1 + t2)) - exp(-l*(t1 + t2)))/(t1 + t2) + ...
-//        (1-exp(-l.*(t1 + t2)))/(t1 + t2)/d);
 			norm = (exp_ml_t1_p_t2*(l*t2*t2+l*t2*t1-t1)+t1)/t1_p_t2_sq/d;
 			double norm_pt2 = (1-exp_ml_t1_p_t2)/t1_p_t2/d;
 
@@ -526,11 +514,13 @@ Example code using full dataVec arithmatic.  Slower but closer to the original M
 				norm_pt2 += (exp_m2_h_t1_p_t2 - exp_ml_t1_p_t2)/t1_p_t2;
 			}
 			norm = a*norm +(1-a) * norm_pt2;
+			last_l = l;
 		}
 		LogL += log(f_frag/norm)/freq_l;
 	}
 
 	LogL = -2 * LogL;
+#endif
 	return LogL;
 }
 

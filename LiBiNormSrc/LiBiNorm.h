@@ -5,34 +5,12 @@
 #include "stringEx.h"
 #include "containerEx.h"
 #include "GeneCountData.h"
+#include "Options.h"
 #include "ModelData.h"
 
-
-#define DEF_MAX_READS_FOR_PARAM_ESTIMATION 1000000
-//#define MAX_LENGTH_OF_GENE_FOR_PARAM_ESTIMATION 20000
-#define MAX_LENGTH_OF_GENE_FOR_PARAM_ESTIMATION 200000000
-#define MAX_READS_GENE 100
-#define DEF_THREADS 3
-#define MCMC_ITERATIONS 2000
-#define DEFAULT_MODEL ModelBD
-#define NUMBER_OF_MCMC_RUNS 3
-#define DEFAULT_NORMALISATION_GENE_LENGTH 1000
-#define MAX_GENE_LENGTH_FOR_NORM_PLOT 20000
-#define DEFAULT_COUNT_MODE intersect_union
-#define DEFAULT_FEATURE_TYPE_EXON "exon" 
-#define DEFAULT_GTF_ID_ATTRIBUTE "gene_id"
-#define DEFAULT_GFF_ID_ATTRIBUTE "Genbank"
-
-//	Use this to add the mode which creates fastq files based on bam files with artificial problems
-// #define MAKE_FASTQ_MODE
-
-//	Use this to add the mode where duplicates in bam files can be removed
-// #define DEDUP_MODE
-
-//	Use this mode to run a model with specific parameters.  This affects how the values are set
-//	in ModelParameters.cpp and also ensures that the first N reads are use in data are loaded
-//	in void rnaPosVec::selectAtMost(size_t s) in GeneCountData.cpp
-//#define PRESET_VALUES {-0.060374433,	1.944021977,	-4.434270212,	-3.367865765,	0.877799}
+//	The original MATLAB code had an error in setting the initial values for mcmc runs which this 
+//	simulates (ModelData.cpp)
+// #define SIMULATE_MATLAB_BUG
 
 //	For identifying the mcmc run for a specific model.  Numbered from 1.
 typedef size_t mcmcRunId;

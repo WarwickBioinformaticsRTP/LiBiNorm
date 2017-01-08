@@ -6,7 +6,6 @@
 #include <algorithm>
 #include <vector>
 #include "params.h"
-//#include "mcmc.h"
 
 /*
 Holds the information relating to the 6 different models 
