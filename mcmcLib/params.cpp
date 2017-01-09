@@ -11,7 +11,7 @@ double rand(double a)
 	// Static members generate distribution in range 0 to 1.   This is scaled by input parameter for each call
 	static std::random_device rd;
 	static std::mt19937 gen(rd());
-	static std::uniform_real_distribution<> dis(0, 1);
+	static std::uniform_real_distribution<double> dis(0, 1);
 
 	return dis(gen) * a;
 }
@@ -19,12 +19,13 @@ double rand(double a)
 //	Sets up a vector of values with a normal distribution
 dataVec randn(size_t x)
 {
-	static	std::default_random_engine generator;
+	static std::random_device rd;
+	static std::mt19937 gen(rd());
 	static	std::normal_distribution<double> distribution;
 
 	dataVec retVal(x);
 	for (auto & i : retVal)
-		i = distribution(generator);
+		i = distribution(gen);
 	return retVal;
 }
 

@@ -26,7 +26,7 @@
 //	Use this mode to run a model with specific parameters.  This affects how the values are set
 //	in ModelParameters.cpp and also ensures that the first N reads are use in data are loaded
 //	in void rnaPosVec::selectAtMost(size_t s) in GeneCountData.cpp
-// #define PRESET_VALUES {-0.0224725,	1.971188,	-4.373709,	-3.3618775,	0.8589705}
+//#define PRESET_VALUES {-0.0224725,	1.971188,	-4.373709,	-3.3618775,	0.8589705}
 
 //	Some of the code in ModelData.cpp has also been writtent using vectors which is slower but the code
 //	more closely matches the MATLAB code
