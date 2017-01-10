@@ -32,8 +32,7 @@ dataVec randn(size_t x)
 //	Sets up a parameter within the mcmc chain, using the min and max values to set an initial value
 //	that is randomnly placed somewhere betweeen the min and the max values
 paramType::paramType(std::string name,double min, double max):
-	name(name),min(min),max(max), pri_mu(0), 
-	pri_sig(MAX_DOUBLE),
+	name(name),min(min),max(max),
 	targetflag(true), 
 	localflag(false)
 {
@@ -67,18 +66,3 @@ dataVec paramSet::getvalues() const
 	return retVal;
 }
 
-dataVec paramSet::getSigmas() const
-{
-	dataVec retVal(size());
-	for (size_t i = 0;i < size();i++)
-		retVal[i] = at(i).pri_sig;
-	return retVal;
-}
-
-dataVec paramSet::getMus() const
-{
-	dataVec retVal(size());
-	for (size_t i = 0;i < size();i++)
-		retVal[i] = at(i).pri_mu;
-	return retVal;
-}

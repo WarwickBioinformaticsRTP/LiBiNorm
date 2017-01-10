@@ -17,7 +17,7 @@ using namespace std;
 //	use this to test the calculations based on a specific result of the parameter derivation
 // #define FIXED_RESULTS log10(3.9644),log10(147.39),log10(0.0079),log10(2.0128E-4),0
 //	And this presets a specific model
-#define M_FIXED_RESULTS 5
+//#define M_FIXED_RESULTS 5
 #endif
 
 int main(int argc, char **argv)
@@ -441,38 +441,44 @@ bool LiBiNorm::coreParameterEstimation()
 #else
 
 		{
+			//	Put the Log liklyhoods in order and find the median
 			auto i = orderedResults.begin();
 			size_t n = 0;
 			for (; n < orderedResults.size() / 2; i++, n++) {};
 			br.LLresult = i->first;
 
+			//	Now put each of the params in order
 			auto j = orderedResults.begin();
 			vector<multiset<VEC_DATA_TYPE> > orderedParams(Nparams);
-			for (; n < orderedResults.size(); j++, n++)
+			for (; j != orderedResults.end(); j++)
 			{
 				for (size_t p = 0; p < Nparams; p++)
 					orderedParams[p].emplace((*j->second)[p]);
 			}
+			//	and then find the median
 			for (size_t p = 0; p < Nparams; p++)
 			{
 				auto k = orderedParams[p].begin();
-				for (; n < orderedParams.size() / 2; k++, n++) {};
+				n = 0;
+				for (; n < orderedParams[p].size() / 2; k++, n++) {};
 				br.params[p] = *k;
 			}
 		}
 
 #endif
+		//	Find the absolute distance from the selected 'result' LL in order
 		multiset<VEC_DATA_TYPE> distanceFromOptimalLL;
 		for (auto i = orderedResults.begin(); i != orderedResults.end(); i++)
 			distanceFromOptimalLL.emplace(abs(i->first - br.LLresult));
 
+		//	and then find the median = MAD
 		size_t n = 0;
 		auto i = distanceFromOptimalLL.begin();
 		for (; n < distanceFromOptimalLL.size() / 2; i++, n++) {};
 		br.LL_dev = *i;
 
-		//	Now go through the results ordered by LL, find the halfway point which is the Median absolute Diviation,
-		//	and put the paremeters into sets so that they can be ordered and the single sided medians found
+		//	Now go through the parameters creating ordered lists of the absolute distance from the selected param
+		//	and also the positive and negative distances so that we can do single sided deviation measures
 		vector<multiset<VEC_DATA_TYPE> > posDiffs(Nparams), negDiffs(Nparams),absDiffs(Nparams);
 		n = 0;
 		auto j = orderedResults.begin();
@@ -493,21 +499,22 @@ bool LiBiNorm::coreParameterEstimation()
 				}
 			}
 		}
+		//	And then find the medians
 		for (size_t p = 0; p < Nparams; p++)
 		{
 			auto i = posDiffs[p].begin();
 			n = 0;
-			for (i; n < posDiffs[p].size() / 2; i++, n++) {};
+			for (; n < posDiffs[p].size() / 2; i++, n++) {};
 			br.param_dev[0][p] = *i;
 
 			i = negDiffs[p].begin();
 			n = 0;
-			for (i; n < negDiffs[p].size() / 2; i++, n++) {};
+			for (; n < negDiffs[p].size() / 2; i++, n++) {};
 			br.param_dev[1][p] = *i;
 
 			i = absDiffs[p].begin();
 			n = 0;
-			for (i; n < absDiffs[p].size() / 2; i++, n++) {};
+			for (; n < absDiffs[p].size() / 2; i++, n++) {};
 			br.param_dev[2][p] = *i;
 		}
 	}

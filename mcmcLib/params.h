@@ -30,7 +30,7 @@ class paramType
 public:
 	paramType(std::string name,double min = MIN_DOUBLE, double max = MAX_DOUBLE);
 	std::string name;
-	double value, min, max, pri_mu, pri_sig;
+	double value, min, max;
 	bool targetflag, localflag;
 };
 
@@ -45,8 +45,6 @@ public:
 	void setValues(const dataVec & vals);
 
 	dataVec getvalues() const;
-	dataVec getSigmas() const;
-	dataVec getMus() const;
 
 };
 
