@@ -16,6 +16,7 @@
 #define DEFAULT_FEATURE_TYPE_EXON "exon" 
 #define DEFAULT_GTF_ID_ATTRIBUTE "gene_id"
 #define DEFAULT_GFF_ID_ATTRIBUTE "Genbank"
+#define END_LENGTH_SEARCHED_FOR_OPTIMAL_PARAMETERS 200
 
 //	Use this to add the mode which creates fastq files based on bam files with artificial problems
 // #define MAKE_FASTQ_MODE
@@ -35,5 +36,12 @@
 //	The original MATLAB code had an error in setting the initial values for mcmc runs which this 
 //	simulates (ModelData.cpp)
 // #define SIMULATE_MATLAB_BUG
+
+//
+//	Use this option to use the parameters associated with the most likly parameter set
+//	https://sciencehouse.wordpress.com/2010/06/23/mcmc-and-fitting-models-to-data/
+//	rather than the median values
+// #define USE_PARAMS_FROM_LOWEST_LL
+
 
 #endif

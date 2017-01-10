@@ -409,32 +409,109 @@ bool LiBiNorm::coreParameterEstimation()
 
 
 	//********************************************************************************************
-	//	Find the optimal parameter values, which are associated with the lowest likelihood value found in the last
-	//	half of the iterations of all of the runs.
+	//	Find the optimal parameter values, which are associated with results found in the last
+	//	iterations of all of the MCMC runs.
 	for (modelType m  : allModels())
 	{
 		multimap <double, dataVec *> & orderedResults = allOrderedResults[m];
 
 		bestResult & br = bestResults[m];
+		size_t Nparams = headers[m].size();
+		br.params.resize(Nparams);
+		for (size_t i = 0;i < 3;i++)
+			br.param_dev[i].resize(Nparams);
+
+		//	For each of the mcmc runs take the last END_LENGTH_SEARCHED_FOR_OPTIMAL_PARAMETERS iterations and
+		//	put them in a map ordered by LL value
 		for (mcmcRunId i = 1; i <= fullResultSSChain[m].size(); i++)
 		{
-			for (size_t j = fullResultSSChain[m][i].size() - 1; j > fullResultSSChain[m][i].size() / 2; j--)
+			for (size_t j = fullResultSSChain[m][i].size() - END_LENGTH_SEARCHED_FOR_OPTIMAL_PARAMETERS;
+				j < fullResultSSChain[m][i].size(); j++)
 			{
-				if (outputFull)
-					orderedResults.emplace(fullResultSSChain[m][i][j], &fullResultChain[m][i][j]);
+				orderedResults.emplace(fullResultSSChain[m][i][j], &fullResultChain[m][i][j]);
+			}
+		}
 
-				if (fullResultSSChain[m][i][j] < br.minLL)
+#ifdef USE_PARAMS_FROM_LOWEST_LL
+		//	Find the best LL.
+		br.LLresult = orderedResults.begin()->first;
+		//	Get the parameters from the most likly sample
+		for (size_t p = 0; p < Nparams; p++)
+			br.params[p] = (*orderedResults.begin()->second)[p];
+#else
+
+		{
+			auto i = orderedResults.begin();
+			size_t n = 0;
+			for (; n < orderedResults.size() / 2; i++, n++) {};
+			br.LLresult = i->first;
+
+			auto j = orderedResults.begin();
+			vector<multiset<VEC_DATA_TYPE> > orderedParams(Nparams);
+			for (; n < orderedResults.size(); j++, n++)
+			{
+				for (size_t p = 0; p < Nparams; p++)
+					orderedParams[p].emplace((*j->second)[p]);
+			}
+			for (size_t p = 0; p < Nparams; p++)
+			{
+				auto k = orderedParams[p].begin();
+				for (; n < orderedParams.size() / 2; k++, n++) {};
+				br.params[p] = *k;
+			}
+		}
+
+#endif
+		multiset<VEC_DATA_TYPE> distanceFromOptimalLL;
+		for (auto i = orderedResults.begin(); i != orderedResults.end(); i++)
+			distanceFromOptimalLL.emplace(abs(i->first - br.LLresult));
+
+		size_t n = 0;
+		auto i = distanceFromOptimalLL.begin();
+		for (; n < distanceFromOptimalLL.size() / 2; i++, n++) {};
+		br.LL_dev = *i;
+
+		//	Now go through the results ordered by LL, find the halfway point which is the Median absolute Diviation,
+		//	and put the paremeters into sets so that they can be ordered and the single sided medians found
+		vector<multiset<VEC_DATA_TYPE> > posDiffs(Nparams), negDiffs(Nparams),absDiffs(Nparams);
+		n = 0;
+		auto j = orderedResults.begin();
+		for (; n < orderedResults.size(); j++, n++)
+		{
+			for (size_t p = 0; p < Nparams; p++)
+			{
+				VEC_DATA_TYPE v = (*j->second)[p];
+				if (v > br.params[p])
 				{
-					br.minLL = fullResultSSChain[m][i][j];
-					br.params = fullResultChain[m][i][j];
-					br.run = i;
-					br.pos = j;
+					posDiffs[p].emplace(v - br.params[p]);
+					absDiffs[p].emplace(v - br.params[p]);
+				}
+				else
+				{
+					negDiffs[p].emplace(br.params[p] - v);
+					absDiffs[p].emplace(br.params[p] - v);
 				}
 			}
 		}
-	}
+		for (size_t p = 0; p < Nparams; p++)
+		{
+			auto i = posDiffs[p].begin();
+			n = 0;
+			for (i; n < posDiffs[p].size() / 2; i++, n++) {};
+			br.param_dev[0][p] = *i;
 
-	//******************************************************************************************
+			i = negDiffs[p].begin();
+			n = 0;
+			for (i; n < negDiffs[p].size() / 2; i++, n++) {};
+			br.param_dev[1][p] = *i;
+
+			i = absDiffs[p].begin();
+			n = 0;
+			for (i; n < absDiffs[p].size() / 2; i++, n++) {};
+			br.param_dev[2][p] = *i;
+		}
+	}
+/*	******************************************************************************************
 	//	And then find the standard deviation
 	for (modelType m :allModels())
 	{
@@ -447,7 +524,7 @@ bool LiBiNorm::coreParameterEstimation()
 
 		for (mcmcRunId i = 1; i <= fullResultSSChain[m].size(); i++)
 		{
-			for (size_t j = fullResultSSChain[m][i].size() - 1; j > fullResultSSChain[m][i].size() / 2; j--)
+			for (size_t j = fullResultSSChain[m][i].size() - 1; j > fullResultSSChain[m][i].size() - 100 ; j--)
 			{
 				N++;
 				VEC_DATA_TYPE diff = fullResultSSChain[m][i][j] - br.minLL;
@@ -471,8 +548,8 @@ bool LiBiNorm::coreParameterEstimation()
 		br.minLL_dev = sqrt(LL_dev / N);
 		br.param_dev[0] = sqrt(param_dev[0] / p_N[0]);
 		br.param_dev[1] = sqrt(param_dev[1] / p_N[1]);
-	}
-#endif
+	}*/
+#endif  // ifdef FIXED_RESULTS
 
 	return true;
 }
@@ -484,10 +561,10 @@ modelType LiBiNorm::getBestModel()
 	double bestLL = MAX_DOUBLE;
 	for (modelType m : allModels())
 	{
-		if (bestResults[m].minLL < bestLL)
+		if (bestResults[m].LLresult < bestLL)
 		{
 			bestModel = m;
-			bestLL = bestResults[m].minLL;
+			bestLL = bestResults[m].LLresult;
 		}
 	}
 	return bestModel;
@@ -522,19 +599,20 @@ void LiBiNorm::printResults()
 	for (modelType m : allModels())
 	{
 		if (bestResults[m].params.size())
-			mcmcResult.printMiddle(bestResults[m].params, bestResults[m].minLL, "");
+			mcmcResult.printMiddle(bestResults[m].params, bestResults[m].LLresult, "");
 		else
 			mcmcResult.printGaps(headers[m].size() + 2);
 	}
 	mcmcResult.printEnd();
 	//	A row for the deviations for each model
-	for (size_t i = 0; i < 2; i++)
+	for (size_t i = 0; i < 3; i++)
 	{
-		mcmcResult.printStart((i == 0) ? "Pos Dev" : "Neg Dev");
+
+		mcmcResult.printStart((i == 0) ? "Pos Dev" : ((i == 1)?"Neg Dev":"Abs"));
 		for (modelType m : allModels())
 		{
 			if (bestResults[m].param_dev[i].size())
-				mcmcResult.printMiddle(bestResults[m].param_dev[i], bestResults[m].minLL_dev, "");
+				mcmcResult.printMiddle(bestResults[m].param_dev[i], bestResults[m].LL_dev, "");
 			else
 				mcmcResult.printGaps(headers[m].size() + 2);
 		}
@@ -591,7 +669,7 @@ void LiBiNorm::printBias()
 	for (modelType m : allModels())
 	{
 		mcmcResult.print("","","Log likelihood",_BRL("mcmc run","mcmc iteration")headers[m]);
-		mcmcResult.print(m,"Parameters",bestResults[m].minLL,_BRL(bestResults[m].run, bestResults[m].pos) bestResults[m].params);
+		mcmcResult.print(m,"Parameters",bestResults[m].LLresult,_BRL(bestResults[m].run, bestResults[m].pos) bestResults[m].params);
 		if (biases[m].size())
 		{
 			mcmcResult.print("","Length", lengths);
@@ -656,7 +734,7 @@ void LiBiNorm::printConsolidatedMcmcRunData()
 	}
 	mcmcResult.printEnd("");
 	bool found = true;
-	for (size_t i = 0; (i < 1000) && found; i++)
+	for (size_t i = 0; (i < 1000000) && found; i++)
 	{
 		found = false;
 		mcmcResult.printStart(i);
