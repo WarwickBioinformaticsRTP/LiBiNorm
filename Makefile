@@ -155,14 +155,13 @@ $(BUILD)/LiBiNormSrc/LiBiNorm.o: ../bioinformaticsLib/dataVec.h
 $(BUILD)/LiBiNormSrc/LiBiNorm.o: ../bioinformaticsLib/libCommon.h
 $(BUILD)/LiBiNormSrc/LiBiNorm.o: ../bioinformaticsLib/printEx.h
 $(BUILD)/LiBiNormSrc/LiBiNorm.o: ../bioinformaticsLib/inQuotes.h
-$(BUILD)/LiBiNormSrc/LiBiNorm.o: LiBiNormSrc/modelData.h mcmcLib/mcmc.h
+$(BUILD)/LiBiNormSrc/LiBiNorm.o: LiBiNormSrc/ModelData.h mcmcLib/mcmc.h
 $(BUILD)/LiBiNormSrc/LiBiNorm.o: mcmcLib/params.h LiBiNormSrc/LiBiNorm.h
 $(BUILD)/LiBiNormSrc/LiBiNorm.o: ../bioinformaticsLib/stringEx.h
 $(BUILD)/LiBiNormSrc/LiBiNorm.o: ../bioinformaticsLib/containerEx.h
 $(BUILD)/LiBiNormSrc/LiBiNorm.o: LiBiNormSrc/GeneCountData.h
 $(BUILD)/LiBiNormSrc/LiBiNorm.o: ../bioinformaticsLib/parser.h
 $(BUILD)/LiBiNormSrc/LiBiNorm.o: LiBiNormSrc/Options.h
-$(BUILD)/LiBiNormSrc/LiBiNorm.o: LiBiNormSrc/ModelData.h
 $(BUILD)/LiBiNormSrc/LiBiNorm.o: LiBiNormSrc/LiBiCount.h
 $(BUILD)/LiBiNormSrc/LiBiNorm.o: LiBiNormSrc/FeatureFileEx.h
 $(BUILD)/LiBiNormSrc/LiBiNorm.o: LiBiNormSrc/Regions.h
@@ -250,12 +249,12 @@ $(BUILD)/LiBiNormSrc/LiBiCount.o: LiBiNormSrc/ModelData.h
 $(BUILD)/LiBiNormSrc/ModelData.o: ../bioinformaticsLib/stringEx.h
 $(BUILD)/LiBiNormSrc/ModelData.o: ../bioinformaticsLib/inQuotes.h
 $(BUILD)/LiBiNormSrc/ModelData.o: ../bioinformaticsLib/containerEx.h
-$(BUILD)/LiBiNormSrc/ModelData.o: LiBiNormSrc/ModelData.h
-$(BUILD)/LiBiNormSrc/ModelData.o: LiBiNormSrc/Options.h mcmcLib/mcmc.h
+$(BUILD)/LiBiNormSrc/ModelData.o: LiBiNormSrc/ModelData.h mcmcLib/mcmc.h
 $(BUILD)/LiBiNormSrc/ModelData.o: mcmcLib/params.h
 $(BUILD)/LiBiNormSrc/ModelData.o: ../bioinformaticsLib/dataVec.h
 $(BUILD)/LiBiNormSrc/ModelData.o: ../bioinformaticsLib/libCommon.h
 $(BUILD)/LiBiNormSrc/ModelData.o: ../bioinformaticsLib/printEx.h
+$(BUILD)/LiBiNormSrc/ModelData.o: LiBiNormSrc/Options.h
 $(BUILD)/LiBiNormSrc/FeatureFileEx.o: LiBiNormSrc/FeatureFileEx.h
 $(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bioinformaticsLib/containerEx.h
 $(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bioinformaticsLib/libCommon.h
@@ -367,7 +366,7 @@ $(BUILD)/LiBiNormSrc/LiBiOptimiser.o: ../bioinformaticsLib/dataVec.h
 $(BUILD)/LiBiNormSrc/LiBiOptimiser.o: ../bioinformaticsLib/libCommon.h
 $(BUILD)/LiBiNormSrc/LiBiOptimiser.o: ../bioinformaticsLib/printEx.h
 $(BUILD)/LiBiNormSrc/LiBiOptimiser.o: ../bioinformaticsLib/inQuotes.h
-$(BUILD)/LiBiNormSrc/LiBiOptimiser.o: LiBiNormSrc/modelData.h mcmcLib/mcmc.h
+$(BUILD)/LiBiNormSrc/LiBiOptimiser.o: LiBiNormSrc/ModelData.h mcmcLib/mcmc.h
 $(BUILD)/LiBiNormSrc/LiBiOptimiser.o: mcmcLib/params.h
 
 $(BUILD)/bioinformaticsLib/codFile.o: ../bioinformaticsLib/codFile.h

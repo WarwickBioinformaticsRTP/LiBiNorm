@@ -1,7 +1,7 @@
 #ifndef LIBIOPTIMISER_H
 #define LIBIOPTIMISER_H
 #include "nelderMeadOptimiser.h"
-#include "modelData.h"
+#include "ModelData.h"
 #include "mcmc.h"
 
 class LiBiOptimiser : public nelderMeadOptimiser
