@@ -451,44 +451,39 @@ bool LiBiNorm::coreParameterEstimation()
 
 				//	Now put each of the params in order
 				auto j = orderedResults.begin();
-				vector<multiset<VEC_DATA_TYPE> > orderedParams(Nparams);
+				vector<orderedVec> orderedParams(Nparams);
 				for (; j != orderedResults.end(); j++)
 				{
 					for (size_t p = 0; p < Nparams; p++)
-						orderedParams[p].emplace((*j->second)[p]);
+						orderedParams[p].add((*j->second)[p]);
 				}
 				//	and then find the median
 				for (size_t p = 0; p < Nparams; p++)
 				{
-					auto k = orderedParams[p].begin();
-					n = 0;
-					for (; n < orderedParams[p].size() / 2; k++, n++) {};
-					br.params[logValue][p] = *k;
+					VEC_DATA_TYPE v = orderedParams[p].median();
+					br.params[logValue][p] = v;
 					if (p < 4)
-						br.params[absValue][p] = pow(10,*k);
+						br.params[absValue][p] = pow(10,v);
 					else
-						br.params[absValue][p] = *k;
+						br.params[absValue][p] = v;
 				}
 			}
 
 #endif
 			//	Find the absolute distance from the selected 'result' LL in order
-			multiset<VEC_DATA_TYPE> distanceFromOptimalLL;
+			orderedVec distanceFromOptimalLL;
 			for (auto i = orderedResults.begin(); i != orderedResults.end(); i++)
-				distanceFromOptimalLL.emplace(abs(i->first - br.LLresult));
+				distanceFromOptimalLL.add(abs(i->first - br.LLresult));
 
 			//	and then find the median = MAD
-			size_t n = 0;
-			auto i = distanceFromOptimalLL.begin();
-			for (; n < distanceFromOptimalLL.size() / 2; i++, n++) {};
-			br.LL_dev = *i;
+			br.LL_dev = distanceFromOptimalLL.median();
 
 			//	Now go through the parameters creating ordered lists of the absolute distance from the selected param
 			//	and also the positive and negative distances so that we can do single sided deviation measures
-			typedef vector<multiset<VEC_DATA_TYPE> > diffList;
+			typedef vector<orderedVec> diffList;
 			vector<diffList> diffs(4, diffList(Nparams));
 
-			n = 0;
+			size_t n = 0;
 			auto j = orderedResults.begin();
 			for (; n < orderedResults.size(); j++, n++)
 			{
@@ -497,30 +492,25 @@ bool LiBiNorm::coreParameterEstimation()
 					VEC_DATA_TYPE v = (*j->second)[p];
 					if (v > br.params[logValue][p])
 					{
-						diffs[minLog][p].emplace(v - br.params[logValue][p]);
-						diffs[logValue][p].emplace(v - br.params[logValue][p]);
+						diffs[minLog][p].add(v - br.params[logValue][p]);
+						diffs[logValue][p].add(v - br.params[logValue][p]);
 					}
 					else
 					{
-						diffs[maxLog][p].emplace(br.params[logValue][p] - v);
-						diffs[logValue][p].emplace(br.params[logValue][p] - v);
+						diffs[maxLog][p].add(br.params[logValue][p] - v);
+						diffs[logValue][p].add(br.params[logValue][p] - v);
 					}
 					if (p < 4)
-						diffs[absValue][p].emplace(abs(br.params[absValue][p] - pow(10, v)));
+						diffs[absValue][p].add(abs(br.params[absValue][p] - pow(10, v)));
 					else
-						diffs[absValue][p].emplace(abs(br.params[absValue][p] - v));
+						diffs[absValue][p].add(abs(br.params[absValue][p] - v));
 				}
 			}
 			//	And then find the medians
 			for (size_t p = 0; p < Nparams; p++)
 			{
 				for (size_t t = 0; t < diffs.size(); t++)
-				{
-					auto i = diffs[t][p].begin();
-					n = 0;
-					for (; n < diffs[t][p].size() / 2; i++, n++) {};
-					br.param_dev[t][p] = *i;
-				}
+					br.param_dev[t][p] = diffs[t][p].median();
 			}
 		}
 	}

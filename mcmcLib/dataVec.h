@@ -5,6 +5,7 @@
 #include <vector>
 #include <string>
 #include <valarray>
+#include <set>
 
 #include "libCommon.h"
 #include "printEx.h"
@@ -383,33 +384,33 @@ inline dataVec operator > (dataVec && a,VEC_DATA_TYPE b)
 		i = i>b?1:0;
 	return a;
 }
-/*
-VEC_DATA_TYPE sum(const dataVec & a);
-dataVec exp(dataVec && a);
-dataVec log(dataVec && a);
-dataVec operator * (VEC_DATA_TYPE a, const dataVec & b);
-dataVec operator * (VEC_DATA_TYPE a, dataVec && b);
-dataVec operator < (VEC_DATA_TYPE a, const dataVec & b);
-dataVec operator < (VEC_DATA_TYPE a, dataVec && b);
-dataVec operator - (VEC_DATA_TYPE a, const dataVec & b);
-dataVec operator - (VEC_DATA_TYPE a, dataVec && b);
-dataVec operator + (dataVec && a,VEC_DATA_TYPE b);
-dataVec operator + (const dataVec & a ,VEC_DATA_TYPE b);
-dataVec operator - (dataVec && a,VEC_DATA_TYPE b);
-dataVec operator - (const dataVec & a ,VEC_DATA_TYPE b);
-dataVec operator * (dataVec && a,VEC_DATA_TYPE b);
-dataVec operator * (const dataVec & a ,VEC_DATA_TYPE b);
-dataVec operator / (dataVec && a,VEC_DATA_TYPE b);
-dataVec operator / (const dataVec & a ,VEC_DATA_TYPE b);
-dataVec operator ^ (dataVec && a,int b);
-dataVec operator > (dataVec && a,VEC_DATA_TYPE b);
-
-*/
 
 inline bool printVal(outputDataFile * f,const dataVec & value)
 {
 	printVal(f,(const std::vector<VEC_DATA_TYPE> &) value);
 	return true;
 };
+
+
+/*	An ordered list that can be used for calculating medians */
+
+class orderedVec : public std::multiset<VEC_DATA_TYPE>
+{
+public:
+	VEC_DATA_TYPE median() const
+	{
+		auto i = begin();
+		size_t n = 0;
+		for (; n < size() / 2; i++, n++) {};
+		return *i;
+	}
+	void add(VEC_DATA_TYPE v) { emplace(v); };
+};
+
+
+
+
+
+
 
 #endif
