@@ -3,6 +3,8 @@
 
 using namespace std;
 
+
+
 //	Performs a monte carl markov chain run
 void mcmc::mcmcrun(const mcmcGeneData & data,const paramSet & params,const optionsType & options)
 {

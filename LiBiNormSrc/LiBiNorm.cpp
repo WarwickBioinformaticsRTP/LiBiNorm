@@ -23,8 +23,6 @@ using namespace std;
 
 int main(int argc, char **argv)
 {
-	LiBiOptimiser nmo;
-
 #ifdef _WIN32
 	_DBG( _CrtSetDbgFlag ( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF ));
 #endif
@@ -114,31 +112,9 @@ static mutex mtx;
 			progMessage("Starting ", currentModel,", iteration:", mcmcRun);
 		}
 
-		switch (currentModel)
-		{
-		case noModel: break;
-		case ModelA:
-			options.ssfun = &FLL_ModelA;
-			break;
-		case ModelB:
-			options.ssfun = &FLL_ModelB;
-			break;
-		case ModelC:
-			options.ssfun = &FLL_ModelC;
-			break;
-		case ModelD:
-			options.ssfun = &FLL_ModelD;
-			break;
-		case ModelE:
-			options.ssfun = &FLL_ModelE;
-			break;
-		case ModelBD:
-			options.ssfun = &FLL_ModelBD;
-			break;
-		}
+		setSSfun(options,currentModel);
 
-
-		paramSet params = GetModelParams(currentModel);
+		paramSet params = GetModelParams(currentModel,&initialValues[currentModel]);
 		options.qcov = dataVec(params.size(), options.jumpSize);
 
 		mcmc mcmcEngine;
@@ -179,6 +155,7 @@ void LiBiNormCore::helpCommon()
 	printf("  -d N, --reads=N       Maximum number of reads using for normalisation\n");
 	printf(_s("                        parameter determination (", DEF_MAX_READS_FOR_PARAM_ESTIMATION, ")\n"));
 	printf("  -q, --quiet           suppress progress report\n");
+	printf("  -x, --debug           output debug messages\n");
 	printf("  -c FILENAME, --counts=FILENAME\n");
 	printf("                        Name of output file. default: writes to stdout)\n");
 
@@ -219,6 +196,16 @@ bool LiBiNormCore::commandParseCommon(int & ni, int argc,char **argv)
 		if ((strcmp(argv[ni], "-c") == 0) || (opt2 = (strncmp(argv[ni], "--counts=", 9) == 0)))
 		{
 			countsFilename = opt2 ? argv[++ni] + 9 : argv[++ni];
+			return true;
+		}
+		if ((strcmp(argv[ni], "-x") == 0) || (opt2 = (strncmp(argv[ni], "--debug", 7) == 0)))
+		{
+			debugPrint = true;
+			return true;
+		}
+		if ((strcmp(argv[ni], "-q") == 0) || (opt2 = (strncmp(argv[ni], "--quiet", 7) == 0)))
+		{
+			verbose = false;
 			return true;
 		}
 
@@ -372,6 +359,20 @@ bool LiBiNorm::coreParameterEstimation()
 		else
 			threadLoopCounts[m].requested = NrunsOtherModels;
 	}
+
+
+	for (modelType m : allModels())
+	{
+		LiBiOptimiser  optimiser(geneData);
+		setSSfun(options,m);
+		initialValues[m] = optimiser.getParams(m,options);
+
+		stringEx s;
+		s.appendWithSep(vector<VEC_DATA_TYPE>(initialValues[m]),',');
+		debugMessage("\n",m, " Initial values,", s);
+	}
+
+
 
 #ifdef FIXED_RESULTS
 	theModel = M_FIXED_RESULTS;

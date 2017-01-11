@@ -13,7 +13,7 @@
 */
 class optionsType
 {
-public:
+public:	
 	optionsType():nsimu(3){};
 
 	double(*ssfun)(const dataVec & param, const mcmcGeneData & data);

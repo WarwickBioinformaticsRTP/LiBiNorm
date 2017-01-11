@@ -5,7 +5,7 @@
 #include <map>
 #include <algorithm>
 #include <vector>
-#include "params.h"
+#include "mcmc.h"
 
 /*
 Holds the information relating to the 6 different models 
@@ -26,6 +26,8 @@ enum modelType
 //	A collection of all the models, allowing code to iterate through them
 const std::vector<modelType> & allModels();
 
+void setSSfun(optionsType & options, modelType m);
+
 //	Routines for converting between model identifier and equivalent strings
 std::string conv(const modelType m,bool removeGaps = false);
 modelType modelFromString(const std::string & desc);
@@ -41,7 +43,7 @@ std::ostream& operator<< (std::ostream &out, const modelType & m);
 
 
 //  Returns mcmc paremetyers associated with a model
-paramSet GetModelParams(modelType model);
+paramSet GetModelParams(modelType model,dataVec * defaults = 0);
 
 //	The set of headers associated with the model parameters, extracted from the data provided 
 //	by GetModelParams

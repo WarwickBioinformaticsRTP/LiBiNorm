@@ -4,7 +4,35 @@
 #include "containerEx.h"
 #include "ModelData.h"
 #include "Options.h"
+#include "mcmc.h"
 using namespace std;
+
+
+void setSSfun(optionsType & options,modelType m)
+{
+	switch (m)
+	{
+	case noModel: break;
+	case ModelA:
+		options.ssfun = &FLL_ModelA;
+		break;
+	case ModelB:
+		options.ssfun = &FLL_ModelB;
+		break;
+	case ModelC:
+		options.ssfun = &FLL_ModelC;
+		break;
+	case ModelD:
+		options.ssfun = &FLL_ModelD;
+		break;
+	case ModelE:
+		options.ssfun = &FLL_ModelE;
+		break;
+	case ModelBD:
+		options.ssfun = &FLL_ModelBD;
+		break;
+	}
+}
 
 
 /*
@@ -75,7 +103,7 @@ bool printVal(outputDataFile * f, modelType m)
 
 //	Loads the paremeter information associated with each of the models and sets the value to a random value within the allowed
 //	range for the parameter. 
-paramSet GetModelParams(modelType model)
+paramSet GetModelParams(modelType model,dataVec * defaults)
 {
 	paramSet params;
 
@@ -110,6 +138,9 @@ paramSet GetModelParams(modelType model)
 		};
 		break;
 	};
+
+	if (defaults)
+		params.setValues(*defaults);
 
 #ifdef PRESET_VALUES
 	params.setValues(PRESET_VALUES);

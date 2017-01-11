@@ -80,6 +80,8 @@ private:
 	//	The specific data that will be used for the mcmc parameter determination
 	mcmcGeneData geneData;
 
+	std::map<modelType, dataVec> initialValues;
+
 	//	These vector holds the full results for each of the models, which are needed for identifying
 	//	the optimal parameters and the variation that is seen.
 	//	For each model the results for each mcmc run is stored as a map indexd by run number
