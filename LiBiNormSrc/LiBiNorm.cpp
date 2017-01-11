@@ -313,7 +313,7 @@ int LiBiNorm::main(int argc, char **argv)
 		progMessage("Model selected by command line is ", theModel);
 	}
 
-	getBias(theModel, bestResults[theModel].params, geneCounts.lengths[0], geneCounts.bias);
+	getBias(theModel, bestResults[theModel].params[logValue], geneCounts.lengths[0], geneCounts.bias);
 	
 	string filename = normaliseResultsFilename.replaceSuffix("_expression.txt");
 		if (!geneCounts.outputGeneCounts(filename, outputFull?3:2, conv(theModel)))
@@ -411,111 +411,114 @@ bool LiBiNorm::coreParameterEstimation()
 	//********************************************************************************************
 	//	Find the optimal parameter values, which are associated with results found in the last
 	//	iterations of all of the MCMC runs.
-	for (modelType m  : allModels())
+	for (modelType m : allModels())
 	{
 		multimap <double, dataVec *> & orderedResults = allOrderedResults[m];
-
-		bestResult & br = bestResults[m];
-		size_t Nparams = headers[m].size();
-		br.params.resize(Nparams);
-		for (size_t i = 0;i < 3;i++)
-			br.param_dev[i].resize(Nparams);
-
-		//	For each of the mcmc runs take the last END_LENGTH_SEARCHED_FOR_OPTIMAL_PARAMETERS iterations and
-		//	put them in a map ordered by LL value
-		for (mcmcRunId i = 1; i <= fullResultSSChain[m].size(); i++)
+		if (fullResultSSChain[m].size())
 		{
-			for (size_t j = fullResultSSChain[m][i].size() - END_LENGTH_SEARCHED_FOR_OPTIMAL_PARAMETERS;
-				j < fullResultSSChain[m][i].size(); j++)
+			bestResult & br = bestResults[m];
+			size_t Nparams = headers[m].size();
+			for (size_t i = 0; i < 2; i++)
+				br.params[i].resize(Nparams);
+			for (size_t i = 0; i < 4; i++)
+				br.param_dev[i].resize(Nparams);
+
+			//	For each of the mcmc runs take the last END_LENGTH_SEARCHED_FOR_OPTIMAL_PARAMETERS iterations and
+			//	put them in a map ordered by LL value
+			for (mcmcRunId i = 1; i <= fullResultSSChain[m].size(); i++)
 			{
-				orderedResults.emplace(fullResultSSChain[m][i][j], &fullResultChain[m][i][j]);
+				for (size_t j = fullResultSSChain[m][i].size() - END_LENGTH_SEARCHED_FOR_OPTIMAL_PARAMETERS;
+					j < fullResultSSChain[m][i].size(); j++)
+				{
+					orderedResults.emplace(fullResultSSChain[m][i][j], &fullResultChain[m][i][j]);
+				}
 			}
-		}
 
 #ifdef USE_PARAMS_FROM_LOWEST_LL
-		//	Find the best LL.
-		br.LLresult = orderedResults.begin()->first;
-		//	Get the parameters from the most likly sample
-		for (size_t p = 0; p < Nparams; p++)
-			br.params[p] = (*orderedResults.begin()->second)[p];
+			//	Find the best LL.
+			br.LLresult = orderedResults.begin()->first;
+			//	Get the parameters from the most likly sample
+			for (size_t p = 0; p < Nparams; p++)
+				br.params[p] = (*orderedResults.begin()->second)[p];
 #else
 
-		{
-			//	Put the Log liklyhoods in order and find the median
-			auto i = orderedResults.begin();
-			size_t n = 0;
-			for (; n < orderedResults.size() / 2; i++, n++) {};
-			br.LLresult = i->first;
+			{
+				//	Put the Log liklyhoods in order and find the median
+				auto i = orderedResults.begin();
+				size_t n = 0;
+				for (; n < orderedResults.size() / 2; i++, n++) {};
+				br.LLresult = i->first;
 
-			//	Now put each of the params in order
-			auto j = orderedResults.begin();
-			vector<multiset<VEC_DATA_TYPE> > orderedParams(Nparams);
-			for (; j != orderedResults.end(); j++)
-			{
+				//	Now put each of the params in order
+				auto j = orderedResults.begin();
+				vector<multiset<VEC_DATA_TYPE> > orderedParams(Nparams);
+				for (; j != orderedResults.end(); j++)
+				{
+					for (size_t p = 0; p < Nparams; p++)
+						orderedParams[p].emplace((*j->second)[p]);
+				}
+				//	and then find the median
 				for (size_t p = 0; p < Nparams; p++)
-					orderedParams[p].emplace((*j->second)[p]);
+				{
+					auto k = orderedParams[p].begin();
+					n = 0;
+					for (; n < orderedParams[p].size() / 2; k++, n++) {};
+					br.params[logValue][p] = *k;
+					if (p < 4)
+						br.params[absValue][p] = pow(10,*k);
+					else
+						br.params[absValue][p] = *k;
+				}
 			}
-			//	and then find the median
-			for (size_t p = 0; p < Nparams; p++)
-			{
-				auto k = orderedParams[p].begin();
-				n = 0;
-				for (; n < orderedParams[p].size() / 2; k++, n++) {};
-				br.params[p] = *k;
-			}
-		}
 
 #endif
-		//	Find the absolute distance from the selected 'result' LL in order
-		multiset<VEC_DATA_TYPE> distanceFromOptimalLL;
-		for (auto i = orderedResults.begin(); i != orderedResults.end(); i++)
-			distanceFromOptimalLL.emplace(abs(i->first - br.LLresult));
+			//	Find the absolute distance from the selected 'result' LL in order
+			multiset<VEC_DATA_TYPE> distanceFromOptimalLL;
+			for (auto i = orderedResults.begin(); i != orderedResults.end(); i++)
+				distanceFromOptimalLL.emplace(abs(i->first - br.LLresult));
 
-		//	and then find the median = MAD
-		size_t n = 0;
-		auto i = distanceFromOptimalLL.begin();
-		for (; n < distanceFromOptimalLL.size() / 2; i++, n++) {};
-		br.LL_dev = *i;
+			//	and then find the median = MAD
+			size_t n = 0;
+			auto i = distanceFromOptimalLL.begin();
+			for (; n < distanceFromOptimalLL.size() / 2; i++, n++) {};
+			br.LL_dev = *i;
 
-		//	Now go through the parameters creating ordered lists of the absolute distance from the selected param
-		//	and also the positive and negative distances so that we can do single sided deviation measures
-		vector<multiset<VEC_DATA_TYPE> > posDiffs(Nparams), negDiffs(Nparams),absDiffs(Nparams);
-		n = 0;
-		auto j = orderedResults.begin();
-		for (; n < orderedResults.size(); j++, n++)
-		{
-			for (size_t p = 0; p < Nparams; p++)
+			//	Now go through the parameters creating ordered lists of the absolute distance from the selected param
+			//	and also the positive and negative distances so that we can do single sided deviation measures
+			typedef vector<multiset<VEC_DATA_TYPE> > diffList;
+			vector<diffList> diffs(4, diffList(Nparams));
+
+			n = 0;
+			auto j = orderedResults.begin();
+			for (; n < orderedResults.size(); j++, n++)
 			{
-				VEC_DATA_TYPE v = (*j->second)[p];
-				if (v > br.params[p])
+				for (size_t p = 0; p < Nparams; p++)
 				{
-					posDiffs[p].emplace(v - br.params[p]);
-					absDiffs[p].emplace(v - br.params[p]);
-				}
-				else
-				{
-					negDiffs[p].emplace(br.params[p] - v);
-					absDiffs[p].emplace(br.params[p] - v);
+					VEC_DATA_TYPE v = (*j->second)[p];
+					if (v > br.params[logValue][p])
+					{
+						diffs[minLog][p].emplace(v - br.params[logValue][p]);
+						diffs[logValue][p].emplace(v - br.params[logValue][p]);
+					}
+					else
+					{
+						diffs[maxLog][p].emplace(br.params[logValue][p] - v);
+						diffs[logValue][p].emplace(br.params[logValue][p] - v);
+					}
+					diffs[absValue][p].emplace(abs(br.params[absValue][p] - (p < 4) ? pow(10, v) : v));
 				}
 			}
-		}
-		//	And then find the medians
-		for (size_t p = 0; p < Nparams; p++)
-		{
-			auto i = posDiffs[p].begin();
-			n = 0;
-			for (; n < posDiffs[p].size() / 2; i++, n++) {};
-			br.param_dev[0][p] = *i;
-
-			i = negDiffs[p].begin();
-			n = 0;
-			for (; n < negDiffs[p].size() / 2; i++, n++) {};
-			br.param_dev[1][p] = *i;
-
-			i = absDiffs[p].begin();
-			n = 0;
-			for (; n < absDiffs[p].size() / 2; i++, n++) {};
-			br.param_dev[2][p] = *i;
+			//	And then find the medians
+			for (size_t p = 0; p < Nparams; p++)
+			{
+				for (size_t t = 0; t < diffs.size(); t++)
+				{
+					auto i = diffs[t][p].begin();
+					n = 0;
+					for (; n < diffs[t][p].size() / 2; i++, n++) {};
+					br.param_dev[t][p] = *i;
+				}
+			}
 		}
 	}
 /*	******************************************************************************************
@@ -602,20 +605,28 @@ void LiBiNorm::printResults()
 	mcmcResult.printEnd();
 
 	//	A row for the optimal parameters that were found for each model
-	mcmcResult.printStart("Best");
-	for (modelType m : allModels())
+	for (size_t i = 0; i < 2; i++)
 	{
-		if (bestResults[m].params.size())
-			mcmcResult.printMiddle(bestResults[m].params, bestResults[m].LLresult, "");
-		else
-			mcmcResult.printGaps(headers[m].size() + 2);
+		mcmcResult.printStart((i==0)?"Log Opt":"Abs Opt");
+		for (modelType m : allModels())
+		{
+			if (bestResults[m].params[i].size())
+				mcmcResult.printMiddle(bestResults[m].params[i], bestResults[m].LLresult, "");
+			else
+				mcmcResult.printGaps(headers[m].size() + 2);
+		}
+		mcmcResult.printEnd();
 	}
-	mcmcResult.printEnd();
 	//	A row for the deviations for each model
-	for (size_t i = 0; i < 3; i++)
+	for (size_t i = 0; i < 4; i++)
 	{
-
-		mcmcResult.printStart((i == 0) ? "Pos Dev" : ((i == 1)?"Neg Dev":"Abs"));
+		switch (i)
+		{
+		case 0:	mcmcResult.printStart("Spread Log"); break;
+		case 1:	mcmcResult.printStart("Spread Abs"); break;
+		case 2:	mcmcResult.printStart("pos Spread Log"); break;
+		case 3:	mcmcResult.printStart("neg Spread Log"); break;
+		}
 		for (modelType m : allModels())
 		{
 			if (bestResults[m].param_dev[i].size())
@@ -670,7 +681,7 @@ void LiBiNorm::printBias()
 	for (modelType m : allModels())
 	{
 		if (bestResults[m])
-			getBias(m, bestResults[m].params, lengths, biases[m]);
+			getBias(m, bestResults[m].params[logValue], lengths, biases[m]);
 	}
 
 	for (modelType m : allModels())

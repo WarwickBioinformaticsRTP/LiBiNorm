@@ -339,7 +339,7 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 			progMessage("Model used is ", theModel);
 		}
 
-		getBias(theModel, bestResults[theModel].params, geneCounts.lengths[0], geneCounts.bias);
+		getBias(theModel, bestResults[theModel].params[logValue], geneCounts.lengths[0], geneCounts.bias);
 
 		if (normaliseResultsFilename)
 		{

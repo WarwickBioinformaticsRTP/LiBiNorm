@@ -48,6 +48,16 @@ public:
 		headers = getHeaders();
 	};
 
+	//	Used to identify param and param_dev values within bestResults
+	enum
+	{
+		logValue = 0,
+		absValue = 1,
+		minLog = 2,
+		maxLog = 3
+	};
+
+
 	int main(int argc, char **argv);
 	void mcmcThread(optionsType options);
 protected:
