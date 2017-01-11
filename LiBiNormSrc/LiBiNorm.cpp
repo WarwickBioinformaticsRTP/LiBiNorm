@@ -505,7 +505,10 @@ bool LiBiNorm::coreParameterEstimation()
 						diffs[maxLog][p].emplace(br.params[logValue][p] - v);
 						diffs[logValue][p].emplace(br.params[logValue][p] - v);
 					}
-					diffs[absValue][p].emplace(abs(br.params[absValue][p] - (p < 4) ? pow(10, v) : v));
+					if (p < 4)
+						diffs[absValue][p].emplace(abs(br.params[absValue][p] - pow(10, v)));
+					else
+						diffs[absValue][p].emplace(abs(br.params[absValue][p] - v));
 				}
 			}
 			//	And then find the medians
