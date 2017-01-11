@@ -1,21 +1,31 @@
 #ifndef OPTIONS_H
 #define OPTIONS_H
 
-
-#define DEF_MAX_READS_FOR_PARAM_ESTIMATION 1000000
-#define MAX_LENGTH_OF_GENE_FOR_PARAM_ESTIMATION 20000
-#define MAX_READS_GENE 100
-#define DEF_THREADS 3
-#define MCMC_ITERATIONS 2000
-#define DEFAULT_MODEL ModelBD
-#define NUMBER_OF_MCMC_RUNS 3
-#define DEFAULT_NORMALISATION_GENE_LENGTH 1000
-#define MAX_GENE_LENGTH_FOR_NORM_PLOT 20000
-#define DEFAULT_COUNT_MODE intersect_union
+//	Bam/gff file reading
 #define DEFAULT_FEATURE_TYPE_EXON "exon" 
 #define DEFAULT_GTF_ID_ATTRIBUTE "gene_id"
 #define DEFAULT_GFF_ID_ATTRIBUTE "Genbank"
+#define DEFAULT_COUNT_MODE intersect_union
+
+#define DEF_THREADS 3
+
+//	Read selection for paremeter estimation
+#define DEF_MAX_READS_FOR_PARAM_ESTIMATION 1000000
+#define MAX_LENGTH_OF_GENE_FOR_PARAM_ESTIMATION 20000
+#define MAX_READS_GENE 100
+
+//	MCMC operation
+#define NUMBER_OF_MCMC_RUNS 3
+#define MCMC_ITERATIONS 2000
+#define MCMC_JUMP_SIZE 0.1
+#define DEFAULT_MODEL ModelBD
+
+//	Deriving parameters from MCMC runs
 #define END_LENGTH_SEARCHED_FOR_OPTIMAL_PARAMETERS 200
+
+//	Outputting results
+#define DEFAULT_NORMALISATION_GENE_LENGTH 1000
+#define MAX_GENE_LENGTH_FOR_NORM_PLOT 20000
 
 //	Use this to add the mode which creates fastq files based on bam files with artificial problems
 // #define MAKE_FASTQ_MODE

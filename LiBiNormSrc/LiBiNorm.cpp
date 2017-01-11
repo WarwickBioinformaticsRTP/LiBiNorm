@@ -355,7 +355,7 @@ bool LiBiNorm::coreParameterEstimation()
 
 	optionsType options;
 
-	options.jumpSize = 0.01;
+	options.jumpSize = MCMC_JUMP_SIZE;
 	options.nsimu = Nsimu;
 	options.Nruns = Nruns;
 
