@@ -19,12 +19,10 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="dataVec.h" />
     <ClInclude Include="mcmc.h" />
     <ClInclude Include="params.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="dataVec.cpp" />
     <ClCompile Include="mcmc.cpp" />
     <ClCompile Include="params.cpp" />
   </ItemGroup>

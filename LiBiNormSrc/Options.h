@@ -7,18 +7,18 @@
 #define DEFAULT_GFF_ID_ATTRIBUTE "Genbank"
 #define DEFAULT_COUNT_MODE intersect_union
 
-#define DEF_THREADS 3
+#define DEF_THREADS 3 //-p
 
 //	Read selection for paremeter estimation
-#define DEF_MAX_READS_FOR_PARAM_ESTIMATION 1000000
+#define DEF_MAX_READS_FOR_PARAM_ESTIMATION 1000000  // -d
 #define MAX_LENGTH_OF_GENE_FOR_PARAM_ESTIMATION 20000
 #define MAX_READS_GENE 100
 
 //	MCMC operation
-#define NUMBER_OF_MCMC_RUNS 3
-#define MCMC_ITERATIONS 2000
+#define NUMBER_OF_MCMC_RUNS 3  // -r
+#define MCMC_ITERATIONS 2000  // -s
 #define MCMC_JUMP_SIZE 0.1
-#define DEFAULT_MODEL ModelBD
+#define DEFAULT_MODEL ModelBD // -n
 
 //	Deriving parameters from MCMC runs
 #define END_LENGTH_SEARCHED_FOR_OPTIMAL_PARAMETERS 200

@@ -5,6 +5,7 @@
 
 #include <mutex>
 #include <thread>
+#include "LiBiOptimiser.h"
 #include "LiBiNorm.h"
 #include "LiBiCount.h"
 #include "LiBiDedup.h"
@@ -22,6 +23,7 @@ using namespace std;
 
 int main(int argc, char **argv)
 {
+	LiBiOptimiser nmo;
 
 #ifdef _WIN32
 	_DBG( _CrtSetDbgFlag ( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF ));

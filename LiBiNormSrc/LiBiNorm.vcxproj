@@ -120,6 +120,7 @@
     <ClCompile Include="LiBiCount.cpp" />
     <ClCompile Include="LiBiDedup.cpp" />
     <ClCompile Include="LiBiNorm.cpp" />
+    <ClCompile Include="LiBiOptimiser.cpp" />
     <ClCompile Include="MakeFastq.cpp" />
     <ClCompile Include="ModelData.cpp" />
     <ClCompile Include="Regions.cpp" />
@@ -131,6 +132,7 @@
     <ClInclude Include="LiBiCount.h" />
     <ClInclude Include="LiBiDedup.h" />
     <ClInclude Include="LiBiNorm.h" />
+    <ClInclude Include="LiBiOptimiser.h" />
     <ClInclude Include="MakeFastq.h" />
     <ClInclude Include="ModelData.h" />
     <ClInclude Include="Options.h" />
