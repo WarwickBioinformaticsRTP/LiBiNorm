@@ -60,6 +60,8 @@ public:
 
 	int main(int argc, char **argv);
 	void mcmcThread(optionsType options);
+	void setInitialValuesThread(optionsType options);
+
 protected:
 	bool coreParameterEstimation();
 	modelType getBestModel();
@@ -76,6 +78,7 @@ protected:
 	modelType bestModel;
 private:
 	bool outputFull;
+	size_t nelderMeadCounter;
 
 	//	The specific data that will be used for the mcmc parameter determination
 	mcmcGeneData geneData;

@@ -335,6 +335,30 @@ int LiBiNorm::main(int argc, char **argv)
 	return EXIT_SUCCESS;
 }
 
+void LiBiNorm::setInitialValuesThread(optionsType options)
+{
+static mutex mtx;
+	modelType m;
+	while (true)
+	{
+		{
+			lock_guard<mutex> lock(mtx);
+			if (nelderMeadCounter >= allModels().size())
+				return;
+			m = allModels()[nelderMeadCounter++];
+		}
+		LiBiOptimiser  optimiser(geneData);
+		setSSfun(options, m);
+		initialValues[m] = optimiser.getParams(m, options);
+
+		stringEx s;
+		s.appendWithSep(vector<VEC_DATA_TYPE>(initialValues[m]), ',');
+		debugMessage("\n", m, " Initial values,", s);
+	}
+
+}
+
+
 bool LiBiNorm::coreParameterEstimation()
 {
 	geneCounts.remove_invalid_values();
@@ -360,18 +384,17 @@ bool LiBiNorm::coreParameterEstimation()
 			threadLoopCounts[m].requested = NrunsOtherModels;
 	}
 
-
-	for (modelType m : allModels())
 	{
-		LiBiOptimiser  optimiser(geneData);
-		setSSfun(options,m);
-		initialValues[m] = optimiser.getParams(m,options);
+		nelderMeadCounter = 0;
+//		LiBiNorm::setInitialValuesThread(options);
+		vector<thread> threads;
+		for (size_t i = 0; i < Nthreads; i++)
+			threads.emplace_back(&LiBiNorm::setInitialValuesThread, this, options);
 
-		stringEx s;
-		s.appendWithSep(vector<VEC_DATA_TYPE>(initialValues[m]),',');
-		debugMessage("\n",m, " Initial values,", s);
+		for (auto & i : threads)
+			i.join();
+
 	}
-
 
 
 #ifdef FIXED_RESULTS
@@ -442,16 +465,23 @@ bool LiBiNorm::coreParameterEstimation()
 			br.LLresult = orderedResults.begin()->first;
 			//	Get the parameters from the most likly sample
 			for (size_t p = 0; p < Nparams; p++)
-				br.params[p] = (*orderedResults.begin()->second)[p];
+			{
+				VEC_DATA_TYPE v = (*orderedResults.begin()->second)[p];
+				br.params[logValue][p] = v;
+				if (p < 4)
+					br.params[absValue][p] = pow(10, v);
+				else
+					br.params[absValue][p] = v;
+			}
 #else
-
 			{
 				//	Put the Log liklyhoods in order and find the median
 				auto i = orderedResults.begin();
 				size_t n = 0;
 				for (; n < orderedResults.size() / 2; i++, n++) {};
 				br.LLresult = i->first;
-
+			}
+			{
 				//	Now put each of the params in order
 				auto j = orderedResults.begin();
 				vector<orderedVec> orderedParams(Nparams);
@@ -466,12 +496,11 @@ bool LiBiNorm::coreParameterEstimation()
 					VEC_DATA_TYPE v = orderedParams[p].median();
 					br.params[logValue][p] = v;
 					if (p < 4)
-						br.params[absValue][p] = pow(10,v);
+						br.params[absValue][p] = pow(10, v);
 					else
 						br.params[absValue][p] = v;
 				}
 			}
-
 #endif
 			//	Find the absolute distance from the selected 'result' LL in order
 			orderedVec distanceFromOptimalLL;
