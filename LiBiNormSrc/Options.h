@@ -14,6 +14,9 @@
 #define MAX_LENGTH_OF_GENE_FOR_PARAM_ESTIMATION 20000
 #define MAX_READS_GENE 100
 
+//	Nelder Mead
+#define EDGE_PENALTY_MULTIPLIER 1000
+
 //	MCMC operation
 #define NUMBER_OF_MCMC_RUNS 2  // -r
 #define MCMC_ITERATIONS 2000  // -s

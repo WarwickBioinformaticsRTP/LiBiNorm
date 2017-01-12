@@ -1,3 +1,4 @@
+#include "Options.h"
 #include "LiBiOptimiser.h"
 
 ErrorPair LiBiOptimiser::ErrorFunc()
@@ -11,8 +12,15 @@ ErrorPair LiBiOptimiser::ErrorFunc()
 
 	for (size_t i = 0; i < params.size(); i++)
 	{
-		if ((data[i] > params[i].max) || (data[i] < params[i].min))
-			ep.WithWeightings += 10000;
+		double diff = data[i] - params[i].max;
+		if (diff > 0)
+			ep.WithWeightings += (diff * diff ) * EDGE_PENALTY_MULTIPLIER;
+		else
+		{
+			diff = params[i].min - data[i];
+			if (diff > 0)
+				ep.WithWeightings += (diff * diff) * EDGE_PENALTY_MULTIPLIER;
+		}
 	}
 
 	return ep;
@@ -30,7 +38,7 @@ dataVec LiBiOptimiser::getParams(modelType m, optionsType & options)
 
 	allOptiData.push_back(&optiData);
 
-	VEC_DATA_TYPE minError = optimise(allOptiData, 200,100, options.jumpSize);
+	optimise(allOptiData, 50,100, options.jumpSize);
 
 	dataVec results;
 	for (size_t i = 0; i < params.size(); i++)

@@ -515,6 +515,7 @@ bool LiBiNorm::coreParameterEstimation()
 				for (size_t t = 0; t < diffs.size(); t++)
 					br.param_dev[t][p] = diffs[t][p].median();
 			}
+			progMessage(m);
 		}
 	}
 /*	******************************************************************************************
