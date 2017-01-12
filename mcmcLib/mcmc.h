@@ -2,6 +2,7 @@
 #define MCMC_H
 
 #include "params.h"
+#include "nelderMeadOptimiser.h"
 
 
 /*

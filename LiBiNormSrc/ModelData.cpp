@@ -139,7 +139,7 @@ paramSet GetModelParams(modelType model,dataVec * defaults)
 		break;
 	};
 
-	if (defaults)
+	if ((defaults) && (defaults->size()))
 		params.setValues(*defaults);
 
 #ifdef PRESET_VALUES

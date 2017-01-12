@@ -12,12 +12,12 @@ ErrorPair LiBiOptimiser::ErrorFunc()
 
 	for (size_t i = 0; i < params.size(); i++)
 	{
-		double diff = data[i] - params[i].max;
+		double diff = data[i] - params[i].max + 0.2;
 		if (diff > 0)
 			ep.WithWeightings += (diff * diff ) * EDGE_PENALTY_MULTIPLIER;
 		else
 		{
-			diff = params[i].min - data[i];
+			diff = params[i].min - data[i] + 0.2;
 			if (diff > 0)
 				ep.WithWeightings += (diff * diff) * EDGE_PENALTY_MULTIPLIER;
 		}
@@ -38,7 +38,7 @@ dataVec LiBiOptimiser::getParams(modelType m, optionsType & options)
 
 	allOptiData.push_back(&optiData);
 
-	optimise(allOptiData, 50,100, options.jumpSize);
+	optimise(allOptiData, NELDER_MEAD_ITERATIONS,100, options.jumpSize);
 
 	dataVec results;
 	for (size_t i = 0; i < params.size(); i++)

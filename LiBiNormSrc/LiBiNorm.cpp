@@ -614,6 +614,18 @@ void LiBiNorm::printResults()
 		}
 		mcmcResult.printEnd();
 	}
+
+	//	And the initial Values
+	if (initialValues[ModelA].size())
+	{
+		mcmcResult.printStart("Nelder Mead");
+		for (modelType m : allModels())
+			mcmcResult.printMiddle(initialValues[m], "","");
+		mcmcResult.printEnd();
+	}
+	else
+		mcmcResult.printEnd();
+
 	//	A row for the deviations for each model
 	for (size_t i = 0; i < 4; i++)
 	{

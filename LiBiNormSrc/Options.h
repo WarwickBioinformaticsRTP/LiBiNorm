@@ -15,6 +15,7 @@
 #define MAX_READS_GENE 100
 
 //	Nelder Mead
+#define NELDER_MEAD_ITERATIONS 1000
 #define EDGE_PENALTY_MULTIPLIER 1000
 
 //	MCMC operation

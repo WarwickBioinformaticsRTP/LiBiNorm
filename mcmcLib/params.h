@@ -2,6 +2,7 @@
 #define PARAMS_H
 
 #include <limits> 
+#include "nelderMeadOptimiser.h"
 #include "dataVec.h"
 
 
