@@ -61,7 +61,6 @@ public:
 
 	int main(int argc, char **argv);
 	void mcmcThread(optionsType options);
-	void setInitialValuesThread(optionsType options);
 
 protected:
 	bool coreParameterEstimation();

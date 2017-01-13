@@ -110,10 +110,9 @@ void LiBiNorm::mcmcThread(optionsType options)
 		initialValues[m] = optimiser.getParams(m, options);
 
 		initValuesMutexes[m].unlock();
-		{
-			lock_guard<mutex> lock(mtx1);
-			progMessage("Finishing intial values ", m);
-		}
+
+		lock_guard<mutex> lock(mtx1);
+		progMessage("Finishing intial values ", m);
 	}
 
 
@@ -137,10 +136,13 @@ void LiBiNorm::mcmcThread(optionsType options)
 			mcmcRun = model_iterator->second.counter++;
 
 			currentModel = model_iterator->first;
-			progMessage("Starting ", currentModel,", iteration:", mcmcRun);
 		}
 		{
 			lock_guard<mutex> lock(initValuesMutexes[currentModel]);
+		}
+		{
+			lock_guard<mutex> lock(mtx1);
+			progMessage("Starting ", currentModel, ", iteration:", mcmcRun);
 		}
 
 		setSSfun(options,currentModel);
@@ -151,21 +153,20 @@ void LiBiNorm::mcmcThread(optionsType options)
 		mcmc mcmcEngine;
 		mcmcEngine.mcmcrun(geneData, params, options);
 
-		{
-			lock_guard<mutex> lock(mtx1);
+		//  Make sure only one thread at a time is outputting results
+		lock_guard<mutex> lock(mtx1);
 
-			progMessage("Finishing ", currentModel, ", iteration:", mcmcRun);
+		progMessage("Finishing ", currentModel, ", iteration:", mcmcRun);
 
 #ifdef STORE_ENDPOINTS
-			Chain[currentModel].emplace(loop, mcmcEngine.chain().back());
-			SSChain[currentModel].emplace(loop, mcmcEngine.sschain().back());
+		Chain[currentModel].emplace(loop, mcmcEngine.chain().back());
+		SSChain[currentModel].emplace(loop, mcmcEngine.sschain().back());
 #endif
 
-			//	Always store full set of results as these are needed to calculate the optimal parameters
-			//	emplace/move them for efficiency
-			fullResultChain[currentModel].emplace(mcmcRun, move(mcmcEngine._chain));
-			fullResultSSChain[currentModel].emplace(mcmcRun, move(mcmcEngine._sschain));
-		}
+		//	Always store full set of results as these are needed to calculate the optimal parameters
+		//	emplace/move them for efficiency
+		fullResultChain[currentModel].emplace(mcmcRun, move(mcmcEngine._chain));
+		fullResultSSChain[currentModel].emplace(mcmcRun, move(mcmcEngine._sschain));
 	}
 }
 
@@ -364,29 +365,6 @@ int LiBiNorm::main(int argc, char **argv)
 	}
 
 	return EXIT_SUCCESS;
-}
-
-void LiBiNorm::setInitialValuesThread(optionsType options)
-{
-static mutex mtx;
-	modelType m;
-	while (true)
-	{
-		{
-			lock_guard<mutex> lock(mtx);
-			if (nelderMeadCounter >= allModels().size())
-				return;
-			m = allModels()[nelderMeadCounter++];
-		}
-		LiBiOptimiser  optimiser(geneData);
-		setSSfun(options, m);
-		initialValues[m] = optimiser.getParams(m, options);
-
-		stringEx s;
-		s.appendWithSep(vector<VEC_DATA_TYPE>(initialValues[m]), ',');
-		debugMessage("\n", m, " Initial values,", s);
-	}
-
 }
 
 bool LiBiNorm::coreParameterEstimation()

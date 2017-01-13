@@ -190,12 +190,12 @@ $(BUILD)/mcmcLib/mcmc.o: ../bioinformaticsLib/dataVec.h
 $(BUILD)/mcmcLib/mcmc.o: ../bioinformaticsLib/libCommon.h
 $(BUILD)/mcmcLib/mcmc.o: ../bioinformaticsLib/printEx.h
 $(BUILD)/mcmcLib/mcmc.o: ../bioinformaticsLib/inQuotes.h
-$(BUILD)/mcmcLib/params.o: mcmcLib/params.h
-$(BUILD)/mcmcLib/params.o: ../bioinformaticsLib/nelderMeadOptimiser.h
+$(BUILD)/mcmcLib/params.o: ../bioinformaticsLib/rand.h
 $(BUILD)/mcmcLib/params.o: ../bioinformaticsLib/dataVec.h
 $(BUILD)/mcmcLib/params.o: ../bioinformaticsLib/libCommon.h
 $(BUILD)/mcmcLib/params.o: ../bioinformaticsLib/printEx.h
-$(BUILD)/mcmcLib/params.o: ../bioinformaticsLib/inQuotes.h
+$(BUILD)/mcmcLib/params.o: ../bioinformaticsLib/inQuotes.h mcmcLib/params.h
+$(BUILD)/mcmcLib/params.o: ../bioinformaticsLib/nelderMeadOptimiser.h
 $(BUILD)/LiBiNormSrc/LiBiDedup.o: LiBiNormSrc/LiBiDedup.h
 $(BUILD)/LiBiNormSrc/LiBiDedup.o: ../bamtools/api/BamReader.h
 $(BUILD)/LiBiNormSrc/LiBiDedup.o: ../bamtools/api/api_global.h
@@ -425,6 +425,11 @@ $(BUILD)/bioinformaticsLib/parser.o: ../bioinformaticsLib/parser.h
 $(BUILD)/bioinformaticsLib/printEx.o: ../bioinformaticsLib/printEx.h
 $(BUILD)/bioinformaticsLib/printEx.o: ../bioinformaticsLib/inQuotes.h
 $(BUILD)/bioinformaticsLib/printEx.o: ../bioinformaticsLib/stringEx.h
+$(BUILD)/bioinformaticsLib/rand.o: ../bioinformaticsLib/rand.h
+$(BUILD)/bioinformaticsLib/rand.o: ../bioinformaticsLib/dataVec.h
+$(BUILD)/bioinformaticsLib/rand.o: ../bioinformaticsLib/libCommon.h
+$(BUILD)/bioinformaticsLib/rand.o: ../bioinformaticsLib/printEx.h
+$(BUILD)/bioinformaticsLib/rand.o: ../bioinformaticsLib/inQuotes.h
 $(BUILD)/bioinformaticsLib/smithWaterman.o: ../bioinformaticsLib/smithWaterman.h
 
 $(BUILD)/bamtools/api/BamAlignment.o: ../bamtools/api/BamAlignment.h
