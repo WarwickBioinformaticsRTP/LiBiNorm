@@ -91,16 +91,22 @@ vector<mutex> initValuesMutexes(allModels().size()+1);
 //	listed in threadLoopCounts which has a pair of integers associated with each 
 void LiBiNorm::mcmcThread(optionsType options)
 {
-
 	static mutex mtx1;
 	modelType m;
-	while (true)
+	bool modelsLeftToDo = true;
+	while (modelsLeftToDo)
 	{
 		{
 			lock_guard<mutex> lock(mtx1);
-			if (nelderMeadCounter >= allModels().size())
+
+			while (modelsLeftToDo = (nelderMeadCounter < allModels().size()))
+			{
+				m = allModels()[nelderMeadCounter++];
+				if (threadLoopCounts[m].requested > 0)
+					break;
+			}
+			if (!modelsLeftToDo)
 				break;
-			m = allModels()[nelderMeadCounter++];
 			initValuesMutexes[m].lock();
 			progMessage("Starting intial values ", m);
 		}
@@ -114,8 +120,6 @@ void LiBiNorm::mcmcThread(optionsType options)
 		lock_guard<mutex> lock(mtx1);
 		progMessage("Finishing intial values ", m);
 	}
-
-
 
 	map<modelType, loop_counts >::iterator model_iterator = threadLoopCounts.begin();
 	modelType currentModel;
@@ -138,6 +142,8 @@ void LiBiNorm::mcmcThread(optionsType options)
 			currentModel = model_iterator->first;
 		}
 		{
+			//	Stop here if necessary to wait for the initial values to be completed.  
+			//	Only likely to happen if there are more than 6 threads
 			lock_guard<mutex> lock(initValuesMutexes[currentModel]);
 		}
 		{

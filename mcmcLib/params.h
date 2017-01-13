@@ -6,11 +6,6 @@
 #include "dataVec.h"
 
 
-#define MAX_DOUBLE std::numeric_limits<double>::max()
-#define MIN_DOUBLE std::numeric_limits<double>::min()
-double rand(double a);
-dataVec randn(size_t x);
-
 //	Holds the subset of the read information associated with a gene that is used by the functions for 
 //	calculating log liklyhoods with the mcmc
 class mcmcGeneData

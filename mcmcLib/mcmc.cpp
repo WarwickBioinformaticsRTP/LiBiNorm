@@ -1,8 +1,8 @@
 #include <iostream>
+#include "rand.h"
 #include "mcmc.h"
 
 using namespace std;
-
 
 
 //	Performs a monte carl markov chain run

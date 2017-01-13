@@ -10,8 +10,13 @@ ErrorPair LiBiOptimiser::ErrorFunc()
 
 	ep = opts->ssfun(data, geneData);
 
+	//	Stop parameter d drifting off
+
 	for (size_t i = 0; i < params.size(); i++)
 	{
+
+		ep.WithWeightings += abs((data[0] - (params[i].max  + params[i].min)/2) * 10);
+
 		double diff = data[i] - params[i].max + 0.2;
 		if (diff > 0)
 			ep.WithWeightings += (diff * diff ) * EDGE_PENALTY_MULTIPLIER;
