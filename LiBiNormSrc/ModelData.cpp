@@ -139,14 +139,15 @@ paramSet GetModelParams(modelType model,dataVec * defaults)
 		break;
 	};
 
+#ifdef SIMULATE_MATLAB_BUG
+	params[0].value = rand(3);
+#endif
+
 	if ((defaults) && (defaults->size()))
 		params.setValues(*defaults);
 
 #ifdef PRESET_VALUES
 	params.setValues(PRESET_VALUES);
-#endif
-#ifdef SIMULATE_MATLAB_BUG
-	params[0].value = rand(3);
 #endif
 	return params;
 }

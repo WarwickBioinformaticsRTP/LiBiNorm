@@ -38,10 +38,11 @@ dataVec LiBiOptimiser::getParams(modelType m, optionsType & options)
 
 	allOptiData.push_back(&optiData);
 
-	optimise(allOptiData, NELDER_MEAD_ITERATIONS,100, options.jumpSize);
+	VEC_DATA_TYPE LL = optimise(allOptiData, NELDER_MEAD_ITERATIONS,20, options.jumpSize);
 
 	dataVec results;
 	for (size_t i = 0; i < params.size(); i++)
 		results.push_back(allOptiData[0]->at(i).value);
+	results.push_back(LL);
 	return results;
 }

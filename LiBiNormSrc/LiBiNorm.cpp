@@ -85,19 +85,47 @@ int main(int argc, char **argv)
 	return EXIT_SUCCESS;
 }
 
+vector<mutex> initValuesMutexes(allModels().size()+1);
+
 //	Multiple instances of this are called, each works through the requested mcmc runs as 
 //	listed in threadLoopCounts which has a pair of integers associated with each 
 void LiBiNorm::mcmcThread(optionsType options)
 {
+
+	static mutex mtx1;
+	modelType m;
+	while (true)
+	{
+		{
+			lock_guard<mutex> lock(mtx1);
+			if (nelderMeadCounter >= allModels().size())
+				break;
+			m = allModels()[nelderMeadCounter++];
+			initValuesMutexes[m].lock();
+			progMessage("Starting intial values ", m);
+		}
+
+		LiBiOptimiser  optimiser(geneData);
+		setSSfun(options, m);
+		initialValues[m] = optimiser.getParams(m, options);
+
+		initValuesMutexes[m].unlock();
+		{
+			lock_guard<mutex> lock(mtx1);
+			progMessage("Finishing intial values ", m);
+		}
+	}
+
+
+
 	map<modelType, loop_counts >::iterator model_iterator = threadLoopCounts.begin();
 	modelType currentModel;
 	mcmcRunId mcmcRun;
-static mutex mtx;
 	while (true)
 	{
 		//  Look for an iteration of a loop that is yet to be done.
 		{
-			lock_guard<mutex> lock(mtx);
+			lock_guard<mutex> lock(mtx1);
 			//	Check to see if we have done all the runs associated with this model
 			//	if so then move on to the next
 			while(model_iterator->second.counter > model_iterator->second.requested)
@@ -111,6 +139,9 @@ static mutex mtx;
 			currentModel = model_iterator->first;
 			progMessage("Starting ", currentModel,", iteration:", mcmcRun);
 		}
+		{
+			lock_guard<mutex> lock(initValuesMutexes[currentModel]);
+		}
 
 		setSSfun(options,currentModel);
 
@@ -121,7 +152,7 @@ static mutex mtx;
 		mcmcEngine.mcmcrun(geneData, params, options);
 
 		{
-			lock_guard<mutex> lock(mtx);
+			lock_guard<mutex> lock(mtx1);
 
 			progMessage("Finishing ", currentModel, ", iteration:", mcmcRun);
 
@@ -358,7 +389,6 @@ static mutex mtx;
 
 }
 
-
 bool LiBiNorm::coreParameterEstimation()
 {
 	geneCounts.remove_invalid_values();
@@ -383,7 +413,7 @@ bool LiBiNorm::coreParameterEstimation()
 		else
 			threadLoopCounts[m].requested = NrunsOtherModels;
 	}
-
+/*
 	{
 		nelderMeadCounter = 0;
 //		LiBiNorm::setInitialValuesThread(options);
@@ -395,13 +425,16 @@ bool LiBiNorm::coreParameterEstimation()
 			i.join();
 
 	}
-
+*/
 
 #ifdef FIXED_RESULTS
 	theModel = M_FIXED_RESULTS;
 	bestResults[theModel].params = dataVec{ FIXED_RESULTS };
 #else
 
+	nelderMeadCounter = 0;
+//	for (auto & m : initValuesMutexes)
+//		m.lock();
 	//	And then set the threads running
 	if (Nthreads == 1)
 	{
@@ -649,7 +682,7 @@ void LiBiNorm::printResults()
 	{
 		mcmcResult.printStart("Nelder Mead");
 		for (modelType m : allModels())
-			mcmcResult.printMiddle(initialValues[m], "","");
+			mcmcResult.printMiddle(initialValues[m], "");
 		mcmcResult.printEnd();
 	}
 	else

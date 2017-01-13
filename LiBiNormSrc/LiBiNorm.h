@@ -2,6 +2,7 @@
 #define LIBINORM_H
 
 #include <map>
+#include <mutex>
 #include "stringEx.h"
 #include "containerEx.h"
 #include "GeneCountData.h"
@@ -43,7 +44,7 @@ typedef std::map<modelType, std::vector<std::string> > headerType;
 class LiBiNorm : protected LiBiNormCore
 {
 public:
-	LiBiNorm() : bestModel(noModel),outputFull(false) 
+	LiBiNorm() : bestModel(noModel),outputFull(false)
 	{
 		headers = getHeaders();
 	};
