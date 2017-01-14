@@ -15,11 +15,12 @@
 #define MAX_READS_GENE 100
 
 //	Nelder Mead
-#define NELDER_MEAD_ITERATIONS 600
+#define USE_NELDER_MEAD_FOR_INITIAL_VALUES
+#define NELDER_MEAD_ITERATIONS 2000
 #define EDGE_PENALTY_MULTIPLIER 1000
 
 //	MCMC operation
-#define NUMBER_OF_MCMC_RUNS 10  // -r
+#define NUMBER_OF_MCMC_RUNS 5  // -r
 #define MCMC_ITERATIONS 400  // -s
 #define MCMC_JUMP_SIZE 0.01
 #define DEFAULT_MODEL ModelBD // -n
@@ -40,7 +41,7 @@
 //	Use this mode to run a model with specific parameters.  This affects how the values are set
 //	in ModelParameters.cpp and also ensures that the first N reads are use in data are loaded
 //	in void rnaPosVec::selectAtMost(size_t s) in GeneCountData.cpp
-//#define PRESET_VALUES {-0.0224725,	1.971188,	-4.373709,	-3.3618775,	0.8589705}
+// #define PRESET_VALUES {0.6,	1.39794,	-3.991802,	-3.033625,	0.8577306}
 
 //	Some of the code in ModelData.cpp has also been writtent using vectors which is slower but the code
 //	more closely matches the MATLAB code

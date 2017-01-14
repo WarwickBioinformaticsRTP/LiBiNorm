@@ -85,13 +85,15 @@ int main(int argc, char **argv)
 	return EXIT_SUCCESS;
 }
 
-vector<mutex> initValuesMutexes(allModels().size()+1);
 
 //	Multiple instances of this are called, each works through the requested mcmc runs as 
 //	listed in threadLoopCounts which has a pair of integers associated with each 
 void LiBiNorm::mcmcThread(optionsType options)
 {
 	static mutex mtx1;
+
+#ifdef USE_NELDER_MEAD_FOR_INITIAL_VALUES
+	static vector<mutex> initValuesMutexes(allModels().size() + 1);
 	modelType m;
 	bool modelsLeftToDo = true;
 	while (modelsLeftToDo)
@@ -120,6 +122,7 @@ void LiBiNorm::mcmcThread(optionsType options)
 		lock_guard<mutex> lock(mtx1);
 		progMessage("Finishing intial values ", m);
 	}
+#endif
 
 	map<modelType, loop_counts >::iterator model_iterator = threadLoopCounts.begin();
 	modelType currentModel;
@@ -141,11 +144,13 @@ void LiBiNorm::mcmcThread(optionsType options)
 
 			currentModel = model_iterator->first;
 		}
+#ifdef USE_NELDER_MEAD_FOR_INITIAL_VALUES
 		{
 			//	Stop here if necessary to wait for the initial values to be completed.  
 			//	Only likely to happen if there are more than 6 threads
 			lock_guard<mutex> lock(initValuesMutexes[currentModel]);
 		}
+#endif
 		{
 			lock_guard<mutex> lock(mtx1);
 			progMessage("Starting ", currentModel, ", iteration:", mcmcRun);
@@ -662,6 +667,7 @@ void LiBiNorm::printResults()
 	}
 
 	//	And the initial Values
+#ifdef USE_NELDER_MEAD_FOR_INITIAL_VALUES
 	if (initialValues[ModelA].size())
 	{
 		mcmcResult.printStart("Nelder Mead");
@@ -671,6 +677,10 @@ void LiBiNorm::printResults()
 	}
 	else
 		mcmcResult.printEnd();
+#else
+	mcmcResult.print();
+#endif
+
 
 	//	A row for the deviations for each model
 	for (size_t i = 0; i < 4; i++)

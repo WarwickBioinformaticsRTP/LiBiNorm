@@ -14,10 +14,10 @@ ErrorPair LiBiOptimiser::ErrorFunc()
 
 	for (size_t i = 0; i < params.size(); i++)
 	{
+//		VEC_DATA_TYPE diff = (data[i] - (params[i].max + params[i].min) / 2);
+//		ep.WithWeightings += abs(diff * diff * 20);
 
-		ep.WithWeightings += abs((data[0] - (params[i].max  + params[i].min)/2) * 10);
-
-		double diff = data[i] - params[i].max + 0.2;
+		VEC_DATA_TYPE diff = data[i] - params[i].max + 0.2;
 		if (diff > 0)
 			ep.WithWeightings += (diff * diff ) * EDGE_PENALTY_MULTIPLIER;
 		else
@@ -43,7 +43,7 @@ dataVec LiBiOptimiser::getParams(modelType m, optionsType & options)
 
 	allOptiData.push_back(&optiData);
 
-	VEC_DATA_TYPE LL = optimise(allOptiData, NELDER_MEAD_ITERATIONS,20, options.jumpSize);
+	VEC_DATA_TYPE LL = optimise(allOptiData, NELDER_MEAD_ITERATIONS,20, options.jumpSize,conv(m));
 
 	dataVec results;
 	for (size_t i = 0; i < params.size(); i++)
