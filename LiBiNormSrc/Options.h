@@ -22,6 +22,7 @@
 //	MCMC operation
 #define NUMBER_OF_MCMC_RUNS 5  // -r
 #define MCMC_ITERATIONS 2000  // -s
+#define NELDER_MCMC_ITERATIONS 500  // -s
 #define MCMC_JUMP_SIZE 0.01
 #define DEFAULT_MODEL ModelBD // -n
 

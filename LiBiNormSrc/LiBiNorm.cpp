@@ -92,37 +92,38 @@ void LiBiNorm::mcmcThread(optionsType options)
 {
 	static mutex mtx1;
 
-#ifdef USE_NELDER_MEAD_FOR_INITIAL_VALUES
 	static vector<mutex> initValuesMutexes(allModels().size() + 1);
-	modelType m;
-	bool modelsLeftToDo = true;
-	while (modelsLeftToDo)
+	if (nelderMead)
 	{
+		modelType m;
+		bool modelsLeftToDo = true;
+		while (modelsLeftToDo)
 		{
-			lock_guard<mutex> lock(mtx1);
-
-			while ((modelsLeftToDo = (nelderMeadCounter < allModels().size())))
 			{
-				m = allModels()[nelderMeadCounter++];
-				if (threadLoopCounts[m].requested > 0)
+				lock_guard<mutex> lock(mtx1);
+
+				while ((modelsLeftToDo = (nelderMeadCounter < allModels().size())))
+				{
+					m = allModels()[nelderMeadCounter++];
+					if (threadLoopCounts[m].requested > 0)
+						break;
+				}
+				if (!modelsLeftToDo)
 					break;
+				initValuesMutexes[m].lock();
+				progMessage("Starting intial values ", m);
 			}
-			if (!modelsLeftToDo)
-				break;
-			initValuesMutexes[m].lock();
-			progMessage("Starting intial values ", m);
+
+			LiBiOptimiser  optimiser(geneData);
+			setSSfun(options, m);
+			initialValues[m] = optimiser.getParams(m, options);
+
+			initValuesMutexes[m].unlock();
+
+			lock_guard<mutex> lock(mtx1);
+			progMessage("Finishing intial values ", m);
 		}
-
-		LiBiOptimiser  optimiser(geneData);
-		setSSfun(options, m);
-		initialValues[m] = optimiser.getParams(m, options);
-
-		initValuesMutexes[m].unlock();
-
-		lock_guard<mutex> lock(mtx1);
-		progMessage("Finishing intial values ", m);
 	}
-#endif
 
 	map<modelType, loop_counts >::iterator model_iterator = threadLoopCounts.begin();
 	modelType currentModel;
@@ -144,13 +145,12 @@ void LiBiNorm::mcmcThread(optionsType options)
 
 			currentModel = model_iterator->first;
 		}
-#ifdef USE_NELDER_MEAD_FOR_INITIAL_VALUES
+		if(nelderMead)
 		{
 			//	Stop here if necessary to wait for the initial values to be completed.  
 			//	Only likely to happen if there are more than 6 threads
 			lock_guard<mutex> lock(initValuesMutexes[currentModel]);
 		}
-#endif
 		{
 			lock_guard<mutex> lock(mtx1);
 			progMessage("Starting ", currentModel, ", iteration:", mcmcRun);
@@ -197,6 +197,9 @@ void LiBiNormCore::helpCommon()
 	printf(_s("                        determination (", DEF_THREADS, ")\n"));
 	printf("  -d N, --reads=N       Maximum number of reads using for normalisation\n");
 	printf(_s("                        parameter determination (", DEF_MAX_READS_FOR_PARAM_ESTIMATION, ")\n"));
+#ifdef USE_NELDER_MEAD_FOR_INITIAL_VALUES
+	printf("  -o, --omit            omit parameter initialisation. Use random initial values\n");
+#endif
 	printf("  -q, --quiet           suppress progress report\n");
 	printf("  -x, --debug           output debug messages\n");
 	printf("  -c FILENAME, --counts=FILENAME\n");
@@ -251,6 +254,13 @@ bool LiBiNormCore::commandParseCommon(int & ni, int argc,char **argv)
 			verbose = false;
 			return true;
 		}
+#ifdef USE_NELDER_MEAD_FOR_INITIAL_VALUES
+		if ((strcmp(argv[ni], "-o") == 0) || (opt2 = (strncmp(argv[ni], "--omit", 6) == 0)))
+		{
+			verbose = false;
+			return true;
+		}
+#endif
 
 		return false;
 }
@@ -274,7 +284,11 @@ int LiBiNorm::main(int argc, char **argv)
 		helpCommon();
 		printf("  -g N, --genes=N       Number of genes to be included in calculations\n");
 		printf(_s("  -r N, --runs=N        Number of mcmc runs (", NUMBER_OF_MCMC_RUNS,")\n"));
-		printf(_s("  -s N, --mcmc=N        Length of each simulation (", MCMC_ITERATIONS,")\n"));
+#ifdef USE_NELDER_MEAD_FOR_INITIAL_VALUES
+		printf(_s("  -s N, --mcmc=N        Length of each simulation (", NELDER_MCMC_ITERATIONS,")\n"));
+#else
+		printf(_s("  -s N, --mcmc=N        Length of each simulation (", MCMC_ITERATIONS, ")\n"));
+#endif
 		printf("  -f, --full            Output complete set of montecarlo data\n");
 		return EXIT_SUCCESS;
 	}
@@ -300,8 +314,8 @@ int LiBiNorm::main(int argc, char **argv)
 		else if ((strcmp(argv[ni], "-s") == 0) || (opt2 = (strncmp(argv[ni], "--mcmc=", 7) == 0)))
 		{
 			Nsimu = atoi(opt2 ? argv[ni] + 7 : argv[++ni]);
-			if ((Nsimu < 500) || (Nsimu > 10000))
-				exitFail("-s values must lie between 500 and 10000");
+			if ((Nsimu < 1) || (Nsimu > 10000))
+				exitFail("-s values must lie between 1 and 10000");
 		}
 		else if ((strcmp(argv[ni], "-f") == 0) || (opt2 = (strncmp(argv[ni], "--full", 6) == 0)))
 			outputFull = true;
@@ -667,19 +681,15 @@ void LiBiNorm::printResults()
 	}
 
 	//	And the initial Values
-#ifdef USE_NELDER_MEAD_FOR_INITIAL_VALUES
-	if (initialValues[ModelA].size())
+	if ((nelderMead) && (initialValues[ModelA].size()))
 	{
-		mcmcResult.printStart("Nelder Mead");
+		mcmcResult.printStart("Initial");
 		for (modelType m : allModels())
 			mcmcResult.printMiddle(initialValues[m], "");
 		mcmcResult.printEnd();
 	}
-	else
-		mcmcResult.printEnd();
-#else
-	mcmcResult.print();
-#endif
+
+	mcmcResult.printEnd();
 
 
 	//	A row for the deviations for each model
