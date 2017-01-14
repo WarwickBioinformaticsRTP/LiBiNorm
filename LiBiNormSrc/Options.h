@@ -21,12 +21,12 @@
 
 //	MCMC operation
 #define NUMBER_OF_MCMC_RUNS 5  // -r
-#define MCMC_ITERATIONS 400  // -s
+#define MCMC_ITERATIONS 2000  // -s
 #define MCMC_JUMP_SIZE 0.01
 #define DEFAULT_MODEL ModelBD // -n
 
 //	Deriving parameters from MCMC runs
-#define END_LENGTH_SEARCHED_FOR_OPTIMAL_PARAMETERS 400
+#define END_LENGTH_SEARCHED_FOR_OPTIMAL_PARAMETERS 1000
 
 //	Outputting results
 #define DEFAULT_NORMALISATION_GENE_LENGTH 1000

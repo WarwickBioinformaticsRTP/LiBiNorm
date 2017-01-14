@@ -101,7 +101,7 @@ void LiBiNorm::mcmcThread(optionsType options)
 		{
 			lock_guard<mutex> lock(mtx1);
 
-			while (modelsLeftToDo = (nelderMeadCounter < allModels().size()))
+			while ((modelsLeftToDo = (nelderMeadCounter < allModels().size())))
 			{
 				m = allModels()[nelderMeadCounter++];
 				if (threadLoopCounts[m].requested > 0)
@@ -475,7 +475,7 @@ bool LiBiNorm::coreParameterEstimation()
 			//	put them in a map ordered by LL value
 			for (mcmcRunId i = 1; i <= fullResultSSChain[m].size(); i++)
 			{
-				for (size_t j = fullResultSSChain[m][i].size() - END_LENGTH_SEARCHED_FOR_OPTIMAL_PARAMETERS;
+				for (size_t j = max<int>(0,((int)fullResultSSChain[m][i].size() - END_LENGTH_SEARCHED_FOR_OPTIMAL_PARAMETERS));
 					j < fullResultSSChain[m][i].size(); j++)
 				{
 					orderedResults.emplace(fullResultSSChain[m][i][j], &fullResultChain[m][i][j]);
