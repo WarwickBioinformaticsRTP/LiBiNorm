@@ -686,11 +686,8 @@ void LiBiNorm::printResults()
 		mcmcResult.printStart("Initial");
 		for (modelType m : allModels())
 			mcmcResult.printMiddle(initialValues[m], "");
-		mcmcResult.printEnd();
 	}
-
 	mcmcResult.printEnd();
-
 
 	//	A row for the deviations for each model
 	for (size_t i = 0; i < 4; i++)
