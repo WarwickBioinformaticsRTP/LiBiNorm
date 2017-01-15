@@ -11,11 +11,10 @@ ErrorPair LiBiOptimiser::ErrorFunc()
 	ep = opts->ssfun(data, geneData);
 
 	//	Stop parameter d drifting off
-
 	for (size_t i = 0; i < params.size(); i++)
 	{
-//		VEC_DATA_TYPE diff = (data[i] - (params[i].max + params[i].min) / 2);
-//		ep.WithWeightings += abs(diff * diff * 20);
+		if (i < 2)
+			ep.WithWeightings += (data[i] * PARAMETER_WEIGHTING_SLOPE);
 
 		VEC_DATA_TYPE diff = data[i] - params[i].max + 0.2;
 		if (diff > 0)
