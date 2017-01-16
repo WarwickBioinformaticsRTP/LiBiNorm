@@ -32,7 +32,9 @@ protected:
 		Nthreads(DEF_THREADS),
 		Nruns(NUMBER_OF_MCMC_RUNS),
 		NrunsOtherModels(0)
-	{};
+	{
+		headers = getHeaders();
+	};
 
 	void helpCommon();
 	bool commandParseCommon(int & ni, int argc, char **argv);
@@ -43,7 +45,12 @@ protected:
 	size_t maxReads, Nthreads;
 	mcmcRunId Nruns,NrunsOtherModels;
 
+	headerType headers;
 	stringEx landscapeFilename, normaliseResultsFilename, countsFilename;
+
+	//	The specific data that will be used for the mcmc parameter determination
+	mcmcGeneData geneData;
+	GeneCountData geneCounts;
 };
 
 typedef std::map<modelType, std::vector<std::string> > headerType;
@@ -51,10 +58,7 @@ typedef std::map<modelType, std::vector<std::string> > headerType;
 class LiBiNorm : protected LiBiNormCore
 {
 public:
-	LiBiNorm() : bestModel(noModel),outputFull(false)
-	{
-		headers = getHeaders();
-	};
+	LiBiNorm() : bestModel(noModel), outputFull(false) {};
 
 	//	Used to identify param and param_dev values within bestResults
 	enum
@@ -81,14 +85,10 @@ protected:
 
 protected:
 	std::map<modelType, bestResult> bestResults;
-	GeneCountData geneCounts;
 	modelType bestModel;
 private:
 	bool outputFull;
 	size_t nelderMeadCounter;
-
-	//	The specific data that will be used for the mcmc parameter determination
-	mcmcGeneData geneData;
 
 	std::map<modelType, dataVec> initialValues;
 
@@ -99,8 +99,6 @@ private:
 	//	identifier and not the order that they finished
 	std::map<modelType,std::map<mcmcRunId, std::vector <dataVec > > >fullResultChain;
 	std::map<modelType,std::map<mcmcRunId,dataVec> >fullResultSSChain;
-
-	headerType headers;
 
 	//	Counts of the number of mcmc runs that will be done for each model
 	struct loop_counts { mcmcRunId requested, counter; };

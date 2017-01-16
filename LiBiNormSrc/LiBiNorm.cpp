@@ -10,6 +10,7 @@
 #include "LiBiCount.h"
 #include "LiBiDedup.h"
 #include "LiBiConv.h"
+#include "LiBiVariation.h"
 #include "MakeFastq.h"
 
 using namespace std;
@@ -34,6 +35,7 @@ int main(int argc, char **argv)
 		printf("     count            htseq-count replacement with optional bias correction\n");
 		printf("     model            further bias correction analysis\n");
 		printf("     conv	          renames chromosomes in a .gff3 file to match those in a bam file\n");
+		printf("     variation        shows variation in Log Liklyhood with parameter\n");
 #ifdef DEDUP_MODE
 		printf("     dedup            removes duplicates\n");
 #endif
@@ -60,6 +62,11 @@ int main(int argc, char **argv)
 		{
 			LiBiConv conv;
 			return conv.main(argc - 1, argv + 1);
+		}
+		if (command == "variation")
+		{
+			LiBiVariation variation;
+			return variation.main(argc - 1, argv + 1);
 		}
 #ifdef DEDUP_MODE
 		if (command == "dedup")
@@ -114,7 +121,7 @@ void LiBiNorm::mcmcThread(optionsType options)
 				progMessage("Starting intial values ", m);
 			}
 
-			LiBiOptimiser  optimiser(geneData);
+			LiBiOptimiser  optimiser(geneData,m);
 			setSSfun(options, m);
 			initialValues[m] = optimiser.getParams(m, options);
 
@@ -135,9 +142,9 @@ void LiBiNorm::mcmcThread(optionsType options)
 			lock_guard<mutex> lock(mtx1);
 			//	Check to see if we have done all the runs associated with this model
 			//	if so then move on to the next
-			while(model_iterator->second.counter > model_iterator->second.requested)
+			while (model_iterator->second.counter > model_iterator->second.requested)
 			{
-				if (++model_iterator ==threadLoopCounts.end())
+				if (++model_iterator == threadLoopCounts.end())
 					//	All models have been done
 					return;
 			}
@@ -145,7 +152,7 @@ void LiBiNorm::mcmcThread(optionsType options)
 
 			currentModel = model_iterator->first;
 		}
-		if(nelderMead)
+		if (nelderMead)
 		{
 			//	Stop here if necessary to wait for the initial values to be completed.  
 			//	Only likely to happen if there are more than 6 threads
@@ -155,10 +162,9 @@ void LiBiNorm::mcmcThread(optionsType options)
 			lock_guard<mutex> lock(mtx1);
 			progMessage("Starting ", currentModel, ", iteration:", mcmcRun);
 		}
+		setSSfun(options, currentModel);
 
-		setSSfun(options,currentModel);
-
-		paramSet params = GetModelParams(currentModel,&initialValues[currentModel]);
+		paramSet params = GetModelParams(currentModel, &initialValues[currentModel], options.jumpSize);
 		options.qcov = dataVec(params.size(), options.jumpSize);
 
 		mcmc mcmcEngine;
@@ -290,6 +296,7 @@ int LiBiNorm::main(int argc, char **argv)
 		printf(_s("  -s N, --mcmc=N        Length of each simulation (", MCMC_ITERATIONS, ")\n"));
 #endif
 		printf("  -f, --full            Output complete set of montecarlo data\n");
+		printf("  -v N, --varparam=N   Print variation data parameter Nn");
 		return EXIT_SUCCESS;
 	}
 	int ni = 1;
@@ -345,8 +352,6 @@ int LiBiNorm::main(int argc, char **argv)
 	geneCounts.loadData(landscapeFilename, Ngenes);
 	coreParameterEstimation();
 
-	//	And then the counts and the bias for the genes themselves
-
 	//	If we have explicitly specified the model then use it instead
 	if (theModel == noModel)
 	{
@@ -360,9 +365,9 @@ int LiBiNorm::main(int argc, char **argv)
 	}
 
 	getBias(theModel, bestResults[theModel].params[logValue], geneCounts.lengths[0], geneCounts.bias);
-	
+
 	string filename = normaliseResultsFilename.replaceSuffix("_expression.txt");
-		if (!geneCounts.outputGeneCounts(filename, outputFull?3:2, conv(theModel)))
+	if (!geneCounts.outputGeneCounts(filename, outputFull ? 3 : 2, conv(theModel)))
 		exitFail("Unable to output counts to :", filename);
 
 	printResults();
@@ -377,7 +382,7 @@ int LiBiNorm::main(int argc, char **argv)
 	}
 
 	//	The basic count data in htseq-count format
-	if (!geneCounts.outputGeneCounts(countsFilename,1, conv(theModel)))
+	if (!geneCounts.outputGeneCounts(countsFilename, 1, conv(theModel)))
 		exitFail("Unable to output counts to :", countsFilename);
 
 	progMessage("Data modelled");
@@ -405,7 +410,7 @@ bool LiBiNorm::coreParameterEstimation()
 	options.nsimu = Nsimu;
 	options.Nruns = Nruns;
 
-	options.sigma2 = 1;
+	options.sigma2 = MCMC_SIGMA;
 
 	//	Set the number of iterations required of each of the models.
 	for (modelType m : allModels())
@@ -469,7 +474,6 @@ bool LiBiNorm::coreParameterEstimation()
 	}
 #endif
 
-
 	//********************************************************************************************
 	//	Find the optimal parameter values, which are associated with results found in the last
 	//	iterations of all of the MCMC runs.
@@ -489,8 +493,9 @@ bool LiBiNorm::coreParameterEstimation()
 			//	put them in a map ordered by LL value
 			for (mcmcRunId i = 1; i <= fullResultSSChain[m].size(); i++)
 			{
-				for (size_t j = max<int>(0,((int)fullResultSSChain[m][i].size() - END_LENGTH_SEARCHED_FOR_OPTIMAL_PARAMETERS));
-					j < fullResultSSChain[m][i].size(); j++)
+				//				for (size_t j = max<int>(0,((int)fullResultSSChain[m][i].size() - END_LENGTH_SEARCHED_FOR_OPTIMAL_PARAMETERS));
+				//					j < fullResultSSChain[m][i].size(); j++)
+				for (size_t j = fullResultSSChain[m][i].size() / 2; j < fullResultSSChain[m][i].size(); j++)
 				{
 					orderedResults.emplace(fullResultSSChain[m][i][j], &fullResultChain[m][i][j]);
 				}
@@ -727,6 +732,7 @@ void LiBiNorm::printResults()
 }
 
 
+
 // #define BEST_RESULT_LOCATION  Use this to print out locations where best loglilihood is obtained in mcmc run
 #ifdef BEST_RESULT_LOCATION
 #define _BRL(A,B) A,B,
@@ -806,7 +812,6 @@ void LiBiNorm::printAllMcmcRunData()
 		mcmcResult.close();
 	}
 }
-
 
 void LiBiNorm::printConsolidatedMcmcRunData()
 {

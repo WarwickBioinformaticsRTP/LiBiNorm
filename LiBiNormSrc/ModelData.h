@@ -43,7 +43,7 @@ std::ostream& operator<< (std::ostream &out, const modelType & m);
 
 
 //  Returns mcmc paremetyers associated with a model
-paramSet GetModelParams(modelType model,dataVec * defaults = 0);
+paramSet GetModelParams(modelType model,dataVec * defaults = 0,VEC_DATA_TYPE offset = 0);
 
 //	The set of headers associated with the model parameters, extracted from the data provided 
 //	by GetModelParams

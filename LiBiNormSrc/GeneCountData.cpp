@@ -378,7 +378,9 @@ void GeneCountData::transferTo(mcmcGeneData & mcmcData, size_t maxLength, int ma
 	//	in the reference gene so this makes no difference
 	for (size_t i = 1; i < names.size(); i++)
 	{
+#ifdef MAX_LENGTH_OF_GENE_FOR_PARAM_ESTIMATION
 		if (lengths[0][i] < MAX_LENGTH_OF_GENE_FOR_PARAM_ESTIMATION)
+#endif
 		{
 			//	For the forward and the reverse counts
 			for (size_t j = 0; j < 2; j++)

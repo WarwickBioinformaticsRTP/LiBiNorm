@@ -13,7 +13,8 @@ public:
 
 	optionsType * opts;
 	const mcmcGeneData & geneData;
-	LiBiOptimiser(const mcmcGeneData & geneData) : geneData(geneData){};
+	const modelType currentModel;
+	LiBiOptimiser(const mcmcGeneData & geneData, modelType currentModel) : geneData(geneData), currentModel(currentModel){};
 
 	dataVec getParams(modelType m,optionsType & options);
 

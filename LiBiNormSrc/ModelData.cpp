@@ -1,5 +1,6 @@
 
 #include <map>
+#include "rand.h"
 #include "stringEx.h"
 #include "containerEx.h"
 #include "ModelData.h"
@@ -103,7 +104,7 @@ bool printVal(outputDataFile * f, modelType m)
 
 //	Loads the paremeter information associated with each of the models and sets the value to a random value within the allowed
 //	range for the parameter. 
-paramSet GetModelParams(modelType model,dataVec * defaults)
+paramSet GetModelParams(modelType model,dataVec * defaults, VEC_DATA_TYPE offset)
 {
 	paramSet params;
 
@@ -144,7 +145,10 @@ paramSet GetModelParams(modelType model,dataVec * defaults)
 #endif
 
 	if ((defaults) && (defaults->size()))
+	{
+//		params.setValues(*defaults + (randn(defaults->size()*offset*0.01)));
 		params.setValues(*defaults);
+	}
 
 #ifdef PRESET_VALUES
 	params.setValues(PRESET_VALUES);
@@ -403,8 +407,6 @@ double FLL_ModelD(const dataVec & param, const mcmcGeneData & data)
 
 double FLL_ModelE(const dataVec & param, const mcmcGeneData & data)
 {
-//	function [LogL] = FLL_Dan(param, data)
-
 	double d = pow(10,param[0]);
 	double h = pow(10,param[1]);
 	double t1 = pow(10,param[2]);
@@ -417,6 +419,16 @@ double FLL_ModelE(const dataVec & param, const mcmcGeneData & data)
 	//     1./t1/(t1+ t2) .*(1 - exp(-x*(t1+t2)) - exp(-(l-x)*t1) + exp(-l*t1-x*t2))/d;
 	//	norm =  (2*h<l).*(exp(-l*t1 - 2*h*t2)*(t1 + t2)^2 - exp(-l*(t1 + t2))*t1^2 + t1*t2*exp(-2*h*(t1 + t2))*(l*t2 -2*h*t1 -2*h*t2+l*t1 - t2/t1 - 2))/(t1 + t2)^2/t1^2/t2 + ...
 	//     (l-1/(t1 + t2) - 1/t1 - t1/t2/(t1+t2)*exp(-l*(t1 + t2))+(t1 + t2)/t1/t2*exp(-l*t1))/(t1 + t2)/t1/d;
+#ifdef VECTOR_MATHS
+	const dataVec & x = data.fragData;
+	const dataVec l = data.geneLengths.expand(geneIndex);
+	const dataVec freq_l = data.geneFrequencies.expand(geneIndex);
+	dataVec f_frag = (x> h)*(x < l-h)/t1/(t1+ t2)*(exp(-2*h*(t1+ t2))-exp(-(x +h)*(t1+t2)) - exp(-t1*h-2*h*t2-(l-x)*t1) + exp(-h*t2-l*t1-x*t2)) + 
+	     1/t1/(t1+ t2) *(1 - exp(-x*(t1+t2)) - exp(-(l-x)*t1) + exp(-l*t1-x*t2))/d;
+	dataVec	norm =  (2*h<l)*(exp(-l*t1 - 2*h*t2)*(t1 + t2)*(t1 + t2) - exp(-l*(t1 + t2))*t1*t1 + t1*t2*exp(-2*h*(t1 + t2))*(l*t2 -2*h*t1 -2*h*t2+l*t1 - t2/t1 - 2))/((t1 + t2)*(t1 + t2))/(t1*t1)/t2 +
+	     (l-1/(t1 + t2) - 1/t1 - t1/t2/(t1+t2)*exp(-l*(t1 + t2))+(t1 + t2)/t1/t2*exp(-l*t1))/(t1 + t2)/t1/d;
+	LogL = sum(log(f_frag / norm) / freq_l);
+#else
 
 	double last_l = 0;
 	double norm=0;
@@ -450,6 +462,7 @@ double FLL_ModelE(const dataVec & param, const mcmcGeneData & data)
 		}
 		LogL += log(f_frag/norm)/freq_l;
 	}
+#endif
 	return -2*LogL;
 }
 
