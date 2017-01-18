@@ -17,7 +17,6 @@ int LiBiVariation::main(int argc, char **argv)
 		printf("Options:\n");
 		printf("  -h, --help            show this help message and exit\n");
 		helpCommon();
-		printf("  -i <filename>, --intial=<filename>  initial valuse\n");
 		return EXIT_SUCCESS;
 	}
 	int ni = 1;
@@ -27,10 +26,6 @@ int LiBiVariation::main(int argc, char **argv)
 		if (commandParseCommon(ni, argc, argv))
 		{
 		}
-		else if ((strcmp(argv[ni], "-i") == 0) || (opt2 = (strncmp(argv[ni], "--intial=", 9) == 0)))
-		{
-			parameterFilename = (opt2 ? argv[ni] + 8 : argv[++ni]);
-		}
 		else
 		{
 			exitFail("Invalid parameter: ", argv[ni]);
@@ -38,16 +33,18 @@ int LiBiVariation::main(int argc, char **argv)
 		ni++;
 	}
 
+	//	Load up the initial values
+	parseTsvFile paramFile;
+	if (!paramFile.open(parameterFilename))
+		exitFail("Unable to read parameters from ", parameterFilename);
+	paramFile.read(initialValues);
+
+	//	Load up the landscape file
 	if (!landscapeFilename)
 		exitFail("Landscape file must be specified");
 	geneCounts.loadData(landscapeFilename, -1);
-
 	geneCounts.remove_invalid_values();
 	geneCounts.transferTo(geneData, MAX_READS_GENE, maxReads);
-
-
-	dataVecFile paramFile;
-	vector<dataVec> paramSet = paramFile.read(parameterFilename);
 
 	string filename(normaliseResultsFilename.replaceSuffix("_variation.txt"));
 	TsvFile mcmcResult;
@@ -73,9 +70,7 @@ int LiBiVariation::main(int argc, char **argv)
 
 	mcmcResult.printStart("Log Opt");
 	for (modelType m : allModels())
-	{
-		mcmcResult.printMiddle(paramSet[m], "" , "");
-	}
+		mcmcResult.printMiddle(initialValues[m], "" , "");
 	mcmcResult.printEnd();
 
 	optionsType options;
@@ -87,7 +82,7 @@ int LiBiVariation::main(int argc, char **argv)
 			mcmcResult.printStart("");
 			for (modelType m : allModels())
 			{
-				dataVec params = paramSet[m];
+				dataVec params = initialValues[m];
 				params[p] += i;
 				setSSfun(options, m);
 				double ss1 = options.ssfun(params, geneData);

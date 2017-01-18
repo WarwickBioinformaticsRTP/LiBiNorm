@@ -46,7 +46,9 @@ protected:
 	mcmcRunId Nruns,NrunsOtherModels;
 
 	headerType headers;
-	stringEx landscapeFilename, normaliseResultsFilename, countsFilename;
+	stringEx landscapeFilename, normaliseResultsFilename, countsFilename, parameterFilename;
+
+	std::map<modelType, dataVec> initialValues;
 
 	//	The specific data that will be used for the mcmc parameter determination
 	mcmcGeneData geneData;
@@ -89,8 +91,6 @@ protected:
 private:
 	bool outputFull;
 	size_t nelderMeadCounter;
-
-	std::map<modelType, dataVec> initialValues;
 
 	//	These vector holds the full results for each of the models, which are needed for identifying
 	//	the optimal parameters and the variation that is seen.

@@ -14,13 +14,13 @@ Holds the information relating to the 6 different models
 //	The enumerated types used globally to identify the models
 enum modelType
 {
-	noModel = 0,
-	ModelA = 1,
-	ModelB = 2,
-	ModelC = 3,
-	ModelD = 4,
-	ModelE = 5,
-	ModelBD = 6
+	ModelA = 0,
+	ModelB = 1,
+	ModelC = 2,
+	ModelD = 3,
+	ModelE = 4,
+	ModelBD = 5,
+	noModel = 6
 };
 
 //	A collection of all the models, allowing code to iterate through them
@@ -39,6 +39,11 @@ namespace std
 	std::string to_string(const modelType & m);
 }
 std::ostream& operator<< (std::ostream &out, const modelType & m);
+
+inline void parseval(const char * start, modelType & value, size_t & len)
+{
+	value = modelFromString(std::string(start, len));
+};
 
 
 

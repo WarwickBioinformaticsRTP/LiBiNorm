@@ -8,9 +8,6 @@ class LiBiVariation : protected LiBiNormCore
 public:
 	int main(int argc, char **argv);
 
-private:
-	stringEx parameterFilename;
-
 };
 
 #endif

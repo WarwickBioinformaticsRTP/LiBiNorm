@@ -123,7 +123,7 @@ void LiBiNorm::mcmcThread(optionsType options)
 
 			LiBiOptimiser  optimiser(geneData,m);
 			setSSfun(options, m);
-			initialValues[m] = optimiser.getParams(m, options);
+			initialValues[m] = optimiser.getParams(m, options,initialValues[m]);
 
 			initValuesMutexes[m].unlock();
 
@@ -206,6 +206,10 @@ void LiBiNormCore::helpCommon()
 #ifdef USE_NELDER_MEAD_FOR_INITIAL_VALUES
 	printf("  -o, --omit            omit parameter initialisation. Use random initial values\n");
 #endif
+#ifdef INITIAL_VALUES
+	printf("  -i <filename>, --initial=<filename>\n");
+	printf("                        Set initial values from file\n");
+#endif
 	printf("  -q, --quiet           suppress progress report\n");
 	printf("  -x, --debug           output debug messages\n");
 	printf("  -c FILENAME, --counts=FILENAME\n");
@@ -267,7 +271,13 @@ bool LiBiNormCore::commandParseCommon(int & ni, int argc,char **argv)
 			return true;
 		}
 #endif
-
+#ifdef INITIAL_VALUES
+		if ((strcmp(argv[ni], "-i") == 0) || (opt2 = (strncmp(argv[ni], "--intial=", 9) == 0)))
+		{
+			parameterFilename = (opt2 ? argv[ni] + 8 : argv[++ni]);
+			return true;
+		}
+#endif
 		return false;
 }
 
@@ -350,6 +360,17 @@ int LiBiNorm::main(int argc, char **argv)
 		NrunsOtherModels = (Nruns ==1)?0:1;
 
 	geneCounts.loadData(landscapeFilename, Ngenes);
+
+	//	Load up the initial values
+	if (parameterFilename)
+	{
+		parseTsvFile paramFile;
+		if (!paramFile.open(parameterFilename))
+			exitFail("Unable to read parameters from ", parameterFilename);
+		paramFile.read(initialValues);
+	}
+
+
 	coreParameterEstimation();
 
 	//	If we have explicitly specified the model then use it instead
@@ -421,19 +442,15 @@ bool LiBiNorm::coreParameterEstimation()
 		else
 			threadLoopCounts[m].requested = NrunsOtherModels;
 	}
-/*
-	{
-		nelderMeadCounter = 0;
-//		LiBiNorm::setInitialValuesThread(options);
-		vector<thread> threads;
-		for (size_t i = 0; i < Nthreads; i++)
-			threads.emplace_back(&LiBiNorm::setInitialValuesThread, this, options);
 
-		for (auto & i : threads)
-			i.join();
 
-	}
-*/
+	parseTsvFile paramFile;
+	if (!paramFile.open(parameterFilename))
+		exitFail("Unable to read parameters from ", parameterFilename);
+
+	paramFile.read(initialValues);
+
+
 
 #ifdef FIXED_RESULTS
 	theModel = M_FIXED_RESULTS;
@@ -441,8 +458,6 @@ bool LiBiNorm::coreParameterEstimation()
 #else
 
 	nelderMeadCounter = 0;
-//	for (auto & m : initValuesMutexes)
-//		m.lock();
 	//	And then set the threads running
 	if (Nthreads == 1)
 	{
@@ -489,12 +504,9 @@ bool LiBiNorm::coreParameterEstimation()
 			for (size_t i = 0; i < 4; i++)
 				br.param_dev[i].resize(Nparams);
 
-			//	For each of the mcmc runs take the last END_LENGTH_SEARCHED_FOR_OPTIMAL_PARAMETERS iterations and
-			//	put them in a map ordered by LL value
+			//	Use the second half of teh chain to find parameters and their variation
 			for (mcmcRunId i = 1; i <= fullResultSSChain[m].size(); i++)
 			{
-				//				for (size_t j = max<int>(0,((int)fullResultSSChain[m][i].size() - END_LENGTH_SEARCHED_FOR_OPTIMAL_PARAMETERS));
-				//					j < fullResultSSChain[m][i].size(); j++)
 				for (size_t j = fullResultSSChain[m][i].size() / 2; j < fullResultSSChain[m][i].size(); j++)
 				{
 					orderedResults.emplace(fullResultSSChain[m][i][j], &fullResultChain[m][i][j]);

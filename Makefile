@@ -373,14 +373,15 @@ $(BUILD)/LiBiNormSrc/GeneCountData.o: ../bioinformaticsLib/dataVec.h
 $(BUILD)/LiBiNormSrc/GeneCountData.o: ../bioinformaticsLib/printEx.h
 $(BUILD)/LiBiNormSrc/GeneCountData.o: LiBiNormSrc/Options.h
 $(BUILD)/LiBiNormSrc/GeneCountData.o: LiBiNormSrc/ModelData.h
+$(BUILD)/LiBiNormSrc/LiBiOptimiser.o: ../bioinformaticsLib/rand.h
+$(BUILD)/LiBiNormSrc/LiBiOptimiser.o: ../bioinformaticsLib/dataVec.h
+$(BUILD)/LiBiNormSrc/LiBiOptimiser.o: ../bioinformaticsLib/libCommon.h
+$(BUILD)/LiBiNormSrc/LiBiOptimiser.o: ../bioinformaticsLib/printEx.h
+$(BUILD)/LiBiNormSrc/LiBiOptimiser.o: ../bioinformaticsLib/inQuotes.h
 $(BUILD)/LiBiNormSrc/LiBiOptimiser.o: LiBiNormSrc/Options.h
 $(BUILD)/LiBiNormSrc/LiBiOptimiser.o: LiBiNormSrc/LiBiOptimiser.h
 $(BUILD)/LiBiNormSrc/LiBiOptimiser.o: ../bioinformaticsLib/nelderMeadOptimiser.h
 $(BUILD)/LiBiNormSrc/LiBiOptimiser.o: ../bioinformaticsLib/stringEx.h
-$(BUILD)/LiBiNormSrc/LiBiOptimiser.o: ../bioinformaticsLib/inQuotes.h
-$(BUILD)/LiBiNormSrc/LiBiOptimiser.o: ../bioinformaticsLib/dataVec.h
-$(BUILD)/LiBiNormSrc/LiBiOptimiser.o: ../bioinformaticsLib/libCommon.h
-$(BUILD)/LiBiNormSrc/LiBiOptimiser.o: ../bioinformaticsLib/printEx.h
 $(BUILD)/LiBiNormSrc/LiBiOptimiser.o: LiBiNormSrc/ModelData.h mcmcLib/mcmc.h
 $(BUILD)/LiBiNormSrc/LiBiOptimiser.o: mcmcLib/params.h
 $(BUILD)/LiBiNormSrc/LiBiVariation.o: LiBiNormSrc/LiBiVariation.h
@@ -406,6 +407,7 @@ $(BUILD)/bioinformaticsLib/dataVec.o: ../bioinformaticsLib/dataVec.h
 $(BUILD)/bioinformaticsLib/dataVec.o: ../bioinformaticsLib/libCommon.h
 $(BUILD)/bioinformaticsLib/dataVec.o: ../bioinformaticsLib/printEx.h
 $(BUILD)/bioinformaticsLib/dataVec.o: ../bioinformaticsLib/inQuotes.h
+$(BUILD)/bioinformaticsLib/dataVec.o: ../bioinformaticsLib/containerEx.h
 $(BUILD)/bioinformaticsLib/dataVec.o: ../bioinformaticsLib/parser.h
 $(BUILD)/bioinformaticsLib/fastaFile.o: ../bioinformaticsLib/printEx.h
 $(BUILD)/bioinformaticsLib/fastaFile.o: ../bioinformaticsLib/inQuotes.h

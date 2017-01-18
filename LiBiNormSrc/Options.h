@@ -27,9 +27,6 @@
 #define DEFAULT_MODEL ModelBD // -n
 #define MCMC_SIGMA 0.1	//	Original was 1
 
-//	Deriving parameters from MCMC runs
-#define END_LENGTH_SEARCHED_FOR_OPTIMAL_PARAMETERS 1000
-
 //	Outputting results
 #define DEFAULT_NORMALISATION_GENE_LENGTH 1000
 #define MAX_GENE_LENGTH_FOR_NORM_PLOT 20000
@@ -44,10 +41,13 @@
 //	Allows a maximum gene length to be specified
 //  #define MAX_LENGTH_OF_GENE_FOR_PARAM_ESTIMATION 20000000
 
-//	Use this mode to run a model with specific parameters.  This affects how the values are set
-//	in ModelParameters.cpp and also ensures that the first N reads are use in data are loaded
-//	in void rnaPosVec::selectAtMost(size_t s) in GeneCountData.cpp
-// #define PRESET_VALUES {-0.5665085,	1.43929,	-1.029376,	-4.513112 }
+//	Use this mode to run a model with specific parameters which are loaded in using the -i
+//	command.  This affects how the values are setin ModelParameters.cpp
+#define INITIAL_VALUES
+
+//
+//	For consistency and reproducing the MATLAB algorithms
+#define REPRODUCE_MATLAB	
 
 //	Some of the code in ModelData.cpp has also been writtent using vectors which is slower but the code
 //	more closely matches the MATLAB code

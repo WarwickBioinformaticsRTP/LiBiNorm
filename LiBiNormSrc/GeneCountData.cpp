@@ -10,7 +10,7 @@ using namespace std;
 
 rnaPosVec & rnaPosVec::removeInvalidValues(rna_pos_type maxVal)
 {
-#ifdef PRESET_VALUES
+#ifdef REPRODUCE_MATLAB
 	// Reproduce the matlab code so that results can be compared
 	size_t offset = 0;
 	for (size_t i = 0; i + offset < size();)
@@ -42,14 +42,14 @@ rnaPosVec & rnaPosVec::removeInvalidValues(rna_pos_type maxVal)
 	return *this;
 }
 
-//	Test mode as set by PRESET_VALUES takes the first N samples rather than randomly picks samples,
+//	Test mode as set by REPRODUCE_MATLAB takes the first N samples rather than randomly picks samples,
 //	and uses the same algorithm as the MATLAB code for excluding invalid calues.   Used for comparing the two outputs
 void rnaPosVec::selectAtMost(size_t s)
 {
 	if (s > size())
 		return;
 	//For reproducibility in test mode just use the first N values
-#ifndef PRESET_VALUES
+#ifndef REPRODUCE_MATLAB
 	//	Swap the first s entries with the entry at some other position, then resize to just have the s entries
 	iterator i = begin();
 	for (size_t j = 0; j < s; j++)

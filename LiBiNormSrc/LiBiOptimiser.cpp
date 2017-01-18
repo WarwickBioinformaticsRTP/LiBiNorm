@@ -1,3 +1,4 @@
+#include "rand.h"
 #include "Options.h"
 #include "LiBiOptimiser.h"
 
@@ -31,14 +32,21 @@ ErrorPair LiBiOptimiser::ErrorFunc()
 };
 
 
-dataVec LiBiOptimiser::getParams(modelType m, optionsType & options)
+dataVec LiBiOptimiser::getParams(modelType m, optionsType & options, dataVec & initialValues)
 {
 	opts = & options;
 	params  = GetModelParams(m);
 
+//	dataVec randOffset = randn(params.size());
+
 	optiVector optiData;
-	for (auto & p : params)
-		optiData.push_back(optiItem((p.max+p.min)/2, true));
+	for (size_t i = 0;i < params.size();i++)
+	{
+		if (initialValues.size() > i)
+			optiData.push_back(optiItem(initialValues[i], true));
+		else
+		optiData.push_back(optiItem((params[i].max + params[i].min) / 2 , true));
+	}
 
 	allOptiData.push_back(&optiData);
 

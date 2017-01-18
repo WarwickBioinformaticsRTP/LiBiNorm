@@ -150,9 +150,6 @@ paramSet GetModelParams(modelType model,dataVec * defaults, VEC_DATA_TYPE offset
 		params.setValues(*defaults);
 	}
 
-#ifdef PRESET_VALUES
-	params.setValues(PRESET_VALUES);
-#endif
 	return params;
 }
 

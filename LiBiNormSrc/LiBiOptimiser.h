@@ -16,7 +16,7 @@ public:
 	const modelType currentModel;
 	LiBiOptimiser(const mcmcGeneData & geneData, modelType currentModel) : geneData(geneData), currentModel(currentModel){};
 
-	dataVec getParams(modelType m,optionsType & options);
+	dataVec getParams(modelType m,optionsType & options,dataVec & initialValues);
 
 
 	virtual ErrorPair ErrorFunc();
