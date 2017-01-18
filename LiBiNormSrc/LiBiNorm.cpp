@@ -443,15 +443,6 @@ bool LiBiNorm::coreParameterEstimation()
 			threadLoopCounts[m].requested = NrunsOtherModels;
 	}
 
-
-	parseTsvFile paramFile;
-	if (!paramFile.open(parameterFilename))
-		exitFail("Unable to read parameters from ", parameterFilename);
-
-	paramFile.read(initialValues);
-
-
-
 #ifdef FIXED_RESULTS
 	theModel = M_FIXED_RESULTS;
 	bestResults[theModel].params = dataVec{ FIXED_RESULTS };

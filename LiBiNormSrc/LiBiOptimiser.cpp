@@ -45,7 +45,7 @@ dataVec LiBiOptimiser::getParams(modelType m, optionsType & options, dataVec & i
 		if (initialValues.size() > i)
 			optiData.push_back(optiItem(initialValues[i], true));
 		else
-		optiData.push_back(optiItem((params[i].max + params[i].min) / 2 , true));
+			optiData.push_back(optiItem((params[i].max + params[i].min) / 2 , true));
 	}
 
 	allOptiData.push_back(&optiData);
