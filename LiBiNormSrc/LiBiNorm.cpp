@@ -267,7 +267,7 @@ bool LiBiNormCore::commandParseCommon(int & ni, int argc,char **argv)
 #ifdef USE_NELDER_MEAD_FOR_INITIAL_VALUES
 		if ((strcmp(argv[ni], "-o") == 0) || (opt2 = (strncmp(argv[ni], "--omit", 6) == 0)))
 		{
-			verbose = false;
+			nelderMead = false;
 			return true;
 		}
 #endif
