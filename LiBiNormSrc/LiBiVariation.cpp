@@ -1,3 +1,4 @@
+#include "parser.h"
 #include "LiBiVariation.h"
 
 using namespace std;
@@ -22,11 +23,7 @@ int LiBiVariation::main(int argc, char **argv)
 	int ni = 1;
 	while (ni < argc)
 	{
-		bool opt2 = false;
-		if (commandParseCommon(ni, argc, argv))
-		{
-		}
-		else
+		if (!commandParseCommon(ni, argc, argv))
 		{
 			exitFail("Invalid parameter: ", argv[ni]);
 		}

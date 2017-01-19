@@ -146,8 +146,8 @@ paramSet GetModelParams(modelType model,dataVec * defaults, VEC_DATA_TYPE offset
 
 	if ((defaults) && (defaults->size()))
 	{
-//		params.setValues(*defaults + (randn(defaults->size()*offset*0.01)));
-		params.setValues(*defaults);
+		params.setValues(defaults->addNoise(offset));
+//		params.setValues(*defaults);
 	}
 
 	return params;

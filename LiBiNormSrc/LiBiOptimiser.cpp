@@ -14,7 +14,7 @@ ErrorPair LiBiOptimiser::ErrorFunc()
 	//	Stop parameter d drifting off
 	for (size_t i = 0; i < params.size(); i++)
 	{
-		if ((i == 1) && (currentModel == ModelE))
+		if (i == 1)
 			ep.WithWeightings += (data[i] * PARAMETER_WEIGHTING_SLOPE);
 
 		VEC_DATA_TYPE diff = data[i] - params[i].max + 0.2;

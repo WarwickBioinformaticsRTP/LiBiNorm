@@ -15,7 +15,7 @@
 
 //	Nelder Mead
 #define USE_NELDER_MEAD_FOR_INITIAL_VALUES
-#define NELDER_MEAD_ITERATIONS 2000
+#define NELDER_MEAD_ITERATIONS 20
 #define EDGE_PENALTY_MULTIPLIER 1000
 #define PARAMETER_WEIGHTING_SLOPE 2
 
@@ -47,7 +47,7 @@
 
 //
 //	For consistency and reproducing the MATLAB algorithms
-#define REPRODUCE_MATLAB	
+// #define REPRODUCE_MATLAB	
 
 //	Some of the code in ModelData.cpp has also been writtent using vectors which is slower but the code
 //	more closely matches the MATLAB code
@@ -61,7 +61,7 @@
 //	Use this option to use the parameters associated with the most likly parameter set
 //	https://sciencehouse.wordpress.com/2010/06/23/mcmc-and-fitting-models-to-data/
 //	rather than the median values
-//#define USE_PARAMS_FROM_LOWEST_LL
+#define USE_PARAMS_FROM_LOWEST_LL
 
 
 #endif
