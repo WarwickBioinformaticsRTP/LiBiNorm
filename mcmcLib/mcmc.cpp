@@ -12,7 +12,7 @@ void mcmc::mcmcrun(const mcmcGeneData & data,const paramSet & params,const optio
 
 	dataVec R = options.qcov.diagchol();
 
-	double ss = options.ssfun(oldpar,data);
+	double ss = options.ssfun(oldpar,data,params);
 
 	double ss1 = ss;
 	double ss2 = ss;
@@ -40,7 +40,7 @@ void mcmc::mcmcrun(const mcmcGeneData & data,const paramSet & params,const optio
 		}
 		else
 		{
-			ss1 = options.ssfun(newpar, data);
+			ss1 = options.ssfun(newpar, data,params);
 			ss2 = ss;             //old ss
 			tst = exp(-0.5*((ss1 - ss2) / options.sigma2));
 			if (tst <= 0)

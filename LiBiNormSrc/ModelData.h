@@ -78,12 +78,12 @@ struct bestResult
 void getBias(modelType m, dataVec & params, const dataVec & lengths,dataVec & bias);
 
 //	Calulates the log liklyhoods for each model
-double FLL_ModelA(const dataVec & param, const mcmcGeneData & data);
-double FLL_ModelB(const dataVec & param, const mcmcGeneData & data);
-double FLL_ModelC(const dataVec & param, const mcmcGeneData & data);
-double FLL_ModelD(const dataVec & param, const mcmcGeneData & data);
-double FLL_ModelE(const dataVec & param, const mcmcGeneData & data);
-double FLL_ModelBD(const dataVec & param, const mcmcGeneData & data);
+double FLL_ModelA(const dataVec & param, const mcmcGeneData & data, const paramSet & params);
+double FLL_ModelB(const dataVec & param, const mcmcGeneData & data, const paramSet & params);
+double FLL_ModelC(const dataVec & param, const mcmcGeneData & data, const paramSet & params);
+double FLL_ModelD(const dataVec & param, const mcmcGeneData & data, const paramSet & params);
+double FLL_ModelE(const dataVec & param, const mcmcGeneData & data, const paramSet & params);
+double FLL_ModelBD(const dataVec & param, const mcmcGeneData & data, const paramSet & params);
 
 #endif
 

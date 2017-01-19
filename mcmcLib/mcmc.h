@@ -17,7 +17,7 @@ class optionsType
 public:	
 	optionsType():nsimu(3){};
 
-	double(*ssfun)(const dataVec & param, const mcmcGeneData & data);
+	double(*ssfun)(const dataVec & param, const mcmcGeneData & data,const paramSet & params);
 	double sigma2;
 	size_t nsimu,Nruns;
 	double jumpSize;

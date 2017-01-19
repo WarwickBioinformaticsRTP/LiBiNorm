@@ -9,13 +9,13 @@ ErrorPair LiBiOptimiser::ErrorFunc()
 	for (size_t i = 0; i < (*allOptiData[0]).size(); i++)
 		data.push_back((*allOptiData[0])[i].value);
 
-	ep = opts->ssfun(data, geneData);
+	ep = opts->ssfun(data, geneData,params);
 
-	//	Stop parameter d drifting off
+/*	//	Stop parameter d drifting off
 	for (size_t i = 0; i < params.size(); i++)
 	{
-		if (i == 1)
-			ep.WithWeightings += (data[i] * PARAMETER_WEIGHTING_SLOPE);
+//		if (i == 1)
+//			ep.WithWeightings += (data[i] * PARAMETER_WEIGHTING_SLOPE);
 
 		VEC_DATA_TYPE diff = data[i] - params[i].max + 0.2;
 		if (diff > 0)
@@ -27,7 +27,7 @@ ErrorPair LiBiOptimiser::ErrorFunc()
 				ep.WithWeightings += (diff * diff) * EDGE_PENALTY_MULTIPLIER;
 		}
 	}
-
+*/
 	return ep;
 };
 

@@ -1,4 +1,5 @@
 #include <fstream>
+#include <random>
 #include "LiBiNorm.h"
 #include "GeneCountData.h"
 #include "stringEx.h"
@@ -42,6 +43,19 @@ rnaPosVec & rnaPosVec::removeInvalidValues(rna_pos_type maxVal)
 	return *this;
 }
 
+//  Returns a random number, uniformly distributed between 0 and a.
+int intRand(int max)
+{
+	// Static members generate distribution in range 0 to 1.   This is scaled by input parameter for each call
+	static std::random_device rd;
+//	static std::mt19937 gen(rd());
+	static std::mt19937 gen(2017);
+	static std::uniform_int_distribution<> dis(0, 65535);
+
+	return dis(gen) % max;
+}
+
+
 //	Test mode as set by REPRODUCE_MATLAB takes the first N samples rather than randomly picks samples,
 //	and uses the same algorithm as the MATLAB code for excluding invalid calues.   Used for comparing the two outputs
 void rnaPosVec::selectAtMost(size_t s)
@@ -54,7 +68,7 @@ void rnaPosVec::selectAtMost(size_t s)
 	iterator i = begin();
 	for (size_t j = 0; j < s; j++)
 	{
-		std::swap(*(i++), *(begin() + rand() % size()));
+		std::swap(*(i++), *(begin() + intRand(size())));
 	}
 #endif
 	resize(s);

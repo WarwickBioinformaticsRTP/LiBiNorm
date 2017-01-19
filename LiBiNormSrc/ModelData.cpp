@@ -44,6 +44,7 @@ void setSSfun(optionsType & options,modelType m)
 const std::vector<modelType> & allModels()
 {
 	static std::vector<modelType> list{ ModelA ,ModelB ,ModelC,ModelD,ModelE,ModelBD };
+//	static std::vector<modelType> list{ ModelA ,ModelB ,ModelC};
 	return list;
 };
 
@@ -185,9 +186,31 @@ values are the same for all reads in the gene so only need to be calculated per 
 The original MATLAB code is shown in comments
 */
 
+VEC_DATA_TYPE prior(const dataVec & data, const paramSet & params)
+{
+	VEC_DATA_TYPE _retVal = 0;
+	for (size_t i = 0; i < params.size(); i++)
+	{
+		if (i == 1)
+			_retVal += (data[i] * PARAMETER_WEIGHTING_SLOPE);
+
+		VEC_DATA_TYPE diff = data[i] - params[i].max + 0.2;
+		if (diff > 0)
+			_retVal += (diff * diff) * EDGE_PENALTY_MULTIPLIER;
+		else
+		{
+			diff = params[i].min - data[i] + 0.2;
+			if (diff > 0)
+				_retVal += (diff * diff) * EDGE_PENALTY_MULTIPLIER;
+		}
+	}
+	return _retVal;
+
+};
+
 
 //	The log liklyhood calculations for each of the models
-double FLL_ModelA(const dataVec & param, const mcmcGeneData & data)
+double FLL_ModelA(const dataVec & param, const mcmcGeneData & data, const paramSet & params)
 {
 	double d = pow(10,param[0]);
 	double h = pow(10,param[1]);
@@ -231,11 +254,12 @@ double FLL_ModelA(const dataVec & param, const mcmcGeneData & data)
 	}
 #endif
 	LogL = -2*LogL;
+	LogL += prior(param,params);
 	return LogL;
 }
 
 
-double FLL_ModelB(const dataVec & param, const mcmcGeneData & data)
+double FLL_ModelB(const dataVec & param, const mcmcGeneData & data, const paramSet & params)
 {
 
 	double d = pow(10,param[0]);
@@ -297,10 +321,12 @@ double FLL_ModelB(const dataVec & param, const mcmcGeneData & data)
 	}
 
 #endif
-	return -2*LogL;
+	LogL = -2 * LogL;
+	LogL += prior(param, params);
+	return LogL;
 }
 
-double FLL_ModelC(const dataVec & param, const mcmcGeneData & data)
+double FLL_ModelC(const dataVec & param, const mcmcGeneData & data, const paramSet & params)
 {
 	//	function [LogL] = FLL_Deng(param, data)
 
@@ -346,11 +372,13 @@ double FLL_ModelC(const dataVec & param, const mcmcGeneData & data)
 		LogL += log(f_frag/norm)/freq_l;
 	}
 
-	return -2*LogL;
+	LogL = -2 * LogL;
+	LogL += (param[1] * PARAMETER_WEIGHTING_SLOPE);
+	return LogL;
 }
 
 
-double FLL_ModelD(const dataVec & param, const mcmcGeneData & data)
+double FLL_ModelD(const dataVec & param, const mcmcGeneData & data, const paramSet & params)
 {
 	double d = pow(10,param[0]);
 	double h = pow(10,param[1]);
@@ -399,10 +427,11 @@ double FLL_ModelD(const dataVec & param, const mcmcGeneData & data)
 		temp_l += log(f_frag/norm)/freq_l;
 	}
 	LogL = -2*temp_l;
+	LogL += prior(param, params);
 	return LogL;
 }
 
-double FLL_ModelE(const dataVec & param, const mcmcGeneData & data)
+double FLL_ModelE(const dataVec & param, const mcmcGeneData & data, const paramSet & params)
 {
 	double d = pow(10,param[0]);
 	double h = pow(10,param[1]);
@@ -460,10 +489,12 @@ double FLL_ModelE(const dataVec & param, const mcmcGeneData & data)
 		LogL += log(f_frag/norm)/freq_l;
 	}
 #endif
-	return -2*LogL;
+	LogL = -2 * LogL;
+	LogL += prior(param, params);
+	return LogL;
 }
 
-double FLL_ModelBD(const dataVec & param, const mcmcGeneData & data)
+double FLL_ModelBD(const dataVec & param, const mcmcGeneData & data, const paramSet & params)
 {
 
 	double d = pow(10,param[0]);
@@ -549,6 +580,7 @@ double FLL_ModelBD(const dataVec & param, const mcmcGeneData & data)
 
 #endif
 	LogL = -2 * LogL;
+	LogL += prior(param, params);
 	return LogL;
 }
 
