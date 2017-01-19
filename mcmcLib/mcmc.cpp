@@ -12,15 +12,18 @@ void mcmc::mcmcrun(const mcmcGeneData & data,const paramSet & params,const optio
 
 	dataVec R = options.qcov.diagchol();
 
-	double ss = options.ssfun(oldpar,data,params);
+	double ss = options.ssfun(oldpar,data);
+	double prior = options.priorfun(oldpar, params);
 
 	double ss1 = ss;
 	double ss2 = ss;
+	double prior1 = prior;
+	double prior2 = prior;
 
 	_chain.resize(options.nsimu);
 	_sschain.resize(options.nsimu);
 	_chain[0] = oldpar;
-	_sschain[0] = ss;
+	_sschain[0] = ss + prior;
 
 	bool accept;
 	double tst;
@@ -37,12 +40,17 @@ void mcmc::mcmcrun(const mcmcGeneData & data,const paramSet & params,const optio
 			accept = false;
 			ss1 = MAX_DOUBLE;
 			ss2 = ss;
+			prior1 = 0;
+			prior2 = 0;
 		}
 		else
 		{
-			ss1 = options.ssfun(newpar, data,params);
+			ss1 = options.ssfun(newpar, data);
+			prior1 = options.priorfun(newpar, params);
+
 			ss2 = ss;             //old ss
-			tst = exp(-0.5*((ss1 - ss2) / options.sigma2));
+			prior2 = prior;             //old ss
+			tst = exp(-0.5*((ss1 - ss2 + prior1 - prior2) / options.sigma2));
 			if (tst <= 0)
 				accept = false;
 			else if (tst >= 1)
@@ -57,6 +65,7 @@ void mcmc::mcmcrun(const mcmcGeneData & data,const paramSet & params,const optio
 		{
 			_chain[chainind] = newpar;
 			oldpar = newpar;
+			prior = prior1;
 			ss = ss1;
 		}
 		else
@@ -64,7 +73,7 @@ void mcmc::mcmcrun(const mcmcGeneData & data,const paramSet & params,const optio
 			_chain[chainind] = oldpar;
 		}
 
-		_sschain[chainind] = ss;
+		_sschain[chainind] = ss + prior;
 
 	}
 }

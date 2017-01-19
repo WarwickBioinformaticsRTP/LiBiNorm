@@ -432,6 +432,7 @@ bool LiBiNorm::coreParameterEstimation()
 	options.Nruns = Nruns;
 
 	options.sigma2 = MCMC_SIGMA;
+	options.priorfun = priorFunc;
 
 	//	Set the number of iterations required of each of the models.
 	for (modelType m : allModels())

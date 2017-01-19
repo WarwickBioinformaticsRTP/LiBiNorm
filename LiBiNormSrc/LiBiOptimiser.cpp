@@ -9,7 +9,8 @@ ErrorPair LiBiOptimiser::ErrorFunc()
 	for (size_t i = 0; i < (*allOptiData[0]).size(); i++)
 		data.push_back((*allOptiData[0])[i].value);
 
-	ep = opts->ssfun(data, geneData,params);
+	ep = opts->ssfun(data, geneData);
+	ep.WithPrior += opts->priorfun(data, params);
 
 /*	//	Stop parameter d drifting off
 	for (size_t i = 0; i < params.size(); i++)

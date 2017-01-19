@@ -82,8 +82,7 @@ int LiBiVariation::main(int argc, char **argv)
 				dataVec values = initialValues[m];
 				values[p] += i;
 				setSSfun(options, m);
-				paramSet params = GetModelParams(m);
-				double ss1 = options.ssfun(values, geneData,params);
+				double ss1 = options.ssfun(values, geneData);
 				mcmcResult.printMiddle(values, ss1, "");
 			}
 			mcmcResult.printEnd();
