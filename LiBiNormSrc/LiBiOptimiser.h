@@ -6,21 +6,28 @@
 
 class LiBiOptimiser : public nelderMeadOptimiser
 {
-	optiDataType allOptiData;
-	paramSet params;
+public:
+	LiBiOptimiser(const mcmcGeneData & geneData, modelType currentModel,int & iterations) : 
+		nelderMeadOptimiser(iterations),
+		geneData(geneData), currentModel(currentModel) {};
 
 public:
 
-	optionsType * opts;
-	const mcmcGeneData & geneData;
-	const modelType currentModel;
-	LiBiOptimiser(const mcmcGeneData & geneData, modelType currentModel) : geneData(geneData), currentModel(currentModel){};
 
 	dataVec getParams(modelType m,optionsType & options,dataVec & initialValues);
 
 
 	virtual ErrorPair ErrorFunc();
 	virtual void SaveResults(bool toFile) {};
+
+	int iterations;
+	optionsType * opts;
+	const mcmcGeneData & geneData;
+	const modelType currentModel;
+
+private:
+	optiDataType allOptiData;
+	paramSet params;
 
 };
 

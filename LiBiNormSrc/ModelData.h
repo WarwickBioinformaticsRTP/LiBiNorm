@@ -59,13 +59,15 @@ headerType getHeaders();
 //	Holds the information relating to the best set of parameters associated with each model
 struct bestResult
 {
-	bestResult() :LLresult(DBL_MAX), LL_dev(0), run(0), pos(0) {};
+	bestResult() :LLresult(DBL_MAX), LL_dev(0), run(0), pos(0), nelderMeadIterations(0) {};
 	//	For checking if paraeters have been estimated
 	operator bool() const { return params[0].size(); };
 	// The miniumum log liklyhood, and the associated deviation
 	VEC_DATA_TYPE LLresult, LL_dev;
 	//	The mcmc run, and the position in the run where the best result was found
 	size_t run, pos;
+
+	int nelderMeadIterations;
 	//	The best model parameters found
 	dataVec params[2];
 	//	A measure of the positive and negative spread of the parameters and the absolute diff

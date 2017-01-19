@@ -121,7 +121,7 @@ void LiBiNorm::mcmcThread(optionsType options)
 				progMessage("Starting intial values ", m);
 			}
 
-			LiBiOptimiser  optimiser(geneData,m);
+			LiBiOptimiser  optimiser(geneData,m,bestResults[m].nelderMeadIterations);
 			setSSfun(options, m);
 			initialValues[m] = optimiser.getParams(m, options,initialValues[m]);
 
@@ -664,12 +664,18 @@ void LiBiNorm::printResults()
 	mcmcResult.printStart("");
 	for (modelType m : allModels())
 	{
-		mcmcResult.printMiddle(m);
-		mcmcResult.printGaps(headers[m].size() + 1);
+		string count;
+		if (bestResults[m].nelderMeadIterations)
+			count = _s("NM iterations:", bestResults[m].nelderMeadIterations);
+		mcmcResult.printMiddle(m, count);
+		mcmcResult.printGaps(headers[m].size());
 	}
 	mcmcResult.printEnd();
 
-	mcmcResult.printStart("");
+	const char * host = getenv("HOSTNAME");
+	if (host == NULL) host = "";
+
+	mcmcResult.printStart(host);
 	for (modelType m : allModels())
 		mcmcResult.printMiddle(headers[m], "chain", "");
 	mcmcResult.printEnd();
