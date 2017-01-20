@@ -72,15 +72,19 @@ int LiBiVariation::main(int argc, char **argv)
 
 	optionsType options;
 
+	map<modelType, paramSet> params;
+	for (modelType m : allModels())
+		params[m] = GetModelParams(m);
+
 	for (size_t p = 0; p < 2; p++)
 	{
-		for (double i = -1; i < 4; i += 0.2)
+		for (double i = 0; i < 3; i += 0.2)
 		{
 			mcmcResult.printStart("");
 			for (modelType m : allModels())
 			{
 				dataVec values = initialValues[m];
-				values[p] += i;
+				values[p] = params[m][p].min + i;
 				setSSfun(options, m);
 				double ss1 = options.ssfun(values, geneData);
 				mcmcResult.printMiddle(values, ss1, "");

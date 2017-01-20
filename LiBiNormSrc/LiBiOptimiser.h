@@ -10,7 +10,7 @@ public:
 	LiBiOptimiser(const mcmcGeneData & geneData, modelType currentModel,int & iterations) : 
 		nelderMeadOptimiser(iterations),
 		geneData(geneData), currentModel(currentModel) {};
-
+	virtual ~LiBiOptimiser(){};
 public:
 
 

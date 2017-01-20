@@ -12,23 +12,6 @@ ErrorPair LiBiOptimiser::ErrorFunc()
 	ep = opts->ssfun(data, geneData);
 	ep.WithPrior += opts->priorfun(data, params);
 
-/*	//	Stop parameter d drifting off
-	for (size_t i = 0; i < params.size(); i++)
-	{
-//		if (i == 1)
-//			ep.WithWeightings += (data[i] * PARAMETER_WEIGHTING_SLOPE);
-
-		VEC_DATA_TYPE diff = data[i] - params[i].max + 0.2;
-		if (diff > 0)
-			ep.WithWeightings += (diff * diff ) * EDGE_PENALTY_MULTIPLIER;
-		else
-		{
-			diff = params[i].min - data[i] + 0.2;
-			if (diff > 0)
-				ep.WithWeightings += (diff * diff) * EDGE_PENALTY_MULTIPLIER;
-		}
-	}
-*/
 	return ep;
 };
 
@@ -38,15 +21,13 @@ dataVec LiBiOptimiser::getParams(modelType m, optionsType & options, dataVec & i
 	opts = & options;
 	params  = GetModelParams(m);
 
-//	dataVec randOffset = randn(params.size());
-
 	optiVector optiData;
 	for (size_t i = 0;i < params.size();i++)
 	{
 		if (initialValues.size() > i)
 			optiData.push_back(optiItem(initialValues[i], true));
 		else
-			optiData.push_back(optiItem((params[i].max + params[i].min) / 2 , true));
+			optiData.push_back(optiItem(params[i].initial, true));
 	}
 
 	allOptiData.push_back(&optiData);

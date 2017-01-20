@@ -1,11 +1,8 @@
 
-#include <map>
-#include "rand.h"
 #include "stringEx.h"
 #include "containerEx.h"
 #include "ModelData.h"
 #include "Options.h"
-#include "mcmc.h"
 using namespace std;
 
 
@@ -114,29 +111,29 @@ paramSet GetModelParams(modelType model,dataVec * defaults, VEC_DATA_TYPE offset
 	case noModel:
 		break;
 	case ModelB: case ModelD: case ModelE:
-		params = { { "log10 d", -1 , 2 }    // average length of fragments
-			,{ "log10 h", 0 , 3 }   // the minimum length of fragmenation
-			,{ "log10 t1", -5 , -1 }   // theta1
-			,{ "log10 t2", -5, -1 } // theta2
+		params = { { "log10 d", -1, 2, 0 }    // average length of fragments
+			,{ "log10 h", 0, 3, 2 }   // the minimum length of fragmenation
+			,{ "log10 t1", -5, -1, -3 }   // theta1
+			,{ "log10 t2", -5, -1, -3 } // theta2
 		};
 		break;
 	case ModelC:
-		params = { { "log10 d", -1 , 2 }    // average length of fragments
-			,{ "log10 h", 0 , 3 }   // the minimum length of fragmenation
-			,{ "log10 t2", -5, -1 } // theta2
+		params = { { "log10 d", -1, 2, 0 }    // average length of fragments
+			,{ "log10 h", 0, 3, 2 }   // the minimum length of fragmenation
+			,{ "log10 t2", -5, -1, -3 } // theta2
 		};
 		break;
 	case ModelA:
-		params = { { "log10 d", -1 , 2 }    // average length of fragments
-			,{ "log10 h", 0 , 3 }   // the minimum length of fragmenation
+		params = { { "log10 d", -1, 2, 0 }    // average length of fragments
+			,{ "log10 h", 0, 3, 2 }   // the minimum length of fragmenation
 		};
 		break;
 	case ModelBD:
-		params = { { "log10 d", -1 , 2 }    // average length of fragments
-			,{ "log10 h", 0 , 3 }   // the minimum length of fragmenation
-			,{ "log10 t1", -5 , -1 }   // theta1
-			,{ "log10 t2", -5, -1 } // theta2
-			,{ "a", 0, 1 } // alpha strength of model B
+		params = { { "log10 d", -1, 2, 0 }    // average length of fragments
+			,{ "log10 h", 0, 3, 2 }   // the minimum length of fragmenation
+			,{ "log10 t1", -5, -1, -3 }   // theta1
+			,{ "log10 t2", -5, -1, -3 } // theta2
+			,{ "a", 0, 1, 0.5 } // alpha strength of model B
 		};
 		break;
 	};

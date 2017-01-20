@@ -8,11 +8,19 @@ using namespace std;
 //	Sets up a parameter within the mcmc chain, using the min and max values to set an initial value
 //	that is randomnly placed somewhere betweeen the min and the max values
 paramType::paramType(std::string name,double min, double max):
-	name(name),min(min),max(max),
+	name(name),min(min),max(max),initial(0),
 	targetflag(true), 
 	localflag(false)
 {
 	value = rand(max - min) + min;
+};
+
+paramType::paramType(std::string name, double min, double max, double initial) :
+	name(name), min(min), max(max), initial(initial),
+	targetflag(true),
+	localflag(false)
+{
+	value = initial;
 };
 
 

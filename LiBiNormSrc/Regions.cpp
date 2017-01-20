@@ -1,6 +1,4 @@
-#include <vector>
 #include "Regions.h"
-#include "parser.h"
 
 using namespace std;
 using namespace BamTools;

@@ -3,7 +3,6 @@
 
 #include<map>
 #include<string>
-#include "libCommon.h"
 #include "printEx.h"
 #include "api/BamReader.h"
 

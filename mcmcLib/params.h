@@ -24,9 +24,10 @@ public:
 class paramType
 {
 public:
-	paramType(std::string name,double min = MIN_DOUBLE, double max = MAX_DOUBLE);
+	paramType(std::string name, double min = MIN_DOUBLE, double max = MAX_DOUBLE);
+	paramType(std::string name, double min, double max, double initial);
 	std::string name;
-	double value, min, max;
+	double min, max, value,initial;
 	bool targetflag, localflag;
 };
 

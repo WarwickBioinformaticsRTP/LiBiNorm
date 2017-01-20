@@ -10,7 +10,6 @@
 #include "libCommon.h"
 #include "stringEx.h"
 #include "Regions.h"
-#include "parser.h"
 
 using namespace std;
 using namespace BamTools;

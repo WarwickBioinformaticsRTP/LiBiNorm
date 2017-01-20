@@ -1,6 +1,4 @@
-#include <algorithm>
 #include "FeatureFileEx.h"
-#include "GeneCountData.h"
 
 
 using namespace std;

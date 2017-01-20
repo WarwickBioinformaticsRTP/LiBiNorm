@@ -1,10 +1,8 @@
 #include <fstream>
 #include <random>
-#include "LiBiNorm.h"
-#include "GeneCountData.h"
-#include "stringEx.h"
 #include "containerEx.h"
-#include "parser.h"
+#include "GeneCountData.h"
+#include "Options.h"
 
 using namespace std;
 
@@ -48,8 +46,12 @@ int intRand(int max)
 {
 	// Static members generate distribution in range 0 to 1.   This is scaled by input parameter for each call
 	static std::random_device rd;
-//	static std::mt19937 gen(rd());
-	static std::mt19937 gen(2017);
+#ifdef SELECT_READS_SEED
+	static std::mt19937 gen(SELECT_READS_SEED);
+#else
+	static std::mt19937 gen(rd());
+#endif
+
 	static std::uniform_int_distribution<> dis(0, 65535);
 
 	return dis(gen) % max;

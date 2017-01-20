@@ -8,9 +8,9 @@
 #endif
 
 #include "libCommon.h"
-#include "LiBiCount.h"
-#include "LiBiNorm.h"
+#include "Regions.h"
 #include "parser.h"
+#include "LiBiCount.h"
 
 //#define MATCH_USING_POSITION
 

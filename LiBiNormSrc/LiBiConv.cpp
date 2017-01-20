@@ -1,6 +1,6 @@
-#include "stringEx.h"
 #include "api/BamReader.h"
 #include "libCommon.h"
+#include "stringEx.h"
 #include "LiBiConv.h"
 #include "FeatureFileEx.h"
 

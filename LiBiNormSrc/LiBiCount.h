@@ -3,7 +3,6 @@
 
 #include "FeatureFileEx.h"
 #include "LiBiNorm.h"
-#include "dataVec.h"
 
 using namespace BamTools;
 
