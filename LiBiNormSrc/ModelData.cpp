@@ -1,4 +1,5 @@
 
+#include "rand.h"
 #include "stringEx.h"
 #include "containerEx.h"
 #include "ModelData.h"
@@ -146,6 +147,12 @@ paramSet GetModelParams(modelType model,dataVec * defaults, VEC_DATA_TYPE offset
 	{
 		params.setValues(defaults->addNoise(offset));
 //		params.setValues(*defaults);
+	}
+	else
+	{
+		dataVec r = randn(params.size());
+		for (size_t i = 0; i < params.size(); i++)
+			params[i].value = params[i].initial + r[i] * offset;
 	}
 
 	return params;
