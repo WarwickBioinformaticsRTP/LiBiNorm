@@ -10,14 +10,14 @@
 #define DEF_THREADS 3 //-p
 
 //	The seed for the random number generator used to select reads.  If undefined then a random seed is generated
-#define SELECT_READS_SEED 2018
+#define SELECT_READS_SEED 2017
 
 //	Read selection for paremeter estimation
 #define DEF_MAX_READS_FOR_PARAM_ESTIMATION 100000000  // -d
 #define MAX_READS_GENE 100
 
 //	Nelder Mead
-//#define USE_NELDER_MEAD_FOR_INITIAL_VALUES
+#define USE_NELDER_MEAD_FOR_INITIAL_VALUES
 #define NELDER_MEAD_ITERATIONS 2000
 #define EDGE_PENALTY_MULTIPLIER 1000
 
@@ -25,7 +25,7 @@
 #define PARAMETER_WEIGHTING_SLOPE 2
 
 //	MCMC operation
-#define NUMBER_OF_MCMC_RUNS 10  // -r
+#define NUMBER_OF_MCMC_RUNS 20  // -r
 #define MCMC_ITERATIONS 2000  // -s
 #define NELDER_MCMC_ITERATIONS 200  // -s
 #define MCMC_JUMP_SIZE 0.01
