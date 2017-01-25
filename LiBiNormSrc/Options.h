@@ -10,7 +10,7 @@
 #define DEF_THREADS 3 //-p
 
 //	The seed for the random number generator used to select reads.  If undefined then a random seed is generated
-#define SELECT_READS_SEED 2017
+// #define SELECT_READS_SEED 2017
 
 //	Read selection for paremeter estimation
 #define DEF_MAX_READS_FOR_PARAM_ESTIMATION 100000000  // -d

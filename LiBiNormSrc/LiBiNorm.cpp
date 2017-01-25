@@ -15,6 +15,9 @@
 
 using namespace std;
 
+extern intRandClass intRand;
+
+
 #ifdef _DEBUG
 //	use this to test the calculations based on a specific result of the parameter derivation
 // #define FIXED_RESULTS log10(3.9644),log10(147.39),log10(0.0079),log10(2.0128E-4),0
@@ -334,6 +337,11 @@ int LiBiNorm::main(int argc, char **argv)
 			if ((Nsimu < 1) || (Nsimu > 10000))
 				exitFail("-s values must lie between 1 and 10000");
 		}
+		else if ((strcmp(argv[ni], "-e") == 0) || (opt2 = (strncmp(argv[ni], "--seed=", 7) == 0)))
+		{
+			int seed = atoi(opt2 ? argv[ni] + 7 : argv[++ni]);
+			intRand.reseed(seed);
+		}
 		else if ((strcmp(argv[ni], "-f") == 0) || (opt2 = (strncmp(argv[ni], "--full", 6) == 0)))
 			outputFull = true;
 		else if (strcmp(argv[ni], "-x") == 0)
@@ -346,6 +354,7 @@ int LiBiNorm::main(int argc, char **argv)
 		}
 		ni++;
 	}
+
 
 	if (!landscapeFilename)
 		exitFail("Landscape file must be specified");

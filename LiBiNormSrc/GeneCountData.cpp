@@ -1,8 +1,6 @@
 #include <fstream>
-#include <random>
 #include "containerEx.h"
 #include "GeneCountData.h"
-#include "Options.h"
 
 using namespace std;
 
@@ -41,6 +39,8 @@ rnaPosVec & rnaPosVec::removeInvalidValues(rna_pos_type maxVal)
 	return *this;
 }
 
+
+/*
 //  Returns a random number, uniformly distributed between 0 and a.
 int intRand(int max)
 {
@@ -57,6 +57,9 @@ int intRand(int max)
 	return dis(gen) % max;
 }
 
+*/
+
+intRandClass intRand;
 
 //	Test mode as set by REPRODUCE_MATLAB takes the first N samples rather than randomly picks samples,
 //	and uses the same algorithm as the MATLAB code for excluding invalid calues.   Used for comparing the two outputs
@@ -70,7 +73,7 @@ void rnaPosVec::selectAtMost(size_t s)
 	iterator i = begin();
 	for (size_t j = 0; j < s; j++)
 	{
-		std::swap(*(i++), *(begin() + intRand(size())));
+		std::swap(*(i++), *(begin() + intRand.value(size())));
 	}
 #endif
 	resize(s);
@@ -398,11 +401,17 @@ void GeneCountData::transferTo(mcmcGeneData & mcmcData, size_t maxLength, int ma
 		if (lengths[0][i] < MAX_LENGTH_OF_GENE_FOR_PARAM_ESTIMATION)
 #endif
 		{
+			size_t count = maxLength;
+			VEC_DATA_TYPE len = lengths[0][i];
+//			if (len < 2000)
+//				count = 1000000;
+//				count += (1000 - max(len,500.0));
+
 			//	For the forward and the reverse counts
 			for (size_t j = 0; j < 2; j++)
 			{
 				rnaPosVec & positions = readPositionData.at(names[i]).positions[j];
-				positions.selectAtMost(maxLength);
+				positions.selectAtMost(count);
 
 				//	fragData contains the count 
 				mcmcData.fragData.append(positions);

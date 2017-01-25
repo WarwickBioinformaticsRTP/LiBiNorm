@@ -2,8 +2,32 @@
 #define GENE_COUNT_DATA_H
 
 #include <map>
+#include <random>
+
+#include "Options.h"
 #include "parser.h"
 #include "mcmc.h"
+
+
+
+class intRandClass
+{
+public:
+#ifdef SELECT_READS_SEED
+	intRandClass() : gen(SELECT_READS_SEED), dis(0, 65535) {};
+#else
+	intRandClass() : gen(rd()), dis(0, 65535) {};
+#endif
+
+	int value(int max) { return dis(gen) % max; };
+	void reseed(int value) { gen.seed(value); };
+
+private:
+	std::random_device rd;
+	std::mt19937 gen;
+	std::uniform_int_distribution<> dis;
+};
+
 
 typedef long rna_pos_type;
 
