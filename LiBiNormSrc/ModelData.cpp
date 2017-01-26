@@ -14,20 +14,26 @@ void setSSfun(optionsType & options,modelType m)
 	case noModel: break;
 	case ModelA:
 		options.ssfun = &FLL_ModelA;
+		options.priorfun = &priorFunc;
 		break;
 	case ModelB:
 		options.ssfun = &FLL_ModelB;
+		options.priorfun = &priorFunc;
 		break;
 	case ModelC:
 		options.ssfun = &FLL_ModelC;
+		options.priorfun = &priorFunc;
 		break;
 	case ModelD:
 		options.ssfun = &FLL_ModelD;
+		options.priorfun = &priorFunc;
 		break;
 	case ModelE:
 		options.ssfun = &FLL_ModelE;
+		options.priorfun = &priorFuncE;
 		break;
 	case ModelBD:
+		options.priorfun = &priorFunc;
 		options.ssfun = &FLL_ModelBD;
 		break;
 	}
@@ -195,9 +201,6 @@ double priorFunc(const dataVec & data, const paramSet & params)
 	VEC_DATA_TYPE _retVal = 0;
 	for (size_t i = 0; i < params.size(); i++)
 	{
-		if (i == 1)
-			_retVal += (data[i] * PARAMETER_WEIGHTING_SLOPE);
-
 		VEC_DATA_TYPE diff = data[i] - params[i].max + 0.2;
 		if (diff > 0)
 			_retVal += (diff * diff) * EDGE_PENALTY_MULTIPLIER;
@@ -208,6 +211,14 @@ double priorFunc(const dataVec & data, const paramSet & params)
 				_retVal += (diff * diff) * EDGE_PENALTY_MULTIPLIER;
 		}
 	}
+	return _retVal;
+};
+double priorFuncE(const dataVec & data, const paramSet & params)
+{
+	VEC_DATA_TYPE _retVal = priorFunc(data,params);
+
+	_retVal += (data[1] * PARAMETER_WEIGHTING_SLOPE);
+
 	return _retVal;
 };
 

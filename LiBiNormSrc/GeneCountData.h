@@ -28,6 +28,7 @@ private:
 	std::uniform_int_distribution<> dis;
 };
 
+extern intRandClass intRand;
 
 typedef long rna_pos_type;
 

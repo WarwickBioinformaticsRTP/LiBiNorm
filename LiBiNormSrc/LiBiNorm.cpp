@@ -15,8 +15,6 @@
 
 using namespace std;
 
-extern intRandClass intRand;
-
 
 #ifdef _DEBUG
 //	use this to test the calculations based on a specific result of the parameter derivation
@@ -441,7 +439,6 @@ bool LiBiNorm::coreParameterEstimation()
 	options.Nruns = Nruns;
 
 	options.sigma2 = MCMC_SIGMA;
-	options.priorfun = priorFunc;
 
 	//	Set the number of iterations required of each of the models.
 	for (modelType m : allModels())

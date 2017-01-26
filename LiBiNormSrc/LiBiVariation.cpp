@@ -23,7 +23,16 @@ int LiBiVariation::main(int argc, char **argv)
 	int ni = 1;
 	while (ni < argc)
 	{
-		if (!commandParseCommon(ni, argc, argv))
+		bool opt2 = false;
+		if (commandParseCommon(ni, argc, argv))
+		{
+		}
+		else if ((strcmp(argv[ni], "-e") == 0) || (opt2 = (strncmp(argv[ni], "--seed=", 7) == 0)))
+		{
+			int seed = atoi(opt2 ? argv[ni] + 7 : argv[++ni]);
+			intRand.reseed(seed);
+		}
+		else
 		{
 			exitFail("Invalid parameter: ", argv[ni]);
 		}

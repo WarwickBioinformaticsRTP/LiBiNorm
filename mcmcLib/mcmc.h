@@ -18,7 +18,7 @@ public:
 	optionsType():nsimu(3){};
 
 	double(*ssfun)(const dataVec & param, const mcmcGeneData & data);
-	double(*priorfun)(const dataVec & param, const paramSet & params);
+	double(*priorfun)(const dataVec &, const paramSet &);
 	double sigma2;
 	size_t nsimu,Nruns;
 	double jumpSize;
