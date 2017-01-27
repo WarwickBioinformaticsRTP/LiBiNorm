@@ -306,6 +306,9 @@ int LiBiNorm::main(int argc, char **argv)
 #else
 		printf(_s("  -s N, --mcmc=N        Length of each simulation (", MCMC_ITERATIONS, ")\n"));
 #endif
+#ifdef SELECT_READ_SEED
+		printf("  -e N, --seed=N       Output complete set of montecarlo data\n");
+#endif
 		printf("  -f, --full            Output complete set of montecarlo data\n");
 		printf("  -v N, --varparam=N   Print variation data parameter Nn");
 		return EXIT_SUCCESS;
@@ -335,11 +338,13 @@ int LiBiNorm::main(int argc, char **argv)
 			if ((Nsimu < 1) || (Nsimu > 10000))
 				exitFail("-s values must lie between 1 and 10000");
 		}
+#ifdef SELECT_READ_SEED
 		else if ((strcmp(argv[ni], "-e") == 0) || (opt2 = (strncmp(argv[ni], "--seed=", 7) == 0)))
 		{
 			int seed = atoi(opt2 ? argv[ni] + 7 : argv[++ni]);
 			intRand.reseed(seed);
 		}
+#endif
 		else if ((strcmp(argv[ni], "-f") == 0) || (opt2 = (strncmp(argv[ni], "--full", 6) == 0)))
 			outputFull = true;
 		else if (strcmp(argv[ni], "-x") == 0)

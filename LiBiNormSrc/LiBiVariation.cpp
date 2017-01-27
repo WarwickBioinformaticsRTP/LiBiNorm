@@ -16,6 +16,9 @@ int LiBiVariation::main(int argc, char **argv)
 		printf("/* ----------------------------- */\n");
 		printf("     LiBiNorm variation:  Test of effect of parameter variation\n\n");
 		printf("Options:\n");
+#ifdef SELECT_READ_SEED
+		printf("  -e N, --seed=N       Output complete set of montecarlo data\n");
+#endif
 		printf("  -h, --help            show this help message and exit\n");
 		helpCommon();
 		return EXIT_SUCCESS;
@@ -27,11 +30,13 @@ int LiBiVariation::main(int argc, char **argv)
 		if (commandParseCommon(ni, argc, argv))
 		{
 		}
+#ifdef SELECT_READ_SEED
 		else if ((strcmp(argv[ni], "-e") == 0) || (opt2 = (strncmp(argv[ni], "--seed=", 7) == 0)))
 		{
 			int seed = atoi(opt2 ? argv[ni] + 7 : argv[++ni]);
 			intRand.reseed(seed);
 		}
+#endif
 		else
 		{
 			exitFail("Invalid parameter: ", argv[ni]);
