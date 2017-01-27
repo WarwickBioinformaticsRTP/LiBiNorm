@@ -88,6 +88,5 @@ double FLL_ModelBD(const dataVec & param, const mcmcGeneData & data);
 
 // Common prior function
 double priorFunc(const dataVec & data, const paramSet & params);
-double priorFuncE(const dataVec & data, const paramSet & params);
 #endif
 

@@ -22,7 +22,10 @@
 #define EDGE_PENALTY_MULTIPLIER 1000
 
 //	Prior: Nelder Mead and MCMC slope for d parameter
-#define PARAMETER_WEIGHTING_SLOPE 0.01
+#define D_PRIOR_TARGET 0.6
+#define D_PRIOR_MULTIPLIER 4
+#define H_PRIOR_TARGET 50
+#define H_PRIOR_MULTIPLIER 8
 
 //	MCMC operation
 #define NUMBER_OF_MCMC_RUNS 20  // -r

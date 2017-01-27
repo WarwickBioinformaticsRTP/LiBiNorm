@@ -30,11 +30,11 @@ void setSSfun(optionsType & options,modelType m)
 		break;
 	case ModelE:
 		options.ssfun = &FLL_ModelE;
-		options.priorfun = &priorFuncE;
+		options.priorfun = &priorFunc;
 		break;
 	case ModelBD:
-		options.priorfun = &priorFunc;
 		options.ssfun = &FLL_ModelBD;
+		options.priorfun = &priorFunc;
 		break;
 	}
 }
@@ -211,13 +211,22 @@ double priorFunc(const dataVec & data, const paramSet & params)
 				_retVal += (diff * diff) * EDGE_PENALTY_MULTIPLIER;
 		}
 	}
-	return _retVal;
-};
-double priorFuncE(const dataVec & data, const paramSet & params)
-{
-	VEC_DATA_TYPE _retVal = priorFunc(data,params);
 
-	_retVal += (data[1] * PARAMETER_WEIGHTING_SLOPE);
+	//	Priors for d and h paremeters
+	static double d_target = log10(D_PRIOR_TARGET);
+	VEC_DATA_TYPE diff = abs(data[0] - d_target);
+	//	Quadratic until the difference is 1 and then linear with matching slope
+	if (diff < 1)
+		_retVal += (diff * diff * D_PRIOR_MULTIPLIER);
+	else
+		_retVal += (2 * diff - 1) * D_PRIOR_MULTIPLIER;
+
+	static double h_target = log10(H_PRIOR_TARGET);
+	diff = abs(data[1] - h_target);
+	if (diff < 1)
+		_retVal += (diff * diff * H_PRIOR_MULTIPLIER);
+	else
+		_retVal += (2 * diff - 1) * H_PRIOR_MULTIPLIER;
 
 	return _retVal;
 };
