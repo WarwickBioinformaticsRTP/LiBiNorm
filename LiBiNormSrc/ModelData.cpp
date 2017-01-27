@@ -119,25 +119,25 @@ paramSet GetModelParams(modelType model,dataVec * defaults, VEC_DATA_TYPE offset
 		break;
 	case ModelB: case ModelD: case ModelE:
 		params = { { "log10 d", -1, 2, 0 }    // average length of fragments
-			,{ "log10 h", 0, 3, 2 }   // the minimum length of fragmenation
+			,{ "log10 h", 0, 3, 2.5 }   // the minimum length of fragmenation
 			,{ "log10 t1", -5, -1, -3 }   // theta1
 			,{ "log10 t2", -5, -1, -3 } // theta2
 		};
 		break;
 	case ModelC:
 		params = { { "log10 d", -1, 2, 0 }    // average length of fragments
-			,{ "log10 h", 0, 3, 2 }   // the minimum length of fragmenation
+			,{ "log10 h", 0, 3, 2.5 }   // the minimum length of fragmenation
 			,{ "log10 t2", -5, -1, -3 } // theta2
 		};
 		break;
 	case ModelA:
 		params = { { "log10 d", -1, 2, 0 }    // average length of fragments
-			,{ "log10 h", 0, 3, 2 }   // the minimum length of fragmenation
+			,{ "log10 h", 0, 3, 2.5 }   // the minimum length of fragmenation
 		};
 		break;
 	case ModelBD:
 		params = { { "log10 d", -1, 2, 0 }    // average length of fragments
-			,{ "log10 h", 0, 3, 2 }   // the minimum length of fragmenation
+			,{ "log10 h", 0, 3, 2.5 }   // the minimum length of fragmenation
 			,{ "log10 t1", -5, -1, -3 }   // theta1
 			,{ "log10 t2", -5, -1, -3 } // theta2
 			,{ "a", 0, 1, 0.5 } // alpha strength of model B
