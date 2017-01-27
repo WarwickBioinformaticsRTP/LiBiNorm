@@ -13,12 +13,15 @@
 class intRandClass
 {
 public:
+	intRandClass() : dis(0, 65535)
+	{
 #ifdef SELECT_READS_SEED
-	intRandClass() : seed (SELECT_READS_SEED),gen(seed), dis(0, 65535) {};
+		seed = SELECT_READS_SEED;
 #else
-	intRandClass() : seed (rd()),gen(seed), dis(0, 65535) {};
-
+		seed = rd();
 #endif
+		gen.seed(seed);
+	};
 
 	int value(int max) { return dis(gen) % max; };
 	void reseed(int value) { seed = value;  gen.seed(seed); };
