@@ -14,15 +14,18 @@ class intRandClass
 {
 public:
 #ifdef SELECT_READS_SEED
-	intRandClass() : gen(SELECT_READS_SEED), dis(0, 65535) {};
+	intRandClass() : seed (SELECT_READS_SEED),gen(seed), dis(0, 65535) {};
 #else
-	intRandClass() : gen(rd()), dis(0, 65535) {};
+	intRandClass() : seed (rd()),gen(seed), dis(0, 65535) {};
+
 #endif
 
 	int value(int max) { return dis(gen) % max; };
-	void reseed(int value) { gen.seed(value); };
+	void reseed(int value) { seed = value;  gen.seed(seed); };
+	int theSeed() { return seed; };
 
 private:
+	int seed;
 	std::random_device rd;
 	std::mt19937 gen;
 	std::uniform_int_distribution<> dis;

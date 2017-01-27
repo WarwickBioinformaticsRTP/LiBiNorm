@@ -684,10 +684,12 @@ void LiBiNorm::printResults()
 	}
 	mcmcResult.printEnd();
 
-	const char * host = getenv("HOSTNAME");
+/*	const char * host = getenv("HOSTNAME");
 	if (host == NULL) host = "";
 
-	mcmcResult.printStart(host);
+	mcmcResult.printStart(host);*/
+
+	mcmcResult.printStart(intRand.theSeed());
 	for (modelType m : allModels())
 		mcmcResult.printMiddle(headers[m], "chain", "");
 	mcmcResult.printEnd();

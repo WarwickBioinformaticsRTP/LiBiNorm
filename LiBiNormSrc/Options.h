@@ -49,7 +49,7 @@
 //   #define MAX_LENGTH_OF_GENE_FOR_PARAM_ESTIMATION 20000
 
 //	Adds a menu option that allows the seed to be specified
-// #define SELECT_READ_SEED
+#define SELECT_READ_SEED
 
 //	Use this mode to run a model with specific parameters which are loaded in using the -i
 //	command.  This affects how the values are setin ModelParameters.cpp

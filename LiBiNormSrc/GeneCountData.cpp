@@ -402,7 +402,7 @@ void GeneCountData::transferTo(mcmcGeneData & mcmcData, size_t maxLength, int ma
 #endif
 		{
 			size_t count = maxLength;
-			VEC_DATA_TYPE len = lengths[0][i];
+//			VEC_DATA_TYPE len = lengths[0][i];
 //			if (len < 2000)
 //				count = 1000000;
 //				count += (1000 - max(len,500.0));

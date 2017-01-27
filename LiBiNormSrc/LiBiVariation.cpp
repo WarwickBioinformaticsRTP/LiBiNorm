@@ -26,7 +26,9 @@ int LiBiVariation::main(int argc, char **argv)
 	int ni = 1;
 	while (ni < argc)
 	{
+#ifdef SELECT_READ_SEED
 		bool opt2 = false;
+#endif
 		if (commandParseCommon(ni, argc, argv))
 		{
 		}
