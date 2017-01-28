@@ -25,7 +25,7 @@
 #define D_PRIOR_TARGET 0.6
 #define D_PRIOR_MULTIPLIER 4
 #define H_PRIOR_TARGET 100
-#define H_PRIOR_MULTIPLIER 8
+#define H_PRIOR_MULTIPLIER 100
 
 //	MCMC operation
 #define NUMBER_OF_MCMC_RUNS 20  // -r
