@@ -24,7 +24,7 @@
 //	Prior: Nelder Mead and MCMC slope for d parameter
 #define D_PRIOR_TARGET 0.6
 #define D_PRIOR_MULTIPLIER 4
-#define H_PRIOR_TARGET 50
+#define H_PRIOR_TARGET 100
 #define H_PRIOR_MULTIPLIER 8
 
 //	MCMC operation
@@ -53,7 +53,7 @@
 
 //	Use this mode to run a model with specific parameters which are loaded in using the -i
 //	command.  This affects how the values are setin ModelParameters.cpp
-// #define INITIAL_VALUES
+#define INITIAL_VALUES
 
 //	For consistent selection of reads and reproducing the MATLAB algorithms
 // #define REPRODUCE_MATLAB	
