@@ -13,7 +13,7 @@
 class intRandClass
 {
 public:
-	intRandClass() : dis(0, 65535)
+	intRandClass() 
 	{
 #ifdef SELECT_READS_SEED
 		seed = SELECT_READS_SEED;
@@ -23,12 +23,15 @@ public:
 		gen.seed(seed);
 	};
 
-	int value(int max) { return dis(gen) % max; };
-	void reseed(int value) { seed = value;  gen.seed(seed); };
-	int theSeed() { return seed; };
+	int value(int max) { return gen() % max; };
+	void reseed(unsigned value) {
+		seed = value;  
+		gen.seed(seed);
+	};
+	unsigned theSeed() { return seed; };
 
 private:
-	int seed;
+	unsigned int seed;
 	std::random_device rd;
 	std::mt19937 gen;
 	std::uniform_int_distribution<> dis;

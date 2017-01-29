@@ -37,6 +37,7 @@ int LiBiVariation::main(int argc, char **argv)
 		{
 			int seed = atoi(opt2 ? argv[ni] + 7 : argv[++ni]);
 			intRand.reseed(seed);
+			// cout << seed << endl;
 		}
 #endif
 		else
@@ -94,7 +95,7 @@ int LiBiVariation::main(int argc, char **argv)
 
 	for (size_t p = 0; p < 2; p++)
 	{
-		for (double i = 0; i < 3; i += 0.2)
+		for (double i = 0; i < 3; i += 0.1)
 		{
 			mcmcResult.printStart("");
 			for (modelType m : allModels())

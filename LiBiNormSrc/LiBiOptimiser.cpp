@@ -2,6 +2,8 @@
 #include "Options.h"
 #include "LiBiOptimiser.h"
 
+using namespace std;
+
 ErrorPair LiBiOptimiser::ErrorFunc()
 {
 	ErrorPair ep;
@@ -12,6 +14,9 @@ ErrorPair LiBiOptimiser::ErrorFunc()
 	ep = opts->ssfun(data, geneData);
 	ep.WithPrior += opts->priorfun(data, params);
 
+/*	cout << ep.WithPrior << endl;
+	string s;
+	cin >> s;*/
 	return ep;
 };
 
