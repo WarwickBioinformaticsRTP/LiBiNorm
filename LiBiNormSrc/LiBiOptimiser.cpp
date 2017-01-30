@@ -36,6 +36,19 @@ dataVec LiBiOptimiser::getParams(modelType m, optionsType & options, dataVec & i
 	}
 
 	allOptiData.push_back(&optiData);
+	if (params.size() > 2)
+	{
+		for (size_t i = 0; i < 2; i++)
+			allOptiData[0][0][i].optimise = false;
+
+		optimise(allOptiData, 100, 20, options.jumpSize, conv(m));
+		optimise(allOptiData, 100, 20, options.jumpSize, conv(m));
+
+		for (size_t i = 0; i < 2; i++)
+			allOptiData[0][0][i].optimise = true;
+
+		optimise(allOptiData, 100, 20, options.jumpSize, conv(m));
+	}
 
 	VEC_DATA_TYPE LL = optimise(allOptiData, NELDER_MEAD_ITERATIONS,20, options.jumpSize,conv(m));
 

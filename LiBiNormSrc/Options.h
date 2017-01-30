@@ -23,12 +23,13 @@
 
 //	Prior: Nelder Mead and MCMC slope for d parameter
 #define D_PRIOR_TARGET 0.6
-#define D_PRIOR_MULTIPLIER 4
+#define D_PRIOR_MULTIPLIER 0
 #define H_PRIOR_TARGET 100
-#define H_PRIOR_MULTIPLIER 100
+#define H_PRIOR_MULTIPLIER 0
+#define E_H_PRIOR_MULTIPLIER 2;
 
 //	MCMC operation
-#define NUMBER_OF_MCMC_RUNS 20  // -r
+#define NUMBER_OF_MCMC_RUNS 10  // -r
 #define MCMC_ITERATIONS 2000  // -s
 #define NELDER_MCMC_ITERATIONS 200  // -s
 #define MCMC_JUMP_SIZE 0.01

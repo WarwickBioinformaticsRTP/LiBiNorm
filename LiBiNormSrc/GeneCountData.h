@@ -23,12 +23,12 @@ public:
 		gen.seed(seed);
 	};
 
-	int value(int max) { return gen() % max; };
-	void reseed(unsigned value) {
+	unsigned int value(unsigned int max) { return gen() % max; };
+	void reseed(unsigned int value) {
 		seed = value;  
 		gen.seed(seed);
 	};
-	unsigned theSeed() { return seed; };
+	unsigned int theSeed() { return seed; };
 
 private:
 	unsigned int seed;
