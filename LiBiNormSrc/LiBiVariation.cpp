@@ -48,14 +48,7 @@ int LiBiVariation::main(int argc, char **argv)
 	}
 
 	//	Load up the initial values
-	parseTsvFile paramFile;
-	if (!paramFile.open(parameterFilename))
-		exitFail("Unable to read parameters from ", parameterFilename);
-	paramFile.read(initialValues);
-
-	//	Get rid of spurious values (possibly as a result of trailing tabs in the text file)
-	for (modelType m : allModels())
-		initialValues[m].resize(headers[m].size());
+	SetInitialParamsFromFile(parameterFilename);
 
 	//	Load up the landscape file
 	if (!landscapeFilename)

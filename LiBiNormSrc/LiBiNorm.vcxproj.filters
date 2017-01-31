@@ -48,6 +48,9 @@
     <ClCompile Include="LiBiVariation.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="LiBiNormCore.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="LiBiNorm.h">
@@ -84,6 +87,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="LiBiVariation.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LiBiNormCore.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

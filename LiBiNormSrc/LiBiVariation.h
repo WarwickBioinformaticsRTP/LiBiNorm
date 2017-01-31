@@ -1,7 +1,7 @@
 #ifndef LIBIVARIATION_H
 #define LIBIVARIATION_H
 
-#include "LiBiNorm.h"
+#include "LiBiNormCore.h"
 
 class LiBiVariation : protected LiBiNormCore
 {
