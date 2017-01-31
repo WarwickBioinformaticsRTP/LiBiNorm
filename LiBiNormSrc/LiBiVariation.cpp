@@ -53,6 +53,10 @@ int LiBiVariation::main(int argc, char **argv)
 		exitFail("Unable to read parameters from ", parameterFilename);
 	paramFile.read(initialValues);
 
+	//	Get rid of spurious values (possibly as a result of trailing tabs in the text file)
+	for (modelType m : allModels())
+		initialValues[m].resize(headers[m].size());
+
 	//	Load up the landscape file
 	if (!landscapeFilename)
 		exitFail("Landscape file must be specified");

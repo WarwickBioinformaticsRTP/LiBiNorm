@@ -239,7 +239,14 @@ double priorFunc(const dataVec & data, const paramSet & params)
 double priorFuncE(const dataVec & data, const paramSet & params)
 {
 	VEC_DATA_TYPE _retVal = priorFunc(data, params);
-	_retVal += data[1] * E_H_PRIOR_MULTIPLIER;
+	static double h_target = log10(E_H_PRIOR_TARGET);
+	VEC_DATA_TYPE diff = abs(data[1] - h_target);
+	if (diff < 1)
+		_retVal += (diff * diff * E_H_PRIOR_MULTIPLIER);
+	else
+		_retVal += (2 * diff - 1) * E_H_PRIOR_MULTIPLIER;
+
+//	_retVal += data[1] * E_H_PRIOR_MULTIPLIER;
 	return _retVal;
 
 }

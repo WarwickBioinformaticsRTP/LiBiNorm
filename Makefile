@@ -43,7 +43,7 @@ LIBINORMEXE = $(BUILD)/$(LIBINORM)$(EXE)
 TARGS =  $(LIBINORMEXE) 
 
 ################################################################################
-# Libraries to be linked.   Assumes that there is a RElease and Debug version of Bamtools
+# Libraries to be linked. 
 
 LIBS        = -lz -pthread
 LIBPATH     = 
@@ -137,8 +137,8 @@ clean :
 #	do make depend to update dependancies.  This makes a dependancy list that is dynamically dependant 
 #	on the build type.  There are three make depends, one for all of the sources within this directory (SOURCES)
 #	and one for the sources that are in other library directories (BIOLIBSRC & BAMTOOLSSRC)
-#	The dummy hat is prefixed is part of the proxess of dealing with the fact that the object files
-#	are not in the same directory as the source files.  The dependancies work without removing the  
+#	The dummy that contains XXZZ is prefixed is part of the proxess of dealing with the fact that the object files
+#	are not in the same directory as the source files.  The dependancies work without removing it  
 #   but it looks neater if they are removed.
 
 depend :

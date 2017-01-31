@@ -85,7 +85,7 @@ int main(int argc, char **argv)
 #endif
 		if ((command == "--version") || (command == "-v"))
 		{
-			cout << "LiBiNorm version 1.2.2" << endl;
+			cout << "LiBiNorm version " << LIBINORM_VERSION << endl;
 			return EXIT_SUCCESS;
 		}
 		exitFail("Invalid commmand:",command);

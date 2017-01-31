@@ -1,6 +1,8 @@
 #ifndef OPTIONS_H
 #define OPTIONS_H
 
+
+#define LIBINORM_VERSION "1.3.0"
 //	Bam/gff file reading
 #define DEFAULT_FEATURE_TYPE_EXON "exon" 
 #define DEFAULT_GTF_ID_ATTRIBUTE "gene_id"
@@ -26,7 +28,8 @@
 #define D_PRIOR_MULTIPLIER 0
 #define H_PRIOR_TARGET 100
 #define H_PRIOR_MULTIPLIER 0
-#define E_H_PRIOR_MULTIPLIER 2;
+#define E_H_PRIOR_TARGET 20
+#define E_H_PRIOR_MULTIPLIER 2
 
 //	MCMC operation
 #define NUMBER_OF_MCMC_RUNS 10  // -r
