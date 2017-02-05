@@ -51,6 +51,9 @@
     <ClCompile Include="LiBiNormCore.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="LiBiTools.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="LiBiNorm.h">
@@ -90,6 +93,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="LiBiNormCore.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LiBiTools.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

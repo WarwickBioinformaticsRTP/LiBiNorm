@@ -59,7 +59,7 @@ LIBINORMSRC = LiBiNormSrc/LiBiNorm.cpp
 LIBINORMSRCEX = $(addprefix $(LIBINORMSRCDIR), \
 	LiBiNormCore.cpp LiBiDedup.cpp LiBiCount.cpp ModelData.cpp \
 	Regions.cpp MakeFastq.cpp LiBiConv.cpp GeneCountData.cpp \
-	FeatureFileEx.cpp LiBiOptimiser.cpp LiBiVariation.cpp) 
+	FeatureFileEx.cpp LiBiOptimiser.cpp LiBiVariation.cpp LiBiTools.cpp ) 
 
 MCMCLIBSRC =  $(shell find $(MCMCLIBDIR) -name *.cpp)
 
@@ -185,6 +185,7 @@ $(BUILD)/LiBiNormSrc/LiBiNorm.o: ../bioinformaticsLib/featureFile.h
 $(BUILD)/LiBiNormSrc/LiBiNorm.o: ../bioinformaticsLib/genbankFile.h
 $(BUILD)/LiBiNormSrc/LiBiNorm.o: LiBiNormSrc/LiBiDedup.h
 $(BUILD)/LiBiNormSrc/LiBiNorm.o: LiBiNormSrc/LiBiConv.h
+$(BUILD)/LiBiNormSrc/LiBiNorm.o: LiBiNormSrc/LiBiTools.h
 $(BUILD)/LiBiNormSrc/LiBiNorm.o: LiBiNormSrc/LiBiVariation.h
 $(BUILD)/LiBiNormSrc/LiBiNorm.o: LiBiNormSrc/MakeFastq.h
 $(BUILD)/mcmcLib/mcmc.o: ../bioinformaticsLib/rand.h
@@ -411,6 +412,18 @@ $(BUILD)/LiBiNormSrc/LiBiVariation.o: ../bioinformaticsLib/nelderMeadOptimiser.h
 $(BUILD)/LiBiNormSrc/LiBiVariation.o: ../bioinformaticsLib/dataVec.h
 $(BUILD)/LiBiNormSrc/LiBiVariation.o: ../bioinformaticsLib/printEx.h
 $(BUILD)/LiBiNormSrc/LiBiVariation.o: LiBiNormSrc/ModelData.h
+$(BUILD)/LiBiNormSrc/LiBiTools.o: LiBiNormSrc/LiBiTools.h
+$(BUILD)/LiBiNormSrc/LiBiTools.o: ../bioinformaticsLib/libCommon.h
+$(BUILD)/LiBiNormSrc/LiBiTools.o: ../bioinformaticsLib/stringEx.h
+$(BUILD)/LiBiNormSrc/LiBiTools.o: ../bioinformaticsLib/inQuotes.h
+$(BUILD)/LiBiNormSrc/LiBiTools.o: ../bioinformaticsLib/fastaFile.h
+$(BUILD)/LiBiNormSrc/LiBiTools.o: LiBiNormSrc/GeneCountData.h
+$(BUILD)/LiBiNormSrc/LiBiTools.o: LiBiNormSrc/Options.h
+$(BUILD)/LiBiNormSrc/LiBiTools.o: ../bioinformaticsLib/parser.h
+$(BUILD)/LiBiNormSrc/LiBiTools.o: mcmcLib/mcmc.h mcmcLib/params.h
+$(BUILD)/LiBiNormSrc/LiBiTools.o: ../bioinformaticsLib/nelderMeadOptimiser.h
+$(BUILD)/LiBiNormSrc/LiBiTools.o: ../bioinformaticsLib/dataVec.h
+$(BUILD)/LiBiNormSrc/LiBiTools.o: ../bioinformaticsLib/printEx.h
 
 $(BUILD)/bioinformaticsLib/codFile.o: ../bioinformaticsLib/codFile.h
 $(BUILD)/bioinformaticsLib/codFile.o: ../bioinformaticsLib/genomicPosition.h

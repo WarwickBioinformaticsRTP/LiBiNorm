@@ -10,6 +10,7 @@
 #include "LiBiCount.h"
 #include "LiBiDedup.h"
 #include "LiBiConv.h"
+#include "LiBiTools.h"
 #include "LiBiVariation.h"
 #include "MakeFastq.h"
 
@@ -56,21 +57,23 @@ int main(int argc, char **argv)
 			LiBiConv conv;
 			return conv.main(argc - 1, argv + 1);
 		}
-		if (command == "land")
-		{
-			LiBiConv conv;
-			return conv.main2(argc - 1, argv + 1);
-		}
-		if (command == "genes")
-		{
-			LiBiConv conv;
-			return conv.main3(argc - 1, argv + 1);
-		}
 		if (command == "variation")
 		{
 			LiBiVariation variation;
 			return variation.main(argc - 1, argv + 1);
 		}
+#ifdef LIBITOOLS
+		if (command == "land")
+		{
+			LiBiTools tools;
+			return tools.landMain(argc - 1, argv + 1);
+		}
+		if (command == "genes")
+		{
+			LiBiTools tools;
+			return tools.geneMain(argc - 1, argv + 1);
+		}
+#endif
 #ifdef DEDUP_MODE
 		if (command == "dedup")
 		{

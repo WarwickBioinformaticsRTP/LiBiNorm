@@ -46,6 +46,9 @@
 //	Use this to add the mode which creates fastq files based on bam files with artificial problems
 // #define MAKE_FASTQ_MODE
 
+//	Use this to enable various addditional tools for eexploring LiBiNorm data
+#define LIBITOOLS
+
 //	Use this to add the mode where duplicates in bam files can be removed
 // #define DEDUP_MODE
 

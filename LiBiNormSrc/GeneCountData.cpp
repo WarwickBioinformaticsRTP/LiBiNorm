@@ -233,11 +233,18 @@ bool GeneCountData::outputLandscape(const string & filename)
 
 	for (size_t i = 1;i < names.size();i++)
 	{
-		long len = lengths[0][i];
 		long count = counts[i];
-		string & name = names[i];
-		output.print(name, _s(len,":",count," plus"), readPositionData[name].positions[0]);
-		output.print(name, _s(len,":", count," minus"), readPositionData[name].positions[1]);
+		if (count > 0)
+		{
+			long len = lengths[0][i];
+			string & name = names[i];
+			string c;
+#ifdef COUNT_IN_LANDSCAPE
+			c = _s(":", count);
+#endif
+			output.print(name, _s(len, c, " plus"), readPositionData[name].positions[0]);
+			output.print(name, _s(len, c, " minus"), readPositionData[name].positions[1]);
+		}
 	}
 
 	return true;
