@@ -56,6 +56,16 @@ int main(int argc, char **argv)
 			LiBiConv conv;
 			return conv.main(argc - 1, argv + 1);
 		}
+		if (command == "land")
+		{
+			LiBiConv conv;
+			return conv.main2(argc - 1, argv + 1);
+		}
+		if (command == "genes")
+		{
+			LiBiConv conv;
+			return conv.main3(argc - 1, argv + 1);
+		}
 		if (command == "variation")
 		{
 			LiBiVariation variation;
@@ -197,20 +207,19 @@ int LiBiNorm::main(int argc, char **argv)
 		printf("/* ----------------------------- */\n");
 		printf("     LiBiNorm:    RNA-seq library bias normalisation   \n\n");
 		printf("Options:\n");
-		printf("  -h, --help            show this help message and exit\n");
+		printf("  -h, --help            Show this help message and exit\n");
 		helpCommon();
-		printf("  -g N, --genes=N       Number of genes to be included in calculations\n");
-		printf("  -r N, --runs=N        Number of mcmc runs (", NUMBER_OF_MCMC_RUNS,")\n");
+		printf("  -g N, --genes=N       Limit parameter discovery to using data from first N genes\n");
+		printf("  -r N, --runs=N        Number of MCMC runs (", NUMBER_OF_MCMC_RUNS,")\n");
 #ifdef USE_NELDER_MEAD_FOR_INITIAL_VALUES
-		printf("  -s N, --mcmc=N        Length of each simulation (", NELDER_MCMC_ITERATIONS,")\n");
+		printf("  -s N, --mcmc=N        Length of each MCMC run (", NELDER_MCMC_ITERATIONS,")\n");
 #else
-		printf("  -s N, --mcmc=N        Length of each simulation (", MCMC_ITERATIONS, ")\n");
+		printf("  -s N, --mcmc=N        Length of each MCMC run (", MCMC_ITERATIONS, ")\n");
 #endif
 #ifdef SELECT_READ_SEED
-		printf("  -e N, --seed=N       Output complete set of montecarlo data\n");
+		printf("  -e N, --seed=N        Set seed used for selecting subset of reads\n");
 #endif
-		printf("  -f, --full            Output complete set of montecarlo data\n");
-		printf("  -v N, --varparam=N   Print variation data parameter Nn");
+		printf("  -f, --full            Output complete set of MCMC run data\n");
 		return EXIT_SUCCESS;
 	}
 	int ni = 1;

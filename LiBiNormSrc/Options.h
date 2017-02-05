@@ -49,6 +49,9 @@
 //	Use this to add the mode where duplicates in bam files can be removed
 // #define DEDUP_MODE
 
+//  Output detailed results of interpreting the Feature file
+#define OUTPUT_FEATURE_DATA
+
 //	Allows a maximum gene length to be specified
 //   #define MAX_LENGTH_OF_GENE_FOR_PARAM_ESTIMATION 20000
 

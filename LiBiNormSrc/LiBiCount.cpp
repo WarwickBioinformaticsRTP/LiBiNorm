@@ -44,9 +44,6 @@ bool dbgFound = false;
 
 //	Test code: Compare lengths calculated from the gff file with the lengths in the original landscape file
 //#define COMPARE_RESULTS "Y:\\LiBiNorm\\SRR557798\\SRR557798.NoA.plus.minus"
-
-//  Output detailed results of interpreting the Feature file
-//#define OUTPUT_FEATURE_DATA
 #endif
 
 using namespace std;
@@ -55,10 +52,8 @@ using namespace std;
 int LiBiCount::main(int argc, char **argv)
 {
 
-	stringEx bamFileName,featureFileName,outputFilename,geneListFilename,
-		id_attribute = "gene_id";
-
-	stringEx feature_type;
+	stringEx bamFileName,featureFileName,outputFilename,geneListFilename;
+	stringEx id_attribute,feature_type;
 
 	reverseStrand = false;
 	useStrand = true;

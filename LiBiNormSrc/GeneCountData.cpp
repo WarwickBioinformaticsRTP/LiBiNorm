@@ -128,7 +128,7 @@ void GeneCountData::useSelectedGenes(const std::string & filename)
 	while (!file.eof())
 	{
 		std::getline(file, line);
-		parser(line, " \n\r", line, gene);
+		parser(line, " \n\r",gene);
 		addEntry(gene);
 	};
 }
