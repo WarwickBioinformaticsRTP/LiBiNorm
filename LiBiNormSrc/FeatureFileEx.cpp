@@ -47,24 +47,20 @@ void featureFileEx::index(GeneCountData & geneCounts)
 	{
 		for (auto & chrom : entryMap)
 		{
+			//	First get rid of entries associated with genes that we are not interested in 
+			for (auto i = chrom.second.begin(); i != chrom.second.end();)
 			{
-				//	First get rid of entries associated with genes that we are not interested in 
-				for (auto i = chrom.second.begin(); i != chrom.second.end();)
+				if (geneCounts.readPositionData.find(i->second.tags[0].val) == geneCounts.readPositionData.end())
 				{
-					if (geneCounts.readPositionData.find(i->second.tags[0].val) == geneCounts.readPositionData.end())
-					{
-						//			if (!geneList.contains(i->second.tags[0].val))
-						auto j = i++;
-						chrom.second.erase(j);
-					}
-					else
-						i++;
+					//			if (!geneList.contains(i->second.tags[0].val))
+					auto j = i++;
+					chrom.second.erase(j);
 				}
+				else
+					i++;
 			}
 		}
 	}
-
-
 
 	for (auto & chrom : entryMap)
 	{
@@ -91,7 +87,7 @@ void featureFileEx::index(GeneCountData & geneCounts)
 							type.add(k->second.type);
 							chrom.second.erase(k);
 						}
-						//	If teh second region is the same length or shorter then just add the type associated with the new region
+						//	If the second region is the same length or shorter then just add the type associated with the new region
 						else if (k->second.finish <= finish)
 						{
 							type.add(k->second.type);
@@ -101,49 +97,48 @@ void featureFileEx::index(GeneCountData & geneCounts)
 				}
 			}
 			thisChromData.emplace(i->first,featureRegion(i->second.start,finish,i->second.tags[0].val,i->second.strand,i->second.type));
-
 		}
-		
-		//	
 
 		//	And now for each region find the regions that it overlaps and produce overlap list:  The list of all regions that start before this region has ended.
 		//	Then select the first of the regions, which will be used as the starting point for checking for region overlaps
 		chromosomeEndIndexMap & thisChromEndMap = genomeEndIndex[chrom.first];
-
 		
-		
-		//	We are using a temporary map of the address of the gtfEntries used to store the data.  This only works because the entries will not be moved
-		//	during this process
-		map<void *,map<size_t,chromosomeFeatureData::iterator> > tempMap;
+		//	We are using a temporary map of the address of the features in this chromosome.
+		//	We can use address only because the entries will not be moved during this process
+		//	For each of the features we create a map of iterators pointing to other overlapping features, 
+		//	the mmap being indexed by the position of the start of the region
+		map<void *,map<size_t,chromosomeFeatureData::iterator> > overlapMap;
 
 		for (chromosomeFeatureData::iterator i = thisChromData.begin(); i != thisChromData.end();i++)
 		{
-
 			//	Take the opportunity to produce a map of all the genes for holding counts
 			geneCounts.addEntry(i->second.name);
 
 			//	And a parallel map of the ends of all of the featureRegions/
 			thisChromEndMap.emplace(i->second.finish,i);
-
 		
 			for (chromosomeFeatureData::iterator j = next(i,1);(j != thisChromData.end()) && (j->first < i->second.finish);j++)
-				tempMap[&j->second].emplace(i->first,i);
+				overlapMap[&j->second].emplace(i->first,i);
 		}
 		for (chromosomeFeatureData::iterator i = thisChromData.begin(); i != thisChromData.end();i++)
 		{
-			VEC_DATA_TYPE & length = geneCounts.lengths[0].at(geneCounts.readPositionData.at(i->second.name).index);
-			auto j = tempMap.find(&i->second);
+			size_t index = geneCounts.readPositionData.at(i->second.name).index;
 
-			if (j == tempMap.end())
+			VEC_DATA_TYPE & length = geneCounts.lengths[0].at(index);
+			auto j = overlapMap.find(&i->second);
+
+			if (j == overlapMap.end())
 			{
+				//	The overlaps pointer points to self, indicating that there is no overlap
 				*i->second.overlaps = i;
 				//	Add featureRegion to the list of regions associated with the gene
-				genes[i->second.name].addRegion(&i->second, false,length);
+				genes[i->second.name].addRegion(&i->second, false,length,chrom.first);
 			}
 			else
 			{
 				*i->second.overlaps = j->second.begin()->second;
-				genes[i->second.name].addRegion(&i->second, true,length);
+				genes[i->second.name].addRegion(&i->second, true,length,chrom.first);
+				geneCounts.overlapsAnotherGene[index] = true;
 			}
 		}
 
@@ -153,7 +148,6 @@ void featureFileEx::index(GeneCountData & geneCounts)
 	geneCounts.addErrorEntry(lowQualString);
 	geneCounts.addErrorEntry(notAlignedString);
 	geneCounts.addErrorEntry(notUnique);
-
 }
 
 void featureFileEx::outputChromData(const string & filename)

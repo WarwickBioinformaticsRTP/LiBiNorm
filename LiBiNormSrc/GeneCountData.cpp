@@ -234,7 +234,7 @@ bool GeneCountData::outputLandscape(const string & filename)
 	for (size_t i = 1;i < names.size();i++)
 	{
 		long count = counts[i];
-		if (count > 0)
+		if ((count > 0) && (!overlapsAnotherGene[i]))
 		{
 			long len = lengths[0][i];
 			string & name = names[i];
@@ -298,6 +298,7 @@ void GeneCountData::addEntry(string name, VEC_DATA_TYPE length)
 		counts.push_back(0);
 		names.push_back(name);
 		lengths[0].push_back(length);
+		overlapsAnotherGene.push_back(false);
 		readPositionData.emplace(name, counts.size() - 1);
 	}
 }
@@ -404,9 +405,11 @@ void GeneCountData::transferTo(mcmcGeneData & mcmcData, size_t maxLength, int ma
 	//	in the reference gene so this makes no difference
 	for (size_t i = 1; i < names.size(); i++)
 	{
+		if (( !overlapsAnotherGene[i])
 #ifdef MAX_LENGTH_OF_GENE_FOR_PARAM_ESTIMATION
-		if (lengths[0][i] < MAX_LENGTH_OF_GENE_FOR_PARAM_ESTIMATION)
+		 && (lengths[0][i] < MAX_LENGTH_OF_GENE_FOR_PARAM_ESTIMATION)
 #endif
+			)
 		{
 			size_t count = maxLength;
 //			VEC_DATA_TYPE len = lengths[0][i];

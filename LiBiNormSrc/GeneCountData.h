@@ -135,6 +135,7 @@ public:
 	dataVec errCounts;
 
 	std::vector<double> freq;
+	std::vector<bool> overlapsAnotherGene;
 	std::vector<int> histoGram_ind;
 };
 

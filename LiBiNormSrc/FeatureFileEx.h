@@ -63,16 +63,19 @@ typedef std::vector<featureRegion *> featureRegionList;
 class geneData
 {
 public:
-	geneData() : overlaps(false), strand(' ') {};
+	geneData() : overlapsAnotherGene(false), strand(' ') {};
 
-	void addRegion(featureRegion * newRegion,bool ol, VEC_DATA_TYPE & length)
+	void addRegion(featureRegion * newRegion,bool ol, VEC_DATA_TYPE & length,const std::string & chr)
 	{
 		if (ol)
-			overlaps = true;
+			overlapsAnotherGene = true;
 
 		newRegion->RNAstart = length + 1;
 		if (regions.size() == 0)
+		{
 			strand = newRegion->strand;
+			chromosome = chr;
+		}
 
 		regions.push_back(newRegion);
 		length += (newRegion->finish - newRegion->start + 1);
@@ -80,7 +83,8 @@ public:
 	};
 
 	featureRegionList regions;
-	bool overlaps;
+	std::string chromosome;
+	bool overlapsAnotherGene;
 	char strand;
 };
 

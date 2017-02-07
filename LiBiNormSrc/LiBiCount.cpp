@@ -270,7 +270,7 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 		exitFail("Could not open feature file: ",featureFileName);
 
 #ifdef	OUTPUT_FEATURE_DATA
-		if ((countsFilename) && !genomeDef.printEntries(countsFilename.replaceSuffix("_genome.txt")))
+	if ((countsFilename) && !genomeDef.printEntries(countsFilename.replaceSuffix("_genome.txt")))
 		progMessage("Unable to output genome data to :",countsFilename.replaceSuffix("_genome.txt"));
 #endif
 
