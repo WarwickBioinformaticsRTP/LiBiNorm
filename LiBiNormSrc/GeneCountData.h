@@ -9,6 +9,12 @@
 #include "mcmc.h"
 
 
+struct geneListFilenameData
+{
+	geneListFilenameData() :start(0), finish(10000000) {};
+	std::string geneListFilename;
+	int start, finish;
+};
 
 class intRandClass
 {
@@ -116,7 +122,7 @@ public:
 	bool outputGeneCounts(const std::string & filename, int detailLevel = 0, stringEx model = "");
 	bool outputLandscape(const std::string & filename);
 
-	void useSelectedGenes(const std::string & filename);
+	void useSelectedGenes(const geneListFilenameData & filename);
 
 	//	Names, bias, lengths and RPM data are held in a series of vectors sharing a common gene order
 	std::vector<std::string> names;

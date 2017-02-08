@@ -6,6 +6,7 @@ class LiBiTools
 {
 public:
 	int landMain(int argc, char **argv);
+	int landMain2(int argc, char **argv);
 	int geneMain(int argc, char **argv);
 };
 

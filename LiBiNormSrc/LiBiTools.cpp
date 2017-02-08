@@ -1,4 +1,5 @@
 
+#include <fstream>
 #include "api/BamReader.h"
 
 #include "LiBiTools.h"
@@ -9,6 +10,7 @@
 #include "FeatureFileEx.h"
 #include "GeneCountData.h"
 
+using namespace std;
 using namespace BamTools;
 
 #define LOOKAHEAD 1000
@@ -150,6 +152,95 @@ int LiBiTools::landMain(int argc, char **argv)
 	return EXIT_SUCCESS;
 
 }
+
+int LiBiTools::landMain2(int argc, char **argv)
+{
+	stringEx landFilename, geneFilename;
+
+	if (argc < 1)
+	{
+		printf("Error: parameter wrong!\n");
+		return EXIT_FAILURE;
+	}
+	else if ((argc == 1) || ((argc == 2) && ((strcmp(argv[1], "-h") == 0) || (strcmp(argv[1], "--help") == 0))))
+	{
+		printf("Usage: LiBiNorm land2 landscapefile geneFile\n");
+		printf("This program extracts data from a landscape file\n");
+		return EXIT_SUCCESS;
+	}
+	if (argc < 3)
+		exitFail("Insufficient arguments");
+
+	landFilename = argv[argc - 2];
+	geneFilename = argv[argc - 1];
+
+	featureFileEx genomeDef;
+	stringEx id_attribute = DEFAULT_GFF_ID_ATTRIBUTE,
+		feature_type = DEFAULT_FEATURE_TYPE_EXON;
+
+
+	GeneCountData geneCounts;
+	geneCounts.loadData(landFilename);
+
+
+	ifstream file;
+	file.open(geneFilename);
+
+	if (!file.is_open())
+	{
+		progMessage("Unable to read gene list from ", geneFilename);
+		return EXIT_FAILURE;
+	}
+
+	setEx<string> genes;
+
+	string line, gene;
+	while (!file.eof())
+	{
+		std::getline(file, line);
+		parser(line, " \n\r", gene);
+		genes.emplace(gene);
+	};
+
+	TsvFile output;
+	output.open(landFilename.replaceSuffix(".subset.txt"));
+	TsvFile output2;
+	output2.open(landFilename.replaceSuffix(".unused.txt"));
+	TsvFile genelist;
+	genelist.open(landFilename.replaceSuffix(".extraGenes.txt"));
+
+	for (size_t i = 1; i < geneCounts.names.size(); i++)
+	{
+		long count = geneCounts.counts[i];
+		string & name = geneCounts.names[i];
+		if (genes.contains(name))
+		{
+			long len = geneCounts.lengths[0][i];
+			string c;
+#ifdef COUNT_IN_LANDSCAPE
+			c = _s(":", count);
+#endif
+			output.print(name, _s(len, c, " plus"), geneCounts.readPositionData[name].positions[0]);
+			output.print(name, _s(len, c, " minus"), geneCounts.readPositionData[name].positions[1]);
+		}
+		else
+		{
+			long len = geneCounts.lengths[0][i];
+			string c;
+#ifdef COUNT_IN_LANDSCAPE
+			c = _s(":", count);
+#endif
+			output2.print(name, _s(len, c, " plus"), geneCounts.readPositionData[name].positions[0]);
+			output2.print(name, _s(len, c, " minus"), geneCounts.readPositionData[name].positions[1]);
+			genelist.print(name);
+		}
+
+	}
+
+	return EXIT_SUCCESS;
+
+}
+
 
 int LiBiTools::geneMain(int argc, char **argv)
 {

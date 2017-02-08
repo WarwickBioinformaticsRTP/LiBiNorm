@@ -6,6 +6,7 @@
 
 using namespace BamTools;
 
+
 //	The htseq-count modes
 enum mode {
 	intersect_union,

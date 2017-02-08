@@ -48,11 +48,11 @@ bool dbgFound = false;
 
 using namespace std;
 
-
 int LiBiCount::main(int argc, char **argv)
 {
+	vector<geneListFilenameData> geneListFilenames;
 
-	stringEx bamFileName,featureFileName,outputFilename,geneListFilename;
+	stringEx bamFileName,featureFileName,outputFilename;
 	stringEx id_attribute,feature_type;
 
 	reverseStrand = false;
@@ -196,7 +196,14 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 		}
 		else if ((strcmp(argv[ni], "-g") == 0) || (opt2 = (strncmp(argv[ni], "--genes=", 8) == 0)))
 		{
-			geneListFilename = opt2 ? argv[++ni] + 8 : argv[++ni];
+			geneListFilenameData glfd;
+			glfd.geneListFilename = opt2 ? argv[++ni] + 8 : argv[++ni];
+			if ((!opt2) && (ni < (argc - 3)) && (argv[ni+1][0] != '-') && (argv[ni + 2][0] != '-'))
+			{
+				glfd.start = atoi(argv[++ni]);
+				glfd.finish = atoi(argv[++ni]);
+			}
+			geneListFilenames.push_back(glfd);
 		}
 		else if (strcmp(argv[ni], "-x") == 0)
 		{
@@ -275,10 +282,10 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 #endif
 
 	geneCounts.addEntry("reference", DEFAULT_NORMALISATION_GENE_LENGTH);
-	if (geneListFilename)
+	for (auto & glfn : geneListFilenames)
 	{
-		progMessage("Using genes/transcripts listed in ", geneListFilename);
-		geneCounts.useSelectedGenes(geneListFilename);
+		progMessage("Using genes/transcripts listed in ", glfn.geneListFilename);
+		geneCounts.useSelectedGenes(glfn);
 	}
 
 	genomeDef.index(geneCounts);

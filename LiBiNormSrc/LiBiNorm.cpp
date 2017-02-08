@@ -68,6 +68,11 @@ int main(int argc, char **argv)
 			LiBiTools tools;
 			return tools.landMain(argc - 1, argv + 1);
 		}
+		if (command == "land2")
+		{
+			LiBiTools tools;
+			return tools.landMain2(argc - 1, argv + 1);
+		}
 		if (command == "genes")
 		{
 			LiBiTools tools;

@@ -113,23 +113,26 @@ VEC_DATA_TYPE GeneCountData::length(const std::string & gene)
 
 //	Reads in a file contain a list of gene names.  Only these genes will then be used
 //	in the subsequent analysis
-void GeneCountData::useSelectedGenes(const std::string & filename)
+void GeneCountData::useSelectedGenes(const geneListFilenameData & filenameData)
 {
 	ifstream file;
-	file.open(filename);
+	file.open(filenameData.geneListFilename);
 
 	if (!file.is_open())
 	{
-		progMessage("Unable to read gene list from ", filename);
+		progMessage("Unable to read gene list from ", filenameData.geneListFilename);
 		return;
 	}
 
 	string line, gene;
+	int i = 0;
 	while (!file.eof())
 	{
 		std::getline(file, line);
 		parser(line, " \n\r",gene);
-		addEntry(gene);
+		if ((i >= filenameData.start) && (i <= filenameData.finish))
+			addEntry(gene);
+		i++;
 	};
 }
 
@@ -310,6 +313,7 @@ void GeneCountData::addEntry(string name, VEC_DATA_TYPE length, VEC_DATA_TYPE co
 		counts.push_back(count);
 		names.push_back(name);
 		lengths[0].push_back(length);
+		overlapsAnotherGene.push_back(false);
 		readPositionData.emplace(name, geneAttribute(counts.size() - 1, move(posPositions), move(negPositions)));
 	}
 }
