@@ -104,14 +104,16 @@ public:
 class countInfo
 {
 public:
-	countInfo() :overlapsAnotherGene(false), histoGram_ind(0) {};
+	countInfo(const std::string & name) :overlapsAnotherGene(false), histoGram_ind(0),name(name) {};
 	bool overlapsAnotherGene;
 	int histoGram_ind;
 	std::string name;
 };
 
+
 class GeneCountData
 {
+	static rnaPosVec nullData;
 public:
 
 	VEC_DATA_TYPE & count(const std::string & gene);
@@ -119,8 +121,9 @@ public:
 	//	Needed if we decide the data is not name ordered and have to restart
 	void reset() { for (auto & gene : readPositionData)	gene.second.reset(); };
 
-	void addEntry(std::string name, VEC_DATA_TYPE length = 0);
-	void addEntry(std::string name, VEC_DATA_TYPE length, VEC_DATA_TYPE count, rnaPosVec & posPositions, rnaPosVec & negPositions);
+//	void addEntry(const std::string & name, VEC_DATA_TYPE length = 0);
+	void addEntry(const std::string & name, VEC_DATA_TYPE length = 0, VEC_DATA_TYPE count = 0, 
+		rnaPosVec & posPositions = nullData, rnaPosVec & negPositions = nullData);
 	void addErrorEntry(std::string name);
 
 

@@ -126,7 +126,6 @@ void featureFileEx::index(GeneCountData & geneCounts)
 				overlapMap[&i->second].emplace(j->first, j);
 			}
 		}
-		geneCounts.info.resize(geneCounts.counts.size());
 		for (chromosomeFeatureData::iterator i = thisChromData.begin(); i != thisChromData.end();i++)
 		{
 			size_t index = geneCounts.readPositionData.at(i->second.name).index;

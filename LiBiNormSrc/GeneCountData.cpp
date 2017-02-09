@@ -80,6 +80,9 @@ void rnaPosVec::selectAtMost(size_t s)
 }
 
 
+rnaPosVec GeneCountData::nullData;
+
+
 //	Returns the address of the counter associated with a gene or error condition
 //	such that the value can be incremened when an associated error if found
 
@@ -297,22 +300,25 @@ void GeneCountData::remove_invalid_values()
 	}
 }
 
-void GeneCountData::addEntry(string name, VEC_DATA_TYPE length)
+/*void GeneCountData::addEntry(const string & name, VEC_DATA_TYPE length)
 {
 	auto geneData = readPositionData.find(name);
 	if (geneData == readPositionData.end())
 	{
 		counts.push_back(0);
+		info.push_back(countInfo(name));
 		lengths[0].push_back(length);
 		readPositionData.emplace(name, counts.size() - 1);
 	}
 }
-void GeneCountData::addEntry(string name, VEC_DATA_TYPE length, VEC_DATA_TYPE count, rnaPosVec & posPositions, rnaPosVec & negPositions)
+*/
+void GeneCountData::addEntry(const string & name, VEC_DATA_TYPE length, VEC_DATA_TYPE count, rnaPosVec & posPositions, rnaPosVec & negPositions)
 {
 	auto geneData = readPositionData.find(name);
 	if (geneData == readPositionData.end())
 	{
 		counts.push_back(count);
+		info.push_back(countInfo(name));
 		lengths[0].push_back(length);
 		readPositionData.emplace(name, geneAttribute(counts.size() - 1, move(posPositions), move(negPositions)));
 	}
