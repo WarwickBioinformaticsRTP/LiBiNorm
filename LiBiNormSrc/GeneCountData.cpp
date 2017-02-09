@@ -131,7 +131,11 @@ void GeneCountData::useSelectedGenes(const geneListFilenameData & filenameData)
 		std::getline(file, line);
 		parser(line, " \n\r",gene);
 		if ((i >= filenameData.start) && (i <= filenameData.finish))
+		{
+			if (filenameData.start)
+				progMessage("using ",gene);
 			addEntry(gene);
+		}
 		i++;
 	};
 }
