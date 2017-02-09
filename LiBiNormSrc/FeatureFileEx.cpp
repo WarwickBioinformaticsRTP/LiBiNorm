@@ -111,10 +111,6 @@ void featureFileEx::index(GeneCountData & geneCounts)
 
 		for (chromosomeFeatureData::iterator i = thisChromData.begin(); i != thisChromData.end();i++)
 		{
-_DBG(		string name = i->second.name;
-			bool found = (name == "NM_008434.2");
-			bool found2 = (name == "NR_001461.5");)
-
 			//	Take the opportunity to produce a map of all the genes for holding counts
 			geneCounts.addEntry(i->second.name);
 
@@ -124,14 +120,15 @@ _DBG(		string name = i->second.name;
 			//	Starting from the next region, find all of the subsequent regions which start before this region ends.  
 			//	In each case add the subsequent region to the list of overlaps.  This means that for each overlap case only the
 			//	second of the regions is added.   This is correct for the subsequent logic
-			for (chromosomeFeatureData::iterator j = next(i,1);(j != thisChromData.end()) && (j->first < i->second.finish);j++)
-				overlapMap[&j->second].emplace(i->first,i);
+			for (chromosomeFeatureData::iterator j = next(i, 1); (j != thisChromData.end()) && (j->first < i->second.finish); j++)
+			{
+				overlapMap[&j->second].emplace(i->first, i);
+				overlapMap[&i->second].emplace(j->first, j);
+			}
 		}
+		geneCounts.info.resize(geneCounts.counts.size());
 		for (chromosomeFeatureData::iterator i = thisChromData.begin(); i != thisChromData.end();i++)
 		{
-_DBG(		string name = i->second.name;
-			bool found = (name == "NM_008434.2");
-			bool found2 = (name == "NR_001461.5"););
 			size_t index = geneCounts.readPositionData.at(i->second.name).index;
 
 			VEC_DATA_TYPE & length = geneCounts.lengths[0].at(index);
@@ -148,11 +145,11 @@ _DBG(		string name = i->second.name;
 			{
 				*i->second.overlaps = j->second.begin()->second;
 				genes[i->second.name].addRegion(&i->second, true,length,chrom.first);
-				geneCounts.overlapsAnotherGene[index] = true;
+				geneCounts.info[index].overlapsAnotherGene = true;
 				//	We get a link to a feature region so we have to go through to the gene to finds its name and then look
 				//	up the associated index so that we can indicate that this other gene also overlaps
-				size_t index2 = geneCounts.readPositionData.at(j->second.begin()->second->second.name).index;
-				geneCounts.overlapsAnotherGene[index2] = true;
+//				size_t index2 = geneCounts.readPositionData.at(j->second.begin()->second->second.name).index;
+//				geneCounts.info[index2].overlapsAnotherGene = true;
 			}
 		}
 

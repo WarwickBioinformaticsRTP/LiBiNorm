@@ -209,10 +209,10 @@ int LiBiTools::landMain2(int argc, char **argv)
 	TsvFile genelist;
 	genelist.open(landFilename.replaceSuffix(".extraGenes.txt"));
 
-	for (size_t i = 1; i < geneCounts.names.size(); i++)
+	for (size_t i = 1; i < geneCounts.info.size(); i++)
 	{
 		long count = geneCounts.counts[i];
-		string & name = geneCounts.names[i];
+		string & name = geneCounts.info[i].name;
 		if (genes.contains(name))
 		{
 			long len = geneCounts.lengths[0][i];

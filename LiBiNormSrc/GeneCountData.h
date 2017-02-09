@@ -100,6 +100,16 @@ public:
 
 //	This class holds and processes all of the count information associated with the set of genes
 //	or transcripts
+
+class countInfo
+{
+public:
+	countInfo() :overlapsAnotherGene(false), histoGram_ind(0) {};
+	bool overlapsAnotherGene;
+	int histoGram_ind;
+	std::string name;
+};
+
 class GeneCountData
 {
 public:
@@ -125,12 +135,15 @@ public:
 	void useSelectedGenes(const geneListFilenameData & filename);
 
 	//	Names, bias, lengths and RPM data are held in a series of vectors sharing a common gene order
-	std::vector<std::string> names;
+	std::vector<countInfo> info;
 	dataVec bias;
 	//	The first entry is for the raw lengths, and the second for the normalised lengths
 	dataVec lengths[2];
 	dataVec counts;
 	dataVec RPM[2], RPKM[2], RPK[2], TPM[2];
+
+	//	The number of genes in each range of lengths
+	std::vector<double> freq;
 
 	//	Read position data for all of the genes
 	std::map<const std::string, geneAttribute > readPositionData;
@@ -140,9 +153,6 @@ public:
 	std::vector<std::string> errorNames;
 	dataVec errCounts;
 
-	std::vector<double> freq;
-	std::vector<bool> overlapsAnotherGene;
-	std::vector<int> histoGram_ind;
 };
 
 #endif

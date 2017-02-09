@@ -190,9 +190,9 @@ bool GeneCountData::outputGeneCounts(const string & filename, int detailLevel, s
 		}
 
 		//	Dont start at 0 as 0 is the reference for normalisation
-		for (size_t i = 1; i < names.size(); i++)
+		for (size_t i = 1; i < info.size(); i++)
 		{
-			output.printStart(names[i], counts[i]);
+			output.printStart(info[i].name, counts[i]);
 
 			switch (detailLevel)
 			{
@@ -238,13 +238,13 @@ bool GeneCountData::outputLandscape(const string & filename)
 	if (!output.open(filename))
 		exitFail("Unable to open ", filename, " for landscape data");
 
-	for (size_t i = 1;i < names.size();i++)
+	for (size_t i = 1;i < info.size();i++)
 	{
 		long count = counts[i];
-		if ((count > 0) && (!overlapsAnotherGene[i]))
+		if ((count > 0) && (!info[i].overlapsAnotherGene))
 		{
 			long len = lengths[0][i];
-			string & name = names[i];
+			string & name = info[i].name;
 			string c;
 #ifdef COUNT_IN_LANDSCAPE
 			c = _s(":", count);
@@ -263,9 +263,9 @@ bool GeneCountData::outputLandscape(const string & filename)
 void GeneCountData::histc(const vector<int> E)
 {
 	freq.assign(E.size(), 0);
-	histoGram_ind.assign(lengths[0].size(), -1);
+//	histoGram_ind.assign(lengths[0].size(), -1);
 	//	Increment from 1 because the first entry is the reference length
-	for (size_t i = 1; i < names.size(); i++)
+	for (size_t i = 1; i < info.size(); i++)
 	{
 		double v = lengths[0][i];
 		size_t l = 0;
@@ -283,17 +283,17 @@ void GeneCountData::histc(const vector<int> E)
 			k = h;
 		else
 			k = l;
-		histoGram_ind[i] = k;
+		info[i].histoGram_ind = k;
 		freq[k]++;
 	}
 }
 
 void GeneCountData::remove_invalid_values()
 {
-	for (size_t i = 0; i < names.size(); i++)
+	for (size_t i = 0; i < info.size(); i++)
 	{
 		for (size_t j = 0; j < 2; j++)
-			readPositionData[names[i]].positions[j].removeInvalidValues(lengths[0][i]);
+			readPositionData[info[i].name].positions[j].removeInvalidValues(lengths[0][i]);
 	}
 }
 
@@ -303,9 +303,7 @@ void GeneCountData::addEntry(string name, VEC_DATA_TYPE length)
 	if (geneData == readPositionData.end())
 	{
 		counts.push_back(0);
-		names.push_back(name);
 		lengths[0].push_back(length);
-		overlapsAnotherGene.push_back(false);
 		readPositionData.emplace(name, counts.size() - 1);
 	}
 }
@@ -315,9 +313,7 @@ void GeneCountData::addEntry(string name, VEC_DATA_TYPE length, VEC_DATA_TYPE co
 	if (geneData == readPositionData.end())
 	{
 		counts.push_back(count);
-		names.push_back(name);
 		lengths[0].push_back(length);
-		overlapsAnotherGene.push_back(false);
 		readPositionData.emplace(name, geneAttribute(counts.size() - 1, move(posPositions), move(negPositions)));
 	}
 }
@@ -411,9 +407,9 @@ void GeneCountData::transferTo(mcmcGeneData & mcmcData, size_t maxLength, int ma
 
 	//	Start at one because we dont include the reference gene (except there are no reads
 	//	in the reference gene so this makes no difference
-	for (size_t i = 1; i < names.size(); i++)
+	for (size_t i = 1; i < info.size(); i++)
 	{
-		if (( !overlapsAnotherGene[i])
+		if (( !info[i].overlapsAnotherGene)
 #ifdef MAX_LENGTH_OF_GENE_FOR_PARAM_ESTIMATION
 		 && (lengths[0][i] < MAX_LENGTH_OF_GENE_FOR_PARAM_ESTIMATION)
 #endif
@@ -428,7 +424,7 @@ void GeneCountData::transferTo(mcmcGeneData & mcmcData, size_t maxLength, int ma
 			//	For the forward and the reverse counts
 			for (size_t j = 0; j < 2; j++)
 			{
-				rnaPosVec & positions = readPositionData.at(names[i]).positions[j];
+				rnaPosVec & positions = readPositionData.at(info[i].name).positions[j];
 				positions.selectAtMost(count);
 
 				//	fragData contains the count 
@@ -439,7 +435,7 @@ void GeneCountData::transferTo(mcmcGeneData & mcmcData, size_t maxLength, int ma
 				Nreads += positions.size();
 			}
 			mcmcData.geneLengths[geneIndex] = lengths[0][i];
-			mcmcData.geneFrequencies[geneIndex] = freq[histoGram_ind[i]];
+			mcmcData.geneFrequencies[geneIndex] = freq[info[i].histoGram_ind];
 
 			geneIndex++;
 			if ((maxTotReads) && (Nreads > maxTotReads))
