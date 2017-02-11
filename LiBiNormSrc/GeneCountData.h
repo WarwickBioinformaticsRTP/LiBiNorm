@@ -3,6 +3,7 @@
 
 #include <map>
 #include <random>
+#include "containerEx.h"
 
 #include "Options.h"
 #include "parser.h"
@@ -74,14 +75,14 @@ inline bool printVal(outputDataFile * f, rnaPosVec value)
 };
 
 //	Holds the read position information associated with a specific gene.
-class geneAttribute 
+class geneReadData 
 {
 public:
-	geneAttribute(size_t index = 0) :index(index) {};
+	geneReadData(size_t index = 0) :index(index) {};
 
 	//	Used by the copy constructor in GeneCountData::addEntry.  Provides a more efficient way of copying the
 	//	position vectors as they are just about to be discarded
-	geneAttribute(size_t index, rnaPosVec && posPos, rnaPosVec && negPos) :index(index)
+	geneReadData(size_t index, rnaPosVec && posPos, rnaPosVec && negPos) :index(index)
 	{
 		swap(posPos, positions[0]);
 		swap(negPos, positions[1]);
@@ -104,11 +105,18 @@ public:
 class countInfo
 {
 public:
-	countInfo(const std::string & name) :overlapsAnotherGene(false), histoGram_ind(0),name(name) {};
-	bool overlapsAnotherGene;
+	countInfo(const std::string & name) :useForParemeterEstimation(true), histoGram_ind(0),name(name) {};
+	bool useForParemeterEstimation;
 	int histoGram_ind;
 	std::string name;
 };
+
+class readPositionDataClass : public std::map<const std::string, geneReadData >
+{
+public:
+	ADD_ITER(geneName, geneAttributes)
+};
+
 
 
 class GeneCountData
@@ -149,10 +157,10 @@ public:
 	std::vector<double> freq;
 
 	//	Read position data for all of the genes
-	std::map<const std::string, geneAttribute > readPositionData;
+	readPositionDataClass readPositionData;
 
 	//	For data associated with reads that do not map
-	std::map<const std::string, geneAttribute > errorCounts;
+	readPositionDataClass errorCounts;
 	std::vector<std::string> errorNames;
 	dataVec errCounts;
 

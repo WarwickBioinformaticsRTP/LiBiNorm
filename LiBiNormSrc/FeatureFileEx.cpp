@@ -118,8 +118,8 @@ void featureFileEx::index(GeneCountData & geneCounts)
 			thisChromEndMap.emplace(i->second.finish,i);
 
 			//	Starting from the next region, find all of the subsequent regions which start before this region ends.  
-			//	In each case add the subsequent region to the list of overlaps.  This means that for each overlap case only the
-			//	second of the regions is added.   This is correct for the subsequent logic
+			//	In each case add the subsequent region to the list of overlaps.  And also add this region to the list of 
+			//	overlaps
 			for (chromosomeFeatureData::iterator j = next(i, 1); (j != thisChromData.end()) && (j->first < i->second.finish); j++)
 			{
 				overlapMap[&j->second].emplace(i->first, i);
@@ -144,11 +144,7 @@ void featureFileEx::index(GeneCountData & geneCounts)
 			{
 				*i->second.overlaps = j->second.begin()->second;
 				genes[i->second.name].addRegion(&i->second, true,length,chrom.first);
-				geneCounts.info[index].overlapsAnotherGene = true;
-				//	We get a link to a feature region so we have to go through to the gene to finds its name and then look
-				//	up the associated index so that we can indicate that this other gene also overlaps
-//				size_t index2 = geneCounts.readPositionData.at(j->second.begin()->second->second.name).index;
-//				geneCounts.info[index2].overlapsAnotherGene = true;
+				geneCounts.info[index].useForParemeterEstimation = false;
 			}
 		}
 

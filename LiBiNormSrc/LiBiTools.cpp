@@ -26,7 +26,7 @@ int LiBiTools::landMain(int argc, char **argv)
 	}
 	else if ((argc == 1) || ((argc == 2) && ((strcmp(argv[1], "-h") == 0) || (strcmp(argv[1], "--help") == 0))))
 	{
-		printf("Usage: LiBiNorm test -g gff_file landscapefile1 landscapefile2 gff_file\n");
+		printf("Usage: LiBiNorm land -g gff_file -b bamfile landscapefile1 landscapefile2\n");
 		printf("This program compares two landscape files\n");
 		return EXIT_SUCCESS;
 	}
@@ -81,8 +81,8 @@ int LiBiTools::landMain(int argc, char **argv)
 	TsvFile resFile;
 	resFile.open("combined.txt");
 
-	auto it1 = geneCounts1.readPositionData.begin();
-	auto it2 = geneCounts2.readPositionData.begin();
+	readPositionDataClass::Iterator it1 = geneCounts1.readPositionData.begin();
+	readPositionDataClass::Iterator it2 = geneCounts2.readPositionData.begin();
 
 	while ((it1 != geneCounts1.readPositionData.end()) && (it2 != geneCounts2.readPositionData.end()))
 	{
@@ -91,17 +91,17 @@ int LiBiTools::landMain(int argc, char **argv)
 		bool match = it1->first == it2->first;
 		if (!match)
 		{
-			auto it1a = it1;
+			readPositionDataClass::Iterator it1a = it1;
 			for (int i = 0; (i < LOOKAHEAD) && (!match) && (++it1a != geneCounts1.readPositionData.end()); i++)
 			{
-				if (it1a->first == it2->first)
+				if (it1a.geneName() == it2.geneName())
 				{
 					for (int j = 0; j <= i; j++)
 					{
-						if ((geneIterator = genomeDef.genes.find(it1->first)) != genomeDef.genes.end())
+						if ((geneIterator = genomeDef.genes.find(it1.geneName())) != genomeDef.genes.end())
 						{
-							resFile.print(1, _s("chr", geneIterator->second.chromosome, ":", geneIterator->second.regions[0]->start), it1->first, it1->second.positions[0]);
-							resFile.print(1, _s("chr", geneIterator->second.chromosome, ":", geneIterator->second.regions[0]->start), it1->first, it1->second.positions[1]);
+							resFile.print(1, _s("chr", geneIterator->second.chromosome, ":", geneIterator->second.regions[0]->start), it1.geneName(), it1.geneAttributes().positions[0]);
+							resFile.print(1, _s("chr", geneIterator->second.chromosome, ":", geneIterator->second.regions[0]->start), it1.geneName(), it1.geneAttributes().positions[1]);
 							resFile.print();
 						}
 						it1++;
@@ -114,14 +114,14 @@ int LiBiTools::landMain(int argc, char **argv)
 				auto it2a = it2;
 				for (int i = 0; (i < LOOKAHEAD) && (!match) && (++it2a != geneCounts2.readPositionData.end()); i++)
 				{
-					if (it2a->first == it1->first)
+					if (it2a.geneName() == it1.geneName())
 					{
 						for (int j = 0; j <= i; j++)
 						{
-							if ((geneIterator = genomeDef.genes.find(it2->first)) != genomeDef.genes.end())
+							if ((geneIterator = genomeDef.genes.find(it2.geneName())) != genomeDef.genes.end())
 							{
-								resFile.print(2, _s("chr", geneIterator->second.chromosome, ":", geneIterator->second.regions[0]->start), it1->first, it2->second.positions[0]);
-								resFile.print(2, _s("chr", geneIterator->second.chromosome, ":", geneIterator->second.regions[0]->start), it2->first, it2->second.positions[1]);
+								resFile.print(2, _s("chr", geneIterator->second.chromosome, ":", geneIterator->second.regions[0]->start), it1.geneName(), it2.geneAttributes().positions[0]);
+								resFile.print(2, _s("chr", geneIterator->second.chromosome, ":", geneIterator->second.regions[0]->start), it2.geneName(), it2.geneAttributes().positions[1]);
 								resFile.print();
 							}
 							it2++;
@@ -131,17 +131,17 @@ int LiBiTools::landMain(int argc, char **argv)
 				}
 			}
 		}
-		if ((geneIterator = genomeDef.genes.find(it1->first)) != genomeDef.genes.end())
+		if ((geneIterator = genomeDef.genes.find(it1.geneName())) != genomeDef.genes.end())
 		{
-			resFile.print(1, _s("chr", geneIterator->second.chromosome, ":", geneIterator->second.regions[0]->start), it1->first, it1->second.positions[0]);
-			resFile.print(1, _s("chr", geneIterator->second.chromosome, ":", geneIterator->second.regions[0]->start), it1->first, it1->second.positions[1]);
+			resFile.print(1, _s("chr", geneIterator->second.chromosome, ":", geneIterator->second.regions[0]->start), it1.geneName(), it1.geneAttributes().positions[0]);
+			resFile.print(1, _s("chr", geneIterator->second.chromosome, ":", geneIterator->second.regions[0]->start), it1.geneName(), it1.geneAttributes().positions[1]);
 			if (!match)
 				resFile.print();
 		}
-		if ((geneIterator = genomeDef.genes.find(it2->first)) != genomeDef.genes.end())
+		if ((geneIterator = genomeDef.genes.find(it2.geneName())) != genomeDef.genes.end())
 		{
-			resFile.print(2, _s("chr",geneIterator->second.chromosome,":",geneIterator->second.regions[0]->start), it2->first, it2->second.positions[0]);
-			resFile.print(2, _s("chr", geneIterator->second.chromosome, ":", geneIterator->second.regions[0]->start), it2->first, it2->second.positions[1]);
+			resFile.print(2, _s("chr",geneIterator->second.chromosome,":",geneIterator->second.regions[0]->start), it2.geneName(), it2.geneAttributes().positions[0]);
+			resFile.print(2, _s("chr", geneIterator->second.chromosome, ":", geneIterator->second.regions[0]->start), it2.geneName(), it2.geneAttributes().positions[1]);
 			resFile.print();
 		}
 
@@ -211,7 +211,9 @@ int LiBiTools::landMain2(int argc, char **argv)
 
 	for (size_t i = 1; i < geneCounts.info.size(); i++)
 	{
+#ifdef COUNT_IN_LANDSCAPE
 		long count = geneCounts.counts[i];
+#endif
 		string & name = geneCounts.info[i].name;
 		if (genes.contains(name))
 		{

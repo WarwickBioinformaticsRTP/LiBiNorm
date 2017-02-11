@@ -106,12 +106,12 @@ VEC_DATA_TYPE & GeneCountData::count(const std::string & gene)
 //	Returns the actual length of a gene (rather than the normalised length) given the name  
 VEC_DATA_TYPE GeneCountData::length(const std::string & gene)
 {
-	auto i = readPositionData.find(gene);
+	readPositionDataClass::Iterator i = readPositionData.find(gene);
 	if (i == readPositionData.end())
 	{
 		return 0;
 	}
-	return lengths[0].at((*i).second.index);
+	return lengths[0].at(i.geneAttributes().index);
 }
 
 //	Reads in a file contain a list of gene names.  Only these genes will then be used
@@ -244,7 +244,7 @@ bool GeneCountData::outputLandscape(const string & filename)
 	for (size_t i = 1;i < info.size();i++)
 	{
 		long count = counts[i];
-		if ((count > 0) && (!info[i].overlapsAnotherGene))
+		if ((count > 0) && (info[i].useForParemeterEstimation))
 		{
 			long len = lengths[0][i];
 			string & name = info[i].name;
@@ -320,7 +320,7 @@ void GeneCountData::addEntry(const string & name, VEC_DATA_TYPE length, VEC_DATA
 		counts.push_back(count);
 		info.push_back(countInfo(name));
 		lengths[0].push_back(length);
-		readPositionData.emplace(name, geneAttribute(counts.size() - 1, move(posPositions), move(negPositions)));
+		readPositionData.emplace(name, geneReadData(counts.size() - 1, move(posPositions), move(negPositions)));
 	}
 }
 
@@ -415,7 +415,7 @@ void GeneCountData::transferTo(mcmcGeneData & mcmcData, size_t maxLength, int ma
 	//	in the reference gene so this makes no difference
 	for (size_t i = 1; i < info.size(); i++)
 	{
-		if (( !info[i].overlapsAnotherGene)
+		if ((info[i].useForParemeterEstimation)
 #ifdef MAX_LENGTH_OF_GENE_FOR_PARAM_ESTIMATION
 		 && (lengths[0][i] < MAX_LENGTH_OF_GENE_FOR_PARAM_ESTIMATION)
 #endif
