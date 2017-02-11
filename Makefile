@@ -238,6 +238,7 @@ $(BUILD)/LiBiNormSrc/LiBiDedup.o: ../bioinformaticsLib/inQuotes.h
 $(BUILD)/LiBiNormSrc/LiBiDedup.o: LiBiNormSrc/Regions.h
 $(BUILD)/LiBiNormSrc/LiBiDedup.o: ../bioinformaticsLib/printEx.h
 $(BUILD)/LiBiNormSrc/LiBiCount.o: ../bioinformaticsLib/libCommon.h
+$(BUILD)/LiBiNormSrc/LiBiCount.o: ../bioinformaticsLib/containerEx.h
 $(BUILD)/LiBiNormSrc/LiBiCount.o: LiBiNormSrc/Regions.h
 $(BUILD)/LiBiNormSrc/LiBiCount.o: ../bioinformaticsLib/printEx.h
 $(BUILD)/LiBiNormSrc/LiBiCount.o: ../bioinformaticsLib/inQuotes.h
@@ -258,7 +259,6 @@ $(BUILD)/LiBiNormSrc/LiBiCount.o: ../bamtools/api/SamSequence.h
 $(BUILD)/LiBiNormSrc/LiBiCount.o: ../bioinformaticsLib/parser.h
 $(BUILD)/LiBiNormSrc/LiBiCount.o: LiBiNormSrc/LiBiCount.h
 $(BUILD)/LiBiNormSrc/LiBiCount.o: LiBiNormSrc/FeatureFileEx.h
-$(BUILD)/LiBiNormSrc/LiBiCount.o: ../bioinformaticsLib/containerEx.h
 $(BUILD)/LiBiNormSrc/LiBiCount.o: ../bioinformaticsLib/featureFile.h
 $(BUILD)/LiBiNormSrc/LiBiCount.o: ../bioinformaticsLib/genbankFile.h
 $(BUILD)/LiBiNormSrc/LiBiCount.o: ../bioinformaticsLib/stringEx.h
@@ -463,8 +463,8 @@ $(BUILD)/bioinformaticsLib/fastaFile.o: ../bioinformaticsLib/fastaFile.h
 $(BUILD)/bioinformaticsLib/featureFile.o: ../bioinformaticsLib/stringEx.h
 $(BUILD)/bioinformaticsLib/featureFile.o: ../bioinformaticsLib/inQuotes.h
 $(BUILD)/bioinformaticsLib/featureFile.o: ../bioinformaticsLib/featureFile.h
-$(BUILD)/bioinformaticsLib/featureFile.o: ../bioinformaticsLib/genbankFile.h
 $(BUILD)/bioinformaticsLib/featureFile.o: ../bioinformaticsLib/containerEx.h
+$(BUILD)/bioinformaticsLib/featureFile.o: ../bioinformaticsLib/genbankFile.h
 $(BUILD)/bioinformaticsLib/featureFile.o: ../bioinformaticsLib/printEx.h
 $(BUILD)/bioinformaticsLib/featureFile.o: ../bioinformaticsLib/parser.h
 $(BUILD)/bioinformaticsLib/featureFile.o: ../bioinformaticsLib/libCommon.h

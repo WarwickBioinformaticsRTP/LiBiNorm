@@ -392,7 +392,7 @@ struct overlapCounts
 //	accumlated for multiple region types if required.
 struct chromosomeGeneInfo: public map<string,overlapCounts> 
 {
-	ADD_CONSTMAPPAIR(geneName,geneOverlapCounts)
+	ADD_MAPPAIR_VAR(geneName,geneOverlapCounts)
 	size_t noMatch;
 	size_t nSegments;
 	chromosomeGeneInfo():noMatch(0),nSegments(0){};
@@ -657,7 +657,7 @@ void LiBiCount::addRead(const regionLists & segments,const featureFileEx & gtfDa
 			//	For a strict match, all of the read segments must lie inside an annotated region of the same gene
 			for (chromosomeGeneInfo::Pair gene : genes)
 			{
-				if (gene.geneOverlapCounts().strict == genes.nSegments)
+				if (gene.geneOverlapCounts.strict == genes.nSegments)
 				{
 					if (result)
 					{
@@ -669,9 +669,9 @@ void LiBiCount::addRead(const regionLists & segments,const featureFileEx & gtfDa
 								outputFile.printEnd(*mode, *result, location, segments.name);
 							geneCounts.count(*result)++;
 							geneCounts.readPositionData[*result].positions[0].emplace_back(RNAstartPos);
-							result = &gene.geneName();
-							RNAstartPos = gene.geneOverlapCounts().RNAstartPos;
-							RNAendPos = gene.geneOverlapCounts().RNAendPos;
+							result = &gene.geneName;
+							RNAstartPos = gene.geneOverlapCounts.RNAstartPos;
+							RNAendPos = gene.geneOverlapCounts.RNAendPos;
 						}
 						else
 						{
@@ -683,9 +683,9 @@ void LiBiCount::addRead(const regionLists & segments,const featureFileEx & gtfDa
 					else
 					{
 						//	A strict match, keep looking as there may be more
-						result = &gene.geneName();
-						RNAstartPos = gene.geneOverlapCounts().RNAstartPos;
-						RNAendPos = gene.geneOverlapCounts().RNAendPos;
+						result = &gene.geneName;
+						RNAstartPos = gene.geneOverlapCounts.RNAstartPos;
+						RNAendPos = gene.geneOverlapCounts.RNAendPos;
 					}
 				}
 			}
@@ -740,15 +740,15 @@ void LiBiCount::addRead(const regionLists & segments,const featureFileEx & gtfDa
 
 					for (chromosomeGeneInfo::Pair gene : genes)
 					{
-						if (gene.geneOverlapCounts().partial == (genes.nSegments - genes.noMatch))
+						if (gene.geneOverlapCounts.partial == (genes.nSegments - genes.noMatch))
 						{
-							if (gene.geneOverlapCounts().length > bestLength)
+							if (gene.geneOverlapCounts.length > bestLength)
 							{
-								result = &gene.geneName();
+								result = &gene.geneName;
 
-								bestLength = gene.geneOverlapCounts().length;
+								bestLength = gene.geneOverlapCounts.length;
 							}
-							else if (gene.geneOverlapCounts().length == bestLength)
+							else if (gene.geneOverlapCounts.length == bestLength)
 							{
 								//	Two genes with the same match length
 								result = &ambiguousString;
