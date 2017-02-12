@@ -28,7 +28,7 @@ void featureRegion::checkOverlap(const region & segment,vector<featureOverlap> &
 	}
 }
 
-featureRegion::featureRegion(size_t start, size_t finish, const std::string & name, char strand, const std::string & type, const string & bioType) :
+featureRegion::featureRegion(size_t start, size_t finish, const std::string & name, char strand, const std::string & type, const std::string & bioType) :
 	start(start), finish(finish),  RNAstart(0), name(name), type(type), bioType(bioType),strand(strand)
 {
 	overlaps = new chromosomeFeatureData::iterator();
@@ -96,8 +96,9 @@ void featureFileEx::index(GeneCountData & geneCounts)
 					}
 				}
 			}
+			static const string nullString;
 			thisChromData.emplace(i->first,featureRegion(i->second.start,finish,i->second.tags[0].val,
-				i->second.strand,i->second.type, (i->second.tags.size()> 1)?i->second.tags[1].val:""));
+				i->second.strand,i->second.type , (i->second.tags.size()> 1)?i->second.tags[1].val: nullString));
 		}
 
 		//	And now for each region find the regions that it overlaps and produce overlap list:  The list of all regions that start before this region has ended.

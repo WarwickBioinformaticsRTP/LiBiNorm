@@ -31,7 +31,7 @@ struct featureOverlap
 class featureRegion
 {
 public:
-	featureRegion(featureRegion && gtf) : start(gtf.start), finish(gtf.finish), RNAstart(gtf.RNAstart), name(std::move(gtf.name)), type(std::move(gtf.type)), bioType(std::move(bioType)), strand(gtf.strand),
+	featureRegion(featureRegion && gtf) : start(gtf.start), finish(gtf.finish), RNAstart(gtf.RNAstart), name(std::move(gtf.name)), type(std::move(gtf.type)), bioType(std::move(gtf.bioType)), strand(gtf.strand),
 		overlaps(gtf.overlaps)
 	{
 		gtf.overlaps = 0;
