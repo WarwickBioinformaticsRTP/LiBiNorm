@@ -244,7 +244,7 @@ bool GeneCountData::outputLandscape(const string & filename)
 	for (size_t i = 1;i < info.size();i++)
 	{
 		long count = counts[i];
-		if ((count > 0) && (info[i].useForParemeterEstimation))
+		if (/*(count > 0) && */(info[i].useForParemeterEstimation))
 		{
 			long len = lengths[0][i];
 			string & name = info[i].name;

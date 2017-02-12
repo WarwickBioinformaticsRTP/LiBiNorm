@@ -31,12 +31,12 @@ struct featureOverlap
 class featureRegion
 {
 public:
-	featureRegion(featureRegion && gtf) : start(gtf.start), finish(gtf.finish), RNAstart(gtf.RNAstart), name(std::move(gtf.name)), type(std::move(gtf.type)), strand(gtf.strand),
+	featureRegion(featureRegion && gtf) : start(gtf.start), finish(gtf.finish), RNAstart(gtf.RNAstart), name(std::move(gtf.name)), type(std::move(gtf.type)), bioType(std::move(bioType)), strand(gtf.strand),
 		overlaps(gtf.overlaps)
 	{
 		gtf.overlaps = 0;
 	}
-	featureRegion(size_t start, size_t finish, const std::string & name, char strand, const std::string & type);
+	featureRegion(size_t start, size_t finish, const std::string & name, char strand, const std::string & type, const std::string & bioType);
 	~featureRegion();
 
 	void checkOverlap(const region & segment, std::vector<featureOverlap> & overlapList) const;
@@ -46,6 +46,7 @@ public:
 	//	Store actual values here as these are only created once and then referenced lots, so this is more efficient
 	const std::string name;
 	const std::string type;
+	const std::string bioType;
 	char strand;
 	chromosomeFeatureData::iterator * overlaps;
 };

@@ -28,8 +28,8 @@ void featureRegion::checkOverlap(const region & segment,vector<featureOverlap> &
 	}
 }
 
-featureRegion::featureRegion(size_t start, size_t finish, const std::string & name, char strand, const std::string & type) :
-	start(start), finish(finish),  RNAstart(0), name(name), type(type), strand(strand)
+featureRegion::featureRegion(size_t start, size_t finish, const std::string & name, char strand, const std::string & type, const string & bioType) :
+	start(start), finish(finish),  RNAstart(0), name(name), type(type), bioType(bioType),strand(strand)
 {
 	overlaps = new chromosomeFeatureData::iterator();
 };
@@ -96,7 +96,8 @@ void featureFileEx::index(GeneCountData & geneCounts)
 					}
 				}
 			}
-			thisChromData.emplace(i->first,featureRegion(i->second.start,finish,i->second.tags[0].val,i->second.strand,i->second.type));
+			thisChromData.emplace(i->first,featureRegion(i->second.start,finish,i->second.tags[0].val,
+				i->second.strand,i->second.type, (i->second.tags.size()> 1)?i->second.tags[1].val:""));
 		}
 
 		//	And now for each region find the regions that it overlaps and produce overlap list:  The list of all regions that start before this region has ended.
@@ -111,6 +112,7 @@ void featureFileEx::index(GeneCountData & geneCounts)
 
 		for (chromosomeFeatureData::iterator i = thisChromData.begin(); i != thisChromData.end();i++)
 		{
+			bool found = (i->second.name == "NM_001004142.2");
 			//	Take the opportunity to produce a map of all the genes for holding counts
 			geneCounts.addEntry(i->second.name);
 
@@ -133,6 +135,9 @@ void featureFileEx::index(GeneCountData & geneCounts)
 			VEC_DATA_TYPE & length = geneCounts.lengths[0].at(index);
 			auto j = overlapMap.find(&i->second);
 
+			if (i->second.bioType == "miRNA")
+				geneCounts.info[index].useForParemeterEstimation = false;
+
 			if (j == overlapMap.end())
 			{
 				//	The overlaps pointer points to self, indicating that there is no overlap
@@ -144,7 +149,12 @@ void featureFileEx::index(GeneCountData & geneCounts)
 			{
 				*i->second.overlaps = j->second.begin()->second;
 				genes[i->second.name].addRegion(&i->second, true,length,chrom.first);
-				geneCounts.info[index].useForParemeterEstimation = false;
+				if ((i->second.strand == j->second.begin()->second->second.strand) &&
+					(j->second.begin()->second->second.bioType != "miRNA"))
+				{
+					geneCounts.info[index].useForParemeterEstimation = false;
+				}
+
 			}
 		}
 
