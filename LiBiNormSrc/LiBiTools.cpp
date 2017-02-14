@@ -27,7 +27,9 @@ int LiBiTools::landMain(int argc, char **argv)
 	else if ((argc == 1) || ((argc == 2) && ((strcmp(argv[1], "-h") == 0) || (strcmp(argv[1], "--help") == 0))))
 	{
 		printf("Usage: LiBiNorm land -g gff_file -b bamfile landscapefile1 landscapefile2\n");
-		printf("This program compares two landscape files\n");
+		printf("This program compares two landscape files and produces a single file that combines the data from both\n");
+		printf("The gff file is used to provide cooedinates for the genes so that they can be viewed easily on IGV\n");
+		printf("The bam file allows the correct chromosome names to be used, the mapping being done based on chromosome length\n");
 		return EXIT_SUCCESS;
 	}
 	if (argc < 3)
@@ -78,8 +80,10 @@ int LiBiTools::landMain(int argc, char **argv)
 	geneCounts2.loadData(land_filename2);
 	genomeDef.index(geneCounts1);
 
-	TsvFile resFile;
+	TsvFile resFile,missingGenesFile,extraGenesFile;
 	resFile.open("combined.txt");
+	missingGenesFile.open("missingGenes.txt");
+	extraGenesFile.open("extraGenes.txt");
 
 	readPositionDataClass::Iterator it1 = geneCounts1.readPositionData.begin();
 	readPositionDataClass::Iterator it2 = geneCounts2.readPositionData.begin();
@@ -103,6 +107,8 @@ int LiBiTools::landMain(int argc, char **argv)
 							resFile.print(1, _s("chr", geneIterator->second.chromosome, ":", geneIterator->second.regions[0]->start), it1.geneName(), it1.geneAttributes().positions[0]);
 							resFile.print(1, _s("chr", geneIterator->second.chromosome, ":", geneIterator->second.regions[0]->start), it1.geneName(), it1.geneAttributes().positions[1]);
 							resFile.print();
+							missingGenesFile.print(it2.geneName(), _s(it2.geneAttributes().positions[0].size(), " plus"), it2.geneAttributes().positions[0]);
+							missingGenesFile.print(it2.geneName(), _s(it2.geneAttributes().positions[1].size(), " minus"), it2.geneAttributes().positions[1]);
 						}
 						it1++;
 					}
@@ -123,6 +129,8 @@ int LiBiTools::landMain(int argc, char **argv)
 								resFile.print(2, _s("chr", geneIterator->second.chromosome, ":", geneIterator->second.regions[0]->start), it1.geneName(), it2.geneAttributes().positions[0]);
 								resFile.print(2, _s("chr", geneIterator->second.chromosome, ":", geneIterator->second.regions[0]->start), it2.geneName(), it2.geneAttributes().positions[1]);
 								resFile.print();
+								extraGenesFile.print(it1.geneName(), _s(it1.geneAttributes().positions[0].size(), " plus"), it1.geneAttributes().positions[0]);
+								extraGenesFile.print(it1.geneName(), _s(it1.geneAttributes().positions[1].size(), " minus"), it1.geneAttributes().positions[1]);
 							}
 							it2++;
 						}

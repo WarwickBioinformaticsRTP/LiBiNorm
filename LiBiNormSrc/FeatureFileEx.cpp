@@ -40,11 +40,13 @@ featureRegion::~featureRegion() {
 
 void featureFileEx::index(GeneCountData & geneCounts)
 {
+	bool usingPreselectedGenes = false;
 	//	If there are already entries in the geneCounts data at this stage it is because
 	//	we have preloaded them with a set of genes/transcripts that we are specifically
 	//	interested in.  At this point we then get rid of the rest
 	if (geneCounts.readPositionData.size() > 1)
 	{
+		usingPreselectedGenes = true;
 		for (auto & chrom : entryMap)
 		{
 			//	First get rid of entries associated with genes that we are not interested in 
@@ -113,7 +115,6 @@ void featureFileEx::index(GeneCountData & geneCounts)
 
 		for (chromosomeFeatureData::iterator i = thisChromData.begin(); i != thisChromData.end();i++)
 		{
-			bool found = (i->second.name == "NM_001004142.2");
 			//	Take the opportunity to produce a map of all the genes for holding counts
 			geneCounts.addEntry(i->second.name);
 
@@ -136,7 +137,7 @@ void featureFileEx::index(GeneCountData & geneCounts)
 			VEC_DATA_TYPE & length = geneCounts.lengths[0].at(index);
 			auto j = overlapMap.find(&i->second);
 
-			if (i->second.bioType == "miRNA")
+			if (!usingPreselectedGenes && (i->second.bioType == "miRNA"))
 				geneCounts.info[index].useForParemeterEstimation = false;
 
 			if (j == overlapMap.end())
@@ -150,7 +151,8 @@ void featureFileEx::index(GeneCountData & geneCounts)
 			{
 				*i->second.overlaps = j->second.begin()->second;
 				genes[i->second.name].addRegion(&i->second, true,length,chrom.first);
-				if ((i->second.strand == j->second.begin()->second->second.strand) &&
+				if (!usingPreselectedGenes && 
+					(i->second.strand == j->second.begin()->second->second.strand) &&
 					(j->second.begin()->second->second.bioType != "miRNA"))
 				{
 					geneCounts.info[index].useForParemeterEstimation = false;
