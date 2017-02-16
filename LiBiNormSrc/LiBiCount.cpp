@@ -49,6 +49,9 @@ bool dbgFound = false;
 
 using namespace std;
 
+bool htSeqCompatible = false;
+
+
 int LiBiCount::main(int argc, char **argv)
 {
 	vector<geneListFilenameData> geneListFilenames;

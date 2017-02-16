@@ -52,7 +52,7 @@ void featureFileEx::index(GeneCountData & geneCounts)
 			//	First get rid of entries associated with genes that we are not interested in 
 			for (auto i = chrom.second.begin(); i != chrom.second.end();)
 			{
-				if (geneCounts.readPositionData.find(i->second.tags[0].val) == geneCounts.readPositionData.end())
+				if (geneCounts.readPositionData.find(i->second.name) == geneCounts.readPositionData.end())
 				{
 					//			if (!geneList.contains(i->second.tags[0].val))
 					auto j = i++;
@@ -79,7 +79,7 @@ void featureFileEx::index(GeneCountData & geneCounts)
 				if (k != chrom.second.end())
 				{
 					//	It turns out that the Yam1 gene is defined on both strands, so need to check strands
-					if ((i->second.type == k->second.type) && (i->second.tags[0].val == k->second.tags[0].val) && (i->second.strand == k->second.strand))
+					if ((i->second.type == k->second.type) && (i->second.name == k->second.name) && (i->second.strand == k->second.strand))
 					{
 						//	If the second region extends beyond the firat then make the region longer and add
 						//	the second type to the list of types associated with the region
@@ -99,8 +99,8 @@ void featureFileEx::index(GeneCountData & geneCounts)
 				}
 			}
 			static const string nullString;
-			thisChromData.emplace(i->first,featureRegion(i->second.start,finish,i->second.tags[0].val,
-				i->second.strand,i->second.type , (i->second.tags.size()> 1)?i->second.tags[1].val: nullString));
+			thisChromData.emplace(i->first,featureRegion(i->second.start,finish,i->second.name,
+				i->second.strand,i->second.type , i->second.biotype));
 		}
 
 		//	And now for each region find the regions that it overlaps and produce overlap list:  The list of all regions that start before this region has ended.
@@ -137,8 +137,8 @@ void featureFileEx::index(GeneCountData & geneCounts)
 			VEC_DATA_TYPE & length = geneCounts.lengths[0].at(index);
 			auto j = overlapMap.find(&i->second);
 
-			if (!usingPreselectedGenes && (i->second.bioType == "miRNA"))
-				geneCounts.info[index].useForParemeterEstimation = false;
+//			if (!usingPreselectedGenes && (i->second.bioType == "miRNA"))
+//				geneCounts.info[index].useForParemeterEstimation = false;
 
 			if (j == overlapMap.end())
 			{
@@ -151,9 +151,9 @@ void featureFileEx::index(GeneCountData & geneCounts)
 			{
 				*i->second.overlaps = j->second.begin()->second;
 				genes[i->second.name].addRegion(&i->second, true,length,chrom.first);
-				if (!usingPreselectedGenes && 
-					(i->second.strand == j->second.begin()->second->second.strand) &&
-					(j->second.begin()->second->second.bioType != "miRNA"))
+//				if (!usingPreselectedGenes && 
+//					(i->second.strand == j->second.begin()->second->second.strand) &&
+//					(j->second.begin()->second->second.bioType != "miRNA"))
 				{
 					geneCounts.info[index].useForParemeterEstimation = false;
 				}
