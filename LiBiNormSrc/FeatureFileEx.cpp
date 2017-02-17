@@ -137,8 +137,8 @@ void featureFileEx::index(GeneCountData & geneCounts)
 			VEC_DATA_TYPE & length = geneCounts.lengths[0].at(index);
 			auto j = overlapMap.find(&i->second);
 
-//			if (!usingPreselectedGenes && (i->second.bioType == "miRNA"))
-//				geneCounts.info[index].useForParemeterEstimation = false;
+			if (!usingPreselectedGenes && ((i->second.bioType == "miRNA") || (i->second.bioType == "lncRNA")))
+				geneCounts.info[index].useForParemeterEstimation = false;
 
 			if (j == overlapMap.end())
 			{
@@ -146,6 +146,7 @@ void featureFileEx::index(GeneCountData & geneCounts)
 				*i->second.overlaps = i;
 				//	Add featureRegion to the list of regions associated with the gene
 				genes[i->second.name].addRegion(&i->second, false,length,chrom.first);
+
 			}
 			else
 			{
@@ -169,18 +170,26 @@ void featureFileEx::index(GeneCountData & geneCounts)
 	geneCounts.addErrorEntry(notUnique);
 }
 
-void featureFileEx::outputChromData(const string & filename)
+bool featureFileEx::outputChromData(const string & filename, const GeneCountData & geneCounts)
 {
 	TsvFile output;
 	output.open(filename);
 
 	if (!output.is_open())
-		exitFail("Unable to open output file",filename);
+	{
+		exitFail("Unable to open ", filename," for outputting genome data");
+		return false;
+	}
 
 	for(auto & i : genomeGtfData)
 	{
 		for (auto & j : i.second)
-			output.printEnd(i.first,j.first,j.second.finish,j.second.strand,j.second.name,j.second.type);
+		{
+			size_t index = geneCounts.readPositionData.at(j.second.name).index;
+			bool beingUsed = geneCounts.info[index].useForParemeterEstimation;
+			output.printEnd(i.first, _s(i.first, ":", j.second.start, "-", j.second.finish), j.second.RNAstart, j.second.strand, j.second.name, j.second.type, j.second.bioType,beingUsed);
+		}
 	}
+	return true;
 }
 

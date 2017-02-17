@@ -52,7 +52,10 @@ public:
 };
 
 //	A map of the features associated with each gene
-typedef std::map<std::string,chromosomeFeatureData> genomeFeatureRegions;
+class genomeFeatureRegions : public std::map<std::string, chromosomeFeatureData>
+{
+
+};
 
 //	For each region in the genome where a read starts we store a reference to an iterator that 
 //	points to the first region that overlaps the region 
@@ -96,7 +99,7 @@ class featureFileEx : public featureFile
 {
 public: 
 	void index(GeneCountData & geneCounts);
-	void outputChromData(const std::string & filename);
+	bool outputChromData(const std::string & filename, const GeneCountData & geneCounts);
 
 	//	A container of all the consolidated feature regions
 	genomeFeatureRegions genomeGtfData; 

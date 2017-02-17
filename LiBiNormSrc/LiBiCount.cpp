@@ -312,7 +312,9 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 
 	elapsedTime("Feature file consolidated.");
 
-	_DBG(genomeDef.outputChromData(featureFileName.replaceSuffix(".txt"));)
+#ifdef	OUTPUT_FEATURE_DATA
+	genomeDef.outputChromData(countsFilename.replaceSuffix("_genome2.txt"), geneCounts);
+#endif
 
 	if (nameOrder)
 		processNameOrderedBamData();
