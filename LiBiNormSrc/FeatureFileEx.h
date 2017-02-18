@@ -98,7 +98,7 @@ public:
 class featureFileEx : public featureFile
 {
 public: 
-	void index(GeneCountData & geneCounts);
+	void index(GeneCountData & geneCounts,bool useStrand);
 	bool outputChromData(const std::string & filename, const GeneCountData & geneCounts);
 
 	//	A container of all the consolidated feature regions

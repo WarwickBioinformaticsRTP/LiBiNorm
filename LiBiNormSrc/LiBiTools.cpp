@@ -80,7 +80,7 @@ int LiBiTools::landMain(int argc, char **argv)
 	GeneCountData geneCounts1, geneCounts2;
 	geneCounts1.loadData(land_filename1);
 	geneCounts2.loadData(land_filename2);
-	genomeDef.index(geneCounts1);
+	genomeDef.index(geneCounts1,false);
 
 	TsvFile resFile,missingGenesFile,extraGenesFile;
 	resFile.open("combined.txt");

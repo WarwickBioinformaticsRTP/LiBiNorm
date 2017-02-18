@@ -39,7 +39,7 @@ featureRegion::~featureRegion() {
 };
 
 
-void featureFileEx::index(GeneCountData & geneCounts)
+void featureFileEx::index(GeneCountData & geneCounts, bool useStrand)
 {
 	bool usingPreselectedGenes = false;
 	//	If there are already entries in the geneCounts data at this stage it is because
@@ -117,7 +117,8 @@ void featureFileEx::index(GeneCountData & geneCounts)
 		for (chromosomeFeatureData::iterator i = thisChromData.begin(); i != thisChromData.end();i++)
 		{
 			//	Take the opportunity to produce a map of all the genes for holding counts
-			geneCounts.addEntry(i->second.name);
+			//	The default is that it will be used for parameter estimation
+			geneCounts.addEntry(i->second.name,true);
 
 			//	And a parallel map of the ends of all of the featureRegions/
 			thisChromEndMap.emplace(i->second.finish,i);
@@ -159,9 +160,11 @@ void featureFileEx::index(GeneCountData & geneCounts)
 			{
 				*i->second.overlaps = j->second.begin()->second;
 				genes[i->second.name].addRegion(&i->second, true,length,chrom.first);
-//				if (!usingPreselectedGenes && 
-//					(i->second.strand == j->second.begin()->second->second.strand) &&
-//					(j->second.begin()->second->second.bioType != "miRNA"))
+				//	If the genes overlap then we dont use them if either
+				//	   a) the reads are unstranded
+				//	   b) the genes are on the same strand
+				if (!usingPreselectedGenes && 
+					(!useStrand || (i->second.strand == j->second.begin()->second->second.strand)))
 				{
 					geneCounts.info[index].useForParameterEstimation = false;
 				}

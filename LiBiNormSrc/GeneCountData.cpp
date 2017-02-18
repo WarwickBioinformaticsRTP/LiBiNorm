@@ -329,8 +329,9 @@ void GeneCountData::remove_invalid_values()
 	}
 }
 */
-void GeneCountData::addEntry(const string & name, VEC_DATA_TYPE length, VEC_DATA_TYPE count,
-	rnaPosVec & posPositions, rnaPosVec & negPositions, bool useForParameterEstimation)
+void GeneCountData::addEntry(const string & name, bool useForParameterEstimation,
+	VEC_DATA_TYPE length, VEC_DATA_TYPE count,
+	rnaPosVec & posPositions, rnaPosVec & negPositions)
 {
 	auto geneData = readPositionData.find(name);
 	if (geneData == readPositionData.end())
@@ -363,7 +364,7 @@ string GeneCountData::loadData(const string filename, int Ngenes)
 		exitFail("Unable to open file ", filename);
 
 	//The reference value
-	addEntry("reference", DEFAULT_NORMALISATION_GENE_LENGTH);
+	addEntry("reference",false, DEFAULT_NORMALISATION_GENE_LENGTH);
 
 
 	stringEx buffer;
@@ -427,7 +428,7 @@ string GeneCountData::loadData(const string filename, int Ngenes)
 			}
 
 
-			addEntry(gene, length, count, posPositions, negPositions,use=="Y");
+			addEntry(gene, use == "Y",length, count, posPositions, negPositions);
 			a++;
 		}
 		lastGene = gene;

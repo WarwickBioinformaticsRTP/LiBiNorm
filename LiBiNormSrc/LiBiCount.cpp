@@ -286,14 +286,14 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 		progMessage("Unable to output genome data to :",countsFilename.replaceSuffix("_genome.txt"));
 #endif
 
-	geneCounts.addEntry("reference", DEFAULT_NORMALISATION_GENE_LENGTH);
+	geneCounts.addEntry("reference", false,DEFAULT_NORMALISATION_GENE_LENGTH);
 	for (auto & glfn : geneListFilenames)
 	{
 		progMessage("Using genes/transcripts listed in ", glfn.geneListFilename);
 		geneCounts.useSelectedGenes(glfn);
 	}
 
-	genomeDef.index(geneCounts);
+	genomeDef.index(geneCounts,useStrand);
 
 #ifdef COMPARE_RESULTS
 	transcriptDataMap transData;

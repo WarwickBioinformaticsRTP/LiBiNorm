@@ -132,9 +132,9 @@ public:
 	void reset() { for (auto & gene : readPositionData)	gene.second.reset(); };
 
 //	void addEntry(const std::string & name, VEC_DATA_TYPE length = 0);
-	void addEntry(const std::string & name, VEC_DATA_TYPE length = 0, VEC_DATA_TYPE count = 0, 
-		rnaPosVec & posPositions = nullData, rnaPosVec & negPositions = nullData,
-		bool useForParameterEstimation = false);
+	void addEntry(const std::string & name, bool useForParameterEstimation = false,
+		VEC_DATA_TYPE length = 0, VEC_DATA_TYPE count = 0,
+		rnaPosVec & posPositions = nullData, rnaPosVec & negPositions = nullData);
 	void addErrorEntry(std::string name);
 
 
