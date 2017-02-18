@@ -56,7 +56,7 @@
 #define OUTPUT_FEATURE_DATA
 
 //	Allows a maximum gene length to be specified
-//   #define MAX_LENGTH_OF_GENE_FOR_PARAM_ESTIMATION 20000
+#define MAX_LENGTH_OF_GENE_FOR_PARAM_ESTIMATION 20000
 
 //	Adds a menu option that allows the seed to be specified
 #define SELECT_READ_SEED
@@ -75,6 +75,9 @@
 //	The original MATLAB code had an error in setting the initial values for mcmc runs which this 
 //	simulates (ModelData.cpp)
 // #define SIMULATE_MATLAB_BUG
+
+//	Output landscape files in the original format
+// #define LANDSCAPE_FORMAT_1
 
 //	Use this option to use the parameters associated with the most likly parameter set
 //	https://sciencehouse.wordpress.com/2010/06/23/mcmc-and-fitting-models-to-data/

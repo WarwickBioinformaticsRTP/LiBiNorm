@@ -2,13 +2,15 @@
 #include <fstream>
 #include "api/BamReader.h"
 
-#include "LiBiTools.h"
 
 #include "libCommon.h"
 #include "stringEx.h"
 #include "fastaFile.h"
+
+#include "Options.h"
 #include "FeatureFileEx.h"
 #include "GeneCountData.h"
+#include "LiBiTools.h"
 
 using namespace std;
 using namespace BamTools;

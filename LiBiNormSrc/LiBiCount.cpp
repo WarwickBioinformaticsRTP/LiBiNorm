@@ -312,14 +312,14 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 
 	elapsedTime("Feature file consolidated.");
 
-#ifdef	OUTPUT_FEATURE_DATA
-	genomeDef.outputChromData(countsFilename.replaceSuffix("_genome2.txt"), geneCounts);
-#endif
-
 	if (nameOrder)
 		processNameOrderedBamData();
 	else
 		processPositionOrderedBamData();
+
+#ifdef	OUTPUT_FEATURE_DATA
+	genomeDef.outputChromData(countsFilename.replaceSuffix("_genome2.txt"), geneCounts);
+#endif
 
 	//	Need to output landscape file now because the data will be modified during the process
 	//	of selecting reads for normalisation

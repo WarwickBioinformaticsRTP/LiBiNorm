@@ -5,7 +5,6 @@
 #include <random>
 #include "containerEx.h"
 
-#include "Options.h"
 #include "parser.h"
 #include "mcmc.h"
 
@@ -82,7 +81,7 @@ public:
 
 	//	Used by the copy constructor in GeneCountData::addEntry.  Provides a more efficient way of copying the
 	//	position vectors as they are just about to be discarded
-	geneReadData(size_t index, rnaPosVec && posPos, rnaPosVec && negPos) :index(index)
+	geneReadData(size_t index, rnaPosVec && posPos, rnaPosVec && negPos) :	index(index)
 	{
 		swap(posPos, positions[0]);
 		swap(negPos, positions[1]);
@@ -95,6 +94,7 @@ public:
 
 	//	Index to the position where the associated name length and count information is held for this gene
 	size_t index;
+
 	//	and their locations
 	rnaPosVec positions[2];
 };
@@ -105,9 +105,11 @@ public:
 class countInfo
 {
 public:
-	countInfo(const std::string & name) :useForParemeterEstimation(true), histoGram_ind(0),name(name) {};
-	bool useForParemeterEstimation;
+	countInfo(const std::string & name,bool useForParameterEstimation) : histoGram_ind(0), 
+		useForParameterEstimation(useForParameterEstimation),name(name) {};
 	int histoGram_ind;
+	//  Use for parameter estimation
+	bool useForParameterEstimation;
 	std::string name;
 };
 
@@ -131,7 +133,8 @@ public:
 
 //	void addEntry(const std::string & name, VEC_DATA_TYPE length = 0);
 	void addEntry(const std::string & name, VEC_DATA_TYPE length = 0, VEC_DATA_TYPE count = 0, 
-		rnaPosVec & posPositions = nullData, rnaPosVec & negPositions = nullData);
+		rnaPosVec & posPositions = nullData, rnaPosVec & negPositions = nullData,
+		bool useForParameterEstimation = false);
 	void addErrorEntry(std::string name);
 
 

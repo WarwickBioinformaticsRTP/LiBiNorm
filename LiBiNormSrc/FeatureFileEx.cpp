@@ -1,3 +1,4 @@
+#include "Options.h"
 #include "FeatureFileEx.h"
 
 
@@ -137,8 +138,14 @@ void featureFileEx::index(GeneCountData & geneCounts)
 			VEC_DATA_TYPE & length = geneCounts.lengths[0].at(index);
 			auto j = overlapMap.find(&i->second);
 
-			if (!usingPreselectedGenes && ((i->second.bioType == "miRNA") || (i->second.bioType == "lncRNA")))
-				geneCounts.info[index].useForParemeterEstimation = false;
+//			if (!usingPreselectedGenes && 
+//				((i->second.bioType == "miRNA") || (i->second.bioType == "lncRNA") || (i->second.bioType == "misc_RNA")))
+//					geneCounts.info[index].useForParameterEstimation = false;
+
+#ifdef MAX_LENGTH_OF_GENE_FOR_PARAM_ESTIMATION
+			if (!usingPreselectedGenes && (length > MAX_LENGTH_OF_GENE_FOR_PARAM_ESTIMATION))
+				geneCounts.info[index].useForParameterEstimation = false;
+#endif
 
 			if (j == overlapMap.end())
 			{
@@ -156,7 +163,7 @@ void featureFileEx::index(GeneCountData & geneCounts)
 //					(i->second.strand == j->second.begin()->second->second.strand) &&
 //					(j->second.begin()->second->second.bioType != "miRNA"))
 				{
-					geneCounts.info[index].useForParemeterEstimation = false;
+					geneCounts.info[index].useForParameterEstimation = false;
 				}
 
 			}
@@ -186,8 +193,12 @@ bool featureFileEx::outputChromData(const string & filename, const GeneCountData
 		for (auto & j : i.second)
 		{
 			size_t index = geneCounts.readPositionData.at(j.second.name).index;
-			bool beingUsed = geneCounts.info[index].useForParemeterEstimation;
-			output.printEnd(i.first, _s(i.first, ":", j.second.start, "-", j.second.finish), j.second.RNAstart, j.second.strand, j.second.name, j.second.type, j.second.bioType,beingUsed);
+			size_t countF = geneCounts.readPositionData.at(j.second.name).positions[0].size();
+			size_t countR = geneCounts.readPositionData.at(j.second.name).positions[1].size();
+			bool beingUsed = geneCounts.info[index].useForParameterEstimation;
+			int length = geneCounts.lengths[0][index];
+			output.printEnd(i.first, _s("chr",i.first, ":", j.second.start, "-", j.second.finish), j.second.RNAstart, j.second.strand,
+				j.second.name, j.second.type, j.second.bioType,beingUsed, length,countF, countR);
 		}
 	}
 	return true;

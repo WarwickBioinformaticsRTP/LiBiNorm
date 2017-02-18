@@ -1,5 +1,6 @@
 #include <fstream>
 #include "containerEx.h"
+#include "Options.h"
 #include "GeneCountData.h"
 
 using namespace std;
@@ -240,11 +241,11 @@ bool GeneCountData::outputLandscape(const string & filename)
 
 	if (!output.open(filename))
 		exitFail("Unable to open ", filename, " for landscape data");
-
+#ifdef LANDSCAPE_FORMAT_1
 	for (size_t i = 1;i < info.size();i++)
 	{
 		long count = counts[i];
-		if (/*(count > 0) && */(info[i].useForParemeterEstimation))
+		if (/*(count > 0) && */(info[i].useForParameterEstimation))
 		{
 			long len = lengths[0][i];
 			string & name = info[i].name;
@@ -256,6 +257,19 @@ bool GeneCountData::outputLandscape(const string & filename)
 			output.print(name, _s(len, c, " minus"), readPositionData[name].positions[1]);
 		}
 	}
+#else
+	output.print("Landscape file","Format",2);
+	for (size_t i = 1; i < info.size(); i++)
+	{
+		long count = counts[i];
+		long len = lengths[0][i];
+		string & name = info[i].name;
+		output.print(name, len, count, info[i].useForParameterEstimation?"Y":"N");
+		output.print(name, "plus", readPositionData[name].positions[0]);
+		output.print(name, "minus", readPositionData[name].positions[1]);
+	}
+
+#endif
 
 	return true;
 }
@@ -270,24 +284,27 @@ void GeneCountData::histc(const vector<int> E)
 	//	Increment from 1 because the first entry is the reference length
 	for (size_t i = 1; i < info.size(); i++)
 	{
-		double v = lengths[0][i];
-		size_t l = 0;
-		size_t h = E.size() - 1;
-		size_t k = l;
-		while ((h - l) > 1)
+		if (info[i].useForParameterEstimation)
 		{
-			k = (h + l) / 2;
-			if (v < E[k])
-				h = k;
+			double v = lengths[0][i];
+			size_t l = 0;
+			size_t h = E.size() - 1;
+			size_t k = l;
+			while ((h - l) > 1)
+			{
+				k = (h + l) / 2;
+				if (v < E[k])
+					h = k;
+				else
+					l = k;
+			}
+			if (v == E[h])
+				k = h;
 			else
-				l = k;
+				k = l;
+			info[i].histoGram_ind = k;
+			freq[k]++;
 		}
-		if (v == E[h])
-			k = h;
-		else
-			k = l;
-		info[i].histoGram_ind = k;
-		freq[k]++;
 	}
 }
 
@@ -312,13 +329,14 @@ void GeneCountData::remove_invalid_values()
 	}
 }
 */
-void GeneCountData::addEntry(const string & name, VEC_DATA_TYPE length, VEC_DATA_TYPE count, rnaPosVec & posPositions, rnaPosVec & negPositions)
+void GeneCountData::addEntry(const string & name, VEC_DATA_TYPE length, VEC_DATA_TYPE count,
+	rnaPosVec & posPositions, rnaPosVec & negPositions, bool useForParameterEstimation)
 {
 	auto geneData = readPositionData.find(name);
 	if (geneData == readPositionData.end())
 	{
 		counts.push_back(count);
-		info.push_back(countInfo(name));
+		info.push_back(countInfo(name, useForParameterEstimation));
 		lengths[0].push_back(length);
 		readPositionData.emplace(name, geneReadData(counts.size() - 1, move(posPositions), move(negPositions)));
 	}
@@ -339,6 +357,7 @@ void GeneCountData::addErrorEntry(string name)
 string GeneCountData::loadData(const string filename, int Ngenes)
 {
 	std::ifstream f;
+	int format = -1;
 	f.open(filename);
 	if (!f.is_open())
 		exitFail("Unable to open file ", filename);
@@ -347,7 +366,8 @@ string GeneCountData::loadData(const string filename, int Ngenes)
 	addEntry("reference", DEFAULT_NORMALISATION_GENE_LENGTH);
 
 
-	string buffer, gene, direction;
+	stringEx buffer;
+	string gene, direction;
 	int a = 1;
 	stringEx lastGene;
 	while (!f.eof() & (Ngenes-- != 0))
@@ -355,26 +375,59 @@ string GeneCountData::loadData(const string filename, int Ngenes)
 		//	Need to check for gene and length consistency and that the gene has not appeared before
 
 		getline(f, buffer);
-		string gene, n1, n2;
+		if (format == -1)
+		{
+			string dummy;
+			if (buffer.startsWith("Landscape file"))
+			{
+				parseTsv(buffer, dummy, dummy, format);
+				if ((format < 2) || (format > 2))
+					exitFail("Unknown landscape file format");
+				getline(f, buffer);
+			}
+			else
+				format = 1;
+		}
+		string gene,gene1,gene2, n1, n2;
 		if (buffer.size())
 		{
 			rnaPosVec posPositions, negPositions;
-
-			parseTsv(buffer, gene, n1, " ", direction, (std::vector<rna_pos_type> &)posPositions);
-			getline(f, buffer);
-			parseTsv(buffer, gene, n2, " ", direction, (std::vector<rna_pos_type> &)negPositions);
-
 			int length, count;
+			string use("Y");
 
-			if (strchr(n1.c_str(), ':') == NULL)
+			switch (format)
 			{
-				length = atoi(n1.c_str());
-				count = posPositions.size() + negPositions.size();
+			case 1:
+				//	Need to case the posPositions to the undelying type in order to pick up the
+				//	librray code for parsing a vector of things
+				parseTsv(buffer, gene, n1, " ", direction, (std::vector<rna_pos_type> &)posPositions);
+				getline(f, buffer);
+				parseTsv(buffer, gene1, n2, " ", direction, (std::vector<rna_pos_type> &)negPositions);
+				if ((gene1 != gene) || (direction != "minus"))
+					exitFail("Landscape file format error: ", buffer);
+				if (strchr(n1.c_str(), ':') == NULL)
+				{
+					length = atoi(n1.c_str());
+					count = posPositions.size() + negPositions.size();
+				}
+				else
+					parser(n1, ":", length, count);
+				break;
+			case 2:
+				parseTsv(buffer, gene, length,count,use);
+				getline(f, buffer);
+				parseTsv(buffer, gene1, direction, (std::vector<rna_pos_type> &)posPositions);
+				if ((gene1 != gene) || (direction != "plus")) 
+					exitFail("Landscape file format error: ", buffer);
+				getline(f, buffer);
+				parseTsv(buffer, gene2, direction, (std::vector<rna_pos_type> &)negPositions);
+				if ((gene2 != gene) || (direction != "minus"))
+					exitFail("Landscape file format error: ", buffer);
+				break;
 			}
-			else
-				parser(n1, ":", length, count);
 
-			addEntry(gene, length, count, posPositions, negPositions);
+
+			addEntry(gene, length, count, posPositions, negPositions,use=="Y");
 			a++;
 		}
 		lastGene = gene;
@@ -415,11 +468,7 @@ void GeneCountData::transferTo(mcmcGeneData & mcmcData, size_t maxLength, int ma
 	//	in the reference gene so this makes no difference
 	for (size_t i = 1; i < info.size(); i++)
 	{
-		if ((info[i].useForParemeterEstimation)
-#ifdef MAX_LENGTH_OF_GENE_FOR_PARAM_ESTIMATION
-		 && (lengths[0][i] < MAX_LENGTH_OF_GENE_FOR_PARAM_ESTIMATION)
-#endif
-			)
+		if (info[i].useForParameterEstimation)
 		{
 			size_t count = maxLength;
 //			VEC_DATA_TYPE len = lengths[0][i];
