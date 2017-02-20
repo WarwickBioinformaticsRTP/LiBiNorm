@@ -131,7 +131,6 @@ public:
 	//	Needed if we decide the data is not name ordered and have to restart
 	void reset() { for (auto & gene : readPositionData)	gene.second.reset(); };
 
-//	void addEntry(const std::string & name, VEC_DATA_TYPE length = 0);
 	void addEntry(const std::string & name, bool useForParameterEstimation = false,
 		VEC_DATA_TYPE length = 0, VEC_DATA_TYPE count = 0,
 		rnaPosVec & posPositions = nullData, rnaPosVec & negPositions = nullData);
@@ -141,7 +140,7 @@ public:
 	std::string loadData(const std::string filename, int Nlines = -1);
 	void remove_invalid_values();
 	void histc (const std::vector<int> E);
-	void transferTo(mcmcGeneData & mcmcData,size_t maxLength,int maxTotReads);
+	void transferTo(mcmcGeneData & mcmcData,size_t maxLength,int maxTotReads,int maxGeneLengthForParameterEstimation);
 
 	bool outputGeneCounts(const std::string & filename, int detailLevel = 0, stringEx model = "");
 	bool outputLandscape(const std::string & filename);

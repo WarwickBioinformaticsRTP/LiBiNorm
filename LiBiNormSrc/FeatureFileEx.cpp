@@ -134,8 +134,13 @@ void featureFileEx::index(GeneCountData & geneCounts, bool useStrand)
 		}
 		for (chromosomeFeatureData::iterator i = thisChromData.begin(); i != thisChromData.end();i++)
 		{
+			bool found = false;
 			size_t index = geneCounts.readPositionData.at(i->second.name).index;
 
+			if (i->second.name == "ENSMUSG00000022708")
+				found = true;
+
+			//	Use this for accumulating length information
 			VEC_DATA_TYPE & length = geneCounts.lengths[0].at(index);
 			auto j = overlapMap.find(&i->second);
 
@@ -143,10 +148,6 @@ void featureFileEx::index(GeneCountData & geneCounts, bool useStrand)
 //				((i->second.bioType == "miRNA") || (i->second.bioType == "lncRNA") || (i->second.bioType == "misc_RNA")))
 //					geneCounts.info[index].useForParameterEstimation = false;
 
-#ifdef MAX_LENGTH_OF_GENE_FOR_PARAM_ESTIMATION
-			if (!usingPreselectedGenes && (length > MAX_LENGTH_OF_GENE_FOR_PARAM_ESTIMATION))
-				geneCounts.info[index].useForParameterEstimation = false;
-#endif
 
 			if (j == overlapMap.end())
 			{
@@ -171,7 +172,6 @@ void featureFileEx::index(GeneCountData & geneCounts, bool useStrand)
 
 			}
 		}
-
 	}
 	geneCounts.addErrorEntry(noFeatureString);
 	geneCounts.addErrorEntry(ambiguousString);

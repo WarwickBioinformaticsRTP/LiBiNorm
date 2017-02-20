@@ -28,6 +28,7 @@ protected:
 #endif
 		theModel(noModel),
 		maxReads(DEF_MAX_READS_FOR_PARAM_ESTIMATION),
+		maxGeneLength(DEF_LENGTH_OF_GENE_FOR_PARAM_ESTIMATION),
 		Nthreads(DEF_THREADS),
 		Nruns(NUMBER_OF_MCMC_RUNS),
 		NrunsOtherModels(0)
@@ -42,7 +43,7 @@ protected:
 	bool normalise, pauseAtEnd,nelderMead;
 	size_t Nsimu;
 	modelType theModel;
-	size_t maxReads, Nthreads;
+	size_t maxReads, Nthreads,maxGeneLength;
 	mcmcRunId Nruns,NrunsOtherModels;
 
 	headerType headers;

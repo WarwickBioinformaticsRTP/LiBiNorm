@@ -2,7 +2,7 @@
 #define OPTIONS_H
 
 
-#define LIBINORM_VERSION "1.3.1"
+#define LIBINORM_VERSION "1.4.0"
 //	Bam/gff file reading
 #define DEFAULT_FEATURE_TYPE_EXON "exon" 
 #define DEFAULT_GTF_ID_ATTRIBUTE "gene_id"
@@ -10,6 +10,10 @@
 #define DEFAULT_COUNT_MODE intersect_union
 
 #define DEF_THREADS 3 //-p
+
+//	The transcript types that are ignored when parsing gtf files.
+//	These are included in htseq_compatible mode
+#define IGNORED_GTF_TRANSCRIPT_TYPES  "retained_intron" 
 
 //	The seed for the random number generator used to select reads.  If undefined then a random seed is generated
 //#define SELECT_READS_SEED 2017
@@ -56,7 +60,7 @@
 #define OUTPUT_FEATURE_DATA
 
 //	Allows a maximum gene length to be specified
-#define MAX_LENGTH_OF_GENE_FOR_PARAM_ESTIMATION 20000
+#define DEF_LENGTH_OF_GENE_FOR_PARAM_ESTIMATION 20000
 
 //	Adds a menu option that allows the seed to be specified
 #define SELECT_READ_SEED

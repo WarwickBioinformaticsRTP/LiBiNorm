@@ -441,7 +441,7 @@ string GeneCountData::loadData(const string filename, int Ngenes)
 
 //	Transfers information for up to maxLength reads from up to Ngenes genes or transcripts
 //	into the form which can be used by the mcmc chain
-void GeneCountData::transferTo(mcmcGeneData & mcmcData, size_t maxLength, int maxTotReads)
+void GeneCountData::transferTo(mcmcGeneData & mcmcData, size_t maxLength, int maxTotReads, int maxGeneLengthForParameterEstimation)
 {
 	vectorEx<int> bins{ { 0,300 } };
 	for (size_t i = 500; i <= 10000; i += 500)
@@ -469,7 +469,7 @@ void GeneCountData::transferTo(mcmcGeneData & mcmcData, size_t maxLength, int ma
 	//	in the reference gene so this makes no difference
 	for (size_t i = 1; i < info.size(); i++)
 	{
-		if (info[i].useForParameterEstimation)
+		if ((info[i].useForParameterEstimation) && (lengths[0][i] <= maxGeneLengthForParameterEstimation))
 		{
 			size_t count = maxLength;
 //			VEC_DATA_TYPE len = lengths[0][i];
@@ -481,10 +481,10 @@ void GeneCountData::transferTo(mcmcGeneData & mcmcData, size_t maxLength, int ma
 			for (size_t j = 0; j < 2; j++)
 			{
 				rnaPosVec & positions = readPositionData.at(info[i].name).positions[j];
-				positions.selectAtMost(count);
+				positions.selectAtMost(maxLength);
 
 				//	fragData contains the count 
-				size_t len = min(count, positions.size());
+				size_t len = min(maxLength, positions.size());
 				mcmcData.fragData.append(positions,len);
 
 				mcmcData.geneIndex.insert(mcmcData.geneIndex.end(),len, geneIndex);//gene.length);

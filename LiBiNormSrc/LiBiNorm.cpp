@@ -347,7 +347,7 @@ int LiBiNorm::main(int argc, char **argv)
 bool LiBiNorm::coreParameterEstimation()
 {
 	geneCounts.remove_invalid_values();
-	geneCounts.transferTo(geneData, MAX_READS_GENE,maxReads);
+	geneCounts.transferTo(geneData, MAX_READS_GENE,maxReads,maxGeneLength);
 
 	elapsedTime("Data loaded");
 

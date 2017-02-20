@@ -267,6 +267,12 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 	if (!nameOrder)
 		tempDirectory = tempDirectory::get(tempDirectory);
 
+#ifdef IGNORED_GTF_TRANSCRIPT_TYPES
+	//	Retained intron transcripts dramatically change the apparent lengths of genes
+	if (!htSeqCompatible)
+		genomeDef.ignoreTranscriptTypes({ { IGNORED_GTF_TRANSCRIPT_TYPES } });
+#endif
+
 	// retrieve 'metadata' from BAM files.
 	references = reader.GetReferenceData();
 	for(auto & i : references)

@@ -55,7 +55,7 @@ int LiBiVariation::main(int argc, char **argv)
 		exitFail("Landscape file must be specified");
 	geneCounts.loadData(landscapeFilename, -1);
 	geneCounts.remove_invalid_values();
-	geneCounts.transferTo(geneData, MAX_READS_GENE, maxReads);
+	geneCounts.transferTo(geneData, MAX_READS_GENE, maxReads, maxGeneLength);
 
 	string filename(normaliseResultsFilename.replaceSuffix("_variation.txt"));
 	TsvFile mcmcResult;

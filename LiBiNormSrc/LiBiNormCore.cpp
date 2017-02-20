@@ -68,6 +68,11 @@ bool LiBiNormCore::commandParseCommon(int & ni, int argc,char **argv)
 				exitFail("At least 1000 reads must be specified");
 			return true;
 		}
+		if ((strcmp(argv[ni], "-e") == 0) || (opt2 = (strncmp(argv[ni], "--geneLength=", 13) == 0)))
+		{
+			maxGeneLength = atoi(opt2 ? argv[ni] + 13 : argv[++ni]);
+			return true;
+		}
 		if ((strcmp(argv[ni], "-c") == 0) || (opt2 = (strncmp(argv[ni], "--counts=", 9) == 0)))
 		{
 			countsFilename = opt2 ? argv[++ni] + 9 : argv[++ni];
