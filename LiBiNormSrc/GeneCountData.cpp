@@ -277,14 +277,14 @@ bool GeneCountData::outputLandscape(const string & filename)
 //	Find the number of read position values in 'this' (a vector) that sits within each bin of the
 //	histogram defined by E.   The results go into the 'freq'vector
 //	This is used as part of the liklyhood calculations
-void GeneCountData::histc(const vector<int> E)
+void GeneCountData::histc(const vector<int> E, int maxGeneLengthForParameterEstimation)
 {
 	freq.assign(E.size(), 0);
 //	histoGram_ind.assign(lengths[0].size(), -1);
 	//	Increment from 1 because the first entry is the reference length
 	for (size_t i = 1; i < info.size(); i++)
 	{
-		if (info[i].useForParameterEstimation)
+		if ((info[i].useForParameterEstimation) && (lengths[0][i] <= maxGeneLengthForParameterEstimation))
 		{
 			double v = lengths[0][i];
 			size_t l = 0;
@@ -448,7 +448,7 @@ void GeneCountData::transferTo(mcmcGeneData & mcmcData, size_t maxLength, int ma
 		bins.push_back(i);
 	bins.add(11000, 12000, 15000, 30000);
 
-	histc(bins);
+	histc(bins, maxGeneLengthForParameterEstimation);
 
 	freq[0] = freq[0] * 2;
 	freq[1] = freq[1] * 2;

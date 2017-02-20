@@ -139,7 +139,7 @@ public:
 
 	std::string loadData(const std::string filename, int Nlines = -1);
 	void remove_invalid_values();
-	void histc (const std::vector<int> E);
+	void histc (const std::vector<int> E, int maxGeneLengthForParameterEstimation);
 	void transferTo(mcmcGeneData & mcmcData,size_t maxLength,int maxTotReads,int maxGeneLengthForParameterEstimation);
 
 	bool outputGeneCounts(const std::string & filename, int detailLevel = 0, stringEx model = "");
