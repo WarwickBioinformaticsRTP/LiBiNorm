@@ -6,7 +6,7 @@
 //	Bam/gff file reading
 #define DEFAULT_FEATURE_TYPE_EXON "exon" 
 #define DEFAULT_GTF_ID_ATTRIBUTE "gene_id"
-#define DEFAULT_GFF_ID_ATTRIBUTE "Genbank"
+#define DEFAULT_GFF_ID_ATTRIBUTE "gene"
 #define DEFAULT_COUNT_MODE intersect_union
 
 #define DEF_THREADS 3 //-p
@@ -14,9 +14,6 @@
 //	The transcript types that are ignored when parsing gtf files.
 //	These are included in htseq_compatible mode
 #define IGNORED_GTF_TRANSCRIPT_TYPES  "retained_intron" 
-
-//	The seed for the random number generator used to select reads.  If undefined then a random seed is generated
-//#define SELECT_READS_SEED 2017
 
 //	Read selection for paremeter estimation
 #define DEF_MAX_READS_FOR_PARAM_ESTIMATION 100000000  // -d
@@ -45,7 +42,17 @@
 
 //	Outputting results
 #define DEFAULT_NORMALISATION_GENE_LENGTH 1000
-#define MAX_GENE_LENGTH_FOR_NORM_PLOT 20000
+#define MAX_GENE_LENGTH_FOR_NORM_PLOT 20000 
+
+//	Allows a maximum gene length to be specified
+#define DEF_LENGTH_OF_GENE_FOR_PARAM_ESTIMATION 20000 // -e
+
+
+//	******************************************************************************
+//	The following are options that would normally be disabled in the release version of the code
+
+//	The seed for the random number generator used to select reads.  If undefined then a random seed is generated
+// #define SELECT_READS_SEED 2017
 
 //	Use this to add the mode which creates fastq files based on bam files with artificial problems
 // #define MAKE_FASTQ_MODE
@@ -59,8 +66,6 @@
 //  Output detailed results of interpreting the Feature file
 #define OUTPUT_FEATURE_DATA
 
-//	Allows a maximum gene length to be specified
-#define DEF_LENGTH_OF_GENE_FOR_PARAM_ESTIMATION 20000
 
 //	Adds a menu option that allows the seed to be specified
 #define SELECT_READ_SEED

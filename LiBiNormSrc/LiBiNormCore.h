@@ -43,7 +43,7 @@ protected:
 	bool normalise, pauseAtEnd,nelderMead;
 	size_t Nsimu;
 	modelType theModel;
-	size_t maxReads, Nthreads,maxGeneLength;
+	size_t maxReads,maxGeneLength,Nthreads;
 	mcmcRunId Nruns,NrunsOtherModels;
 
 	headerType headers;

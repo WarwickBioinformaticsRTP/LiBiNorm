@@ -5,7 +5,9 @@
 
 using namespace std;
 
-
+//  Remove reads that, apparently, start before the beginning or after the end of the gene.
+//	The first version reproduces the less efficient algorithm that was used in th eoriginal matlab
+//	code
 rnaPosVec & rnaPosVec::removeInvalidValues(rna_pos_type maxVal)
 {
 #ifdef REPRODUCE_MATLAB
@@ -242,6 +244,7 @@ bool GeneCountData::outputLandscape(const string & filename)
 	if (!output.open(filename))
 		exitFail("Unable to open ", filename, " for landscape data");
 #ifdef LANDSCAPE_FORMAT_1
+	//	This is the original format
 	for (size_t i = 1;i < info.size();i++)
 	{
 		long count = counts[i];
@@ -258,6 +261,9 @@ bool GeneCountData::outputLandscape(const string & filename)
 		}
 	}
 #else
+	//	This format includes an additional header line, and an extra line per gene/transcript
+	//	that contains the meta information such as length, number of reads (redundant but
+	//	useful when viewing the file and whether it is 
 	output.print("Landscape file","Format",2);
 	for (size_t i = 1; i < info.size(); i++)
 	{
@@ -277,10 +283,12 @@ bool GeneCountData::outputLandscape(const string & filename)
 //	Find the number of read position values in 'this' (a vector) that sits within each bin of the
 //	histogram defined by E.   The results go into the 'freq'vector
 //	This is used as part of the liklyhood calculations
+//	Only include genes/transcripts that are OK for use during the parameter estimation phase,
+//	ie do not overlap other genes, and are less than the current length threshold.
 void GeneCountData::histc(const vector<int> E, int maxGeneLengthForParameterEstimation)
 {
 	freq.assign(E.size(), 0);
-//	histoGram_ind.assign(lengths[0].size(), -1);
+
 	//	Increment from 1 because the first entry is the reference length
 	for (size_t i = 1; i < info.size(); i++)
 	{
@@ -317,18 +325,7 @@ void GeneCountData::remove_invalid_values()
 	}
 }
 
-/*void GeneCountData::addEntry(const string & name, VEC_DATA_TYPE length)
-{
-	auto geneData = readPositionData.find(name);
-	if (geneData == readPositionData.end())
-	{
-		counts.push_back(0);
-		info.push_back(countInfo(name));
-		lengths[0].push_back(length);
-		readPositionData.emplace(name, counts.size() - 1);
-	}
-}
-*/
+
 void GeneCountData::addEntry(const string & name, bool useForParameterEstimation,
 	VEC_DATA_TYPE length, VEC_DATA_TYPE count,
 	rnaPosVec & posPositions, rnaPosVec & negPositions)
@@ -469,14 +466,10 @@ void GeneCountData::transferTo(mcmcGeneData & mcmcData, size_t maxLength, int ma
 	//	in the reference gene so this makes no difference
 	for (size_t i = 1; i < info.size(); i++)
 	{
+		//	Only include genes/transcripts that are OK for use during the parameter estimation phase,
+		//	ie do not overlap other genes, and are less than the current length threshold.
 		if ((info[i].useForParameterEstimation) && (lengths[0][i] <= maxGeneLengthForParameterEstimation))
 		{
-			size_t count = maxLength;
-//			VEC_DATA_TYPE len = lengths[0][i];
-//			if (len < 2000)
-//				count = 1000000;
-//				count += (1000 - max(len,500.0));
-
 			//	For the forward and the reverse counts
 			for (size_t j = 0; j < 2; j++)
 			{
@@ -487,7 +480,7 @@ void GeneCountData::transferTo(mcmcGeneData & mcmcData, size_t maxLength, int ma
 				size_t len = min(maxLength, positions.size());
 				mcmcData.fragData.append(positions,len);
 
-				mcmcData.geneIndex.insert(mcmcData.geneIndex.end(),len, geneIndex);//gene.length);
+				mcmcData.geneIndex.insert(mcmcData.geneIndex.end(),len, geneIndex);
 				Nreads += positions.size();
 			}
 			mcmcData.geneLengths[geneIndex] = lengths[0][i];

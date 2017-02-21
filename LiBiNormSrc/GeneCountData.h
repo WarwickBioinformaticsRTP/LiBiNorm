@@ -16,6 +16,11 @@ struct geneListFilenameData
 	int start, finish;
 };
 
+//
+//	Used to generate random integers between 0 and max.  This does not use the C++ 
+//	function to generate a flat distribution because its implementation (unlike the
+//	underlying random number generator) is not consistent between compilers.  This consistency
+//	is needed for comparison testing
 class intRandClass
 {
 public:
@@ -63,14 +68,15 @@ class rnaPosVec : public std::vector<rna_pos_type>
 public:
 	rnaPosVec & removeInvalidValues(rna_pos_type maxVal);
 
-	//	Test code takes the first N samples rather than randomly picks samples, and uses the same 
-	//	algorithm as the MATLAB code for excluding invalid calues.   Used for comparing the two outputs
+	//	Test code takes the first N samples rather than randomly picks samples, with the compile option 
+	//	of using the same as the MATLAB code for code validation.   
 	void selectAtMost(size_t s);
 };
-
-inline bool printVal(outputDataFile * f, rnaPosVec value)
+//
+//	Allows the printTsv library class to print a vector of positions
+inline bool printVal(outputDataFile * f, const rnaPosVec value)
 {
-	return printVal(f, (std::vector<rna_pos_type>)value);
+	return printVal(f, (const std::vector<rna_pos_type>)value);
 };
 
 //	Holds the read position information associated with a specific gene.
