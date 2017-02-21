@@ -30,6 +30,10 @@ int main(int argc, char **argv)
 		printf("     model            further bias correction analysis\n");
 		printf("     conv	          renames chromosomes in a .gff3 file to match those in a bam file\n");
 		printf("     variation        shows variation in Log Liklyhood with parameter\n");
+#ifdef LIBITOOLS
+		printf("     land             shows variation in Log Liklyhood with parameter\n");
+
+#endif
 #ifdef DEDUP_MODE
 		printf("     dedup            removes duplicates\n");
 #endif
@@ -225,7 +229,7 @@ int LiBiNorm::main(int argc, char **argv)
 		printf("  -s N, --mcmc=N        Length of each MCMC run (", MCMC_ITERATIONS, ")\n");
 #endif
 #ifdef SELECT_READ_SEED
-		printf("  -e N, --seed=N        Set seed used for selecting subset of reads\n");
+		printf("  -y N, --seed=N        Set seed used for selecting subset of reads\n");
 #endif
 		printf("  -f, --full            Output complete set of MCMC run data\n");
 		return EXIT_SUCCESS;
@@ -256,7 +260,7 @@ int LiBiNorm::main(int argc, char **argv)
 				exitFail("-s values must lie between 1 and 10000");
 		}
 #ifdef SELECT_READ_SEED
-		else if ((strcmp(argv[ni], "-e") == 0) || (opt2 = (strncmp(argv[ni], "--seed=", 7) == 0)))
+		else if ((strcmp(argv[ni], "-y") == 0) || (opt2 = (strncmp(argv[ni], "--seed=", 7) == 0)))
 		{
 			int seed = atoi(opt2 ? argv[ni] + 7 : argv[++ni]);
 			intRand.reseed(seed);

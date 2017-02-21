@@ -22,6 +22,8 @@ void LiBiNormCore::helpCommon()
 	printf("                        determination (", DEF_THREADS, ")\n");
 	printf("  -d N, --reads=N       Maximum number of reads using for normalisation\n");
 	printf("                        parameter determination (", DEF_MAX_READS_FOR_PARAM_ESTIMATION, ")\n");
+	printf("  -e N, --geneLength=N  Maximum length of transcripts used for normalisation\n");
+	printf("                        parameter determination (", DEF_LENGTH_OF_GENE_FOR_PARAM_ESTIMATION, ")\n");
 #ifdef USE_NELDER_MEAD_FOR_INITIAL_VALUES
 	printf("  -o, --omit            Omit Nelder Mead parameter discovery. Use random initial values for MCMC\n");
 #endif

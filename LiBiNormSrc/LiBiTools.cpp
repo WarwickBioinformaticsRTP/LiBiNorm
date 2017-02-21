@@ -28,7 +28,7 @@ int LiBiTools::landMain(int argc, char **argv)
 	}
 	else if ((argc == 1) || ((argc == 2) && ((strcmp(argv[1], "-h") == 0) || (strcmp(argv[1], "--help") == 0))))
 	{
-		printf("Usage: LiBiNorm land -g gff_file -b bamfile landscapefile1 landscapefile2\n");
+		printf("\nUsage: LiBiNorm land -g gff_file -b bamfile landscapefile1 landscapefile2\n\n");
 		printf("This program compares two landscape files and produces a single file that combines the data from both\n");
 		printf("The gff file is used to provide cooedinates for the genes so that they can be viewed easily on IGV\n");
 		printf("The bam file allows the correct chromosome names to be used, the mapping being done based on chromosome length\n");
@@ -174,7 +174,7 @@ int LiBiTools::landMain2(int argc, char **argv)
 	}
 	else if ((argc == 1) || ((argc == 2) && ((strcmp(argv[1], "-h") == 0) || (strcmp(argv[1], "--help") == 0))))
 	{
-		printf("Usage: LiBiNorm land2 landscapefile geneFile\n");
+		printf("\nUsage: LiBiNorm land2 landscapefile geneFile\n\n");
 		printf("This program extracts data from a landscape file\n");
 		return EXIT_SUCCESS;
 	}
