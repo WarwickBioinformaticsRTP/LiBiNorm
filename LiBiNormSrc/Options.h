@@ -2,7 +2,7 @@
 #define OPTIONS_H
 
 
-#define LIBINORM_VERSION "1.4.0"
+#define LIBINORM_VERSION "1.4.1"
 //	Bam/gff file reading
 #define DEFAULT_FEATURE_TYPE_EXON "exon" 
 #define DEFAULT_GTF_ID_ATTRIBUTE "gene_id"
@@ -57,7 +57,8 @@
 //	Use this to add the mode which creates fastq files based on bam files with artificial problems
 // #define MAKE_FASTQ_MODE
 
-//	Use this to enable various addditional tools for eexploring LiBiNorm data
+//	Use this to enable various addditional tools for exploring LiBiNorm data.  This currently
+//	provides the land, land2 and gene additional run modes
 #define LIBITOOLS
 
 //	Use this to add the mode where duplicates in bam files can be removed
@@ -76,6 +77,9 @@
 
 //	For consistent selection of reads and reproducing the MATLAB algorithms
 // #define REPRODUCE_MATLAB	
+
+//	Adds -z option where the program will pause at the end rather than simply exiting.  Useful for debugging
+#define PAUSE_AT_END_OPTION	
 
 //	Some of the code in ModelData.cpp has also been writtent using vectors which is slower but the code
 //	more closely matches the MATLAB code

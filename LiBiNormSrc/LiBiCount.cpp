@@ -210,10 +210,6 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 			}
 			geneListFilenames.push_back(glfd);
 		}
-		else if (strcmp(argv[ni], "-x") == 0)
-		{
-			pauseAtEnd = true;
-		}
 		else
 		{
 			exitFail("Invalid parameter: ",string(argv[ni]));

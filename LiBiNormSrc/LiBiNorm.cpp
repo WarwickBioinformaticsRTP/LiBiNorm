@@ -268,10 +268,6 @@ int LiBiNorm::main(int argc, char **argv)
 #endif
 		else if ((strcmp(argv[ni], "-f") == 0) || (opt2 = (strncmp(argv[ni], "--full", 6) == 0)))
 			outputFull = true;
-		else if (strcmp(argv[ni], "-x") == 0)
-		{
-			pauseAtEnd = true;
-		}
 		else
 		{
 			exitFail("Invalid parameter: ",argv[ni]);

@@ -33,6 +33,9 @@ void LiBiNormCore::helpCommon()
 #endif
 	printf("  -q, --quiet           suppress progress report\n");
 	printf("  -x, --debug           output debug messages\n");
+#ifdef PAUSE_AT_END_OPTION
+	printf("  -z	                pause at end rather than simply exiting\n");
+#endif
 	printf("  -c FILENAME, --counts=FILENAME\n");
 	printf("                        Name of output file. default: writes to stdout\n");
 
@@ -85,6 +88,14 @@ bool LiBiNormCore::commandParseCommon(int & ni, int argc,char **argv)
 			debugPrint = true;
 			return true;
 		}
+#ifdef PAUSE_AT_END_OPTION
+		if (strcmp(argv[ni], "-z") == 0)
+		{
+			pauseAtEnd = true;
+			return true;
+		}
+#endif
+
 		if ((strcmp(argv[ni], "-q") == 0) || (opt2 = (strncmp(argv[ni], "--quiet", 7) == 0)))
 		{
 			verbose = false;
