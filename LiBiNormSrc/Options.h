@@ -24,11 +24,13 @@
 #define NELDER_MEAD_ITERATIONS 2000
 #define EDGE_PENALTY_MULTIPLIER 1000
 
-//	Prior: Nelder Mead and MCMC slope for d parameter
+//	Prior: Nelder Mead and MCMC slope for parameters.  By setting a multiplier to zero the code is disabled
+//	These provide common priors for all models, as implemented in priorFunc in ModelData.cpp  
 #define D_PRIOR_TARGET 0.6
 #define D_PRIOR_MULTIPLIER 0
 #define H_PRIOR_TARGET 100
 #define H_PRIOR_MULTIPLIER 0
+//	These provides an additional priors for parameter H model E, as implemented in priorFuncE in ModelData.cpp  
 #define E_H_PRIOR_TARGET 20
 #define E_H_PRIOR_MULTIPLIER 2
 

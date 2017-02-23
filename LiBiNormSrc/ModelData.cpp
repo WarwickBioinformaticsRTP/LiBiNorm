@@ -181,24 +181,15 @@ headerType getHeaders()
 	return _retVal;
 }
 
+/* 
+	Common Priors for the models
+	This is used for all models and adds quadratic cost function for approaching too
+	close to the extremes of the parameter range which is set as a prior
 
-/*
-
-This code implements the six different models for the bias within an RNA transcript.
-
-In each case the parameters (between 2 and 5 ) are passed in with param and the data, 
-ie the information about the reads and the genes are passed in in data.
-
-data.fragData contains the information about the individual reads, one entry per read
-data.geneIndex indeicates which gene a read is associated with, one entry per read
-data.geneData gives inforation about each gene
-data.geneLengths is the lengths of the genes
-data.geneFrequencies are the frequencies
-
-One modification from the original matlab code arises from the fact that the normalisation 
-values are the same for all reads in the gene so only need to be calculated per gene.  
-
-The original MATLAB code is shown in comments
+	The code also includes an option of setting a terget for the d and h parameters. This was found not 
+	to be necessary once the Nelder Mead initialisation was performed in two stages.  The first being to find the values
+	for t1 ,t2 and a, keeping d and h fixed, and then to look for d and h. The code has been retained in case
+	it turns out to be of use in the future
 */
 
 double priorFunc(const dataVec & data, const paramSet & params)
@@ -218,6 +209,7 @@ double priorFunc(const dataVec & data, const paramSet & params)
 	}
 
 	//	Priors for d and h paremeters
+#if (D_PRIOR_MULTIPLIER > 0)
 	static double d_target = log10(D_PRIOR_TARGET);
 	VEC_DATA_TYPE diff = abs(data[0] - d_target);
 	//	Quadratic until the difference is 1 and then linear with matching slope
@@ -225,31 +217,58 @@ double priorFunc(const dataVec & data, const paramSet & params)
 		_retVal += (diff * diff * D_PRIOR_MULTIPLIER);
 	else
 		_retVal += (2 * diff - 1) * D_PRIOR_MULTIPLIER;
-
+#endif
+#if (H_PRIOR_MULTIPLIER > 0)
 	static double h_target = log10(H_PRIOR_TARGET);
 	diff = abs(data[1] - h_target);
 	if (diff < 1)
 		_retVal += (diff * diff * H_PRIOR_MULTIPLIER);
 	else
 		_retVal += (2 * diff - 1) * H_PRIOR_MULTIPLIER;
+#endif
 
 	return _retVal;
 };
 
+/*
+	This adds a target prior just for the h parameter in model E.  The cost function is weighted using a 
+	quadratic for differences in the log value up to 1 (ie a factor of 10 in absolute terms) and then linearly beyond that
+*/
+
 double priorFuncE(const dataVec & data, const paramSet & params)
 {
 	VEC_DATA_TYPE _retVal = priorFunc(data, params);
+#if (E_H_PRIOR_MULTIPLIER > 0)
 	static double h_target = log10(E_H_PRIOR_TARGET);
 	VEC_DATA_TYPE diff = abs(data[1] - h_target);
 	if (diff < 1)
 		_retVal += (diff * diff * E_H_PRIOR_MULTIPLIER);
 	else
 		_retVal += (2 * diff - 1) * E_H_PRIOR_MULTIPLIER;
-
 //	_retVal += data[1] * E_H_PRIOR_MULTIPLIER;
+#endif
 	return _retVal;
 
 }
+
+/*
+
+The following code implements the six different models for the bias within an RNA transcript.
+
+In each case the parameters (between 2 and 5 ) are passed in with param and the data,
+ie the information about the reads and the genes are passed in in data.
+
+data.fragData contains the information about the individual reads, one entry per read
+data.geneIndex indeicates which gene a read is associated with, one entry per read
+data.geneData gives inforation about each gene
+data.geneLengths is the lengths of the genes
+data.geneFrequencies are the frequencies
+
+One modification from the original matlab code arises from the fact that the normalisation
+values are the same for all reads in the gene so only need to be calculated per gene.
+
+The original MATLAB code is shown in comments
+*/
 
 
 //	The log liklyhood calculations for each of the models
