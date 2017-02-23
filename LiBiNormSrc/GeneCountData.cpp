@@ -114,7 +114,7 @@ VEC_DATA_TYPE GeneCountData::length(const std::string & gene)
 	{
 		return 0;
 	}
-	return lengths[0].at(i.geneAttributes().index);
+	return lengths[0].at(i.readGeneAttributes().index);
 }
 
 //	Reads in a file contain a list of gene names.  Only these genes will then be used
@@ -140,7 +140,7 @@ void GeneCountData::useSelectedGenes(const geneListFilenameData & filenameData)
 		{
 			if (filenameData.start)
 				progMessage("using ",gene);
-			addEntry(gene);
+			addEntry(gene,true);
 		}
 		i++;
 	};

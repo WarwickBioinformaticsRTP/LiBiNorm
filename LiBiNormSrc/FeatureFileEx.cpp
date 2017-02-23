@@ -160,7 +160,6 @@ void featureFileEx::index(GeneCountData & geneCounts, bool useStrand)
 				{
 					geneCounts.info[index].useForParameterEstimation = false;
 				}
-
 			}
 		}
 	}

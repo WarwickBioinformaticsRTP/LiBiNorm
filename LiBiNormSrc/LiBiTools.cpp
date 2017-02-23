@@ -16,10 +16,12 @@ using namespace std;
 using namespace BamTools;
 
 #define LOOKAHEAD 1000
+#define MAX_READS 1000
 
 int LiBiTools::landMain(int argc, char **argv)
 {
 	stringEx land_filename1, land_filename2, gff_filename, bamFileName;
+	stringEx id_attribute;
 
 	if (argc < 1)
 	{
@@ -47,6 +49,10 @@ int LiBiTools::landMain(int argc, char **argv)
 		{
 			bamFileName = argv[++ni];
 		}
+		else if (strcmp(argv[ni], "-i") == 0)
+		{
+			id_attribute = argv[++ni];
+		}
 		else
 			exitFail("Unrecognised option", argv[ni]);
 		ni++;
@@ -55,8 +61,16 @@ int LiBiTools::landMain(int argc, char **argv)
 	land_filename2 = argv[argc - 1];
 
 	featureFileEx genomeDef;
-	stringEx id_attribute = DEFAULT_GFF_ID_ATTRIBUTE,
-		feature_type = DEFAULT_FEATURE_TYPE_EXON;
+
+	if (!id_attribute)
+	{
+		if (gff_filename.suffix().startsWith("gff"))
+			id_attribute = DEFAULT_GFF_ID_ATTRIBUTE;
+		else
+			id_attribute = DEFAULT_GTF_ID_ATTRIBUTE;
+	}
+
+	stringEx feature_type = DEFAULT_FEATURE_TYPE_EXON;
 
 	BamReader reader;
 	RefVector references;
@@ -73,22 +87,31 @@ int LiBiTools::landMain(int argc, char **argv)
 		genomeDef.addToChromosomeMap(i.RefLength, i.RefName);
 	}
 
+	progMessage("Reading feature file");
 	if (!genomeDef.open(gff_filename, id_attribute, feature_type))
 		exitFail("Could not open feature file: ", gff_filename);
 
 
-	GeneCountData geneCounts1, geneCounts2;
+	GeneCountData geneCounts1, geneCounts2,geneCountsDummy;
+	progMessage("Reading first landscape file");
 	geneCounts1.loadData(land_filename1);
+	progMessage("Reading second landscape file");
 	geneCounts2.loadData(land_filename2);
-	genomeDef.index(geneCounts1,false);
 
+	progMessage("Indexing feature file");
+	genomeDef.index(geneCountsDummy,false);
+
+	progMessage("Outputting results");
 	TsvFile resFile,missingGenesFile,extraGenesFile;
 	resFile.open("combined.txt");
 	missingGenesFile.open("missingGenes.txt");
 	extraGenesFile.open("extraGenes.txt");
 
 	readPositionDataClass::Iterator it1 = geneCounts1.readPositionData.begin();
+	bool used1 = geneCounts1.info[it1.readGeneAttributes().index].useForParameterEstimation;
+
 	readPositionDataClass::Iterator it2 = geneCounts2.readPositionData.begin();
+	bool used2 = geneCounts1.info[it2.readGeneAttributes().index].useForParameterEstimation;
 
 	while ((it1 != geneCounts1.readPositionData.end()) && (it2 != geneCounts2.readPositionData.end()))
 	{
@@ -100,18 +123,31 @@ int LiBiTools::landMain(int argc, char **argv)
 			readPositionDataClass::Iterator it1a = it1;
 			for (int i = 0; (i < LOOKAHEAD) && (!match) && (++it1a != geneCounts1.readPositionData.end()); i++)
 			{
-				if (it1a.geneName() == it2.geneName())
+				if (it1a.readGeneName() == it2.readGeneName())
 				{
+					//	There is a match for it2 later on, so it1 is a singleton.  Output it, and all entries up
+					//	until the subsequent match 
 					for (int j = 0; j <= i; j++)
 					{
-						if ((geneIterator = genomeDef.genes.find(it1.geneName())) != genomeDef.genes.end())
+						string position("Unknown");
+						if ((geneIterator = genomeDef.genes.find(it1.readGeneName())) != genomeDef.genes.end())
+							position = _s("chr", geneIterator->second.chromosome, ":", geneIterator->second.regions[0]->start);
+						string used = geneCounts1.info[it1.readGeneAttributes().index].useForParameterEstimation ? "Y" : "";
+
+						if (used == "Y")
 						{
-							resFile.print(1, _s("chr", geneIterator->second.chromosome, ":", geneIterator->second.regions[0]->start), it1.geneName(), it1.geneAttributes().positions[0]);
-							resFile.print(1, _s("chr", geneIterator->second.chromosome, ":", geneIterator->second.regions[0]->start), it1.geneName(), it1.geneAttributes().positions[1]);
-							resFile.print();
-							missingGenesFile.print(it2.geneName(), _s(it2.geneAttributes().positions[0].size(), " plus"), it2.geneAttributes().positions[0]);
-							missingGenesFile.print(it2.geneName(), _s(it2.geneAttributes().positions[1].size(), " minus"), it2.geneAttributes().positions[1]);
+							int size = it1.readGeneAttributes().positions[0].size() + it1.readGeneAttributes().positions[1].size();
+							missingGenesFile.print(it1.readGeneName(), _s(size, " plus"), it2.readGeneAttributes().positions[0]);
+							missingGenesFile.print(it1.readGeneName(), _s(size, " minus"), it2.readGeneAttributes().positions[1]);
 						}
+
+						if (it1.readGeneAttributes().positions[0].size() > MAX_READS)
+							it1.readGeneAttributes().positions[0].resize(MAX_READS);
+						if (it1.readGeneAttributes().positions[1].size() > MAX_READS)
+							it1.readGeneAttributes().positions[1].resize(MAX_READS);
+						resFile.print(1, position, used, it1.readGeneName(), it1.readGeneAttributes().positions[0]);
+						resFile.print(1, position, used, it1.readGeneName(), it1.readGeneAttributes().positions[1]);
+						resFile.print();
 						it1++;
 					}
 					match = true;
@@ -122,18 +158,29 @@ int LiBiTools::landMain(int argc, char **argv)
 				auto it2a = it2;
 				for (int i = 0; (i < LOOKAHEAD) && (!match) && (++it2a != geneCounts2.readPositionData.end()); i++)
 				{
-					if (it2a.geneName() == it1.geneName())
+					if (it2a.readGeneName() == it1.readGeneName())
 					{
 						for (int j = 0; j <= i; j++)
 						{
-							if ((geneIterator = genomeDef.genes.find(it2.geneName())) != genomeDef.genes.end())
+							string position("Unknown");
+							if ((geneIterator = genomeDef.genes.find(it2.readGeneName())) != genomeDef.genes.end())
+								position = _s("chr", geneIterator->second.chromosome, ":", geneIterator->second.regions[0]->start);
+							string used = geneCounts2.info[it2.readGeneAttributes().index].useForParameterEstimation ? "Y" : "";
+
+							if (used == "Y")
 							{
-								resFile.print(2, _s("chr", geneIterator->second.chromosome, ":", geneIterator->second.regions[0]->start), it1.geneName(), it2.geneAttributes().positions[0]);
-								resFile.print(2, _s("chr", geneIterator->second.chromosome, ":", geneIterator->second.regions[0]->start), it2.geneName(), it2.geneAttributes().positions[1]);
-								resFile.print();
-								extraGenesFile.print(it1.geneName(), _s(it1.geneAttributes().positions[0].size(), " plus"), it1.geneAttributes().positions[0]);
-								extraGenesFile.print(it1.geneName(), _s(it1.geneAttributes().positions[1].size(), " minus"), it1.geneAttributes().positions[1]);
+								int size = it2.readGeneAttributes().positions[0].size() + it2.readGeneAttributes().positions[1].size();
+								extraGenesFile.print(it2.readGeneName(), _s(size, " plus"), it2.readGeneAttributes().positions[0]);
+								extraGenesFile.print(it2.readGeneName(), _s(size, " minus"), it2.readGeneAttributes().positions[1]);
 							}
+
+							if (it2.readGeneAttributes().positions[0].size() > MAX_READS)
+								it2.readGeneAttributes().positions[0].resize(MAX_READS);
+							if (it2.readGeneAttributes().positions[1].size() > MAX_READS)
+								it2.readGeneAttributes().positions[1].resize(MAX_READS);
+							resFile.print(2, used,position, it2.readGeneName(), it2.readGeneAttributes().positions[0]);
+							resFile.print(2, used, position, it2.readGeneName(), it2.readGeneAttributes().positions[1]);
+							resFile.print();
 							it2++;
 						}
 						match = true;
@@ -141,19 +188,33 @@ int LiBiTools::landMain(int argc, char **argv)
 				}
 			}
 		}
-		if ((geneIterator = genomeDef.genes.find(it1.geneName())) != genomeDef.genes.end())
-		{
-			resFile.print(1, _s("chr", geneIterator->second.chromosome, ":", geneIterator->second.regions[0]->start), it1.geneName(), it1.geneAttributes().positions[0]);
-			resFile.print(1, _s("chr", geneIterator->second.chromosome, ":", geneIterator->second.regions[0]->start), it1.geneName(), it1.geneAttributes().positions[1]);
-			if (!match)
-				resFile.print();
-		}
-		if ((geneIterator = genomeDef.genes.find(it2.geneName())) != genomeDef.genes.end())
-		{
-			resFile.print(2, _s("chr",geneIterator->second.chromosome,":",geneIterator->second.regions[0]->start), it2.geneName(), it2.geneAttributes().positions[0]);
-			resFile.print(2, _s("chr", geneIterator->second.chromosome, ":", geneIterator->second.regions[0]->start), it2.geneName(), it2.geneAttributes().positions[1]);
+
+		string position("Unknown");
+		if ((geneIterator = genomeDef.genes.find(it1.readGeneName())) != genomeDef.genes.end())
+			position = _s("chr", geneIterator->second.chromosome, ":", geneIterator->second.regions[0]->start);
+		string used = geneCounts1.info[it1.readGeneAttributes().index].useForParameterEstimation ? "Y" : "";
+
+		if (it1.readGeneAttributes().positions[0].size() > MAX_READS)
+			it1.readGeneAttributes().positions[0].resize(MAX_READS);
+		if (it1.readGeneAttributes().positions[1].size() > MAX_READS)
+			it1.readGeneAttributes().positions[1].resize(MAX_READS);
+		resFile.print(1, used, position, it1.readGeneName(), it1.readGeneAttributes().positions[0]);
+		resFile.print(1, used, position, it1.readGeneName(), it1.readGeneAttributes().positions[1]);
+		if (!match)
 			resFile.print();
-		}
+
+		position = "Unknown";
+		if ((geneIterator = genomeDef.genes.find(it2.readGeneName())) != genomeDef.genes.end())
+			position = _s("chr", geneIterator->second.chromosome, ":", geneIterator->second.regions[0]->start);
+		used = geneCounts2.info[it2.readGeneAttributes().index].useForParameterEstimation ? "Y" : "";
+
+		if (it2.readGeneAttributes().positions[0].size() > MAX_READS)
+			it2.readGeneAttributes().positions[0].resize(MAX_READS);
+		if (it2.readGeneAttributes().positions[1].size() > MAX_READS)
+			it2.readGeneAttributes().positions[1].resize(MAX_READS);
+		resFile.print(2, used, position, it2.readGeneName(), it2.readGeneAttributes().positions[0]);
+		resFile.print(2, used, position, it2.readGeneName(), it2.readGeneAttributes().positions[1]);
+		resFile.print();
 
 		it1++;
 		it2++;

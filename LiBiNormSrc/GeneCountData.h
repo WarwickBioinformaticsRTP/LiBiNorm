@@ -122,7 +122,7 @@ public:
 class readPositionDataClass : public std::map<const std::string, geneReadData >
 {
 public:
-	ADD_ITER(geneName, geneAttributes)
+	ADD_ITER(readGeneName, readGeneAttributes)
 };
 
 
