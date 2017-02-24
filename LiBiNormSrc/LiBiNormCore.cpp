@@ -9,8 +9,6 @@ using namespace std;
 
 void LiBiNormCore::helpCommon()
 {
-	printf("  -l FILENAME, --landscape=FILENAME\n");
-	printf("                        Name of file for landscape data)\n");
 	printf("  -n M, --normModel=M  Specifies that model M should be used rather than the default\n");
 	printf("                        Model BD. M options: A or SMART,B or polyA,C,D,\n");
 	printf("                        E or random,BD\n");
@@ -44,11 +42,6 @@ void LiBiNormCore::helpCommon()
 bool LiBiNormCore::commandParseCommon(int & ni, int argc,char **argv)
 {
 		bool opt2 = false;
-		if ((strcmp(argv[ni], "-l") == 0) || (opt2 = (strncmp(argv[ni], "--landscape=", 12) == 0)))
-		{
-			landscapeFilename = opt2 ? argv[++ni] + 12 : argv[++ni];
-			return true;
-		}
 		if ((strcmp(argv[ni], "-N") == 0) || (opt2 = (strncmp(argv[ni], "--normFilename=", 15) == 0)))
 		{
 			normaliseResultsFilename = opt2 ? argv[++ni] + 15 : argv[++ni];

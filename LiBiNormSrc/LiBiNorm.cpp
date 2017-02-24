@@ -29,10 +29,12 @@ int main(int argc, char **argv)
 		printf("     count            htseq-count replacement with optional bias correction\n");
 		printf("     model            further bias correction analysis\n");
 		printf("     conv	          renames chromosomes in a .gff3 file to match those in a bam file\n");
+#ifdef INITIAL_VALUES
 		printf("     variation        shows variation in Log Liklyhood with parameter\n");
+#endif
 #ifdef LIBITOOLS
-		printf("     land             shows variation in Log Liklyhood with parameter\n");
-
+		printf("     land             compares two different landscape files\n");
+		printf("     land2            compares a landscape file and a gene list\n");
 #endif
 #ifdef DEDUP_MODE
 		printf("     dedup            removes duplicates\n");
@@ -61,12 +63,12 @@ int main(int argc, char **argv)
 			LiBiConv conv;
 			return conv.main(argc - 1, argv + 1);
 		}
+#ifdef LIBITOOLS
 		if (command == "variation")
 		{
 			LiBiVariation variation;
 			return variation.main(argc - 1, argv + 1);
 		}
-#ifdef LIBITOOLS
 		if (command == "land")
 		{
 			LiBiTools tools;
@@ -217,7 +219,8 @@ int LiBiNorm::main(int argc, char **argv)
 	else if ((argc == 1) || ((argc == 2) && ((strcmp(argv[1], "-h") == 0) || (strcmp(argv[1], "--help") == 0))))
 	{
 		printf("/* ----------------------------- */\n");
-		printf("     LiBiNorm:    RNA-seq library bias normalisation   \n\n");
+		printf("     LiBiNorm model:    RNA-seq library bias normalisation using a landscape file   \n\n");
+		printf("Usage: LiBiNorm model [options] landscapeFilename \n\n");
 		printf("Options:\n");
 		printf("  -h, --help            Show this help message and exit\n");
 		helpCommon();
@@ -235,7 +238,7 @@ int LiBiNorm::main(int argc, char **argv)
 		return EXIT_SUCCESS;
 	}
 	int ni = 1;
-	while(ni < argc)
+	while(ni < argc -1)
 	{
 		bool opt2 = false;
 		if (commandParseCommon(ni, argc,argv))
@@ -275,9 +278,7 @@ int LiBiNorm::main(int argc, char **argv)
 		ni++;
 	}
 
-
-	if (!landscapeFilename)
-		exitFail("Landscape file must be specified");
+	landscapeFilename = argv[argc - 1];
 
 	if (!normaliseResultsFilename)
 		normaliseResultsFilename = landscapeFilename;

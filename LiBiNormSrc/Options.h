@@ -26,18 +26,20 @@
 
 //	Prior: Nelder Mead and MCMC slope for parameters.  By setting a multiplier to zero the code is disabled
 //	These provide common priors for all models, as implemented in priorFunc in ModelData.cpp  
-#define D_PRIOR_TARGET 0.6
-#define D_PRIOR_MULTIPLIER 0
-#define H_PRIOR_TARGET 100
-#define H_PRIOR_MULTIPLIER 0
+// #define D_PRIOR_TARGET 0.6
+// #define D_PRIOR_MULTIPLIER 0
+// #define H_PRIOR_TARGET 100
+// #define H_PRIOR_MULTIPLIER 0
 //	These provides an additional priors for parameter H model E, as implemented in priorFuncE in ModelData.cpp  
 #define E_H_PRIOR_TARGET 20
 #define E_H_PRIOR_MULTIPLIER 2
+// #define E_D_PRIOR_TARGET 0.5
+// #define E_D_PRIOR_MULTIPLIER 2
 
 //	MCMC operation
 #define NUMBER_OF_MCMC_RUNS 10  // -r
-#define MCMC_ITERATIONS 2000  // -s
-#define NELDER_MCMC_ITERATIONS 200  // -s
+#define MCMC_ITERATIONS 2000  // -s     // MCMC iterations if no Nelder Mead initialisation
+#define NELDER_MCMC_ITERATIONS 200  // -s   MCMC iterations if we pre-initialise using Nelder Mead
 #define MCMC_JUMP_SIZE 0.01
 #define DEFAULT_MODEL ModelBD // -n
 #define MCMC_SIGMA 1	

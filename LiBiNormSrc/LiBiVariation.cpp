@@ -15,31 +15,25 @@ int LiBiVariation::main(int argc, char **argv)
 	{
 		printf("/* ----------------------------- */\n");
 		printf("     LiBiNorm variation:  Test of effect of parameter variation\n\n");
+		printf("Usage: LiBiNorm variation [Options] -N <resultsFile> -p <parameterFile> <landscapeFile>\n\n");
 		printf("Options:\n");
-#ifdef SELECT_READ_SEED
-		printf("  -e N, --seed=N       Output complete set of montecarlo data\n");
-#endif
+		printf("  -e N, --seed=N       Ensures a specific set of reads are selected\n");
 		printf("  -h, --help            show this help message and exit\n");
 		helpCommon();
 		return EXIT_SUCCESS;
 	}
 	int ni = 1;
-	while (ni < argc)
+	while (ni < argc-1)
 	{
-#ifdef SELECT_READ_SEED
 		bool opt2 = false;
-#endif
 		if (commandParseCommon(ni, argc, argv))
 		{
 		}
-#ifdef SELECT_READ_SEED
 		else if ((strcmp(argv[ni], "-e") == 0) || (opt2 = (strncmp(argv[ni], "--seed=", 7) == 0)))
 		{
 			int seed = atoi(opt2 ? argv[ni] + 7 : argv[++ni]);
 			intRand.reseed(seed);
-			// cout << seed << endl;
 		}
-#endif
 		else
 		{
 			exitFail("Invalid parameter: ", argv[ni]);
@@ -47,12 +41,18 @@ int LiBiVariation::main(int argc, char **argv)
 		ni++;
 	}
 
+	landscapeFilename = argv[argc - 1];
+
+	if (!parameterFilename)
+		exitFail("Parameter filename must be defined");
+
+	if (!normaliseResultsFilename)
+		exitFail("-N parameter must be specified");
+
 	//	Load up the initial values
 	SetInitialParamsFromFile(parameterFilename);
 
 	//	Load up the landscape file
-	if (!landscapeFilename)
-		exitFail("Landscape file must be specified");
 	geneCounts.loadData(landscapeFilename, -1);
 	geneCounts.remove_invalid_values();
 	geneCounts.transferTo(geneData, MAX_READS_GENE, maxReads, maxGeneLength);

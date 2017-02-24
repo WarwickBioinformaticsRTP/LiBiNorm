@@ -73,8 +73,8 @@ int LiBiCount::main(int argc, char **argv)
 	}
 	else if ((argc == 1) || ((argc == 2) && ((strcmp(argv[1],"-h") ==0) || (strcmp(argv[1],"--help")==0))))
 	{
-printf("Usage: LiBiNorm [options] alignment_file gff_file\n");
-printf(" based on htseq-count\n");
+printf("LiBiNorm count: Calculates expression values from RNA-seq data,  based on htseq-count\n");
+printf("Usage: LiBiNorm count [options] alignment_file gff_file\n");
 printf("This program takes an alignment file in SAM/BAM format and a feature file in\n");
 printf("GFF format and calculates for each feature the number of reads mapping to it.\n");
 printf("See http://www-huber.embl.de/users/anders/HTSeq/doc/count.html for details.\n");
@@ -108,8 +108,9 @@ printf("                        (choices: union, intersection-strict, intersecti
 printf("                        nonempty; default: union)\n");
 printf("  -z, --htseq-compatible\n");
 printf("                        Run in htseq-compatible mode\n");
-
-//printf("  -o SAMOUT, --samout=SAMOUT\n");
+printf("  -l FILENAME, --landscape=FILENAME\n");
+printf("                        Name of file for landscape data)\n");
+//printf("  -o SAMOUT, --samout=SAMOUT\n");		//Still to be implemented
 //printf("                        write out all SAM alignment records into an output SAM\n");
 //printf("                        file called SAMOUT, annotating each line with its\n");
 //printf("                        feature assignment (as an optional field with tag\n");
@@ -195,6 +196,10 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 		{
 			normalise = false;
 			htSeqCompatible = true;
+		}
+		else if ((strcmp(argv[ni], "-l") == 0) || (opt2 = (strncmp(argv[ni], "--landscape=", 12) == 0)))
+		{
+			landscapeFilename = opt2 ? argv[++ni] + 12 : argv[++ni];
 		}
 		else if (commandParseCommon(ni, argc-2, argv)) //argc -2 to allow for the two fixed end parameters
 		{

@@ -48,7 +48,6 @@ void setSSfun(optionsType & options,modelType m)
 const std::vector<modelType> & allModels()
 {
 	static std::vector<modelType> list{ ModelA ,ModelB ,ModelC,ModelD,ModelE,ModelBD };
-//	static std::vector<modelType> list{ ModelA ,ModelB ,ModelC};
 	return list;
 };
 
@@ -209,7 +208,7 @@ double priorFunc(const dataVec & data, const paramSet & params)
 	}
 
 	//	Priors for d and h paremeters
-#if (D_PRIOR_MULTIPLIER > 0)
+#ifdef D_PRIOR_MULTIPLIER
 	static double d_target = log10(D_PRIOR_TARGET);
 	VEC_DATA_TYPE diff = abs(data[0] - d_target);
 	//	Quadratic until the difference is 1 and then linear with matching slope
@@ -218,7 +217,7 @@ double priorFunc(const dataVec & data, const paramSet & params)
 	else
 		_retVal += (2 * diff - 1) * D_PRIOR_MULTIPLIER;
 #endif
-#if (H_PRIOR_MULTIPLIER > 0)
+#ifdef H_PRIOR_MULTIPLIER
 	static double h_target = log10(H_PRIOR_TARGET);
 	diff = abs(data[1] - h_target);
 	if (diff < 1)
@@ -238,14 +237,26 @@ double priorFunc(const dataVec & data, const paramSet & params)
 double priorFuncE(const dataVec & data, const paramSet & params)
 {
 	VEC_DATA_TYPE _retVal = priorFunc(data, params);
-#if (E_H_PRIOR_MULTIPLIER > 0)
-	static double h_target = log10(E_H_PRIOR_TARGET);
-	VEC_DATA_TYPE diff = abs(data[1] - h_target);
-	if (diff < 1)
-		_retVal += (diff * diff * E_H_PRIOR_MULTIPLIER);
-	else
-		_retVal += (2 * diff - 1) * E_H_PRIOR_MULTIPLIER;
-//	_retVal += data[1] * E_H_PRIOR_MULTIPLIER;
+#ifdef E_H_PRIOR_MULTIPLIER
+	{
+		static double h_target = log10(E_H_PRIOR_TARGET);
+		VEC_DATA_TYPE diff = abs(data[1] - h_target);
+		if (diff < 1)
+			_retVal += (diff * diff * E_H_PRIOR_MULTIPLIER);
+		else
+			_retVal += (2 * diff - 1) * E_H_PRIOR_MULTIPLIER;
+		//	_retVal += data[1] * E_H_PRIOR_MULTIPLIER;
+	}
+#endif
+#ifdef E_D_PRIOR_MULTIPLIER
+	{
+		static double d_target = log10(E_D_PRIOR_TARGET);
+		VEC_DATA_TYPE diff = abs(data[1] - d_target);
+		if (diff < 1)
+			_retVal += (diff * diff * E_D_PRIOR_MULTIPLIER);
+		else
+			_retVal += (2 * diff - 1) * E_D_PRIOR_MULTIPLIER;
+	}
 #endif
 	return _retVal;
 
