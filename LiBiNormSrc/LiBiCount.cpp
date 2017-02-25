@@ -13,13 +13,6 @@
 #include "parser.h"
 #include "LiBiCount.h"
 
-//#define MATCH_USING_POSITION
-
-//	The insert size for matching pairs should be A and -A.  In some datasets they are A and A.  By using the absolute value of the
-//	insert size we can ensure that the pairs are still matched up
-#define USE_ABS_INSERT_TO_MATCH_READS
-
-
 #ifdef USE_ABS_INSERT_TO_MATCH_READS
 #define insertConv(A) abs(A)
 #else
@@ -116,8 +109,10 @@ printf("                        Name of file for landscape data)\n");
 //printf("                        feature assignment (as an optional field with tag\n");
 //printf("                        'XF')\n");
 helpCommon();
+#ifdef USE_GENES_FROM_GENELIST
 printf("  -g F (S F), --genes=F  Only perform the analysis for the genes listed in the file with name F\n");
 printf("                           Optional S and X paremeters means that only genes from position S to F are used\n");
+#endif
 printf("\n");
 printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 		return EXIT_SUCCESS;
@@ -204,6 +199,7 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 		else if (commandParseCommon(ni, argc-2, argv)) //argc -2 to allow for the two fixed end parameters
 		{
 		}
+#ifdef USE_GENES_FROM_GENELIST
 		else if ((strcmp(argv[ni], "-g") == 0) || (opt2 = (strncmp(argv[ni], "--genes=", 8) == 0)))
 		{
 			geneListFilenameData glfd;
@@ -215,6 +211,7 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 			}
 			geneListFilenames.push_back(glfd);
 		}
+#endif
 		else
 		{
 			exitFail("Invalid parameter: ",string(argv[ni]));

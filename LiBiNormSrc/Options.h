@@ -52,6 +52,11 @@
 #define DEF_LENGTH_OF_GENE_FOR_PARAM_ESTIMATION 20000 // -e
 
 
+//	The insert size for matching pairs should be A and -A.  In some datasets they are A and A.  By using the absolute value of the
+//	insert size we can ensure that the pairs are still matched up
+#define USE_ABS_INSERT_TO_MATCH_READS
+
+
 //	******************************************************************************
 //	The following are options that would normally be disabled in the release version of the code
 
@@ -71,6 +76,8 @@
 //  Output detailed results of interpreting the Feature file
 #define OUTPUT_FEATURE_DATA
 
+//	Just use selected genes (cont mode)
+#define USE_GENES_FROM_GENELIST
 
 //	Adds a menu option that allows the seed to be specified
 #define SELECT_READ_SEED
@@ -95,6 +102,10 @@
 
 //	Output landscape files in the original format
 // #define LANDSCAPE_FORMAT_1
+
+//	When matching forward and reverse reads the position information is also used to pair the reads
+// #define MATCH_USING_POSITION
+
 
 //	Use this option to use the parameters associated with the most likly parameter set
 //	https://sciencehouse.wordpress.com/2010/06/23/mcmc-and-fitting-models-to-data/
