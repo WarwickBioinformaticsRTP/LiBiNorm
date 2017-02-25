@@ -130,16 +130,14 @@ void GeneCountData::useSelectedGenes(const geneListFilenameData & filenameData)
 		return;
 	}
 
-	string line, gene;
+	stringEx line, gene;
 	int i = 0;
 	while (!file.eof())
 	{
 		std::getline(file, line);
 		parser(line, " \n\r",gene);
-		if ((i >= filenameData.start) && (i <= filenameData.finish))
+		if ((i >= filenameData.start) && (i <= filenameData.finish) && (gene))
 		{
-			if (filenameData.start)
-				progMessage("using ",gene);
 			addEntry(gene,true);
 		}
 		i++;
@@ -425,7 +423,7 @@ string GeneCountData::loadData(const string filename, int Ngenes)
 			}
 
 
-			addEntry(gene, use == "Y",length, count, posPositions, negPositions);
+				addEntry(gene, use == "Y",length, count, posPositions, negPositions);
 			a++;
 		}
 		lastGene = gene;

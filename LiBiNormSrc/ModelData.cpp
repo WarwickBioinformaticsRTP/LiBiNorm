@@ -105,11 +105,13 @@ bool printVal(outputDataFile * f, modelType m)
 	return true;
 };
 
-#define DEFD -0.5
-#define DEFH 1.5
-#define DEFT1 -3
-#define DEFT2 -3
-#define DEFA 0.5
+
+#define PARAM_D { "log10 d", -1, 2, -0.5 }
+#define PARAM_H { "log10 h", 0, 3, 1.5 }
+#define PARAM_T1 { "log10 t1", -5, -1, -3 } 
+#define PARAM_T2 { "log10 t2", -5, -1, -3 } 
+#define PARAM_A { "a", 0, 1, 0.5 }
+
 
 //	Loads the paremeter information associated with each of the models and sets the value to a random value within the allowed
 //	range for the parameter. 
@@ -122,29 +124,29 @@ paramSet GetModelParams(modelType model,dataVec * defaults, VEC_DATA_TYPE offset
 	case noModel:
 		break;
 	case ModelB: case ModelD: case ModelE:
-		params = { { "log10 d", -1, 2, DEFD }    // average length of fragments
-			,{ "log10 h", 0, 3, DEFH }   // the minimum length of fragmenation
-			,{ "log10 t1", -5, -1, DEFT1 }   // theta1
-			,{ "log10 t2", -5, -1, DEFT2 } // theta2
+		params = { PARAM_D   // average length of fragments
+			, PARAM_H   // the minimum length of fragmenation
+			, PARAM_T1   // theta1
+			, PARAM_T2 // theta2
 		};
 		break;
 	case ModelC:
-		params = { { "log10 d", -1, 2, DEFD }    // average length of fragments
-			,{ "log10 h", 0, 3, DEFH }   // the minimum length of fragmenation
-			,{ "log10 t2", -5, -1, DEFT2 } // theta2
+		params = { PARAM_D    // average length of fragments
+			, PARAM_H  // the minimum length of fragmenation
+			, PARAM_T2 // theta2
 		};
 		break;
 	case ModelA:
-		params = { { "log10 d", -1, 2, DEFD }    // average length of fragments
-			,{ "log10 h", 0, 3, DEFH }   // the minimum length of fragmenation
+		params = { PARAM_D    // average length of fragments
+			, PARAM_H   // the minimum length of fragmenation
 		};
 		break;
 	case ModelBD:
-		params = { { "log10 d", -1, 2, DEFD }    // average length of fragments
-			,{ "log10 h", 0, 3, DEFH }   // the minimum length of fragmenation
-			,{ "log10 t1", -5, -1, DEFT1 }   // theta1
-			,{ "log10 t2", -5, -1, DEFT2 } // theta2
-			,{ "a", 0, 1, DEFA } // alpha strength of model B
+		params = { PARAM_D    // average length of fragments
+			, PARAM_H   // the minimum length of fragmenation
+			, PARAM_T1  // theta1
+			, PARAM_T2 // theta2
+			, PARAM_A // alpha strength of model B
 		};
 		break;
 	};
@@ -515,52 +517,52 @@ double FLL_ModelE(const dataVec & param, const mcmcGeneData & data)
 	//	norm =  (2*h<l).*(exp(-l*t1 - 2*h*t2)*(t1 + t2)^2 - exp(-l*(t1 + t2))*t1^2 + t1*t2*exp(-2*h*(t1 + t2))*(l*t2 -2*h*t1 -2*h*t2+l*t1 - t2/t1 - 2))/(t1 + t2)^2/t1^2/t2 + ...
 	//     (l-1/(t1 + t2) - 1/t1 - t1/t2/(t1+t2)*exp(-l*(t1 + t2))+(t1 + t2)/t1/t2*exp(-l*t1))/(t1 + t2)/t1/d;
 #ifdef VECTOR_MATHS
-	const dataVec & x = data.fragData;
-	const dataVec l = data.geneLengths.expand(geneIndex);
-	const dataVec freq_l = data.geneFrequencies.expand(geneIndex);
-	dataVec f_frag = (x> h)*(x < l-h)/t1/(t1+ t2)*(exp(-2*h*(t1+ t2))-exp(-(x +h)*(t1+t2)) - exp(-t1*h-2*h*t2-(l-x)*t1) + exp(-h*t2-l*t1-x*t2)) + 
-	     1/t1/(t1+ t2) *(1 - exp(-x*(t1+t2)) - exp(-(l-x)*t1) + exp(-l*t1-x*t2))/d;
-	dataVec	norm =  (2*h<l)*(exp(-l*t1 - 2*h*t2)*(t1 + t2)*(t1 + t2) - exp(-l*(t1 + t2))*t1*t1 + t1*t2*exp(-2*h*(t1 + t2))*(l*t2 -2*h*t1 -2*h*t2+l*t1 - t2/t1 - 2))/((t1 + t2)*(t1 + t2))/(t1*t1)/t2 +
-	     (l-1/(t1 + t2) - 1/t1 - t1/t2/(t1+t2)*exp(-l*(t1 + t2))+(t1 + t2)/t1/t2*exp(-l*t1))/(t1 + t2)/t1/d;
+		const dataVec & x = data.fragData;
+		const dataVec l = data.geneLengths.expand(geneIndex);
+		const dataVec freq_l = data.geneFrequencies.expand(geneIndex);
+		dataVec f_frag = (x > h)*(x < l - h) / t1 / (t1 + t2)*(exp(-2 * h*(t1 + t2)) - exp(-(x + h)*(t1 + t2)) - exp(-t1*h - 2 * h*t2 - (l - x)*t1) + exp(-h*t2 - l*t1 - x*t2)) +
+			1 / t1 / (t1 + t2) *(1 - exp(-x*(t1 + t2)) - exp(-(l - x)*t1) + exp(-l*t1 - x*t2)) / d;
+		dataVec	norm = (2 * h < l)*(exp(-l*t1 - 2 * h*t2)*(t1 + t2)*(t1 + t2) - exp(-l*(t1 + t2))*t1*t1 + t1*t2*exp(-2 * h*(t1 + t2))*(l*t2 - 2 * h*t1 - 2 * h*t2 + l*t1 - t2 / t1 - 2)) / ((t1 + t2)*(t1 + t2)) / (t1*t1) / t2 +
+			(l - 1 / (t1 + t2) - 1 / t1 - t1 / t2 / (t1 + t2)*exp(-l*(t1 + t2)) + (t1 + t2) / t1 / t2*exp(-l*t1)) / (t1 + t2) / t1 / d;
 	LogL = sum(log(f_frag / norm) / freq_l);
 #else
 
-	double last_l = 0;
-	double norm=0;
+		double last_l = 0;
+		double norm = 0;
 
-	double t1_p_t2 = t1+t2;
-	double t1_p_t2_sq = t1_p_t2*t1_p_t2;
-	double exp_m2_h_t1_p_t2 = exp(-2*h*t1_p_t2);
+		double t1_p_t2 = t1 + t2;
+		double t1_p_t2_sq = t1_p_t2*t1_p_t2;
+		double exp_m2_h_t1_p_t2 = exp(-2 * h*t1_p_t2);
 
-	for (size_t i = 0;i < data.fragData.size(); i++)
-	{
-		const VEC_DATA_TYPE & x = data.fragData[i];
-		const VEC_DATA_TYPE & l = data.geneLengths[geneIndex[i]];
-		const VEC_DATA_TYPE & freq_l = data.geneFrequencies[geneIndex[i]];
-
-		double	f_frag = 1/t1/t1_p_t2 *(1 - exp(-x*t1_p_t2) - exp(-(l-x)*t1) + exp(-l*t1-x*t2))/d;
-
-		if ((x> h) && (x < l-h))
-			f_frag += (exp_m2_h_t1_p_t2-exp(-(x + h)*t1_p_t2) - exp(-t1*h-2*h*t2-(l-x)*t1) + exp(-h*t2-l*t1-x*t2))/t1/t1_p_t2;
-
-		if (f_frag == 0)
-			return 1E20;
-
-		if (l != last_l)
+		for (size_t i = 0; i < data.fragData.size(); i++)
 		{
-			norm = 	(l-1/t1_p_t2 - 1/t1 - t1/t2/t1_p_t2*exp(-l*t1_p_t2)+t1_p_t2/t1/t2*exp(-l*t1))/t1_p_t2/t1/d;
+			const VEC_DATA_TYPE & x = data.fragData[i];
+			const VEC_DATA_TYPE & l = data.geneLengths[geneIndex[i]];
+			const VEC_DATA_TYPE & freq_l = data.geneFrequencies[geneIndex[i]];
 
-			if (2*h < l)
-				norm += (exp(-l*t1 - 2*h*t2)*t1_p_t2_sq - exp(-l*t1_p_t2)*t1*t1 + t1*t2*exp(-2*h*t1_p_t2)*(l*t2 -2*h*t1 -2*h*t2+l*t1 - t2/t1 - 2))/(t1_p_t2*t1_p_t2*t1*t1*t2);
+			double	f_frag = 1 / t1 / t1_p_t2 *(1 - exp(-x*t1_p_t2) - exp(-(l - x)*t1) + exp(-l*t1 - x*t2)) / d;
 
-			last_l = l;
-		}
+			if ((x > h) && (x < l - h))
+				f_frag += (exp_m2_h_t1_p_t2 - exp(-(x + h)*t1_p_t2) - exp(-t1*h - 2 * h*t2 - (l - x)*t1) + exp(-h*t2 - l*t1 - x*t2)) / t1 / t1_p_t2;
+
+			if (f_frag == 0)
+				return 1E20;
+
+			if (l != last_l)
+			{
+				norm = (l - 1 / t1_p_t2 - 1 / t1 - t1 / t2 / t1_p_t2*exp(-l*t1_p_t2) + t1_p_t2 / t1 / t2*exp(-l*t1)) / t1_p_t2 / t1 / d;
+
+				if (2 * h < l)
+					norm += (exp(-l*t1 - 2 * h*t2)*t1_p_t2_sq - exp(-l*t1_p_t2)*t1*t1 + t1*t2*exp(-2 * h*t1_p_t2)*(l*t2 - 2 * h*t1 - 2 * h*t2 + l*t1 - t2 / t1 - 2)) / (t1_p_t2*t1_p_t2*t1*t1*t2);
+
+				last_l = l;
+			}
 		LogL += log(f_frag/norm)/freq_l;
-	}
+		}
 #endif
 	LogL = -2 * LogL;
 	return LogL;
-}
+	}
 
 double FLL_ModelBD(const dataVec & param, const mcmcGeneData & data)
 {

@@ -53,15 +53,31 @@ void featureFileEx::index(GeneCountData & geneCounts, bool useStrand)
 			//	First get rid of entries associated with genes that we are not interested in 
 			for (auto i = chrom.second.begin(); i != chrom.second.end();)
 			{
-				if (geneCounts.readPositionData.find(i->second.name) == geneCounts.readPositionData.end())
+
+
+				string prefix(i->second.name.substr(0, i->second.name.find('.')));
+				auto j = geneCounts.readPositionData.lower_bound(prefix);
+				//	Need to do this to cater for genes/transcripts that have changed release/version 
+				if (!j->first.startsWith(prefix))
 				{
-					//			if (!geneList.contains(i->second.tags[0].val))
-					auto j = i++;
-					chrom.second.erase(j);
+					auto k = i++;
+					chrom.second.erase(k);
 				}
 				else
+				{
+					if (i->second.name != j->first)
+					{
+						//	We now have a different version of the transcript/gene to that in the reference list, so rename
+						//	our list to match the new reference genome
+						geneCounts.readPositionData.emplace(i->second.name, j->second.index);
+						geneCounts.info[j->second.index].name = i->second.name;
+						geneCounts.readPositionData.erase(j);
+					}
 					i++;
+				}
+
 			}
+
 		}
 	}
 
