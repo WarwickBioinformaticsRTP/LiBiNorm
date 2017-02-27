@@ -94,13 +94,6 @@ bool LiBiNormCore::commandParseCommon(int & ni, int argc,char **argv)
 			verbose = false;
 			return true;
 		}
-#ifdef USE_NELDER_MEAD_FOR_INITIAL_VALUES
-		if ((strcmp(argv[ni], "-o") == 0) || (opt2 = (strncmp(argv[ni], "--omit", 6) == 0)))
-		{
-			nelderMead = false;
-			return true;
-		}
-#endif
 #ifdef INITIAL_VALUES
 		if ((strcmp(argv[ni], "-i") == 0) || (opt2 = (strncmp(argv[ni], "--intial=", 9) == 0)))
 		{

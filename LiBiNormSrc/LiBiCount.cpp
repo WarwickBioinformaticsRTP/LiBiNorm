@@ -212,6 +212,13 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 			geneListFilenames.push_back(glfd);
 		}
 #endif
+#ifdef USE_NELDER_MEAD_FOR_INITIAL_VALUES
+		else if ((strcmp(argv[ni], "-o") == 0) || (opt2 = (strncmp(argv[ni], "--omit", 6) == 0)))
+		{
+			nelderMead = false;
+			return true;
+		}
+#endif
 		else
 		{
 			exitFail("Invalid parameter: ",string(argv[ni]));
@@ -285,11 +292,12 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 	if (!genomeDef.open(featureFileName,id_attribute,feature_type))
 		exitFail("Could not open feature file: ",featureFileName);
 
+/*
 #ifdef	OUTPUT_FEATURE_DATA
-	if ((countsFilename) && !genomeDef.printEntries(countsFilename.replaceSuffix("_genome.txt")))
+	if ((countsFilename) && !genomeDef.printEntries(countsFilename.replaceSuffix("_genome2.txt")))
 		progMessage("Unable to output genome data to :",countsFilename.replaceSuffix("_genome.txt"));
 #endif
-
+*/
 	geneCounts.addEntry("reference", false,DEFAULT_NORMALISATION_GENE_LENGTH);
 	for (auto & glfn : geneListFilenames)
 	{
@@ -322,7 +330,8 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 		processPositionOrderedBamData();
 
 #ifdef	OUTPUT_FEATURE_DATA
-	genomeDef.outputChromData(countsFilename.replaceSuffix("_genome2.txt"), geneCounts);
+	if (countsFilename)
+		genomeDef.outputChromData(countsFilename.replaceSuffix("_genome.txt"), geneCounts);
 #endif
 
 	//	Need to output landscape file now because the data will be modified during the process

@@ -2,7 +2,7 @@
 #define OPTIONS_H
 
 
-#define LIBINORM_VERSION "1.5.0"
+#define LIBINORM_VERSION "1.5.1"
 //	Bam/gff file reading
 #define DEFAULT_FEATURE_TYPE_EXON "exon" 
 #define DEFAULT_GTF_ID_ATTRIBUTE "gene_id"
@@ -102,6 +102,9 @@
 
 //	Output landscape files in the original format
 // #define LANDSCAPE_FORMAT_1
+
+//  Print full MCMC run data
+// #define PRINT_MCMC_RUN_DATA
 
 //	When matching forward and reverse reads the position information is also used to pair the reads
 // #define MATCH_USING_POSITION

@@ -323,11 +323,11 @@ int LiBiNorm::main(int argc, char **argv)
 
 	//********************************************************************************************
 	//	This prints out all of the data for the full set of mcmc runs for each model
-	if (outputFull)
-	{
-		printAllMcmcRunData();
-		printConsolidatedMcmcRunData();
-	}
+
+#ifdef PRINT_MCMC_RUN_DATA
+	printAllMcmcRunData();
+	printConsolidatedMcmcRunData();
+#endif
 
 	//	The basic count data in htseq-count format
 	if (!geneCounts.outputGeneCounts(countsFilename, 1, conv(theModel)))
@@ -599,14 +599,9 @@ void LiBiNorm::printResults()
 	}
 	mcmcResult.printEnd();
 
-/*	const char * host = getenv("HOSTNAME");
-	if (host == NULL) host = "";
-
-	mcmcResult.printStart(host);*/
-
-	mcmcResult.printStart(intRand.theSeed());
+	mcmcResult.printStart("");
 	for (modelType m : allModels())
-		mcmcResult.printMiddle(headers[m], "chain", "");
+		mcmcResult.printMiddle(headers[m], "", "");
 	mcmcResult.printEnd();
 
 	//	A row for the optimal parameters that were found for each model
@@ -733,7 +728,7 @@ void LiBiNorm::printAllMcmcRunData()
 		//	This ensures that at least one header is output, which ensures that there is something in the file
 		//	even if no data were produced for this model
 		for (size_t i = 0; i < fullResultChain[modl].size(); i++)
-			mcmcResult.printMiddle(headers[modl], "chain", "");
+			mcmcResult.printMiddle(headers[modl], "LL", "");
 		mcmcResult.printEnd();
 
 		//	For each of the mcmc runs print out the results.  Each run is a column

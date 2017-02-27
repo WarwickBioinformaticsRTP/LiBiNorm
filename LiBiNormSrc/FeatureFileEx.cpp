@@ -193,7 +193,7 @@ bool featureFileEx::outputChromData(const string & filename, const GeneCountData
 
 	if (!output.is_open())
 	{
-		exitFail("Unable to open ", filename," for outputting genome data");
+		progMessage("Unable to open ", filename," for outputting genome data");
 		return false;
 	}
 

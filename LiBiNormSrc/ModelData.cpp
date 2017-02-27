@@ -233,7 +233,8 @@ double priorFunc(const dataVec & data, const paramSet & params)
 
 /*
 	This adds a target prior just for the h parameter in model E.  The cost function is weighted using a 
-	quadratic for differences in the log value up to 1 (ie a factor of 10 in absolute terms) and then linearly beyond that
+	quadratic for differences in the log value up to 1 away from the target (ie a factor of 10 in absolute terms)
+	and then linearly beyond that
 */
 
 double priorFuncE(const dataVec & data, const paramSet & params)
