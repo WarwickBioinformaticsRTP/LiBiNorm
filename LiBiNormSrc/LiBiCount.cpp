@@ -471,7 +471,7 @@ void LiBiCount::addRead(const regionLists & segments,const featureFileEx & gtfDa
 
 				//	If this region overlaps any other regions then go to the one that starts the earliest.
 				//	If there were no overlaps then default is the overlaps points to self
-				regionIterator = *regionIterator->second.overlaps;
+				regionIterator = regionIterator->second.overlaps;
 
 
 				//And now go through each of the segments
@@ -490,7 +490,7 @@ void LiBiCount::addRead(const regionLists & segments,const featureFileEx & gtfDa
 							j->second.checkOverlap(segment.second, overlaps);
 						}
 
-						regionIterator = *j->second.overlaps;
+						regionIterator = j->second.overlaps;
 					}
 
 
@@ -525,8 +525,6 @@ void LiBiCount::addRead(const regionLists & segments,const featureFileEx & gtfDa
 
 						//	
 						featureOverlap & overlap = overlaps[0];
-
-						_DBG(dbgFound = (overlap.geneName == "NM_001115075.1"));
 
 						//	This will create an entry for the combination if it does not exist before, which is needed later on
 						overlapCounts & GeneAttributeCombo1 = genes[overlap.geneName];

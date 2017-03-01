@@ -9,9 +9,6 @@
 #include "dataVec.h"
 #include "GeneCountData.h"
 
-//class featureRegion;
-
-
 struct featureOverlap
 {
 	featureOverlap(size_t start, size_t finish, rna_pos_type RNAstartPos, rna_pos_type RNAendPos, bool strict, const std::string & geneName, const std::string & featType) :
@@ -32,17 +29,14 @@ class featureRegion
 public:
 	class  chromosomeFeatureData : public std::multimap<size_t, featureRegion>
 	{
-
+	public:
+		ADD_ITER(position, feature);
+		ADD_CONSTMAPPAIR_VAR(position, feature);
 	};
 
-	featureRegion(featureRegion && gtf) : start(gtf.start), finish(gtf.finish), RNAstart(gtf.RNAstart), name(std::move(gtf.name)), type(std::move(gtf.type)), bioType(std::move(gtf.bioType)), strand(gtf.strand),
-		overlaps(gtf.overlaps)
-	{
-		gtf.overlaps = 0;
-	}
+	featureRegion(featureRegion && gtf);
 	featureRegion(size_t start, size_t finish, const std::string & name, char strand, const std::string & type, const std::string & bioType);
-	~featureRegion();
-
+	
 	void checkOverlap(const region & segment, std::vector<featureOverlap> & overlapList) const;
 
 	size_t start,finish;
@@ -52,7 +46,7 @@ public:
 	const std::string type;
 	const std::string bioType;
 	char strand;
-	chromosomeFeatureData::iterator * overlaps;
+	chromosomeFeatureData::iterator overlaps;
 };
 
 

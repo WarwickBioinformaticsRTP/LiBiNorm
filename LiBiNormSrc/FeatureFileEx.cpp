@@ -29,14 +29,13 @@ void featureRegion::checkOverlap(const region & segment,vector<featureOverlap> &
 	}
 }
 
+featureRegion::featureRegion(featureRegion && gtf) : start(gtf.start), finish(gtf.finish), RNAstart(gtf.RNAstart), name(std::move(gtf.name)), type(std::move(gtf.type)),
+bioType(std::move(gtf.bioType)), strand(gtf.strand), overlaps(gtf.overlaps)
+{};
+
 featureRegion::featureRegion(size_t start, size_t finish, const std::string & name, char strand, const std::string & type, const std::string & bioType) :
 	start(start), finish(finish),  RNAstart(0), name(name), type(type), bioType(bioType),strand(strand)
-{
-	overlaps = new chromosomeFeatureData::iterator();
-};
-featureRegion::~featureRegion() {
-	delete (overlaps);
-};
+{};
 
 
 void featureFileEx::index(GeneCountData & geneCounts, bool useStrand)
@@ -48,29 +47,29 @@ void featureFileEx::index(GeneCountData & geneCounts, bool useStrand)
 	if (geneCounts.readPositionData.size() > 1)
 	{
 		usingPreselectedGenes = true;
-		for (auto & chrom : entryMap)
+		for (entryMapClass::Pair chrom : entryMap)
 		{
 			//	First get rid of entries associated with genes that we are not interested in 
-			for (auto i = chrom.second.begin(); i != chrom.second.end();)
+			for (featureFile::featureMap::Iterator i = chrom.data().begin(); i != chrom.data().end();)
 			{
 
 
-				string prefix(i->second.name.substr(0, i->second.name.find('.')));
-				auto j = geneCounts.readPositionData.lower_bound(prefix);
+				string prefix(i.feature().name.substr(0, i.feature().name.find('.')));
+				readPositionDataClass::Iterator j = geneCounts.readPositionData.lower_bound(prefix);
 				//	Need to do this to cater for genes/transcripts that have changed release/version 
-				if (!j->first.startsWith(prefix))
+				if (!j.readGeneName().startsWith(prefix))
 				{
 					auto k = i++;
-					chrom.second.erase(k);
+					chrom.data().erase(k);
 				}
 				else
 				{
-					if (i->second.name != j->first)
+					if (i.feature().name != j.readGeneName())
 					{
 						//	We now have a different version of the transcript/gene to that in the reference list, so rename
 						//	our list to match the new reference genome
-						geneCounts.readPositionData.emplace(i->second.name, j->second.index);
-						geneCounts.info[j->second.index].name = i->second.name;
+						geneCounts.readPositionData.emplace(i.feature().name, j.readGeneAttributes().index);
+						geneCounts.info[j.readGeneAttributes().index].name = i.feature().name;
 						geneCounts.readPositionData.erase(j);
 					}
 					i++;
@@ -81,98 +80,100 @@ void featureFileEx::index(GeneCountData & geneCounts, bool useStrand)
 		}
 	}
 
-	for (auto & chrom : entryMap)
+	for (entryMapClass::Pair chrom : entryMap)
 	{
 		//	In each chromosome go through all of the regions to see what regions can be amalgamated
-		featureRegion::chromosomeFeatureData & thisChromData = genomeGtfData[chrom.first];
-		for (auto i = chrom.second.begin(); i != chrom.second.end();i++)
+		featureRegion::chromosomeFeatureData & thisChromData = genomeGtfData[chrom.name()];
+		for (featureFile::featureMap::Iterator i = chrom.data().begin(); i != chrom.data().end();i++)
 		{
 
-			size_t finish = i->second.finish;
-			setEx<string> type{{i->second.type}};
-			for (auto j = next(i,1);(j != chrom.second.end()) && (j->first <= (finish + 1));)
+			size_t finish = i.feature().finish;
+			setEx<string> type{{i.feature().type}};
+			for (featureFile::featureMap::Iterator j = next(i,1);(j != chrom.data().end()) && (j.position() <= (finish + 1));)
 			{
-				auto k = j++;
-				if (k != chrom.second.end())
+				featureFile::featureMap::Iterator k = j++;
+				if (k != chrom.data().end())
 				{
 					//	It turns out that the Yam1 gene is defined on both strands, so need to check strands
-					if ((i->second.type == k->second.type) && (i->second.name == k->second.name) && (i->second.strand == k->second.strand))
+					if ((i.feature().type == k.feature().type) && 
+						(i.feature().name == k.feature().name) && 
+						(i.feature().strand == k.feature().strand))
 					{
 						//	If the second region extends beyond the firat then make the region longer and add
 						//	the second type to the list of types associated with the region
-						if (k->second.finish > finish)
+						if (k.feature().finish > finish)
 						{
-							finish = k->second.finish;
-							type.add(k->second.type);
-							chrom.second.erase(k);
+							finish = k.feature().finish;
+							type.add(k.feature().type);
+							chrom.data().erase(k);
 						}
 						//	If the second region is the same length or shorter then just add the type associated with the new region
-						else if (k->second.finish <= finish)
+						else if (k.feature().finish <= finish)
 						{
-							type.add(k->second.type);
-							chrom.second.erase(k);
+							type.add(k.feature().type);
+							chrom.data().erase(k);
 						}
 					}
 				}
 			}
 			static const string nullString;
-			thisChromData.emplace(i->first,featureRegion(i->second.start,finish,i->second.name,
-				i->second.strand,i->second.type , i->second.biotype));
+			thisChromData.emplace(i.position(),featureRegion(i.feature().start,finish,i.feature().name,
+				i.feature().strand,i.feature().type , i.feature().biotype));
 		}
 
 		//	And now for each region find the regions that it overlaps and produce overlap list:  The list of all regions that start before this region has ended.
 		//	Then select the first of the regions, which will be used as the starting point for checking for region overlaps
-		chromosomeEndIndexMap & thisChromEndMap = genomeEndIndex[chrom.first];
+		chromosomeEndIndexMap & thisChromEndMap = genomeEndIndex[chrom.name()];
 		
 		//	We are using a temporary map of the address of the features in this chromosome.
 		//	We can use address only because the entries will not be moved during this process
 		//	For each of the features we create a map of iterators pointing to other overlapping features, 
 		//	the mmap being indexed by the position of the start of the region
-		map<void *,map<size_t, featureRegion::chromosomeFeatureData::iterator> > overlapMap;
+		map<const void *,map<size_t, featureRegion::chromosomeFeatureData::iterator> > overlapMap;
 
-		for (featureRegion::chromosomeFeatureData::iterator i = thisChromData.begin(); i != thisChromData.end();i++)
+		for (featureRegion::chromosomeFeatureData::Iterator i = thisChromData.begin(); i != thisChromData.end();i++)
 		{
 			//	Take the opportunity to produce a map of all the genes for holding counts
 			//	The default is that it will be used for parameter estimation
-			geneCounts.addEntry(i->second.name,true);
+			geneCounts.addEntry(i.feature().name,true);
 
 			//	And a parallel map of the ends of all of the featureRegions/
-			thisChromEndMap.emplace(i->second.finish,i);
+			thisChromEndMap.emplace(i.feature().finish,i);
 
 			//	Starting from the next region, find all of the subsequent regions which start before this region ends.  
 			//	In each case add the subsequent region to the list of overlaps.  And also add this region to the list of 
 			//	overlaps
-			for (featureRegion::chromosomeFeatureData::iterator j = next(i, 1); (j != thisChromData.end()) && (j->first < i->second.finish); j++)
+			for (featureRegion::chromosomeFeatureData::Iterator j = next(i, 1); (j != thisChromData.end()) && (j.position() < i.feature().finish); j++)
 			{
-				overlapMap[&j->second].emplace(i->first, i);
+				overlapMap[&j.feature()].emplace(i.position(), i);
 //				overlapMap[&i->second].emplace(j->first, j);
 			}
 		}
-		for (featureRegion::chromosomeFeatureData::iterator i = thisChromData.begin(); i != thisChromData.end();i++)
+		for (featureRegion::chromosomeFeatureData::Iterator i = thisChromData.begin(); i != thisChromData.end();i++)
 		{
-			size_t index = geneCounts.readPositionData.at(i->second.name).index;
+			size_t index = geneCounts.readPositionData.at(i.feature().name).index;
 
 			//	Use this for accumulating length information
 			VEC_DATA_TYPE & length = geneCounts.lengths[0].at(index);
-			auto j = overlapMap.find(&i->second);
+			auto j = overlapMap.find(&i.feature());
 
 			if (j == overlapMap.end())
 			{
 				//	The overlaps pointer points to self, indicating that there is no overlap
-				*i->second.overlaps = i;
+				i.feature().overlaps = i;
 				//	Add featureRegion to the list of regions associated with the gene
-				genes[i->second.name].addRegion(&i->second, false,length,chrom.first);
+				genes[i.feature().name].addRegion(&i.feature(), false,length,chrom.name());
 
 			}
 			else
 			{
-				*i->second.overlaps = j->second.begin()->second;
-				genes[i->second.name].addRegion(&i->second, true,length,chrom.first);
+				i.feature().overlaps = j->second.begin()->second;
+				genes[i.feature().name].addRegion(&i.feature(), true,length,chrom.name());
 				//	If the genes overlap then we dont use them if either
 				//	   a) the reads are unstranded
 				//	   b) the genes are on the same strand
 				if (!usingPreselectedGenes && 
-					(!useStrand || (i->second.strand == j->second.begin()->second->second.strand)))
+					(!useStrand || (i.feature().strand == j->second.begin()->second->second.strand)))
 				{
 					geneCounts.info[index].useForParameterEstimation = false;
 					size_t index2 = geneCounts.readPositionData.at(j->second.begin()->second->second.name).index;
@@ -201,15 +202,15 @@ bool featureFileEx::outputChromData(const string & filename, const GeneCountData
 
 	for(auto & i : genomeGtfData)
 	{
-		for (auto & j : i.second)
+		for (featureRegion::chromosomeFeatureData::Pair j : i.second)
 		{
-			size_t index = geneCounts.readPositionData.at(j.second.name).index;
-			size_t countF = geneCounts.readPositionData.at(j.second.name).positions[0].size();
-			size_t countR = geneCounts.readPositionData.at(j.second.name).positions[1].size();
+			size_t index = geneCounts.readPositionData.at(j.feature.name).index;
+			size_t countF = geneCounts.readPositionData.at(j.feature.name).positions[0].size();
+			size_t countR = geneCounts.readPositionData.at(j.feature.name).positions[1].size();
 			bool beingUsed = geneCounts.info[index].useForParameterEstimation;
 			int length = geneCounts.lengths[0][index];
-			output.printEnd(i.first, _s("chr",i.first, ":", j.second.start, "-", j.second.finish), j.second.RNAstart, j.second.strand,
-				j.second.name, j.second.type, j.second.bioType,beingUsed, length,countF, countR);
+			output.printEnd(i.first, _s("chr",i.first, ":", j.feature.start, "-", j.feature.finish), j.feature.RNAstart, j.feature.strand,
+				j.feature.name, j.feature.type, j.feature.bioType,beingUsed, length,countF, countR);
 		}
 	}
 	return true;
