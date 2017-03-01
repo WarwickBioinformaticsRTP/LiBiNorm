@@ -84,7 +84,7 @@ void featureFileEx::index(GeneCountData & geneCounts, bool useStrand)
 	for (auto & chrom : entryMap)
 	{
 		//	In each chromosome go through all of the regions to see what regions can be amalgamated
-		chromosomeFeatureData & thisChromData = genomeGtfData[chrom.first];
+		featureRegion::chromosomeFeatureData & thisChromData = genomeGtfData[chrom.first];
 		for (auto i = chrom.second.begin(); i != chrom.second.end();i++)
 		{
 
@@ -128,9 +128,9 @@ void featureFileEx::index(GeneCountData & geneCounts, bool useStrand)
 		//	We can use address only because the entries will not be moved during this process
 		//	For each of the features we create a map of iterators pointing to other overlapping features, 
 		//	the mmap being indexed by the position of the start of the region
-		map<void *,map<size_t,chromosomeFeatureData::iterator> > overlapMap;
+		map<void *,map<size_t, featureRegion::chromosomeFeatureData::iterator> > overlapMap;
 
-		for (chromosomeFeatureData::iterator i = thisChromData.begin(); i != thisChromData.end();i++)
+		for (featureRegion::chromosomeFeatureData::iterator i = thisChromData.begin(); i != thisChromData.end();i++)
 		{
 			//	Take the opportunity to produce a map of all the genes for holding counts
 			//	The default is that it will be used for parameter estimation
@@ -142,13 +142,13 @@ void featureFileEx::index(GeneCountData & geneCounts, bool useStrand)
 			//	Starting from the next region, find all of the subsequent regions which start before this region ends.  
 			//	In each case add the subsequent region to the list of overlaps.  And also add this region to the list of 
 			//	overlaps
-			for (chromosomeFeatureData::iterator j = next(i, 1); (j != thisChromData.end()) && (j->first < i->second.finish); j++)
+			for (featureRegion::chromosomeFeatureData::iterator j = next(i, 1); (j != thisChromData.end()) && (j->first < i->second.finish); j++)
 			{
 				overlapMap[&j->second].emplace(i->first, i);
-				overlapMap[&i->second].emplace(j->first, j);
+//				overlapMap[&i->second].emplace(j->first, j);
 			}
 		}
-		for (chromosomeFeatureData::iterator i = thisChromData.begin(); i != thisChromData.end();i++)
+		for (featureRegion::chromosomeFeatureData::iterator i = thisChromData.begin(); i != thisChromData.end();i++)
 		{
 			size_t index = geneCounts.readPositionData.at(i->second.name).index;
 
@@ -175,6 +175,8 @@ void featureFileEx::index(GeneCountData & geneCounts, bool useStrand)
 					(!useStrand || (i->second.strand == j->second.begin()->second->second.strand)))
 				{
 					geneCounts.info[index].useForParameterEstimation = false;
+					size_t index2 = geneCounts.readPositionData.at(j->second.begin()->second->second.name).index;
+					geneCounts.info[index2].useForParameterEstimation = false;
 				}
 			}
 		}

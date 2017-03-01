@@ -9,9 +9,8 @@
 #include "dataVec.h"
 #include "GeneCountData.h"
 
-class featureRegion;
+//class featureRegion;
 
-typedef std::multimap<size_t, featureRegion> chromosomeFeatureData ;
 
 struct featureOverlap
 {
@@ -31,6 +30,11 @@ struct featureOverlap
 class featureRegion
 {
 public:
+	class  chromosomeFeatureData : public std::multimap<size_t, featureRegion>
+	{
+
+	};
+
 	featureRegion(featureRegion && gtf) : start(gtf.start), finish(gtf.finish), RNAstart(gtf.RNAstart), name(std::move(gtf.name)), type(std::move(gtf.type)), bioType(std::move(gtf.bioType)), strand(gtf.strand),
 		overlaps(gtf.overlaps)
 	{
@@ -51,15 +55,16 @@ public:
 	chromosomeFeatureData::iterator * overlaps;
 };
 
+
 //	A map of the features associated with each gene
-class genomeFeatureRegions : public std::map<std::string, chromosomeFeatureData>
+class genomeFeatureRegions : public std::map<std::string, featureRegion::chromosomeFeatureData>
 {
 
 };
 
 //	For each region in the genome where a read starts we store a reference to an iterator that 
 //	points to the first region that overlaps the region 
-typedef std::multimap<size_t,chromosomeFeatureData::iterator> chromosomeEndIndexMap;
+typedef std::multimap<size_t, featureRegion::chromosomeFeatureData::iterator> chromosomeEndIndexMap;
 typedef std::map<std::string,chromosomeEndIndexMap > genomeEndIndexMap;
 
 typedef std::vector<featureRegion *> featureRegionList;

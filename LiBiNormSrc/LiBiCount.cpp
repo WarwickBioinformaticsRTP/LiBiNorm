@@ -467,7 +467,7 @@ void LiBiCount::addRead(const regionLists & segments,const featureFileEx & gtfDa
 				if (indirectIteratorStart == thisChromEndMap.end())
 					indirectIteratorStart--;
 
-				chromosomeFeatureData::iterator regionIterator = indirectIteratorStart->second;
+				featureRegion::chromosomeFeatureData::iterator regionIterator = indirectIteratorStart->second;
 
 				//	If this region overlaps any other regions then go to the one that starts the earliest.
 				//	If there were no overlaps then default is the overlaps points to self
