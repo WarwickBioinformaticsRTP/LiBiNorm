@@ -129,7 +129,11 @@ void featureFileEx::index(GeneCountData & geneCounts, bool useStrand)
 		//	We can use address only because the entries will not be moved during this process
 		//	For each of the features we create a map of iterators pointing to other overlapping features, 
 		//	the mmap being indexed by the position of the start of the region
-		map<const void *,map<size_t, featureRegion::chromosomeFeatureData::iterator> > overlapMap;
+		class overlapMapType : public map<const void *, chromosomePositionIndexMap >
+		{
+		public:
+			ADD_ITER(feature,positionData)
+		} overlapMap;
 
 		for (featureRegion::chromosomeFeatureData::Iterator i = thisChromData.begin(); i != thisChromData.end();i++)
 		{
@@ -155,7 +159,7 @@ void featureFileEx::index(GeneCountData & geneCounts, bool useStrand)
 
 			//	Use this for accumulating length information
 			VEC_DATA_TYPE & length = geneCounts.lengths[0].at(index);
-			auto j = overlapMap.find(&i.feature());
+			overlapMapType::Iterator j = overlapMap.find(&i.feature());
 
 			if (j == overlapMap.end())
 			{
@@ -167,16 +171,16 @@ void featureFileEx::index(GeneCountData & geneCounts, bool useStrand)
 			}
 			else
 			{
-				i.feature().overlaps = j->second.begin()->second;
+				i.feature().overlaps = j.positionData().Begin().featureDataIterator();
 				genes[i.feature().name].addRegion(&i.feature(), true,length,chrom.name());
 				//	If the genes overlap then we dont use them if either
 				//	   a) the reads are unstranded
 				//	   b) the genes are on the same strand
 				if (!usingPreselectedGenes && 
-					(!useStrand || (i.feature().strand == j->second.begin()->second->second.strand)))
+					(!useStrand || (i.feature().strand == j.positionData().Begin().featureDataIterator().feature().strand)))
 				{
 					geneCounts.info[index].useForParameterEstimation = false;
-					size_t index2 = geneCounts.readPositionData.at(j->second.begin()->second->second.name).index;
+					size_t index2 = geneCounts.readPositionData.at(j.positionData().Begin().featureDataIterator().feature().name).index;
 					geneCounts.info[index2].useForParameterEstimation = false;
 				}
 			}

@@ -58,7 +58,13 @@ class genomeFeatureRegions : public std::map<std::string, featureRegion::chromos
 
 //	For each region in the genome where a read starts we store a reference to an iterator that 
 //	points to the first region that overlaps the region 
-typedef std::multimap<size_t, featureRegion::chromosomeFeatureData::iterator> chromosomeEndIndexMap;
+class chromosomePositionIndexMap : public std::multimap<size_t, featureRegion::chromosomeFeatureData::Iterator>
+{
+public:
+	ADD_ITER(position,featureDataIterator)
+};
+
+typedef chromosomePositionIndexMap chromosomeEndIndexMap;
 typedef std::map<std::string,chromosomeEndIndexMap > genomeEndIndexMap;
 
 typedef std::vector<featureRegion *> featureRegionList;
