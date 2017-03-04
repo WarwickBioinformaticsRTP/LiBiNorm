@@ -339,6 +339,9 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 	if ((landscapeFilename) && !geneCounts.outputLandscape(landscapeFilename))
 		exitFail("Unable to output landscape data to :", landscapeFilename);
 
+	if (normaliseResultsFilename)
+		geneCounts.outputHeatmapData(normaliseResultsFilename.replaceSuffix("_bias.txt"));
+
 	if (normalise)
 	{
 		coreParameterEstimation();
