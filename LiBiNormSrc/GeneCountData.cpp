@@ -302,7 +302,10 @@ bool GeneCountData::outputHeatmapData(const stringEx & filename)
 	multimap<VEC_DATA_TYPE, size_t> orderedLengths;
 	for (size_t i = 1; i < info.size(); i++)
 	{
-		orderedLengths.emplace(lengths[0][i], i);
+		auto & data = readPositionData[info[i].name];
+		size_t Nreads = data.positions[0].size() + data.positions[1].size();
+		if (Nreads)
+			orderedLengths.emplace(lengths[0][i], i);
 	}
 
 	dataArray allBins(orderedLengths.size(), N_BIAS_BINS);
@@ -322,56 +325,53 @@ bool GeneCountData::outputHeatmapData(const stringEx & filename)
 			E[j] = (length * j)/ N_BIAS_BINS;
 
 		size_t Nreads = data.positions[0].size() + data.positions[1].size();
-		if (Nreads)
+		for (size_t strand = 0; strand < 2; strand++)
 		{
-			for (size_t strand = 0; strand < 2; strand++)
+			rnaPosVec & readPositions = data.positions[strand];
+			for (auto v : readPositions)
 			{
-				rnaPosVec & readPositions = data.positions[strand];
-				for (auto v : readPositions)
+				if (v < length)
 				{
-					if (v < length)
+					size_t l = 0;
+					size_t h = E.size() - 1;
+					size_t k = l;
+					while ((h - l) > 1)
 					{
-						size_t l = 0;
-						size_t h = E.size() - 1;
-						size_t k = l;
-						while ((h - l) > 1)
-						{
-							k = (h + l) / 2;
-							if (v < E[k])
-								h = k;
-							else
-								l = k;
-						}
-						if (v >= E[h])
-							k = h;
+						k = (h + l) / 2;
+						if (v < E[k])
+							h = k;
 						else
-							k = l;
-						counts[k]++;
+							l = k;
 					}
+					if (v >= E[h])
+						k = h;
+					else
+						k = l;
+					counts[k]++;
 				}
 			}
-			counts /= Nreads;
+		}
+		counts /= Nreads;
 #ifdef MATHMATICA_FILE
-			if (first)
-				first = false;
-			else
-				fprintf(mathematicaFile.fout, ",");
+		if (first)
+			first = false;
+		else
+			fprintf(mathematicaFile.fout, ",");
 
-			fprintf(mathematicaFile.fout, "{");
-			mathematicaFile.printStart(fmt("%f",counts));
-			fprintf(mathematicaFile.fout, "}");
+		fprintf(mathematicaFile.fout, "{");
+		mathematicaFile.printStart(fmt("%f", counts));
+		fprintf(mathematicaFile.fout, "}");
 #endif
 
-			VEC_DATA_TYPE min = 10, max = 0;
-			for (auto n : counts)
-			{
-				if (n < min) min = n;
-				if (n > max) max = n;
-			}
-			for (auto & n : counts)
-			{
-				n = (n - min) / (max - min);
-			}
+		VEC_DATA_TYPE min = 10, max = 0;
+		for (auto n : counts)
+		{
+			if (n < min) min = n;
+			if (n > max) max = n;
+		}
+		for (auto & n : counts)
+		{
+			n = (n - min) / (max - min);
 		}
 	}
 #ifdef MATHMATICA_FILE
@@ -399,7 +399,7 @@ bool GeneCountData::outputHeatmapData(const stringEx & filename)
 		}
 #ifdef PEAKVALUES
 		for (size_t j = 0; j < bins; j++)
-			if (allBins[i][j] > consolidatedBins[currPos][j]) 
+			if (allBins[i][j] > consolidatedBins[currPos][j])
 				consolidatedBins[currPos][j] = allBins[i][j];
 #else
 		consolidatedBins[currPos] += allBins[i];
