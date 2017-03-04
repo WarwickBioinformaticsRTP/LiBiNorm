@@ -2,7 +2,7 @@
 #define OPTIONS_H
 
 
-#define LIBINORM_VERSION "1.5.2"
+#define LIBINORM_VERSION "1.6.0"
 //	Bam/gff file reading
 #define DEFAULT_FEATURE_TYPE_EXON "exon" 
 #define DEFAULT_GTF_ID_ATTRIBUTE "gene_id"
@@ -50,6 +50,10 @@
 
 //	Allows a maximum gene length to be specified
 #define DEF_LENGTH_OF_GENE_FOR_PARAM_ESTIMATION 20000 // -e
+
+//	Parameters for printing bias plots
+#define N_BIAS_BINS 100
+#define N_BIAS_GENE_SEGMENTS 500
 
 
 //	The insert size for matching pairs should be A and -A.  In some datasets they are A and A.  By using the absolute value of the

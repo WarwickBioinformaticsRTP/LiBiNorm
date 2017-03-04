@@ -69,7 +69,7 @@ int LiBiVariation::main(int argc, char **argv)
 	for (modelType m : allModels())
 	{
 		mcmcResult.printMiddle(m);
-		mcmcResult.printGaps(headers[m].size() + 1);
+		mcmcResult.printRepeat(headers[m].size() + 1);
 	}
 	mcmcResult.printEnd();
 

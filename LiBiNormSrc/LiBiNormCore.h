@@ -48,6 +48,7 @@ protected:
 
 	headerType headers;
 	stringEx landscapeFilename, normaliseResultsFilename, countsFilename, parameterFilename;
+//	size_t biasBins;
 
 	std::map<modelType, dataVec> initialValues;
 

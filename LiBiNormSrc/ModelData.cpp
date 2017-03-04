@@ -106,10 +106,10 @@ bool printVal(outputDataFile * f, modelType m)
 };
 
 
-#define PARAM_D { "log10 d", -1, 2, -0.5 }
-#define PARAM_H { "log10 h", 0, 3, 1.5 }
-#define PARAM_T1 { "log10 t1", -5, -1, -3 } 
-#define PARAM_T2 { "log10 t2", -5, -1, -3 } 
+#define PARAM_D { "d", -1, 2, -0.5 }
+#define PARAM_H { "h", 0, 3, 1.5 }
+#define PARAM_T1 { "t1", -5, -1, -3 } 
+#define PARAM_T2 { "t2", -5, -1, -3 } 
 #define PARAM_A { "a", 0, 1, 0.5 }
 
 

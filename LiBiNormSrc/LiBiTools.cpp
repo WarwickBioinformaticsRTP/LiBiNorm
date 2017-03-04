@@ -114,10 +114,10 @@ int LiBiTools::landMain(int argc, char **argv)
 	extraGenesFile.open("extraGenes.txt");
 
 	readPositionDataClass::Iterator it1 = geneCounts1.readPositionData.begin();
-	bool used1 = geneCounts1.info[it1.readGeneAttributes().index].useForParameterEstimation;
+//	bool used1 = geneCounts1.info[it1.readGeneAttributes().index].useForParameterEstimation;
 
 	readPositionDataClass::Iterator it2 = geneCounts2.readPositionData.begin();
-	bool used2 = geneCounts1.info[it2.readGeneAttributes().index].useForParameterEstimation;
+//	bool used2 = geneCounts1.info[it2.readGeneAttributes().index].useForParameterEstimation;
 
 	while ((it1 != geneCounts1.readPositionData.end()) && (it2 != geneCounts2.readPositionData.end()))
 	{

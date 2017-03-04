@@ -291,6 +291,9 @@ int LiBiNorm::main(int argc, char **argv)
 
 	geneCounts.loadData(landscapeFilename, Ngenes);
 
+	if (normaliseResultsFilename)
+		geneCounts.outputHeatmapData(normaliseResultsFilename.replaceSuffix("_bias.txt"));
+
 	//	Load up the initial values
 	if (parameterFilename)
 	{
@@ -595,13 +598,22 @@ void LiBiNorm::printResults()
 		if (bestResults[m].nelderMeadIterations)
 			count = _s("NM iterations:", bestResults[m].nelderMeadIterations);
 		mcmcResult.printMiddle(m, count);
-		mcmcResult.printGaps(headers[m].size());
+		mcmcResult.printRepeat(headers[m].size());
 	}
 	mcmcResult.printEnd();
+	mcmcResult.printStart("Name");
 
-	mcmcResult.printStart("");
 	for (modelType m : allModels())
-		mcmcResult.printMiddle(headers[m], "", "");
+		mcmcResult.printMiddle(headers[m], "LL","");
+	mcmcResult.printEnd();
+
+	mcmcResult.printStart("Model");
+
+	for (modelType m : allModels())
+	{
+		mcmcResult.printRepeat(headers[m].size() + 1, conv(m).substr(6).c_str());
+		mcmcResult.printMiddle("");
+	}
 	mcmcResult.printEnd();
 
 	//	A row for the optimal parameters that were found for each model
@@ -613,7 +625,7 @@ void LiBiNorm::printResults()
 			if (bestResults[m].params[i].size())
 				mcmcResult.printMiddle(bestResults[m].params[i], bestResults[m].LLresult, "");
 			else
-				mcmcResult.printGaps(headers[m].size() + 2);
+				mcmcResult.printRepeat(headers[m].size() + 2);
 		}
 		mcmcResult.printEnd();
 	}
@@ -642,7 +654,7 @@ void LiBiNorm::printResults()
 			if (bestResults[m].param_dev[i].size())
 				mcmcResult.printMiddle(bestResults[m].param_dev[i], bestResults[m].LL_dev, "");
 			else
-				mcmcResult.printGaps(headers[m].size() + 2);
+				mcmcResult.printRepeat(headers[m].size() + 2);
 		}
 		mcmcResult.printEnd();
 	}
@@ -657,7 +669,7 @@ void LiBiNorm::printResults()
 			if (fullResultSSChain[m].size() && (i <= fullResultSSChain[m].rbegin()->first))
 				mcmcResult.printMiddle(*fullResultChain[m][i].rbegin(), *fullResultSSChain[m][i].rbegin(), "");
 			else
-				mcmcResult.printGaps(headers[m].size() + 2);
+				mcmcResult.printRepeat(headers[m].size() + 2);
 		}
 		mcmcResult.printEnd();
 	}
@@ -684,7 +696,9 @@ void LiBiNorm::printBias()
 	//	bias figures for
 	dataVec lengths;
 	lengths.push_back(DEFAULT_NORMALISATION_GENE_LENGTH);
-	for (size_t i = 100; i <= MAX_GENE_LENGTH_FOR_NORM_PLOT; i += 100)
+	for (size_t i = 100; i < (size_t)min(400, MAX_GENE_LENGTH_FOR_NORM_PLOT); i += 20)
+		lengths.push_back(i);
+	for (size_t i = 400; i <= MAX_GENE_LENGTH_FOR_NORM_PLOT; i += 100)
 		lengths.push_back(i);
 
 	map<size_t, dataVec> biases;
@@ -697,19 +711,19 @@ void LiBiNorm::printBias()
 
 	for (modelType m : allModels())
 	{
-		mcmcResult.print("","","Log likelihood",_BRL("mcmc run","mcmc iteration")headers[m]);
-		mcmcResult.print(m,"Parameters",bestResults[m].LLresult,_BRL(bestResults[m].run, bestResults[m].pos) bestResults[m].params);
+		mcmcResult.print(m,"Log likelihood",_BRL("mcmc run","mcmc iteration")headers[m]);
+		mcmcResult.print("Parameters",bestResults[m].LLresult,_BRL(bestResults[m].run, bestResults[m].pos) bestResults[m].params[logValue]);
 		if (biases[m].size())
 		{
-			mcmcResult.print("","Length", lengths);
-			mcmcResult.print("","Bias",biases[m]);
+			mcmcResult.print("Length", lengths.subset(1));
+			mcmcResult.print("Bias",biases[m].subset(1));
 		}
 		else
 		{
 			mcmcResult.print("");
 			mcmcResult.print("");
 		}
-		mcmcResult.print();
+	mcmcResult.print();
 	}
 	mcmcResult.close();
 }
@@ -775,7 +789,7 @@ void LiBiNorm::printConsolidatedMcmcRunData()
 				iterators[m]++;
 			}
 			else
-				mcmcResult.printGaps(headers[m].size() + 2);
+				mcmcResult.printRepeat(headers[m].size() + 2);
 		}
 		mcmcResult.printEnd();
 	}

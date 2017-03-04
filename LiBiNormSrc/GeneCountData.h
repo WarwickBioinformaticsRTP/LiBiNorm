@@ -150,6 +150,7 @@ public:
 
 	bool outputGeneCounts(const std::string & filename, int detailLevel = 0, stringEx model = "");
 	bool outputLandscape(const std::string & filename);
+	bool outputHeatmapData(const stringEx & filename);
 
 	void useSelectedGenes(const geneListFilenameData & filename);
 

@@ -92,18 +92,18 @@ rnaPosVec GeneCountData::nullData;
 VEC_DATA_TYPE & GeneCountData::count(const std::string & gene)
 {
 	static VEC_DATA_TYPE dummy;
-	auto i = readPositionData.find(gene);
+	readPositionDataClass::Iterator i = readPositionData.Find(gene);
 	if (i == readPositionData.end())
 	{
-		i = errorCounts.find(gene);
+		i = errorCounts.Find(gene);
 		if (i == errorCounts.end())
 		{
 			_ASSERT_EXPR(false, "Looking for gene that was not in the reference genome");
 			return dummy;
 		}
-		return errCounts.at((*i).second.index);
+		return errCounts.at(i.readGeneAttributes().index);
 	}
-	return counts.at((*i).second.index);
+	return counts.at(i.readGeneAttributes().index);
 }
 
 //	Returns the actual length of a gene (rather than the normalised length) given the name  
@@ -273,6 +273,147 @@ bool GeneCountData::outputLandscape(const string & filename)
 		output.print(name, "minus", readPositionData[name].positions[1]);
 	}
 
+#endif
+
+	return true;
+}
+
+//	Enable this to produce output based on peak rather than average values
+// #define PEAKVALUES
+
+//	Enable this to produce a file that can be used by the mathematica script
+// #define MATHMATICA_FILE
+
+bool GeneCountData::outputHeatmapData(const stringEx & filename)
+{
+#ifdef MATHMATICA_FILE
+	CsvFile mathematicaFile;
+	string mFilename = filename.replaceSuffix(".mm.txt");
+	if (!mathematicaFile.open(mFilename))
+		exitFail("Unable to open ", mFilename, " for bias data");
+	fprintf(mathematicaFile.fout, "{");
+#endif
+	TsvFile tsvFile;
+	if (!tsvFile.open(filename))
+	{
+		progMessage("Unable to open ", filename, " for bias data");
+		return false;
+	}
+	multimap<VEC_DATA_TYPE, size_t> orderedLengths;
+	for (size_t i = 1; i < info.size(); i++)
+	{
+		orderedLengths.emplace(lengths[0][i], i);
+	}
+
+	dataArray allBins(orderedLengths.size(), N_BIAS_BINS);
+	size_t dataCount = 0;
+	for (auto i = orderedLengths.begin();i != orderedLengths.end();i++)
+	{
+
+		dataVec E(N_BIAS_BINS);
+		dataVec & counts = allBins[dataCount++];
+
+		string & name = info[i->second].name;
+		auto & data = readPositionData[name];
+		VEC_DATA_TYPE length = i->first;
+
+
+		for (int j = 0; j < N_BIAS_BINS; j++)
+			E[j] = (length * j)/ N_BIAS_BINS;
+
+		size_t Nreads = data.positions[0].size() + data.positions[1].size();
+		if (Nreads)
+		{
+			for (size_t strand = 0; strand < 2; strand++)
+			{
+				rnaPosVec & readPositions = data.positions[strand];
+				for (auto v : readPositions)
+				{
+					if (v < length)
+					{
+						size_t l = 0;
+						size_t h = E.size() - 1;
+						size_t k = l;
+						while ((h - l) > 1)
+						{
+							k = (h + l) / 2;
+							if (v < E[k])
+								h = k;
+							else
+								l = k;
+						}
+						if (v >= E[h])
+							k = h;
+						else
+							k = l;
+						counts[k]++;
+					}
+				}
+			}
+			counts /= Nreads;
+#ifdef MATHMATICA_FILE
+			if (first)
+				first = false;
+			else
+				fprintf(mathematicaFile.fout, ",");
+
+			fprintf(mathematicaFile.fout, "{");
+			mathematicaFile.printStart(fmt("%f",counts));
+			fprintf(mathematicaFile.fout, "}");
+#endif
+
+			VEC_DATA_TYPE min = 10, max = 0;
+			for (auto n : counts)
+			{
+				if (n < min) min = n;
+				if (n > max) max = n;
+			}
+			for (auto & n : counts)
+			{
+				n = (n - min) / (max - min);
+			}
+		}
+	}
+#ifdef MATHMATICA_FILE
+	fprintf(mathematicaFile.fout, "}");
+#endif
+
+
+#ifdef N_BIAS_GENE_SEGMENTS
+	dataArray consolidatedBins(N_BIAS_GENE_SEGMENTS, N_BIAS_BINS);
+
+	size_t lastPos = 0;
+	size_t section_count = 0;
+	for (size_t i = 0; i < allBins.size(); i++)
+	{
+		size_t currPos = (i * N_BIAS_GENE_SEGMENTS)/ allBins.size();
+		if (currPos != lastPos)
+		{
+#ifndef PEAKVALUES
+			consolidatedBins[lastPos] /= section_count;
+			for (size_t i = lastPos + 1; i < currPos; i++)
+				consolidatedBins[i] = consolidatedBins[lastPos];
+#endif
+			section_count = 0;
+			lastPos = currPos;
+		}
+#ifdef PEAKVALUES
+		for (size_t j = 0; j < bins; j++)
+			if (allBins[i][j] > consolidatedBins[currPos][j]) 
+				consolidatedBins[currPos][j] = allBins[i][j];
+#else
+		consolidatedBins[currPos] += allBins[i];
+#endif
+		section_count++;
+	}
+#ifndef PEAKVALUES
+	consolidatedBins[lastPos] /= section_count;
+#endif
+	for ( int i = consolidatedBins.size()-1; i >= 0;i--)
+		tsvFile.print(fmt("%f", consolidatedBins[i]));
+#else
+	for (int i = allBins.size() - 1; i >= 0; i--)
+		tsvFile.print(fmt("%f", allBins[i]));
 #endif
 
 	return true;
