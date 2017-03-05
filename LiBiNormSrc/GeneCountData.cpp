@@ -330,7 +330,7 @@ bool GeneCountData::outputHeatmapData(const stringEx & filename)
 			rnaPosVec & readPositions = data.positions[strand];
 			for (auto v : readPositions)
 			{
-				if (v < length)
+//				if (v < length)
 				{
 					size_t l = 0;
 					size_t h = E.size() - 1;
