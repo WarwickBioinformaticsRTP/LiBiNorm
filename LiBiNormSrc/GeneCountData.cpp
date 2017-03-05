@@ -284,6 +284,7 @@ bool GeneCountData::outputLandscape(const string & filename)
 //	Enable this to produce a file that can be used by the mathematica script
 // #define MATHMATICA_FILE
 
+//	Produces a datafile that can be used by LiBiNormPlot.R to produce a heat map of the read distribution
 bool GeneCountData::outputHeatmapData(const stringEx & filename)
 {
 #ifdef MATHMATICA_FILE
@@ -300,6 +301,7 @@ bool GeneCountData::outputHeatmapData(const stringEx & filename)
 		return false;
 	}
 	multimap<VEC_DATA_TYPE, size_t> orderedLengths;
+	//	Create a map of all the genes, ordered by length.  Ignore genes with no reads
 	for (size_t i = 1; i < info.size(); i++)
 	{
 		auto & data = readPositionData[info[i].name];
@@ -312,19 +314,19 @@ bool GeneCountData::outputHeatmapData(const stringEx & filename)
 	size_t dataCount = 0;
 	for (auto i = orderedLengths.begin();i != orderedLengths.end();i++)
 	{
-
-		dataVec E(N_BIAS_BINS);
+		//	Get info for the gene
 		dataVec & counts = allBins[dataCount++];
-
 		string & name = info[i->second].name;
 		auto & data = readPositionData[name];
 		VEC_DATA_TYPE length = i->first;
 
-
+		//And then setup the bins
+		dataVec E(N_BIAS_BINS);
 		for (int j = 0; j < N_BIAS_BINS; j++)
 			E[j] = (length * j)/ N_BIAS_BINS;
 
 		size_t Nreads = data.positions[0].size() + data.positions[1].size();
+		//	Put all the reads into bins
 		for (size_t strand = 0; strand < 2; strand++)
 		{
 			rnaPosVec & readPositions = data.positions[strand];
@@ -351,6 +353,7 @@ bool GeneCountData::outputHeatmapData(const stringEx & filename)
 				}
 			}
 		}
+		//	and normalise.  The mathematica code uses counts normalised by reads
 		counts /= Nreads;
 #ifdef MATHMATICA_FILE
 		if (first)
@@ -363,6 +366,7 @@ bool GeneCountData::outputHeatmapData(const stringEx & filename)
 		fprintf(mathematicaFile.fout, "}");
 #endif
 
+		//	And then scale the bins so that they go between 0 and 1
 		VEC_DATA_TYPE min = 10, max = 0;
 		for (auto n : counts)
 		{
@@ -380,6 +384,7 @@ bool GeneCountData::outputHeatmapData(const stringEx & filename)
 
 
 #ifdef N_BIAS_GENE_SEGMENTS
+	//	And now consolidate the data down to 800 rows by combining genes
 	dataArray consolidatedBins(N_BIAS_GENE_SEGMENTS, N_BIAS_BINS);
 
 	size_t lastPos = 0;
@@ -390,7 +395,9 @@ bool GeneCountData::outputHeatmapData(const stringEx & filename)
 		if (currPos != lastPos)
 		{
 #ifndef PEAKVALUES
+			//	Normalise by the number of genes in this section
 			consolidatedBins[lastPos] /= section_count;
+			//	This does infill if there are fewer than N_BIAS_GENE_SEGMENTS genes
 			for (size_t i = lastPos + 1; i < currPos; i++)
 				consolidatedBins[i] = consolidatedBins[lastPos];
 #endif
@@ -409,9 +416,11 @@ bool GeneCountData::outputHeatmapData(const stringEx & filename)
 #ifndef PEAKVALUES
 	consolidatedBins[lastPos] /= section_count;
 #endif
+	//	Output in reverse order so that it is plotted correctly by R
 	for ( int i = consolidatedBins.size()-1; i >= 0;i--)
 		tsvFile.print(fmt("%f", consolidatedBins[i]));
 #else
+	//	This is the code for if we are not consolidating but outputting all of the genes
 	for (int i = allBins.size() - 1; i >= 0; i--)
 		tsvFile.print(fmt("%f", allBins[i]));
 #endif
