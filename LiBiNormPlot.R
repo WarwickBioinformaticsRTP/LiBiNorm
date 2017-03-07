@@ -6,7 +6,7 @@ library(gridExtra)
 library (scales)
 
 ##  For debugging, otherwise pass in file root as parameter
-## base = "Y:\\LiBiNorm\\Wold\\run2\\raw\\results_0"
+base = "Y:\\LiBiNorm\\Wold\\run intersection nonempty\\raw\\results_0"
 
 if (!exists("base")) {
 args = commandArgs(trailingOnly=TRUE)
@@ -20,7 +20,7 @@ ppi <- 300
 
 filename <- paste(base,"_results.txt",sep="")
 if (!file.exists(filename)) {
-  print(c("Unable to open ",filename))
+  cat("Unable to open ",filename,"\n")
 } else {
   con <- file(filename, "r")
   params <- as.data.frame(t(read.table(con,skip=1,nrows=10,row.names=1,skipNul = TRUE,sep="\t")))
@@ -54,37 +54,43 @@ if (!file.exists(filename)) {
 
   errSize <- 0.5
 
-  p1 <- ggplot(dParams, aes(x=Name, y=dParams[4], fill=Model)) +  theme_bw() +
+  p1 <- ggplot(dParams, aes(x=Name, y=dParams$"Abs Opt", fill=Model)) +  theme_bw() +
     geom_bar(position=position_dodge(width=0.9), stat="identity") +
-    geom_errorbar(aes(ymin=dParams[4] - dParams[7], ymax=dParams[4] + dParams[7]), 
+    geom_errorbar(aes(ymin=dParams$"Abs Opt" - dParams$"Spread Abs",
+                      ymax=dParams$"Abs Opt" + dParams$"Spread Abs"), 
                 width=.5,position=position_dodge(width=0.9),size=errSize) +
     scale_y_continuous() + guides(fill=FALSE) +
     theme(axis.title.x=element_blank(),
+          axis.ticks.x=element_blank(),
         axis.title.y=element_blank())  
 
-  p2 <- ggplot(hParams, aes(x=Name, y=hParams[4], fill=Model)) +  theme_bw() +
+  p2 <- ggplot(hParams, aes(x=Name, y=hParams$"Abs Opt", fill=Model)) +  theme_bw() +
     geom_bar(position=position_dodge(), stat="identity") +
-    geom_errorbar(aes(ymin=hParams[4] - hParams[7], ymax=hParams[4] + hParams[7]), 
+    geom_errorbar(aes(ymin=hParams$"Abs Opt" - hParams$"Spread Abs",
+                      ymax=hParams$"Abs Opt" + hParams$"Spread Abs"), 
                 width=.5,position=position_dodge(width=0.9),size=errSize) +
     scale_y_continuous() + guides(fill=FALSE) +
     theme(axis.title.x=element_blank(),
+          axis.ticks.x=element_blank(),
         axis.title.y=element_blank())
 
-  p3 <- ggplot(tParams, aes(x=Name, y=tParams[4], fill=Model)) +  theme_bw() +
+  p3 <- ggplot(tParams, aes(x=Name, y=tParams$"Abs Opt", fill=Model)) +  theme_bw() +
     geom_bar(position=position_dodge(), stat="identity") +
-    geom_errorbar(aes(ymin=tParams[4] - tParams[7], ymax=tParams[4] + tParams[7]), 
+    geom_errorbar(aes(ymin=tParams$"Abs Opt" - tParams[7], ymax=tParams$"Abs Opt" + tParams[7]), 
                 width=.5,position=position_dodge(width=0.9),size=errSize) +  
-    ylab("t1/t2*1000  E: t1/t2*100") +
+    ylab(bquote('x10'^-4~' Model E: x10'^-2~'')) +
     scale_y_continuous() +guides(fill=FALSE) +
     theme(axis.title.x=element_blank(),
-        panel.background = element_blank())
+          axis.ticks.x=element_blank())
 
-  p4 <- ggplot(aParams, aes(x=Name, y=aParams[4], fill=Model)) +  theme_bw() +
+  p4 <- ggplot(aParams, aes(x=Name, y=aParams$"Abs Opt", fill=Model)) +  theme_bw() +
     geom_bar(position=position_dodge(), stat="identity") +
-    geom_errorbar(aes(ymin=aParams[4] - aParams[7], ymax=aParams[4] + aParams[7]), 
+    geom_errorbar(aes(ymin=aParams$"Abs Opt" - aParams$"Spread Abs",
+                      ymax=aParams$"Abs Opt" + aParams$"Spread Abs"), 
                 width=.5,position=position_dodge(width=0.9),size=errSize) +  
     scale_y_continuous() +
     theme(axis.title.x=element_blank(),
+          axis.ticks.x=element_blank(),
         axis.title.y=element_blank())
 
   png(paste(base,"_resultsParam.png",sep=""),units = "in",height=3,width=6,res=ppi)
@@ -94,23 +100,27 @@ if (!file.exists(filename)) {
 
   png(paste(base,"_resultsLL.png",sep=""),units = "in",height=3,width=4,res=ppi)
   
-  ymin = floor(min(LLParams[4])/1000)*1000
-
+  LLParams$"Abs Opt" <- LLParams$"Abs Opt"/1000 
+  LLParams$"Spread Abs" <- LLParams$"Spread Abs"/1000 
+  ymin = floor(min(LLParams$"Abs Opt"))
   # The wonders of R means that ggplot must be inside a print statement if it 
   # is inside an if statement.   Why???
-  print(ggplot(LLParams, aes(x=Name, y=LLParams[4], fill=Model)) +  theme_bw() +
+  print(ggplot(LLParams, aes(x=Name, y=LLParams$"Abs Opt", fill=Model)) +  theme_bw() +
     geom_bar(width = 0.6,position=position_dodge(width=1.0), stat="identity") +
-    geom_errorbar(aes(ymin=LLParams[4] - LLParams[7], ymax=LLParams[4] + LLParams[7]), 
-                  width=.5,position=position_dodge(width=1.0),size=errSize) +  
+    geom_errorbar(aes(ymin=LLParams$"Abs Opt" - LLParams$"Spread Abs",
+                      ymax=LLParams$"Abs Opt" + LLParams$"Spread Abs"), 
+                  width=.4,position=position_dodge(width=1.0),size=errSize) +  
     scale_y_continuous(limits= c(ymin,NA),oob=rescale_none) +
-    theme(axis.title.x=element_blank(),
-          axis.title.y=element_blank()))  
+    ylab(bquote('Log likelihood: x10'^3~'')) +
+    theme(axis.text.x=element_blank(),
+          axis.title.x=element_blank(),
+          axis.ticks.x=element_blank()))  
   invisible(dev.off())    
 }
 
 filename <-paste(base,"_norm.txt",sep="") 
 if (!file.exists(filename)) {
-  print(c("Unable to open ",filename))
+  cat("Unable to open ",filename,"\n")
 } else {
   
   #  Read in each of the sets of data for each line, add an identifier and stack them
@@ -144,14 +154,16 @@ if (!file.exists(filename)) {
   png(paste(base,"_norm.png",sep=""),units = "in",height=5,width=6,res=ppi)
   print(qplot(Length,Bias,data=models,colour=Model,geom="line") +theme_bw() +
     scale_x_log10(breaks=c(100,200,400,700,1000,2000,4000,10000,20000)) +
-    scale_y_continuous(breaks=c(0:20)/10))
+    scale_y_continuous(breaks=c(0:20)/10) +
+    xlab ("Length (bp)") + ylab ("Abundance relative to 1 kb"))
+    
   invisible(dev.off())
 }
 
 filename <- paste(base,"_bias.txt",sep="")
 
 if (!file.exists(filename)) {
-  print(c("Unable to open ",filename))
+  cat("Unable to open ",filename,"\n")
 } else {
   geneMatrix <- as.matrix( read.table(filename,sep = "\t"))
   geneMeltData <- melt(geneMatrix)

@@ -9,6 +9,7 @@ using namespace BamTools;
 
 //	The htseq-count modes
 enum mode {
+	mode_none,
 	intersect_union,
 	intersect_strict,
 	intersect_nonempty,
@@ -17,7 +18,7 @@ enum mode {
 
 
 
-class LiBiCount : private LiBiNorm
+class LiBiCount : private LiBiNormCore
 {
 	//	Used for reading back cached read information from cache files
 	class cacheEntry
@@ -41,6 +42,8 @@ class LiBiCount : private LiBiNorm
 
 
 public:
+	LiBiCount() :countMode(mode_none) {};
+
 	int main(int argc, char **argv);
 
 private:

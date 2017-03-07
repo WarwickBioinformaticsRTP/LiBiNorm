@@ -150,20 +150,20 @@ depend :
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-$(BUILD)/LiBiNormSrc/LiBiNorm.o: LiBiNormSrc/LiBiOptimiser.h
-$(BUILD)/LiBiNormSrc/LiBiNorm.o: ../bioinformaticsLib/nelderMeadOptimiser.h
+$(BUILD)/LiBiNormSrc/LiBiNorm.o: LiBiNormSrc/LiBiNorm.h
+$(BUILD)/LiBiNormSrc/LiBiNorm.o: LiBiNormSrc/LiBiNormCore.h
 $(BUILD)/LiBiNormSrc/LiBiNorm.o: ../bioinformaticsLib/stringEx.h
 $(BUILD)/LiBiNormSrc/LiBiNorm.o: ../bioinformaticsLib/inQuotes.h
-$(BUILD)/LiBiNormSrc/LiBiNorm.o: ../bioinformaticsLib/dataVec.h
-$(BUILD)/LiBiNormSrc/LiBiNorm.o: ../bioinformaticsLib/libCommon.h
-$(BUILD)/LiBiNormSrc/LiBiNorm.o: ../bioinformaticsLib/printEx.h
-$(BUILD)/LiBiNormSrc/LiBiNorm.o: LiBiNormSrc/ModelData.h mcmcLib/mcmc.h
-$(BUILD)/LiBiNormSrc/LiBiNorm.o: mcmcLib/params.h LiBiNormSrc/LiBiNorm.h
-$(BUILD)/LiBiNormSrc/LiBiNorm.o: LiBiNormSrc/LiBiNormCore.h
 $(BUILD)/LiBiNormSrc/LiBiNorm.o: ../bioinformaticsLib/containerEx.h
 $(BUILD)/LiBiNormSrc/LiBiNorm.o: LiBiNormSrc/GeneCountData.h
 $(BUILD)/LiBiNormSrc/LiBiNorm.o: ../bioinformaticsLib/parser.h
+$(BUILD)/LiBiNormSrc/LiBiNorm.o: ../bioinformaticsLib/libCommon.h
+$(BUILD)/LiBiNormSrc/LiBiNorm.o: mcmcLib/mcmc.h mcmcLib/params.h
+$(BUILD)/LiBiNormSrc/LiBiNorm.o: ../bioinformaticsLib/nelderMeadOptimiser.h
+$(BUILD)/LiBiNormSrc/LiBiNorm.o: ../bioinformaticsLib/dataVec.h
+$(BUILD)/LiBiNormSrc/LiBiNorm.o: ../bioinformaticsLib/printEx.h
 $(BUILD)/LiBiNormSrc/LiBiNorm.o: LiBiNormSrc/Options.h
+$(BUILD)/LiBiNormSrc/LiBiNorm.o: LiBiNormSrc/ModelData.h
 $(BUILD)/LiBiNormSrc/LiBiNorm.o: LiBiNormSrc/LiBiCount.h
 $(BUILD)/LiBiNormSrc/LiBiNorm.o: LiBiNormSrc/FeatureFileEx.h
 $(BUILD)/LiBiNormSrc/LiBiNorm.o: LiBiNormSrc/Regions.h
@@ -216,6 +216,7 @@ $(BUILD)/LiBiNormSrc/LiBiNormCore.o: ../bioinformaticsLib/dataVec.h
 $(BUILD)/LiBiNormSrc/LiBiNormCore.o: ../bioinformaticsLib/printEx.h
 $(BUILD)/LiBiNormSrc/LiBiNormCore.o: LiBiNormSrc/Options.h
 $(BUILD)/LiBiNormSrc/LiBiNormCore.o: LiBiNormSrc/ModelData.h
+$(BUILD)/LiBiNormSrc/LiBiNormCore.o: LiBiNormSrc/LiBiOptimiser.h
 $(BUILD)/LiBiNormSrc/LiBiDedup.o: LiBiNormSrc/LiBiDedup.h
 $(BUILD)/LiBiNormSrc/LiBiDedup.o: ../bamtools/api/BamReader.h
 $(BUILD)/LiBiNormSrc/LiBiDedup.o: ../bamtools/api/api_global.h

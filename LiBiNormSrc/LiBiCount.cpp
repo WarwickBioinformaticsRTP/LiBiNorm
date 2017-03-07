@@ -57,7 +57,6 @@ int LiBiCount::main(int argc, char **argv)
 	verbose = true;
 	minqual = 10;
 	nameOrder = true;
-	countMode = DEFAULT_COUNT_MODE;
 	maxCacheSize = READ_CACHE_SIZE;
 
 	if(argc < 1)
@@ -110,7 +109,7 @@ printf("                        Name of file for landscape data)\n");
 //printf("                        'XF')\n");
 helpCommon();
 #ifdef USE_GENES_FROM_GENELIST
-printf("  -g F (S F), --genes=F  Only perform the analysis for the genes listed in the file with name F\n");
+printf("  -g F (S F), --genes=F Only perform the analysis for the genes listed in the file with name F\n");
 printf("                           Optional S and X paremeters means that only genes from position S to F are used\n");
 #endif
 printf("\n");
@@ -212,13 +211,6 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 			geneListFilenames.push_back(glfd);
 		}
 #endif
-#ifdef USE_NELDER_MEAD_FOR_INITIAL_VALUES
-		else if ((strcmp(argv[ni], "-o") == 0) || (opt2 = (strncmp(argv[ni], "--omit", 6) == 0)))
-		{
-			nelderMead = false;
-			return true;
-		}
-#endif
 		else
 		{
 			exitFail("Invalid parameter: ",string(argv[ni]));
@@ -250,6 +242,14 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 	if (!feature_type)
 		feature_type = DEFAULT_FEATURE_TYPE_EXON;
 
+	if (countMode == mode_none)
+	{
+		if (htSeqCompatible)
+			countMode = DEFAULT_COUNT_MODE_HTSEQ_COMPATIBLE;
+		else
+			countMode = DEFAULT_COUNT_MODE;
+	}
+
 	if (!id_attribute)
 	{
 		if (featureFileName.suffix() == "gtf")
@@ -261,7 +261,7 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 	}
 
 	if(normalise && (feature_type != "exon"))
-		exitFail("Can only normalise data when 'exon' is the only feature specified");
+		exitFail("Can only normalise data when 'exon' is the feature specified");
 
 	if (outputFilename && !outputFile.open(outputFilename))
 		exitFail("Unable to open output file: ",outputFilename);

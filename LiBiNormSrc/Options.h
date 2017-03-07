@@ -2,12 +2,13 @@
 #define OPTIONS_H
 
 
-#define LIBINORM_VERSION "1.6.0"
+#define LIBINORM_VERSION "1.7.0"
 //	Bam/gff file reading
 #define DEFAULT_FEATURE_TYPE_EXON "exon" 
 #define DEFAULT_GTF_ID_ATTRIBUTE "gene_id"
 #define DEFAULT_GFF_ID_ATTRIBUTE "gene"
-#define DEFAULT_COUNT_MODE intersect_union
+#define DEFAULT_COUNT_MODE intersect_strict
+#define DEFAULT_COUNT_MODE_HTSEQ_COMPATIBLE intersect_union
 
 #define DEF_THREADS 3 //-p
 
@@ -80,7 +81,7 @@
 //  Output detailed results of interpreting the Feature file
 #define OUTPUT_FEATURE_DATA
 
-//	Just use selected genes (cont mode)
+//	Adds option of just use selected genes (cont mode)
 #define USE_GENES_FROM_GENELIST
 
 //	Adds a menu option that allows the seed to be specified
@@ -94,7 +95,10 @@
 // #define REPRODUCE_MATLAB	
 
 //	Adds -z option where the program will pause at the end rather than simply exiting.  Useful for debugging
-#define PAUSE_AT_END_OPTION	
+// #define PAUSE_AT_END_OPTION	
+
+// Adds -x option which results in the output of additional debug messages
+// #define OUTPUT_DEBUG_MESSAGES
 
 //	Some of the code in ModelData.cpp has also been writtent using vectors which is slower but the code
 //	more closely matches the MATLAB code
@@ -113,6 +117,10 @@
 //	When matching forward and reverse reads the position information is also used to pair the reads
 // #define MATCH_USING_POSITION
 
+//	Causes the code to halt waiting for user input before exiting after a failure
+#ifdef _DEBUG
+#define PAUSE_ON_EXIT_FAILURE
+#endif
 
 //	Use this option to use the parameters associated with the most likly parameter set
 //	https://sciencehouse.wordpress.com/2010/06/23/mcmc-and-fitting-models-to-data/

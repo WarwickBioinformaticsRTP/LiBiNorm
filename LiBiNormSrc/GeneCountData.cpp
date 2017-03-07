@@ -332,25 +332,22 @@ bool GeneCountData::outputHeatmapData(const stringEx & filename)
 			rnaPosVec & readPositions = data.positions[strand];
 			for (auto v : readPositions)
 			{
-//				if (v < length)
+				size_t l = 0;
+				size_t h = E.size() - 1;
+				size_t k = l;
+				while ((h - l) > 1)
 				{
-					size_t l = 0;
-					size_t h = E.size() - 1;
-					size_t k = l;
-					while ((h - l) > 1)
-					{
-						k = (h + l) / 2;
-						if (v < E[k])
-							h = k;
-						else
-							l = k;
-					}
-					if (v >= E[h])
-						k = h;
+					k = (h + l) / 2;
+					if (v < E[k])
+						h = k;
 					else
-						k = l;
-					counts[k]++;
+						l = k;
 				}
+				if (v >= E[h])
+					k = h;
+				else
+					k = l;
+				counts[k]++;
 			}
 		}
 		//	and normalise.  The mathematica code uses counts normalised by reads
