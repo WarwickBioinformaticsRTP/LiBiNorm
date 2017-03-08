@@ -100,8 +100,8 @@ printf("                        (choices: union, intersection-strict, intersecti
 printf("                        nonempty; default: union)\n");
 printf("  -z, --htseq-compatible\n");
 printf("                        Run in htseq-compatible mode\n");
-printf("  -l FILENAME, --landscape=FILENAME\n");
-printf("                        Name of file for landscape data)\n");
+printf("  -l --landscape        A landscape file will be produced named <fileroot>_landscape.txt where)\n");
+printf("                          <fileroot> is specified by the -u option)\n");
 //printf("  -o SAMOUT, --samout=SAMOUT\n");		//Still to be implemented
 //printf("                        write out all SAM alignment records into an output SAM\n");
 //printf("                        file called SAMOUT, annotating each line with its\n");

@@ -14,11 +14,9 @@ void LiBiNormCore::helpCommon()
 {
 	printf("  -n M, --normModel=M   Specifies that model M should be used rather than the default\n");
 	printf("                        Model BD. M options: A or SMART,B or polyA,C,D,\n");
-	printf("                        E or random,BD\n");
-	printf("  -N FILENAME, --normFilename=FILENAME\n");
-	printf("                        Normalise data trying all 6 models and output summary\n");
-	printf("                        info to files with root FILENAME.  Best model selected\n");
-	printf("                        unless overridden by -n\n");
+	printf("                        E or random,BD.  Set m to best for LiBiNorm to select model\n");
+	printf("  -u FILEROOT, --normFileroot=FILEROOT\n");
+	printf("                        All output summary info is sent to files with root FILEROOT\n");
 	printf("  -p N, --threads=N     Number of threads for normalisation parameter\n");
 	printf("                        determination (", DEF_THREADS, ")\n");
 	printf("  -d N, --reads=N       Maximum number of reads using for normalisation\n");
