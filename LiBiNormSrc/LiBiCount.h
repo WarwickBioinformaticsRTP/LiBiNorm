@@ -71,8 +71,8 @@ private:
 	size_t bamCounter, maxCacheSize;
 
 	//	Directory data for outputting results
-	stringEx outputFilename, tempDirectory;
-	TsvFile outputFile;
+	stringEx tempDirectory;
+	TsvFile genomeDataFile;
 
 	//	For obtaining information from the gtf/gff file
 	featureFileEx genomeDef;

@@ -79,7 +79,10 @@
 // #define DEDUP_MODE
 
 //  Output detailed results of interpreting the Feature file
-#define OUTPUT_FEATURE_DATA
+// #define OUTPUT_FEATURE_DATA
+
+//	Output info on how each read is identified
+// #define OUTPUT_READ_MAPPING_INFO
 
 //	Adds option of just use selected genes (cont mode)
 #define USE_GENES_FROM_GENELIST

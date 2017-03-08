@@ -49,7 +49,7 @@ int LiBiCount::main(int argc, char **argv)
 {
 	vector<geneListFilenameData> geneListFilenames;
 
-	stringEx bamFileName,featureFileName,outputFilename;
+	stringEx bamFileName,featureFileName;
 	stringEx id_attribute,feature_type;
 
 	reverseStrand = false;
@@ -226,7 +226,7 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 
 
 	//	If we have specified -N then we run all of the models for preset number of runs.
-	if (theModel == bestModel)
+	if (theModel == findBestModel)
 	{
 		NrunsOtherModels = Nruns;
 	}
@@ -263,8 +263,6 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 	if(normalise && (feature_type != "exon"))
 		exitFail("Can only normalise data when 'exon' is the feature specified");
 
-	if (outputFilename && !outputFile.open(outputFilename))
-		exitFail("Unable to open output file: ",outputFilename);
 
 	if ( !reader.Open(bamFileName) ) 
 		exitFail("Could not open input BAM files: ",bamFileName);
@@ -324,23 +322,31 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 
 	elapsedTime("Feature file consolidated.");
 
+#ifdef OUTPUT_READ_MAPPING_INFO
+	if ((outputFileroot) &&  !genomeDataFile.open(outputFileroot.replaceSuffix("_read_mappings.txt")))
+		progMessage("Unable to open output file: ", outputFileroot.replaceSuffix("_read_mappings.txt"));
+#endif
+
 	if (nameOrder)
 		processNameOrderedBamData();
 	else
 		processPositionOrderedBamData();
 
+#ifdef OUTPUT_READ_MAPPING_INFO
+	genomeDataFile.close();
+#endif
+
 #ifdef	OUTPUT_FEATURE_DATA
-	if (countsFilename)
-		genomeDef.outputChromData(countsFilename.replaceSuffix("_genome.txt"), geneCounts);
+	if (outputFileroot)
+		genomeDef.outputChromData(outputFileroot.replaceSuffix("_genome.txt"), geneCounts);
 #endif
 
 	//	Need to output landscape file now because the data will be modified during the process
-	//	of selecting reads for normalisation
-	if ((landscapeFile) && (outputFilename) &&  !geneCounts.outputLandscape(outputFilename.replaceSuffix("_landscape.txt")))
-		exitFail("Unable to output landscape data to :", outputFilename.replaceSuffix("_landscape.txt"));
-
-	if (outputFilename)
-		geneCounts.outputHeatmapData(outputFilename.replaceSuffix("_bias.txt"));
+	//	of selecting reads for normalisation.  Exits with error message if unable to create file
+	if ((landscapeFile) && (outputFileroot))
+		geneCounts.outputLandscape(outputFileroot.replaceSuffix("_landscape.txt"));
+	if (outputFileroot)
+		geneCounts.outputHeatmapData(outputFileroot.replaceSuffix("_bias.txt"));
 
 	if (normalise)
 	{
@@ -348,9 +354,9 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 
 		elapsedTime("Parameter estimation complete");
 
-		if (outputFilename)
+		if (outputFileroot)
 		{
-			if (theModel == noModel)
+			if ((theModel == noModel) || (theModel == findBestModel))
 			{
 				bestModel = getBestModel();
 				progMessage("Best model is ", bestModel);
@@ -366,7 +372,7 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 
 		getBias(theModel, bestResults[theModel].params[logValue], geneCounts.lengths[0], geneCounts.bias);
 
-		if (outputFilename)
+		if (outputFileroot)
 		{
 			//	Output the results of the mcmc analysis
 			printResults();
@@ -375,7 +381,7 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 			printBias();
 
 			//	And then the counts and the bias for the genes themselves
-			string filename = outputFilename.replaceSuffix("_expression.txt");
+			string filename = outputFileroot.replaceSuffix("_expression.txt");
 			if (!geneCounts.outputGeneCounts(filename, 2, conv(theModel)))
 				exitFail("Unable to output counts to :", filename);
 		}
@@ -451,7 +457,7 @@ void LiBiCount::addRead(const regionLists & segments,const featureFileEx & gtfDa
 		{
 			chromosome = &references[chromSegments.first].RefName;
 
-			if (outputFile.is_open() && location.empty())
+			if (genomeDataFile.is_open() && location.empty())
 			{
 				location = stringEx(*chromosome,":",chromSegments.second.data.begin()->first);
 			}
@@ -684,8 +690,8 @@ void LiBiCount::addRead(const regionLists & segments,const featureFileEx & gtfDa
 						{
 							//	In intersect all we include all of the options, ie there will be multiple counts associated with
 							//	a single fragment
-							if (outputFile.is_open())
-								outputFile.printEnd(*mode, *result, location, segments.name);
+							if (genomeDataFile.is_open())
+								genomeDataFile.printEnd(*mode, *result, location, segments.name);
 							geneCounts.count(*result)++;
 							geneCounts.readPositionData[*result].positions[0].emplace_back(RNAstartPos);
 							result = &gene.geneName;
@@ -789,8 +795,8 @@ void LiBiCount::addRead(const regionLists & segments,const featureFileEx & gtfDa
 		}
 	}
 
-	if (outputFile.is_open())
-		outputFile.printEnd(*mode,*result,location,segments.name);
+	if (genomeDataFile.is_open())
+		genomeDataFile.printEnd(*mode,*result,location,segments.name);
 
 	geneCounts.count(*result)++;
 

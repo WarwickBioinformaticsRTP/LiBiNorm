@@ -219,7 +219,7 @@ int LiBiNorm::main(int argc, char **argv)
 	coreParameterEstimation();
 
 	//	If we have explicitly specified the model then use it instead
-	if (theModel == noModel)
+	if ((theModel == noModel) || (theModel == findBestModel))
 	{
 		bestModel = getBestModel();
 		progMessage("Best model is ", bestModel);
