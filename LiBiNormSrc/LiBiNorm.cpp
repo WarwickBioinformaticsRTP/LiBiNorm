@@ -198,9 +198,6 @@ int LiBiNorm::main(int argc, char **argv)
 
 	landscapeFilename = argv[argc - 1];
 
-	if (!normaliseResultsFilename)
-		normaliseResultsFilename = landscapeFilename;
-
 	//	If we specifiy the model then run the other models just once 
 	if (theModel == noModel)
 		NrunsOtherModels = Nruns;
@@ -209,8 +206,8 @@ int LiBiNorm::main(int argc, char **argv)
 
 	geneCounts.loadData(landscapeFilename, Ngenes);
 
-	if (normaliseResultsFilename)
-		geneCounts.outputHeatmapData(normaliseResultsFilename.replaceSuffix("_bias.txt"));
+	if (outputFileroot)
+		geneCounts.outputHeatmapData(outputFileroot.replaceSuffix("_bias.txt"));
 
 	//	Load up the initial values
 	if (parameterFilename)
@@ -235,12 +232,15 @@ int LiBiNorm::main(int argc, char **argv)
 
 	getBias(theModel, bestResults[theModel].params[logValue], geneCounts.lengths[0], geneCounts.bias);
 
-	string filename = normaliseResultsFilename.replaceSuffix("_expression.txt");
-	if (!geneCounts.outputGeneCounts(filename, outputFull ? 3 : 2, conv(theModel)))
-		exitFail("Unable to output counts to :", filename);
+	if (outputFileroot)
+	{
+		string filename = outputFileroot.replaceSuffix("_expression.txt");
+		if (!geneCounts.outputGeneCounts(filename, outputFull ? 3 : 2, conv(theModel)))
+			exitFail("Unable to output counts to :", filename);
 
-	printResults();
-	printBias();
+		printResults();
+		printBias();
+	}
 
 	//********************************************************************************************
 	//	This prints out all of the data for the full set of mcmc runs for each model

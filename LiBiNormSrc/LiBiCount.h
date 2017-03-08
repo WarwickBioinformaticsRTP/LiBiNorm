@@ -42,7 +42,7 @@ class LiBiCount : private LiBiNormCore
 
 
 public:
-	LiBiCount() :countMode(mode_none) {};
+	LiBiCount() :countMode(mode_none), landscapeFile(false){};
 
 	int main(int argc, char **argv);
 
@@ -65,7 +65,7 @@ private:
 	RefVector references;
 
 	//	Config data for reading the ba, file
-	bool useStrand, reverseStrand, nameOrder;
+	bool useStrand, reverseStrand, nameOrder,landscapeFile;
 	mode countMode;
 	int minqual;
 	size_t bamCounter, maxCacheSize;

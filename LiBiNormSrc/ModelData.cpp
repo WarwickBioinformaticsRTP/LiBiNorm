@@ -91,7 +91,7 @@ modelType modelFromString(const string & desc)
 		{"A",ModelA },{"B",ModelB },{"C",ModelC },{"D",ModelD },{"E",ModelE },{"BD",ModelBD }, 
 		{"a",ModelA },{"b",ModelB },{"c",ModelC },{"d",ModelD },{"e",ModelE },{"bd",ModelBD }, 
 		{"SMART",ModelA},{ "smart",ModelA },{"polya",ModelB },{ "POLYA",ModelB },{ "polyA",ModelB },
-		{"random",ModelE},{ "RANDOM",ModelE }
+		{"random",ModelE},{ "RANDOM",ModelE },{"best",bestModel},{"BEST",bestModel}
 	};
 	auto iter = mappings.find(desc);
 	if (iter == mappings.end())

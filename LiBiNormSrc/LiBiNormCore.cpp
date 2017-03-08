@@ -32,7 +32,7 @@ void LiBiNormCore::helpCommon()
 	printf("  -x, --debug           output debug messages\n");
 #endif
 #ifdef PAUSE_AT_END_OPTION
-	printf("  -u	                pause at end rather than simply exiting\n");
+	printf("  -w	                pause at end rather than simply exiting\n");
 #endif
 	printf("  -c FILENAME, --counts=FILENAME\n");
 	printf("                        Name of output file. default: writes to stdout\n");
@@ -42,9 +42,9 @@ void LiBiNormCore::helpCommon()
 bool LiBiNormCore::commandParseCommon(int & ni, int argc,char **argv)
 {
 		bool opt2 = false;
-		if ((strcmp(argv[ni], "-N") == 0) || (opt2 = (strncmp(argv[ni], "--normFilename=", 15) == 0)))
+		if ((strcmp(argv[ni], "-u") == 0) || (opt2 = (strncmp(argv[ni], "--outputFileroot=", 17) == 0)))
 		{
-			normaliseResultsFilename = opt2 ? argv[++ni] + 15 : argv[++ni];
+			outputFileroot = opt2 ? argv[++ni] + 17 : argv[++ni];
 			return true;
 		}
 		if ((strcmp(argv[ni], "-n") == 0) || (opt2 = (strncmp(argv[ni], "--normModel=", 12) == 0)))
@@ -79,7 +79,7 @@ bool LiBiNormCore::commandParseCommon(int & ni, int argc,char **argv)
 		}
 #endif
 #ifdef PAUSE_AT_END_OPTION
-		if (strcmp(argv[ni], "-u") == 0)
+		if (strcmp(argv[ni], "-w") == 0)
 		{
 			pauseAtEnd = true;
 			return true;
@@ -444,7 +444,7 @@ modelType LiBiNormCore::getBestModel()
 //	The top level summary of the results, showing best LL and associated paremeters for each model
 void LiBiNormCore::printResults()
 {
-	string filename(normaliseResultsFilename.replaceSuffix("_results.txt"));
+	string filename(outputFileroot.replaceSuffix("_results.txt"));
 	TsvFile mcmcResult;
 	//	Now output a table with the end points of each of the chains.
 	if (!mcmcResult.open(filename))
@@ -549,7 +549,7 @@ void LiBiNormCore::printResults()
 void LiBiNormCore::printBias()
 {
 	TsvFile mcmcResult;
-	string filename(normaliseResultsFilename.replaceSuffix("_norm.txt"));
+	string filename(outputFileroot.replaceSuffix("_norm.txt"));
 	if (!mcmcResult.open(filename))
 		exitFail("Unable to open output File ", filename);
 
@@ -594,7 +594,7 @@ void LiBiNormCore::printAllMcmcRunData()
 	TsvFile mcmcResult;
 	for (modelType modl : allModels())
 	{
-		string filename = normaliseResultsFilename.replaceSuffix("_", conv(modl, true), ".txt");
+		string filename = outputFileroot.replaceSuffix("_", conv(modl, true), ".txt");
 		if (!mcmcResult.open(filename))
 			exitFail("Unable to open output file ", filename);
 
@@ -624,7 +624,7 @@ void LiBiNormCore::printAllMcmcRunData()
 void LiBiNormCore::printConsolidatedMcmcRunData()
 {
 	TsvFile mcmcResult;
-	string filename = normaliseResultsFilename.replaceSuffix("_model_cons.txt");
+	string filename = outputFileroot.replaceSuffix("_model_cons.txt");
 	if (!mcmcResult.open(filename))
 		exitFail("Unable to open output File ", filename);
 

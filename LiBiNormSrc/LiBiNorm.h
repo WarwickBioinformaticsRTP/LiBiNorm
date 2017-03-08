@@ -12,6 +12,9 @@ public:
 
 	int main(int argc, char **argv);
 
+private:
+	stringEx landscapeFilename;
+
 };
 
 #endif

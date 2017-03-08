@@ -5,6 +5,7 @@ using namespace std;
 
 int LiBiVariation::main(int argc, char **argv)
 {
+	stringEx landscapeFilename;
 	initClock();
 	if (argc < 1)
 	{
@@ -15,7 +16,7 @@ int LiBiVariation::main(int argc, char **argv)
 	{
 		printf("/* ----------------------------- */\n");
 		printf("     LiBiNorm variation:  Test of effect of parameter variation\n\n");
-		printf("Usage: LiBiNorm variation [Options] -N <resultsFile> -p <parameterFile> <landscapeFile>\n\n");
+		printf("Usage: LiBiNorm variation [Options] -N <resultsFileroot> -p <parameterFile> <landscapeFile>\n\n");
 		printf("Options:\n");
 		printf("  -e N, --seed=N       Ensures a specific set of reads are selected\n");
 		printf("  -h, --help            show this help message and exit\n");
@@ -46,7 +47,7 @@ int LiBiVariation::main(int argc, char **argv)
 	if (!parameterFilename)
 		exitFail("Parameter filename must be defined");
 
-	if (!normaliseResultsFilename)
+	if (!outputFileroot)
 		exitFail("-N parameter must be specified");
 
 	//	Load up the initial values
@@ -57,7 +58,7 @@ int LiBiVariation::main(int argc, char **argv)
 	geneCounts.remove_invalid_values();
 	geneCounts.transferTo(geneData, MAX_READS_GENE, maxReads, maxGeneLength);
 
-	string filename(normaliseResultsFilename.replaceSuffix("_variation.txt"));
+	string filename(outputFileroot.replaceSuffix("_variation.txt"));
 	TsvFile mcmcResult;
 	//	Now output a table with the end points of each of the chains.
 	if (!mcmcResult.open(filename))

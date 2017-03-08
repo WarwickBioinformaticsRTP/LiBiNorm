@@ -71,8 +71,7 @@ protected:
 	mcmcRunId Nruns,NrunsOtherModels;
 
 	headerType headers;
-	stringEx landscapeFilename, normaliseResultsFilename, countsFilename, parameterFilename;
-//	size_t biasBins;
+	stringEx outputFileroot, countsFilename, parameterFilename;
 
 	std::map<modelType, dataVec> initialValues;
 

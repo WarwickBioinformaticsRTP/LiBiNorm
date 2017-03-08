@@ -20,7 +20,8 @@ enum modelType
 	ModelD = 3,
 	ModelE = 4,
 	ModelBD = 5,
-	noModel = 6
+	noModel = 6,
+	bestModel = 7
 };
 
 //	A collection of all the models, allowing code to iterate through them

@@ -6,7 +6,7 @@ library(gridExtra)
 library (scales)
 
 ##  For debugging, otherwise pass in file root as parameter
-base = "Y:\\LiBiNorm\\Wold\\run intersection nonempty\\raw\\results_0"
+## base = "Y:\\LiBiNorm\\Wold\\run intersection nonempty\\raw\\results_0"
 
 if (!exists("base")) {
 args = commandArgs(trailingOnly=TRUE)

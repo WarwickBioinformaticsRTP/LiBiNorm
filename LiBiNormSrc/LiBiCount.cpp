@@ -125,16 +125,7 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 	while(ni < argc-2)
 	{
 		bool opt2 = false;
-/*		if(strcmp(argv[ni], "-t") == 0)
-		{
-			fileCompare(argc - 1,&argv[1]);
-			exitSuccess();
-		}
-		else if((strcmp(argv[ni], "-k") == 0) || (opt2 = (strncmp(argv[ni], "--cache=",8) == 0)))
-		{
-			maxCacheSize = atoi(opt2?argv[ni]+8:argv[++ni]);
-		}
-		else */if ((strcmp(argv[ni], "-s") == 0) || (opt2 = (strncmp(argv[ni], "--stranded=",11) == 0)))
+		if ((strcmp(argv[ni], "-s") == 0) || (opt2 = (strncmp(argv[ni], "--stranded=",11) == 0)))
 		{
 			string strand(opt2?argv[ni]+11:argv[++ni]);
 			if (strand == "yes")
@@ -193,7 +184,7 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 		}
 		else if ((strcmp(argv[ni], "-l") == 0) || (opt2 = (strncmp(argv[ni], "--landscape=", 12) == 0)))
 		{
-			landscapeFilename = opt2 ? argv[++ni] + 12 : argv[++ni];
+			landscapeFile = true;
 		}
 		else if (commandParseCommon(ni, argc-2, argv)) //argc -2 to allow for the two fixed end parameters
 		{
@@ -221,19 +212,28 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 	bamFileName = argv[argc-2];
 	featureFileName = argv[argc-1];
 
+	if (htSeqCompatible)
+	{
+		if (theModel != noModel)
+			progMessage("-n option has no function in htseq-compatible mode");
+		if (maxReads != DEF_MAX_READS_FOR_PARAM_ESTIMATION)
+			progMessage("-d option has no function in htseq-compatible mode");
+		if (parameterFilename)
+			progMessage("-i option has no function in htseq-compatible mode");
+		if (Nthreads != DEF_THREADS)
+			progMessage("htseq-count operation is only ever single threaded");
+	}
+
+
 	//	If we have specified -N then we run all of the models for preset number of runs.
-	if (normaliseResultsFilename)
+	if (theModel == bestModel)
 	{
-		//	Unless specified we find the best model
 		NrunsOtherModels = Nruns;
-	
 	}
-	else
+	else if (theModel == noModel)
 	{
-		if (theModel == noModel)
-			theModel = DEFAULT_MODEL;
+		theModel = DEFAULT_MODEL;
 	}
-	
 
 	if(countsFilename)
 		tempDirectory = countsFilename.replaceSuffix("_tempFiles");
@@ -336,11 +336,11 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 
 	//	Need to output landscape file now because the data will be modified during the process
 	//	of selecting reads for normalisation
-	if ((landscapeFilename) && !geneCounts.outputLandscape(landscapeFilename))
-		exitFail("Unable to output landscape data to :", landscapeFilename);
+	if ((landscapeFile) && (outputFilename) &&  !geneCounts.outputLandscape(outputFilename.replaceSuffix("_landscape.txt")))
+		exitFail("Unable to output landscape data to :", outputFilename.replaceSuffix("_landscape.txt"));
 
-	if (normaliseResultsFilename)
-		geneCounts.outputHeatmapData(normaliseResultsFilename.replaceSuffix("_bias.txt"));
+	if (outputFilename)
+		geneCounts.outputHeatmapData(outputFilename.replaceSuffix("_bias.txt"));
 
 	if (normalise)
 	{
@@ -348,7 +348,7 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 
 		elapsedTime("Parameter estimation complete");
 
-		if (normaliseResultsFilename)
+		if (outputFilename)
 		{
 			if (theModel == noModel)
 			{
@@ -366,7 +366,7 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 
 		getBias(theModel, bestResults[theModel].params[logValue], geneCounts.lengths[0], geneCounts.bias);
 
-		if (normaliseResultsFilename)
+		if (outputFilename)
 		{
 			//	Output the results of the mcmc analysis
 			printResults();
@@ -375,7 +375,7 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 			printBias();
 
 			//	And then the counts and the bias for the genes themselves
-			string filename = normaliseResultsFilename.replaceSuffix("_expression.txt");
+			string filename = outputFilename.replaceSuffix("_expression.txt");
 			if (!geneCounts.outputGeneCounts(filename, 2, conv(theModel)))
 				exitFail("Unable to output counts to :", filename);
 		}
