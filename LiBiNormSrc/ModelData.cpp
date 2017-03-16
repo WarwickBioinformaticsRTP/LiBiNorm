@@ -90,8 +90,10 @@ modelType modelFromString(const string & desc)
 	static map<string, modelType> mappings{
 		{"A",ModelA },{"B",ModelB },{"C",ModelC },{"D",ModelD },{"E",ModelE },{"BD",ModelBD }, 
 		{"a",ModelA },{"b",ModelB },{"c",ModelC },{"d",ModelD },{"e",ModelE },{"bd",ModelBD }, 
-		{"SMART",ModelA},{ "smart",ModelA },{"polya",ModelB },{ "POLYA",ModelB },{ "polyA",ModelB },
-		{"random",ModelE},{ "RANDOM",ModelE },{"best",findBestModel },{"BEST",findBestModel }
+		{ "PolyA",ModelD },{"polya",ModelD },{ "POLYA",ModelD },{ "polyA",ModelD },
+		{"random",ModelE},{ "RANDOM",ModelE },
+		{ "smart",ModelBD },{ "SMART",ModelBD },
+		{"best",findBestModel },{"BEST",findBestModel }
 	};
 	auto iter = mappings.find(desc);
 	if (iter == mappings.end())

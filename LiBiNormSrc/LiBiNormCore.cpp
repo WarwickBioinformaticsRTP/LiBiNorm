@@ -13,8 +13,8 @@ using namespace std;
 void LiBiNormCore::helpCommon()
 {
 	printf("  -n M, --normModel=M   Specifies that model M should be used rather than the default\n");
-	printf("                        Model BD. M options: A or SMART,B or polyA,C,D,\n");
-	printf("                        E or random,BD.  Set m to best for LiBiNorm to select model\n");
+	printf("                        Model BD. M options: A,B,C,D or polyA,\n");
+	printf("                        E or random,BD or smart.  Set m to best for LiBiNorm to select model\n");
 	printf("  -u FILEROOT, --normFileroot=FILEROOT\n");
 	printf("                        All output summary info is sent to files with root FILEROOT\n");
 	printf("  -p N, --threads=N     Number of threads for normalisation parameter\n");
@@ -562,6 +562,8 @@ void LiBiNormCore::printBias()
 
 	map<size_t, dataVec> biases;
 
+	dataVec plottedLengths(lengths.subset(1));
+
 	for (modelType m : allModels())
 	{
 		if (bestResults[m])
@@ -574,13 +576,13 @@ void LiBiNormCore::printBias()
 		mcmcResult.print("Parameters", bestResults[m].LLresult, _BRL(bestResults[m].run, bestResults[m].pos) bestResults[m].params[logValue]);
 		if (biases[m].size())
 		{
-			mcmcResult.print("Length", lengths.subset(1));
+			mcmcResult.print("Length", plottedLengths);
 			mcmcResult.print("Bias", biases[m].subset(1));
 		}
 		else
 		{
-			mcmcResult.print("");
-			mcmcResult.print("");
+			mcmcResult.print("Length", plottedLengths);
+			mcmcResult.print("Bias",dataVec(plottedLengths.size(),0));
 		}
 		mcmcResult.print();
 	}

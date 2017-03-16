@@ -862,7 +862,7 @@ void LiBiCount::incBamCounter(const BamAlignment * ba,int size)
 {
 	if ((++bamCounter % REP_LEN) == 0)
 		{
-			stringEx msg(bamCounter, " BAM alignment record pairs processed.");
+			stringEx msg(bamCounter, " BAM alignment records processed.");
 			if (ba)
 			{
 				if(ba->RefID >= 0)
