@@ -36,6 +36,8 @@ void setSSfun(optionsType & options,modelType m)
 		options.ssfun = &FLL_ModelBD;
 		options.priorfun = &priorFunc;
 		break;
+	case findBestModel:
+			break;
 	}
 }
 
@@ -64,6 +66,7 @@ string conv(const modelType m, bool removeGaps)
 	case ModelD: retVal = "Model D"; break;
 	case ModelE: retVal = "Model E"; break;
 	case ModelBD: retVal = "Model BD"; break;
+	case findBestModel: retVal = "Best"; break;
 	}
 	if (removeGaps)
 		retVal.replace(" ", "");
@@ -150,6 +153,8 @@ paramSet GetModelParams(modelType model,dataVec * defaults, VEC_DATA_TYPE offset
 			, PARAM_T2 // theta2
 			, PARAM_A // alpha strength of model B
 		};
+		break;
+	case findBestModel:
 		break;
 	};
 
@@ -682,6 +687,8 @@ void getBias(modelType m,dataVec & params,const dataVec & l, dataVec & bias)
 		t2 = pow(10, params[3]);
 		a = params[4];
 		break;
+	case findBestModel:
+		break;
 	}
 
 	bias.resize(l.size());
@@ -727,6 +734,8 @@ void getBias(modelType m,dataVec & params,const dataVec & l, dataVec & bias)
 			(1 - exp(-l*(t1 + t2))) / (t1 + t2) / d);
 		break;
 	}
+	case findBestModel:
+		break;
 	}
 	bias = bias * l[0] / bias[0];
 	bias /= l;

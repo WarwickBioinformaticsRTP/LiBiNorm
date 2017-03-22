@@ -2,6 +2,7 @@
 #define LIBICOUNT_H
 
 #include "FeatureFileEx.h"
+#include "api/BamWriter.h"
 #include "LiBiNorm.h"
 
 using namespace BamTools;
@@ -42,7 +43,7 @@ class LiBiCount : private LiBiNormCore
 
 
 public:
-	LiBiCount() :countMode(mode_none), landscapeFile(false){};
+	LiBiCount() : bamOutMode(outputNone), landscapeFile(false), countMode(mode_none) {};
 
 	int main(int argc, char **argv);
 
@@ -54,7 +55,7 @@ private:
 
 	//Support functions for reading bam data
 	bool AReadIsMapped(const BamAlignment & ba);
-	void addRead(const regionLists & segments, const featureFileEx & gtfData);
+	std::string addRead(const regionLists & segments, const featureFileEx & gtfData);
 	void incBamCounter(const BamAlignment * ba = 0, int size = -1);
 
 	//	For comparing two files.  Not currently used
@@ -62,6 +63,14 @@ private:
 	
 	//  For reading and persisting header data from a bam file
 	BamReader reader;
+	BamWriter writer;
+	enum BamOutMode
+	{
+		outputNone,
+		outputAll,
+		outputMatched,
+		outputUnmatched
+	} bamOutMode;
 	RefVector references;
 
 	//	Config data for reading the ba, file

@@ -1,5 +1,3 @@
-
-
 #ifdef _WIN32
 #include <direct.h>
 #else
@@ -9,6 +7,7 @@
 
 #include "libCommon.h"
 #include "containerEx.h"
+#include "bamAlignmentEx.h"
 #include "Regions.h"
 #include "parser.h"
 #include "LiBiCount.h"
@@ -49,8 +48,8 @@ int LiBiCount::main(int argc, char **argv)
 {
 	vector<geneListFilenameData> geneListFilenames;
 
-	stringEx bamFileName,featureFileName;
-	stringEx id_attribute,feature_type;
+	stringEx bamFileName, featureFileName, bamOutFileName;
+	stringEx id_attribute, feature_type;
 
 	reverseStrand = false;
 	useStrand = true;
@@ -59,61 +58,61 @@ int LiBiCount::main(int argc, char **argv)
 	nameOrder = true;
 	maxCacheSize = READ_CACHE_SIZE;
 
-	if(argc < 1)
+	if (argc < 1)
 	{
 		exitFail("Error: parameter wrong!");
 	}
-	else if ((argc == 1) || ((argc == 2) && ((strcmp(argv[1],"-h") ==0) || (strcmp(argv[1],"--help")==0))))
+	else if ((argc == 1) || ((argc == 2) && ((strcmp(argv[1], "-h") == 0) || (strcmp(argv[1], "--help") == 0))))
 	{
-printf("LiBiNorm count: Calculates expression values from RNA-seq data,  based on htseq-count\n");
-printf("Usage: LiBiNorm count [options] alignment_file gff_file\n");
-printf("This program takes an alignment file in SAM/BAM format and a feature file in\n");
-printf("GFF format and calculates for each feature the number of reads mapping to it.\n");
-printf("See http://www-huber.embl.de/users/anders/HTSeq/doc/count.html for details.\n");
-printf("\n");
-printf("Options:\n");
-printf("  -h, --help            show this help message and exit\n");
-printf("  -r ORDER, --order=ORDER\n");
-printf("                        'pos' or 'name'. Sorting order of <alignment_file>\n");
-printf("                        (default: name). Paired-end sequencing data must be\n");
-printf("                        sorted either by position or by read name, and the\n");
-printf("                        sorting order must be specified. Ignored for single-\n");
-printf("                        end data.\n");
-printf("  -s STRANDED, --stranded=STRANDED\n");
-printf("                        whether the data is from a strand-specific assay.\n");
-printf("                        Specify 'yes', 'no', or 'reverse' (default: yes).\n");
-printf("                        'reverse' means 'yes' with reversed strand\n");
-printf("                        interpretation\n");
-printf("  -a MINAQUAL, --minaqual=MINAQUAL\n");
-printf("                        skip all reads with alignment quality lower than the\n");
-printf("                        given minimum value (default: 10)\n");
-printf("  -t FEATURETYPE, --type=FEATURETYPE\n");
-printf("                        feature type (3rd column in GFF file) to be used, all\n");
-printf("                        features of other type are ignored (default for \n");
-printf("                        Ensemble GTF and GFF files: ", DEFAULT_FEATURE_TYPE_EXON,")\n");
-printf("  -i IDATTR, --idattr=IDATTR\n");
-printf("                        GFF attribute to be used as feature ID\n");
-printf("                        (default for Ensembl GTF files: ", DEFAULT_GTF_ID_ATTRIBUTE, "\n");
-printf("                        default for GFF3 files: ", DEFAULT_GFF_ID_ATTRIBUTE, ")\n");
-printf("  -m MODE, --mode=MODE  mode to handle reads overlapping more than one feature\n");
-printf("                        (choices: union, intersection-strict, intersection-\n");
-printf("                        nonempty; default: union)\n");
-printf("  -z, --htseq-compatible\n");
-printf("                        Run in htseq-compatible mode\n");
-printf("  -l --landscape        A landscape file will be produced named <fileroot>_landscape.txt where)\n");
-printf("                          <fileroot> is specified by the -u option)\n");
-//printf("  -o SAMOUT, --samout=SAMOUT\n");		//Still to be implemented
-//printf("                        write out all SAM alignment records into an output SAM\n");
-//printf("                        file called SAMOUT, annotating each line with its\n");
-//printf("                        feature assignment (as an optional field with tag\n");
-//printf("                        'XF')\n");
-helpCommon();
+		printf("LiBiNorm count: Calculates expression values from RNA-seq data,  based on htseq-count\n");
+		printf("Usage: LiBiNorm count [options] alignment_file gff_file\n");
+		printf("This program takes an alignment file in SAM/BAM format and a feature file in\n");
+		printf("GFF format and calculates for each feature the number of reads mapping to it.\n");
+		printf("See http://www-huber.embl.de/users/anders/HTSeq/doc/count.html for details.\n");
+		printf("\n");
+		printf("Options:\n");
+		printf("  -h, --help            show this help message and exit\n");
+		printf("  -r ORDER, --order=ORDER\n");
+		printf("                        'pos' or 'name'. Sorting order of <alignment_file>\n");
+		printf("                        (default: name). Paired-end sequencing data must be\n");
+		printf("                        sorted either by position or by read name, and the\n");
+		printf("                        sorting order must be specified. Ignored for single-\n");
+		printf("                        end data.\n");
+		printf("  -s STRANDED, --stranded=STRANDED\n");
+		printf("                        whether the data is from a strand-specific assay.\n");
+		printf("                        Specify 'yes', 'no', or 'reverse' (default: yes).\n");
+		printf("                        'reverse' means 'yes' with reversed strand\n");
+		printf("                        interpretation\n");
+		printf("  -a MINAQUAL, --minaqual=MINAQUAL\n");
+		printf("                        skip all reads with alignment quality lower than the\n");
+		printf("                        given minimum value (default: 10)\n");
+		printf("  -t FEATURETYPE, --type=FEATURETYPE\n");
+		printf("                        feature type (3rd column in GFF file) to be used, all\n");
+		printf("                        features of other type are ignored (default for \n");
+		printf("                        Ensemble GTF and GFF files: ", DEFAULT_FEATURE_TYPE_EXON, ")\n");
+		printf("  -i IDATTR, --idattr=IDATTR\n");
+		printf("                        GFF attribute to be used as feature ID\n");
+		printf("                        (default for Ensembl GTF files: ", DEFAULT_GTF_ID_ATTRIBUTE, "\n");
+		printf("                        default for GFF3 files: ", DEFAULT_GFF_ID_ATTRIBUTE, ")\n");
+		printf("  -m MODE, --mode=MODE  mode to handle reads overlapping more than one feature\n");
+		printf("                        (choices: union, intersection-strict, intersection-\n");
+		printf("                        nonempty; default: union)\n");
+		printf("  -z, --htseq-compatible\n");
+		printf("                        Run in htseq-compatible mode\n");
+		printf("  -l --landscape        A landscape file will be produced named <fileroot>_landscape.txt where)\n");
+		printf("                          <fileroot> is specified by the -u option)\n");
+		printf("  -o/-ou/om BAMOUT, --bamout=BAMOUT\n");
+		printf("                        write out all alignment records for reads that align to a gene\n");
+		printf("                        into an output bam file e called BAMOUT.  The XF tag is set to the \n");
+		printf("                        identity of the feature to which it was mapped. -ou & -om output mapped and\n");
+		printf("                        unmapped reads respectively\n");
+		helpCommon();
 #ifdef USE_GENES_FROM_GENELIST
-printf("  -g F (S F), --genes=F Only perform the analysis for the genes listed in the file with name F\n");
-printf("                           Optional S and X paremeters means that only genes from position S to F are used\n");
+		printf("  -g F (S F), --genes=F Only perform the analysis for the genes listed in the file with name F\n");
+		printf("                           Optional S and X paremeters means that only genes from position S to F are used\n");
 #endif
-printf("\n");
-printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
+		printf("\n");
+		printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 		return EXIT_SUCCESS;
 	}
 
@@ -122,46 +121,68 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 	if (argc < 3)
 		exitFail("Insufficient arguments");
 
-	while(ni < argc-2)
+	while (ni < argc - 2)
 	{
+
+
 		bool opt2 = false;
-		if ((strcmp(argv[ni], "-s") == 0) || (opt2 = (strncmp(argv[ni], "--stranded=",11) == 0)))
+		if ((strcmp(argv[ni], "-s") == 0) || (opt2 = (strncmp(argv[ni], "--stranded=", 11) == 0)))
 		{
-			string strand(opt2?argv[ni]+11:argv[++ni]);
+			string strand(opt2 ? argv[ni] + 11 : argv[++ni]);
 			if (strand == "yes")
-			{}
+			{
+			}
 			else if (strand == "reverse")
 				reverseStrand = true;
 			else if (strand == "no")
 				useStrand = false;
 			else
-				exitFail("Invalid strand option: ",strand);
+				exitFail("Invalid strand option: ", strand);
 		}
-		else if ((strcmp(argv[ni], "-a") == 0) || (opt2=(strncmp(argv[ni], "--minaqual=",11) == 0)))
+		else if ((strcmp(argv[ni], "-a") == 0) || (opt2 = (strncmp(argv[ni], "--minaqual=", 11) == 0)))
 		{
-			minqual = atoi(opt2?argv[ni]+11:argv[++ni]);
+			minqual = atoi(opt2 ? argv[ni] + 11 : argv[++ni]);
 		}
-		else if((strcmp(argv[ni], "-t") == 0) || (opt2=(strncmp(argv[ni], "--type=",7) == 0)))
+		else if ((strcmp(argv[ni], "-o") == 0) || (strcmp(argv[ni], "-ou") == 0) || (strcmp(argv[ni], "-om") == 0) || 
+			(opt2 = (strncmp(argv[ni], "--bamout=", 9) == 0)))
 		{
-			feature_type = opt2?argv[ni]+7:argv[++ni];
+			if (opt2)
+			{
+				bamOutFileName = argv[ni] + 9;
+				bamOutMode = outputAll;
+			}
+			else
+			{
+				if (strcmp(argv[ni], "-ou") == 0)
+					bamOutMode = outputUnmatched;
+				else if (strcmp(argv[ni], "-om") == 0)
+					bamOutMode = outputMatched;
+				else
+					bamOutMode = outputAll;
+				bamOutFileName = argv[++ni];
+			}
 		}
-		else if((strcmp(argv[ni], "-i") == 0) || (opt2=(strncmp(argv[ni], "--idattr=",9) == 0))) 
+		else if ((strcmp(argv[ni], "-t") == 0) || (opt2 = (strncmp(argv[ni], "--type=", 7) == 0)))
 		{
-			id_attribute = opt2?argv[ni]+9:argv[++ni];
+			feature_type = opt2 ? argv[ni] + 7 : argv[++ni];
 		}
-		else if((strcmp(argv[ni], "-r") == 0)|| (opt2=(strncmp(argv[ni], "--order=",8) == 0)))
+		else if ((strcmp(argv[ni], "-i") == 0) || (opt2 = (strncmp(argv[ni], "--idattr=", 9) == 0)))
 		{
-			string mode(opt2?argv[ni]+8:argv[++ni]);
+			id_attribute = opt2 ? argv[ni] + 9 : argv[++ni];
+		}
+		else if ((strcmp(argv[ni], "-r") == 0) || (opt2 = (strncmp(argv[ni], "--order=", 8) == 0)))
+		{
+			string mode(opt2 ? argv[ni] + 8 : argv[++ni]);
 			if (mode == "pos")
 				nameOrder = false;
 			else if (mode == "name")
 				nameOrder = true;
 			else
-				exitFail("Unknown 'order':",mode,".  Should be pos or name");
+				exitFail("Unknown 'order':", mode, ".  Should be pos or name");
 		}
-		else if ((strcmp(argv[ni], "-m") == 0) || (opt2 = (strncmp(argv[ni], "--mode=",7) == 0)))
+		else if ((strcmp(argv[ni], "-m") == 0) || (opt2 = (strncmp(argv[ni], "--mode=", 7) == 0)))
 		{
-			string mode = opt2?argv[ni]+7:argv[++ni];
+			string mode = opt2 ? argv[ni] + 7 : argv[++ni];
 			if (mode == "union")
 				countMode = intersect_union;
 			else if (mode == "intersection-strict")
@@ -171,9 +192,9 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 			else if (mode == "intersection-all")
 				countMode = intersect_all;
 			else
-				exitFail("Invalid mode: ",mode);
+				exitFail("Invalid mode: ", mode);
 		}
-		else if((strcmp(argv[ni], "-q") == 0) || (strcmp(argv[ni], "--quiet") == 0))
+		else if ((strcmp(argv[ni], "-q") == 0) || (strcmp(argv[ni], "--quiet") == 0))
 		{
 			verbose = false;
 		}
@@ -186,7 +207,7 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 		{
 			landscapeFile = true;
 		}
-		else if (commandParseCommon(ni, argc-2, argv)) //argc -2 to allow for the two fixed end parameters
+		else if (commandParseCommon(ni, argc - 2, argv)) //argc -2 to allow for the two fixed end parameters
 		{
 		}
 #ifdef USE_GENES_FROM_GENELIST
@@ -194,7 +215,7 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 		{
 			geneListFilenameData glfd;
 			glfd.geneListFilename = opt2 ? argv[++ni] + 8 : argv[++ni];
-			if ((!opt2) && (ni < (argc - 3)) && (argv[ni+1][0] != '-') && (argv[ni + 2][0] != '-'))
+			if ((!opt2) && (ni < (argc - 3)) && (argv[ni + 1][0] != '-') && (argv[ni + 2][0] != '-'))
 			{
 				glfd.start = atoi(argv[++ni]);
 				glfd.finish = atoi(argv[++ni]);
@@ -204,13 +225,13 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 #endif
 		else
 		{
-			exitFail("Invalid parameter: ",string(argv[ni]));
+			exitFail("Invalid parameter: ", string(argv[ni]));
 		}
 		ni++;
 	}
 
-	bamFileName = argv[argc-2];
-	featureFileName = argv[argc-1];
+	bamFileName = argv[argc - 2];
+	featureFileName = argv[argc - 1];
 
 	if (htSeqCompatible)
 	{
@@ -235,7 +256,7 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 		theModel = DEFAULT_MODEL;
 	}
 
-	if(countsFilename)
+	if (countsFilename)
 		tempDirectory = countsFilename.replaceSuffix("_tempFiles");
 
 
@@ -260,15 +281,27 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 			exitFail("Unable to identify feature file type in order to specifiy default id attribute");
 	}
 
-	if(normalise && (feature_type != "exon"))
+	if (normalise && (feature_type != "exon"))
 		exitFail("Can only normalise data when 'exon' is the feature specified");
 
+	if (!nameOrder && bamOutFileName)
+		exitFail("Outputting bam files only supported with name ordered data");
 
-	if ( !reader.Open(bamFileName) ) 
-		exitFail("Could not open input BAM files: ",bamFileName);
+	if (!reader.Open(bamFileName))
+		exitFail("Could not open input BAM files: ", bamFileName);
+	// retrieve 'metadata' from BAM files.
+	references = reader.GetReferenceData();
+
+	if (bamOutFileName)
+	{
+		if (!writer.Open(bamOutFileName, reader.GetHeader(), reader.GetReferenceData()))
+			exitFail("Could not open ", bamOutFileName, " for outputting bam data");
+	}
 
 	if (!nameOrder)
 		tempDirectory = tempDirectory::get(tempDirectory);
+
+
 
 #ifdef IGNORED_GTF_TRANSCRIPT_TYPES
 	//	Retained intron transcripts dramatically change the apparent lengths of genes
@@ -276,34 +309,32 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 		genomeDef.ignoreTranscriptTypes({ { IGNORED_GTF_TRANSCRIPT_TYPES } });
 #endif
 
-	// retrieve 'metadata' from BAM files.
-	references = reader.GetReferenceData();
-	for(auto & i : references)
+	for (auto & i : references)
 	{
-		if (strncasecmp(i.RefName.c_str(),"chr",3) == 0)
+		if (strncasecmp(i.RefName.c_str(), "chr", 3) == 0)
 			i.RefName = i.RefName.substr(3);
 		genomeDef.addToChromosomeMap(i.RefLength, i.RefName);
 	}
 
 	initClock();
-	
-	if (!genomeDef.open(featureFileName,id_attribute,feature_type))
-		exitFail("Could not open feature file: ",featureFileName);
 
-/*
-#ifdef	OUTPUT_FEATURE_DATA
-	if ((countsFilename) && !genomeDef.printEntries(countsFilename.replaceSuffix("_genome2.txt")))
-		progMessage("Unable to output genome data to :",countsFilename.replaceSuffix("_genome.txt"));
-#endif
-*/
-	geneCounts.addEntry("reference", false,DEFAULT_NORMALISATION_GENE_LENGTH);
+	if (!genomeDef.open(featureFileName, id_attribute, feature_type))
+		exitFail("Could not open feature file: ", featureFileName);
+
+	/*
+	#ifdef	OUTPUT_FEATURE_DATA
+		if ((countsFilename) && !genomeDef.printEntries(countsFilename.replaceSuffix("_genome2.txt")))
+			progMessage("Unable to output genome data to :",countsFilename.replaceSuffix("_genome.txt"));
+	#endif
+	*/
+	geneCounts.addEntry("reference", false, DEFAULT_NORMALISATION_GENE_LENGTH);
 	for (auto & glfn : geneListFilenames)
 	{
 		progMessage("Using genes/transcripts listed in ", glfn.geneListFilename);
 		geneCounts.useSelectedGenes(glfn);
 	}
 
-	genomeDef.index(geneCounts,useStrand);
+	genomeDef.index(geneCounts, useStrand);
 
 #ifdef COMPARE_RESULTS
 	transcriptDataMap transData;
@@ -323,7 +354,7 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 	elapsedTime("Feature file consolidated.");
 
 #ifdef OUTPUT_READ_MAPPING_INFO
-	if ((outputFileroot) &&  !genomeDataFile.open(outputFileroot.replaceSuffix("_read_mappings.txt")))
+	if ((outputFileroot) && !genomeDataFile.open(outputFileroot.replaceSuffix("_read_mappings.txt")))
 		progMessage("Unable to open output file: ", outputFileroot.replaceSuffix("_read_mappings.txt"));
 #endif
 
@@ -331,6 +362,13 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 		processNameOrderedBamData();
 	else
 		processPositionOrderedBamData();
+
+	if (bamOutFileName)
+	{
+		progMessage("Sorting bam file");
+		sortBamFile(bamOutFileName);
+		progMessage("Bam file sorted");
+	}
 
 #ifdef OUTPUT_READ_MAPPING_INFO
 	genomeDataFile.close();
@@ -426,17 +464,23 @@ struct chromosomeGeneInfo: public map<string,overlapCounts>
 };
 
 
-void LiBiCount::addRead(const regionLists & segments,const featureFileEx & gtfData)
+string LiBiCount::addRead(const regionLists & segments,const featureFileEx & gtfData)
 {
 	if (segments.NH > 1)
 	{
 		geneCounts.count(notUnique)++;
-		return;
+		if ((bamOutMode == outputAll) || (bamOutMode == outputUnmatched))
+			return notUnique;
+		else
+			return "";
 	}
 	else if (segments.qual < minqual)
 	{
 		geneCounts.count(lowQualString)++;
-		return;
+		if ((bamOutMode == outputAll) || (bamOutMode == outputUnmatched))
+			return lowQualString;
+		else
+			return "";
 	}
 
 
@@ -673,6 +717,8 @@ void LiBiCount::addRead(const regionLists & segments,const featureFileEx & gtfDa
 
 	switch(countMode)
 	{
+	case mode_none:
+		break;
 	case intersect_strict:
 	case intersect_nonempty:		
 	case intersect_all:		
@@ -802,7 +848,14 @@ void LiBiCount::addRead(const regionLists & segments,const featureFileEx & gtfDa
 
 	rna_pos_type geneLen = geneCounts.length(*result);
 	
-	if (geneLen != 0)
+	if (geneLen == 0)
+	{
+		if ((bamOutMode == outputAll) || (bamOutMode == outputUnmatched))
+			return *result;
+		else
+			return "";
+	}
+	else
 	{
 		if (segments.strands.size() == 1)
 		{
@@ -854,6 +907,10 @@ void LiBiCount::addRead(const regionLists & segments,const featureFileEx & gtfDa
 				}
 			}
 		}
+		if ((bamOutMode == outputAll) || (bamOutMode == outputMatched))
+			return *result;
+		else
+			return "";
 	}
 }
 
@@ -908,7 +965,9 @@ bool LiBiCount::processNameOrderedBamData()
 	bamCounter = 0;
 	set<string> previousNames;
 
-	bool OK = reader.GetNextAlignment(ba[0],false);
+	bool getFullBamData = (bamOutMode != outputNone);
+
+	bool OK = reader.GetNextAlignment(ba[0], getFullBamData);
 
 	while (OK)
 	{
@@ -917,9 +976,10 @@ bool LiBiCount::processNameOrderedBamData()
 
 		int Nreads = 0;
 
+		//	Load up a buffer full of reads
 		do {
 			used[Nreads] = false;
-			OK = reader.GetNextAlignment(ba[++Nreads],false);
+			OK = reader.GetNextAlignment(ba[++Nreads], getFullBamData);
 		}
 		while ((ba[Nreads].Name == name) && (OK) && (Nreads < READ_BUFFER_SIZE));
 
@@ -928,10 +988,21 @@ bool LiBiCount::processNameOrderedBamData()
 		//	alignments
 		if (AReadIsMapped(ba[0]))
 		{
+			//	One read left
 			if ((Nreads == 1) && (!ba[0].IsPaired()))
 			{
-				//
-				addRead(regionLists(readData(move(ba[0])),name),genomeDef);
+				//  If we might be saving the alignment then dont use the move version because if we do we loose the cigar data
+				if ((bamOutMode != outputNone))
+				{
+					string feature = addRead(regionLists(readData(ba[0]), name), genomeDef);
+					if (feature.size())
+					{
+						ba[0].AddTag("XF","Z",feature);
+						writer.SaveAlignment(ba[0]);
+					}
+				}
+				else
+					addRead(regionLists(readData(move(ba[0])),name),genomeDef);
 				incBamCounter();
 			}
 			else
@@ -940,7 +1011,7 @@ bool LiBiCount::processNameOrderedBamData()
 				{
 					if (!used[i])
 					{
-						regionLists regions(readData(move(ba[i])),name);
+						regionLists regions(readData(writer.IsOpen()?ba[i]:move(ba[i])),name);
 						for (int j = i+1;j < Nreads;j++)
 						{
 							if (!used[j])
@@ -953,15 +1024,28 @@ bool LiBiCount::processNameOrderedBamData()
 								if (!(ba[i].IsMapped() && ba[j].IsMapped())  ||
 
 									((ba[i].RefID == ba[j].MateRefID)
-									&& (ba[i].MateRefID == ba[j].RefID)
-									&& (ba[i].Position == ba[j].MatePosition)
-									&& (ba[i].MatePosition == ba[j].Position)
-									))
+										&& (ba[i].MateRefID == ba[j].RefID)
+										&& (ba[i].Position == ba[j].MatePosition)
+										&& (ba[i].MatePosition == ba[j].Position)))
 								{
+									//	We have found a pair of reads
 									used[i] = true;
-									used[j] = true;		
-									regions.combine(move(ba[j]));
-									addRead(regions,genomeDef);
+									used[j] = true;
+									if (bamOutMode != outputNone)
+									{
+										regions.combine(ba[j]);
+										string feature = addRead(regions, genomeDef);
+										if (feature.size())
+										{
+											ba[j].AddTag("XF", "Z", feature);
+											writer.SaveAlignment(ba[j]);
+										}
+									}
+									else
+									{
+										regions.combine(move(ba[j]));
+										addRead(regions, genomeDef);
+									}
 									incBamCounter();
 									break;
 								}
@@ -969,7 +1053,12 @@ bool LiBiCount::processNameOrderedBamData()
 						}
 						if (!used[i])
 						{
-							addRead(regions,genomeDef);
+							string feature = addRead(regions, genomeDef);
+							if (feature.size())
+							{
+								ba[i].AddTag("XF", "Z", feature);
+								writer.SaveAlignment(ba[i]);
+							}
 							incBamCounter();
 						}
 					}

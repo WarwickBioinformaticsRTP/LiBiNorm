@@ -8,7 +8,7 @@
 CCC = g++
 
 # Flags required by all stages of C++ compiler
-CCCALLFLAGS= -std=gnu++11 
+CCCALLFLAGS= -std=gnu++11 -DBAM_LIBRARY
 
 # Directory information
 BAMTOOLSDIR = bamtools/
@@ -183,6 +183,7 @@ $(BUILD)/LiBiNormSrc/LiBiNorm.o: ../bamtools/api/SamSequenceDictionary.h
 $(BUILD)/LiBiNormSrc/LiBiNorm.o: ../bamtools/api/SamSequence.h
 $(BUILD)/LiBiNormSrc/LiBiNorm.o: ../bioinformaticsLib/featureFile.h
 $(BUILD)/LiBiNormSrc/LiBiNorm.o: ../bioinformaticsLib/genbankFile.h
+$(BUILD)/LiBiNormSrc/LiBiNorm.o: ../bamtools/api/BamWriter.h
 $(BUILD)/LiBiNormSrc/LiBiNorm.o: LiBiNormSrc/LiBiDedup.h
 $(BUILD)/LiBiNormSrc/LiBiNorm.o: LiBiNormSrc/LiBiConv.h
 $(BUILD)/LiBiNormSrc/LiBiNorm.o: LiBiNormSrc/LiBiTools.h
@@ -240,6 +241,7 @@ $(BUILD)/LiBiNormSrc/LiBiDedup.o: LiBiNormSrc/Regions.h
 $(BUILD)/LiBiNormSrc/LiBiDedup.o: ../bioinformaticsLib/printEx.h
 $(BUILD)/LiBiNormSrc/LiBiCount.o: ../bioinformaticsLib/libCommon.h
 $(BUILD)/LiBiNormSrc/LiBiCount.o: ../bioinformaticsLib/containerEx.h
+$(BUILD)/LiBiNormSrc/LiBiCount.o: ../bioinformaticsLib/bamAlignmentEx.h
 $(BUILD)/LiBiNormSrc/LiBiCount.o: LiBiNormSrc/Regions.h
 $(BUILD)/LiBiNormSrc/LiBiCount.o: ../bioinformaticsLib/printEx.h
 $(BUILD)/LiBiNormSrc/LiBiCount.o: ../bioinformaticsLib/inQuotes.h
@@ -267,6 +269,7 @@ $(BUILD)/LiBiNormSrc/LiBiCount.o: ../bioinformaticsLib/dataVec.h
 $(BUILD)/LiBiNormSrc/LiBiCount.o: LiBiNormSrc/GeneCountData.h mcmcLib/mcmc.h
 $(BUILD)/LiBiNormSrc/LiBiCount.o: mcmcLib/params.h
 $(BUILD)/LiBiNormSrc/LiBiCount.o: ../bioinformaticsLib/nelderMeadOptimiser.h
+$(BUILD)/LiBiNormSrc/LiBiCount.o: ../bamtools/api/BamWriter.h
 $(BUILD)/LiBiNormSrc/LiBiCount.o: LiBiNormSrc/LiBiNorm.h
 $(BUILD)/LiBiNormSrc/LiBiCount.o: LiBiNormSrc/LiBiNormCore.h
 $(BUILD)/LiBiNormSrc/LiBiCount.o: LiBiNormSrc/Options.h
