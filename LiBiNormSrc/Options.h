@@ -2,7 +2,7 @@
 #define OPTIONS_H
 
 
-#define LIBINORM_VERSION "1.9.0"
+#define LIBINORM_VERSION "1.10.0"
 //	Bam/gff file reading
 #define DEFAULT_FEATURE_TYPE_EXON "exon" 
 #define DEFAULT_GTF_ID_ATTRIBUTE "gene_id"
@@ -55,6 +55,8 @@
 //	Parameters for printing bias plots
 #define N_BIAS_BINS 100
 #define N_BIAS_GENE_SEGMENTS 500
+#define READ_THRESHOLD 0	//Genes with fewer reads are ignored
+#define MAX_VALUE 0.04		//Output values clipped to this
 
 
 //	The insert size for matching pairs should be A and -A.  In some datasets they are A and A.  By using the absolute value of the
@@ -97,7 +99,7 @@
 //	For consistent selection of reads and reproducing the MATLAB algorithms
 // #define REPRODUCE_MATLAB	
 
-//	Adds -z option where the program will pause at the end rather than simply exiting.  Useful for debugging
+//	Adds -w option where the program will pause at the end rather than simply exiting.  Useful for debugging
 // #define PAUSE_AT_END_OPTION	
 
 // Adds -x option which results in the output of additional debug messages
@@ -113,6 +115,9 @@
 
 //	Output landscape files in the original format
 // #define LANDSCAPE_FORMAT_1
+
+//	Enable this to produce a file that can be used by the mathematica script
+// #define MATHMATICA_FILE
 
 //  Print full MCMC run data
 // #define PRINT_MCMC_RUN_DATA

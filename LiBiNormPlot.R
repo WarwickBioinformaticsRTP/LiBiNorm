@@ -103,7 +103,7 @@ if (!file.exists(filename)) {
   LLParams$"Abs Opt" <- LLParams$"Abs Opt"/1000 
   LLParams$"Spread Abs" <- LLParams$"Spread Abs"/1000 
   ymin = floor(min(LLParams$"Abs Opt"))
-  # The wonders of R means that ggplot must be inside a print statement if it 
+    # The wonders of R means that ggplot must be inside a print statement if it 
   # is inside an if statement.   Why???
   print(ggplot(LLParams, aes(x=Name, y=LLParams$"Abs Opt", fill=Model)) +  theme_bw() +
     geom_bar(width = 0.6,position=position_dodge(width=1.0), stat="identity") +
@@ -111,7 +111,7 @@ if (!file.exists(filename)) {
                       ymax=LLParams$"Abs Opt" + LLParams$"Spread Abs"), 
                   width=.4,position=position_dodge(width=1.0),size=errSize) +  
     scale_y_continuous(limits= c(ymin,NA),oob=rescale_none) +
-    ylab(bquote('Log likelihood: x10'^3~'')) +
+    ylab(bquote('Negative Log likelihood: x10'^3~'')) +
     theme(axis.text.x=element_blank(),
           axis.title.x=element_blank(),
           axis.ticks.x=element_blank()))  
@@ -167,7 +167,7 @@ if (!file.exists(filename)) {
 } else {
   geneMatrix <- as.matrix( read.table(filename,sep = "\t"))
   geneMeltData <- melt(geneMatrix)
-  my_palette <- colorRampPalette(c("white", "orange","red","black","black"))(n = 30)
+  my_palette <- colorRampPalette(c("white", "orange","red","black"))(n = 30)
   png(paste(base,"_bias.png",sep=""),units = "in",height=10,width=3,res=ppi)
   print(ggplot(geneMeltData, aes(x = Var2, y = Var1, fill = value)) + 
     coord_fixed(ratio = 0.7) +

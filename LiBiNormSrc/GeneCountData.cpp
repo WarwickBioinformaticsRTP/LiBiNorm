@@ -281,9 +281,6 @@ bool GeneCountData::outputLandscape(const string & filename)
 //	Enable this to produce output based on peak rather than average values
 // #define PEAKVALUES
 
-//	Enable this to produce a file that can be used by the mathematica script
-// #define MATHMATICA_FILE
-
 //	Produces a datafile that can be used by LiBiNormPlot.R to produce a heat map of the read distribution
 bool GeneCountData::outputHeatmapData(const stringEx & filename)
 {
@@ -293,6 +290,7 @@ bool GeneCountData::outputHeatmapData(const stringEx & filename)
 	if (!mathematicaFile.open(mFilename))
 		exitFail("Unable to open ", mFilename, " for bias data");
 	fprintf(mathematicaFile.fout, "{");
+	bool first = true;
 #endif
 	TsvFile tsvFile;
 	if (!tsvFile.open(filename))
@@ -306,7 +304,7 @@ bool GeneCountData::outputHeatmapData(const stringEx & filename)
 	{
 		auto & data = readPositionData[info[i].name];
 		size_t Nreads = data.positions[0].size() + data.positions[1].size();
-		if (Nreads)
+		if (Nreads > READ_THRESHOLD)
 			orderedLengths.emplace(lengths[0][i], i);
 	}
 
@@ -363,7 +361,7 @@ bool GeneCountData::outputHeatmapData(const stringEx & filename)
 		fprintf(mathematicaFile.fout, "}");
 #endif
 
-		//	And then scale the bins so that they go between 0 and 1
+/*		//	And then scale the bins so that they go between 0 and 1
 		VEC_DATA_TYPE min = 10, max = 0;
 		for (auto n : counts)
 		{
@@ -373,7 +371,7 @@ bool GeneCountData::outputHeatmapData(const stringEx & filename)
 		for (auto & n : counts)
 		{
 			n = (n - min) / (max - min);
-		}
+		}*/
 	}
 #ifdef MATHMATICA_FILE
 	fprintf(mathematicaFile.fout, "}");
@@ -381,7 +379,7 @@ bool GeneCountData::outputHeatmapData(const stringEx & filename)
 
 
 #ifdef N_BIAS_GENE_SEGMENTS
-	//	And now consolidate the data down to 800 rows by combining genes
+	//	And now consolidate the data down to N_BIAS_GENE_SEGMENTS (500) rows by combining genes
 	dataArray consolidatedBins(N_BIAS_GENE_SEGMENTS, N_BIAS_BINS);
 
 	size_t lastPos = 0;
@@ -394,6 +392,7 @@ bool GeneCountData::outputHeatmapData(const stringEx & filename)
 #ifndef PEAKVALUES
 			//	Normalise by the number of genes in this section
 			consolidatedBins[lastPos] /= section_count;
+
 			//	This does infill if there are fewer than N_BIAS_GENE_SEGMENTS genes
 			for (size_t i = lastPos + 1; i < currPos; i++)
 				consolidatedBins[i] = consolidatedBins[lastPos];
@@ -412,6 +411,11 @@ bool GeneCountData::outputHeatmapData(const stringEx & filename)
 	}
 #ifndef PEAKVALUES
 	consolidatedBins[lastPos] /= section_count;
+
+	//	Clip values above MAX_VALUE
+	for (auto & i : consolidatedBins)
+		i.clipMax(MAX_VALUE);
+
 #endif
 	//	Output in reverse order so that it is plotted correctly by R
 	for ( int i = consolidatedBins.size()-1; i >= 0;i--)

@@ -13,8 +13,9 @@ using namespace std;
 void LiBiNormCore::helpCommon()
 {
 	printf("  -n M, --normModel=M   Specifies that model M should be used rather than the default\n");
-	printf("                        Model BD. M options: A,B,C,D or polyA,\n");
-	printf("                        E or random,BD or smart.  Set m to best for LiBiNorm to select model\n");
+	printf("                        Model BD. M options: best,A,B,C,D or polyA,\n");
+	printf("                        E or random,BD or smart.  best causes all models to be evaluated\n");
+	printf("                        and the best, based on liklihood selected\n");
 	printf("  -u FILEROOT, --normFileroot=FILEROOT\n");
 	printf("                        All output summary info is sent to files with root FILEROOT\n");
 	printf("  -p N, --threads=N     Number of threads for normalisation parameter\n");
