@@ -1,3 +1,12 @@
+// ***************************************************************************
+// LiBiNormCore.h (c) 2017 Nigel Dyer
+// School of Life Sciences, University of Warwick
+// ---------------------------------------------------------------------------
+// Last modified: 24 July 2017
+// ---------------------------------------------------------------------------
+// Common code associated with all of the LiBiNorm modes
+// ***************************************************************************
+
 #ifndef LIBINORMCORE_H
 #define LIBINORMCORE_H
 

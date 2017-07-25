@@ -1,3 +1,11 @@
+// ***************************************************************************
+// LiBiNormCore.cpp (c) 2017 Nigel Dyer
+// School of Life Sciences, University of Warwick
+// ---------------------------------------------------------------------------
+// Last modified: 24 July 2017
+// ---------------------------------------------------------------------------
+// Common code associated with all of the LiBiNorm modes
+// ***************************************************************************
 #ifdef _WIN32
 #define _CRTDBG_MAP_ALLOC
 #include <crtdbg.h>

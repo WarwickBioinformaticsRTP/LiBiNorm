@@ -1,3 +1,11 @@
+// ***************************************************************************
+// GeneCountData.h (c) 2017 Nigel Dyer
+// School of Life Sciences, University of Warwick
+// ---------------------------------------------------------------------------
+// Last modified: 24 July 2017
+// ---------------------------------------------------------------------------
+// For processing count information associated with genes
+// ***************************************************************************
 #ifndef GENE_COUNT_DATA_H
 #define GENE_COUNT_DATA_H
 

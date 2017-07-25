@@ -1,3 +1,12 @@
+// ***************************************************************************
+// LiBeDedup.h (c) 2017 Nigel Dyer
+// School of Life Sciences, University of Warwick
+// ---------------------------------------------------------------------------
+// Last modified: 24 July 2017
+// ---------------------------------------------------------------------------
+// For removing duplicate entries in BamFiles
+//	This mode is enabled using #define DEDUP_MODE in Options.h
+// ***************************************************************************
 #include "LiBiDedup.h"
 #include <stdlib.h>
 #include "api/BamReader.h"
@@ -13,11 +22,6 @@
 
 using namespace std;
 using namespace BamTools;
-
-LiBiDedup::LiBiDedup(void)
-{
-}
-
 
 int LiBiDedup::main(int argc, char **argv)
 {
@@ -35,7 +39,8 @@ int LiBiDedup::main(int argc, char **argv)
 	}
 	else if ((argc == 1) || ((argc == 2) && ((strcmp(argv[1],"-h") ==0) || (strcmp(argv[1],"--help")==0))))
 	{
-printf("Usage: LiBiNorm dedup [options] alignment_file\n");
+printf("Usage: LiBiNorm dedup [options] <BAM filename>\n");
+printf("For each set of closely spaced reads keep just one that is aligned to the position with most reads\n");
 printf("Options:\n");
 printf("  -h, --help            show this help message and exit\n");
 printf("  -t N, --threshold=N       minimum number of reads needed for one to be selected (3)\n");
@@ -109,8 +114,6 @@ printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
 		}
 
 		size_t firstPos = lastPos;
-
-
 
 		int thisChromosome = ba[0].RefID;
 		map<size_t,vector<size_t>> instances;

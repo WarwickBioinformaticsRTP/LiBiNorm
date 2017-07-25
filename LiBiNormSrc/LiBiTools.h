@@ -1,6 +1,14 @@
+// ***************************************************************************
+// LiBiTools.h (c) 2017 Nigel Dyer
+// School of Life Sciences, University of Warwick
+// ---------------------------------------------------------------------------
+// Last modified: 24 July 2017
+// ---------------------------------------------------------------------------
+// Assorted tools associated with LiBiNorm
+// ***************************************************************************
+
 #ifndef LIBITOOLS_H
 #define LIBITOOLS_H
-
 
 class LiBiTools
 {

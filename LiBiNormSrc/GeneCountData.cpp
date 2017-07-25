@@ -1,4 +1,12 @@
-#include <fstream>
+// ***************************************************************************
+// GeneCountData.cpp (c) 2017 Nigel Dyer
+// School of Life Sciences, University of Warwick
+// ---------------------------------------------------------------------------
+// Last modified: 24 July 2017
+// ---------------------------------------------------------------------------
+// For processing count information associated with genes
+// ***************************************************************************#include <fstream>
+
 #include "containerEx.h"
 #include "Options.h"
 #include "GeneCountData.h"

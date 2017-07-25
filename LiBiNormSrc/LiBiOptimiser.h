@@ -1,3 +1,12 @@
+// ***************************************************************************
+// LiBiOptimiser.h (c) 2017 Nigel Dyer
+// School of Life Sciences, University of Warwick
+// ---------------------------------------------------------------------------
+// Last modified: 24 July 2017
+// ---------------------------------------------------------------------------
+// Extends the core NelderMead optimiser for paremeter estimation 
+// ***************************************************************************
+
 #ifndef LIBIOPTIMISER_H
 #define LIBIOPTIMISER_H
 #include "nelderMeadOptimiser.h"

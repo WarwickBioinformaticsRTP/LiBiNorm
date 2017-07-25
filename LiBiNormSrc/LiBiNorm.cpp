@@ -1,3 +1,12 @@
+// ***************************************************************************
+// LiBiNorm.cpp (c) 2017 Nigel Dyer
+// School of Life Sciences, University of Warwick
+// ---------------------------------------------------------------------------
+// Last modified: 24 July 2017
+// ---------------------------------------------------------------------------
+// The top level code associated with "LiBiNorm model" mode
+// ***************************************************************************
+
 #ifdef _WIN32
 #define _CRTDBG_MAP_ALLOC
 #include <crtdbg.h>

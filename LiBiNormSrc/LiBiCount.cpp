@@ -1,3 +1,13 @@
+// ***************************************************************************
+// LiBiCount.cpp (c) 2017 Nigel Dyer
+// School of Life Sciences, University of Warwick
+// ---------------------------------------------------------------------------
+// Last modified: 24 July 2017
+// ---------------------------------------------------------------------------
+// The top level code associated with "LiBiNorm count" modes
+// ***************************************************************************
+
+
 #ifdef _WIN32
 #include <direct.h>
 #else
@@ -28,7 +38,6 @@
 bool dbgFound = false;
 #else
 #define READ_CACHE_SIZE 2000000
-//#define READ_CACHE_SIZE 10000
 #define REP_LEN 100000
 #endif
 
@@ -123,8 +132,6 @@ int LiBiCount::main(int argc, char **argv)
 
 	while (ni < argc - 2)
 	{
-
-
 		bool opt2 = false;
 		if ((strcmp(argv[ni], "-s") == 0) || (opt2 = (strncmp(argv[ni], "--stranded=", 11) == 0)))
 		{
@@ -245,7 +252,6 @@ int LiBiCount::main(int argc, char **argv)
 			progMessage("htseq-count operation is only ever single threaded");
 	}
 
-
 	//	If we have specified -N then we run all of the models for preset number of runs.
 	if (theModel == findBestModel)
 	{
@@ -258,7 +264,6 @@ int LiBiCount::main(int argc, char **argv)
 
 	if (countsFilename)
 		tempDirectory = countsFilename.replaceSuffix("_tempFiles");
-
 
 	if (!feature_type)
 		feature_type = DEFAULT_FEATURE_TYPE_EXON;
@@ -300,8 +305,6 @@ int LiBiCount::main(int argc, char **argv)
 
 	if (!nameOrder)
 		tempDirectory = tempDirectory::get(tempDirectory);
-
-
 
 #ifdef IGNORED_GTF_TRANSCRIPT_TYPES
 	//	Retained intron transcripts dramatically change the apparent lengths of genes

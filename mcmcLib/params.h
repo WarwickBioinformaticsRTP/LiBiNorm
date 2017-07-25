@@ -1,3 +1,13 @@
+// ***************************************************************************
+// params.h (c) 2017 Nigel Dyer
+// School of Life Sciences, University of Warwick
+// ---------------------------------------------------------------------------
+// Last modified: 24 July 2017
+// ---------------------------------------------------------------------------
+// Parameter information for use by the mcmc and nelder mead parameter esztimation
+//  algorithms
+// ***************************************************************************
+
 #ifndef PARAMS_H
 #define PARAMS_H
 

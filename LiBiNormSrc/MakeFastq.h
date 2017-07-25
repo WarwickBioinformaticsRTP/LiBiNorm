@@ -1,4 +1,14 @@
-#pragma once
+// ***************************************************************************
+// MakeFastq.h (c) 2017 Nigel Dyer
+// School of Life Sciences, University of Warwick
+// ---------------------------------------------------------------------------
+// Last modified: 24 July 2017
+// ---------------------------------------------------------------------------
+// For making Fastq FIles from BamFiles
+// ***************************************************************************
+
+#ifndef MAKEFASTQ_H
+#define MAKEFASTQ_H
 
 #include <vector>
 #include "api/BamReader.h"
@@ -93,3 +103,4 @@ public:
 	int main(int argc, char **argv);
 };
 
+#endif

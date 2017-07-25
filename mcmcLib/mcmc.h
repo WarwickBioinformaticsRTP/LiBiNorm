@@ -1,9 +1,17 @@
+// ***************************************************************************
+// mcmc.h (c) 2017 Nigel Dyer
+// School of Life Sciences, University of Warwick
+// ---------------------------------------------------------------------------
+// Last modified: 24 July 2017
+// ---------------------------------------------------------------------------
+// An implementation of the mcmc algorithm
+// ***************************************************************************
+
 #ifndef MCMC_H
 #define MCMC_H
 
 #include "params.h"
 #include "nelderMeadOptimiser.h"
-
 
 /*
 % options structure

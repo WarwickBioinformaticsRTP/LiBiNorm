@@ -1,3 +1,12 @@
+// ***************************************************************************
+// FeatureFileEx.h (c) 2017 Nigel Dyer
+// School of Life Sciences, University of Warwick
+// ---------------------------------------------------------------------------
+// Last modified: 24 July 2017
+// ---------------------------------------------------------------------------
+// Extends featureFile class in bioinformaticsLib to support processing of 
+// gff and gtf files
+// ***************************************************************************
 
 #ifndef FEATURE_FILE_EX_HEADER
 #define FEATURE_FILE_EX_HEADER
