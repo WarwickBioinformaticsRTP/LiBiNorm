@@ -354,9 +354,9 @@ $(BUILD)/LiBiNormSrc/LiBiConv.o: LiBiNormSrc/GeneCountData.h
 $(BUILD)/LiBiNormSrc/LiBiConv.o: ../bioinformaticsLib/parser.h mcmcLib/mcmc.h
 $(BUILD)/LiBiNormSrc/LiBiConv.o: mcmcLib/params.h
 $(BUILD)/LiBiNormSrc/LiBiConv.o: ../bioinformaticsLib/nelderMeadOptimiser.h
-$(BUILD)/LiBiNormSrc/GeneCountData.o: ../bioinformaticsLib/containerEx.h
 $(BUILD)/LiBiNormSrc/GeneCountData.o: LiBiNormSrc/Options.h
 $(BUILD)/LiBiNormSrc/GeneCountData.o: LiBiNormSrc/GeneCountData.h
+$(BUILD)/LiBiNormSrc/GeneCountData.o: ../bioinformaticsLib/containerEx.h
 $(BUILD)/LiBiNormSrc/GeneCountData.o: ../bioinformaticsLib/parser.h
 $(BUILD)/LiBiNormSrc/GeneCountData.o: ../bioinformaticsLib/libCommon.h
 $(BUILD)/LiBiNormSrc/GeneCountData.o: mcmcLib/mcmc.h mcmcLib/params.h
@@ -365,7 +365,6 @@ $(BUILD)/LiBiNormSrc/GeneCountData.o: ../bioinformaticsLib/stringEx.h
 $(BUILD)/LiBiNormSrc/GeneCountData.o: ../bioinformaticsLib/inQuotes.h
 $(BUILD)/LiBiNormSrc/GeneCountData.o: ../bioinformaticsLib/dataVec.h
 $(BUILD)/LiBiNormSrc/GeneCountData.o: ../bioinformaticsLib/printEx.h
-$(BUILD)/LiBiNormSrc/FeatureFileEx.o: LiBiNormSrc/Options.h
 $(BUILD)/LiBiNormSrc/FeatureFileEx.o: LiBiNormSrc/FeatureFileEx.h
 $(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bioinformaticsLib/containerEx.h
 $(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bioinformaticsLib/libCommon.h

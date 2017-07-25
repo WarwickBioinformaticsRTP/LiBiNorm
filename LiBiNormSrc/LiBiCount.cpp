@@ -118,7 +118,7 @@ int LiBiCount::main(int argc, char **argv)
 		helpCommon();
 #ifdef USE_GENES_FROM_GENELIST
 		printf("  -g F (S F), --genes=F Only perform the analysis for the genes listed in the file with name F\n");
-		printf("                           Optional S and X paremeters means that only genes from position S to F are used\n");
+		printf("                           Optional S and F paremeters means that only genes from position S to F are used\n");
 #endif
 		printf("\n");
 		printf("Written by Nigel Dyer (nigel.dyer@warwick.ac.uk)\n");
@@ -292,6 +292,7 @@ int LiBiCount::main(int argc, char **argv)
 	if (!nameOrder && bamOutFileName)
 		exitFail("Outputting bam files only supported with name ordered data");
 
+	//	We have now done all of the command line parameter checking, now to process the data
 	if (!reader.Open(bamFileName))
 		exitFail("Could not open input BAM files: ", bamFileName);
 	// retrieve 'metadata' from BAM files.
@@ -307,11 +308,13 @@ int LiBiCount::main(int argc, char **argv)
 		tempDirectory = tempDirectory::get(tempDirectory);
 
 #ifdef IGNORED_GTF_TRANSCRIPT_TYPES
-	//	Retained intron transcripts dramatically change the apparent lengths of genes
+	//	Retained intron transcripts dramatically change the apparent lengths of genes so are ignored, unless
+	//	we are running in htseq compatible mode
 	if (!htSeqCompatible)
 		genomeDef.ignoreTranscriptTypes({ { IGNORED_GTF_TRANSCRIPT_TYPES } });
 #endif
 
+	//	The internal standard is that chromosome names do not include a chr prefix
 	for (auto & i : references)
 	{
 		if (strncasecmp(i.RefName.c_str(), "chr", 3) == 0)
@@ -321,6 +324,7 @@ int LiBiCount::main(int argc, char **argv)
 
 	initClock();
 
+	//	Load up the gtf/gff3 file
 	if (!genomeDef.open(featureFileName, id_attribute, feature_type))
 		exitFail("Could not open feature file: ", featureFileName);
 
@@ -330,13 +334,20 @@ int LiBiCount::main(int argc, char **argv)
 			progMessage("Unable to output genome data to :",countsFilename.replaceSuffix("_genome.txt"));
 	#endif
 	*/
+
+	// geneCounts will hold a list of the genes being analysed, together with an initial 'reference' gene 
+	//	that is the gene length used for normalisation
 	geneCounts.addEntry("reference", false, DEFAULT_NORMALISATION_GENE_LENGTH);
+
+	//	If this option was selected at the command line, load up the list of genes to be analysed
 	for (auto & glfn : geneListFilenames)
 	{
 		progMessage("Using genes/transcripts listed in ", glfn.geneListFilename);
 		geneCounts.useSelectedGenes(glfn);
 	}
 
+	//	And then index the genome so we know where all of the exons associated with the genes being analysed are, and their
+	//	relationship to each other, e.g. if there are any overlaps.
 	genomeDef.index(geneCounts, useStrand);
 
 #ifdef COMPARE_RESULTS
@@ -361,6 +372,7 @@ int LiBiCount::main(int argc, char **argv)
 		progMessage("Unable to open output file: ", outputFileroot.replaceSuffix("_read_mappings.txt"));
 #endif
 
+	//	Now read in the bam file data
 	if (nameOrder)
 		processNameOrderedBamData();
 	else
@@ -936,21 +948,29 @@ void LiBiCount::incBamCounter(const BamAlignment * ba,int size)
 		}
 }
 
+//	Is the read mapped.  
 bool LiBiCount::AReadIsMapped(const BamAlignment & ba)
 {
 	if (!ba.IsMapped())
 	{
 		if (ba.IsPaired())
 		{
+			//	If it is paired and both are not mapped then if this is the first read then 
+			//	increment the not aligned counter
 			if (!ba.IsMateMapped())
 			{
 				if (ba.IsFirstMate())
 					geneCounts.count(notAlignedString)++;
+
+				//	*****************************************
+				//	This may be in the wrong position.  As it stands we may be incorrectly indicating that the
+				//	entry is mapped in some circumstances
 				return false;
 			}
 		}
 		else
 		{
+			//	If it is not paired then increement the 'not Aligned' count
 			geneCounts.count(notAlignedString)++;
 			return false;
 		}
@@ -960,6 +980,7 @@ bool LiBiCount::AReadIsMapped(const BamAlignment & ba)
 
 #define READ_BUFFER_SIZE 100
 
+//	Reads entries from a name ordered bam file
 bool LiBiCount::processNameOrderedBamData()
 {
 	BamAlignment ba[READ_BUFFER_SIZE];
@@ -979,7 +1000,7 @@ bool LiBiCount::processNameOrderedBamData()
 
 		int Nreads = 0;
 
-		//	Load up a buffer full of reads
+		//	Load up a all the reads with the same name, up to the size of the buffer
 		do {
 			used[Nreads] = false;
 			OK = reader.GetNextAlignment(ba[++Nreads], getFullBamData);
@@ -1073,7 +1094,7 @@ bool LiBiCount::processNameOrderedBamData()
 	return true;
 }
 
-
+//	Position ordered bam data, which makes it more tricky to find the mates.  Unpaired mates have to be held in memory anc cached if necessary
 bool LiBiCount::processPositionOrderedBamData()
 {
 	BamAlignment ba;

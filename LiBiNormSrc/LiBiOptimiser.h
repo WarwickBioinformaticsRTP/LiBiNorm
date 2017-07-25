@@ -13,6 +13,7 @@
 #include "ModelData.h"
 #include "mcmc.h"
 
+//	The LiBiOptimiser class 
 class LiBiOptimiser : public nelderMeadOptimiser
 {
 public:
@@ -30,13 +31,15 @@ public:
 	virtual void SaveResults(bool toFile) {};
 
 	int iterations;
+
+	//	
 	optionsType * opts;
 	const mcmcGeneData & geneData;
 	const modelType currentModel;
 
 private:
 	optiDataType allOptiData;
-	paramSet params;
+	paramDescriptionSet params;
 
 };
 

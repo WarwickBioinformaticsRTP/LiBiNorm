@@ -11,7 +11,7 @@
 #define OPTIONS_H
 
 
-#define LIBINORM_VERSION "1.10.0"
+#define LIBINORM_VERSION "1.10.1"
 //	Bam/gff file reading
 #define DEFAULT_FEATURE_TYPE_EXON "exon" 
 #define DEFAULT_GTF_ID_ATTRIBUTE "gene_id"
@@ -83,7 +83,7 @@
 // #define MAKE_FASTQ_MODE
 
 //	Use this to enable various addditional tools for exploring LiBiNorm data.  This currently
-//	provides the land, land2 and gene additional run modes
+//	provides the additional land, land2 and gene run modes
 #define LIBITOOLS
 
 //	Use this to add the mode where duplicates in bam files can be removed
@@ -125,7 +125,7 @@
 //	Output landscape files in the original format
 // #define LANDSCAPE_FORMAT_1
 
-//	Enable this to produce a file that can be used by the mathematica script
+//	Enable this to produce a heatmap data file that can be used by the mathematica script
 // #define MATHMATICA_FILE
 
 //  Print full MCMC run data
