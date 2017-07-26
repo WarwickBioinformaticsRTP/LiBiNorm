@@ -9,11 +9,11 @@
 
 #ifndef LIBIOPTIMISER_H
 #define LIBIOPTIMISER_H
+
 #include "nelderMeadOptimiser.h"
 #include "ModelData.h"
 #include "mcmc.h"
 
-//	The LiBiOptimiser class 
 class LiBiOptimiser : public nelderMeadOptimiser
 {
 public:
@@ -26,8 +26,9 @@ public:
 
 	dataVec getParams(modelType m,optionsType & options,dataVec & initialValues);
 
-
+	//	Generates the error/liklyhood/sum of squares for the current model + paraneter values
 	virtual ErrorPair ErrorFunc();
+	//	Can be used to print results to screen/file during the process.  Currently ignored
 	virtual void SaveResults(bool toFile) {};
 
 	int iterations;
