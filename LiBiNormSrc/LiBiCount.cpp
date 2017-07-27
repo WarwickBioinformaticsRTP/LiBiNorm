@@ -480,7 +480,8 @@ struct chromosomeGeneInfo: public map<string,overlapCounts>
 	chromosomeGeneInfo():noMatch(0),nSegments(0){};
 };
 
-
+//	Adds the read to the count for the associated gene or to the 'non allocated' counts.
+//	Returns a string if the read is to be added to the bam file
 string LiBiCount::addRead(const regionLists & segments,const featureFileEx & gtfData)
 {
 	if (segments.NH > 1)
