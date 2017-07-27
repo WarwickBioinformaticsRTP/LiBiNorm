@@ -25,6 +25,7 @@
 //	These are included in htseq_compatible mode
 #define IGNORED_GTF_TRANSCRIPT_TYPES  "retained_intron" 
 
+
 //	Read selection for paremeter estimation
 #define DEF_MAX_READS_FOR_PARAM_ESTIMATION 100000000  // -d
 #define MAX_READS_GENE 100
@@ -84,10 +85,15 @@
 
 //	Use this to enable various addditional tools for exploring LiBiNorm data.  This currently
 //	provides the additional land, land2 and gene run modes
-#define LIBITOOLS
+// #define LIBITOOLS
 
 //	Use this to add the mode where duplicates in bam files can be removed
 // #define DEDUP_MODE
+
+//	When matching forward and reverse reads the position information can also used to pair the reads
+//	disabling this causes no problems for many datasets, but in the DRR078784 dataset it caused a 170
+//	shortfall in the alignment not unique count for position ordered data
+// #define MATCH_USING_POSITION
 
 //  Output detailed results of interpreting the Feature file
 // #define OUTPUT_FEATURE_DATA
@@ -130,9 +136,6 @@
 
 //  Print full MCMC run data
 // #define PRINT_MCMC_RUN_DATA
-
-//	When matching forward and reverse reads the position information is also used to pair the reads
-// #define MATCH_USING_POSITION
 
 //	Causes the code to halt waiting for user input before exiting after a failure
 #ifdef _DEBUG

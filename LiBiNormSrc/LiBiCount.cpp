@@ -34,13 +34,14 @@
 #define READ_CACHE_SIZE 50000
 //	Report progress every REP_LEN entries
 #define REP_LEN 100000
-#define BAMNAME "SRR557798.3975438"
+#define BAMNAME "DRR078784.4"
 bool dbgFound = false;
 #else
 #define READ_CACHE_SIZE 2000000
 #define REP_LEN 100000
 #endif
 
+#define MAX_MISMATCH_REPORT_COUNT 30
 
 #ifndef _DEBUG
 
@@ -380,6 +381,7 @@ int LiBiCount::main(int argc, char **argv)
 
 	if (bamOutFileName)
 	{
+		writer.Close();
 		progMessage("Sorting bam file");
 		sortBamFile(bamOutFileName);
 		progMessage("Bam file sorted");
@@ -902,7 +904,7 @@ string LiBiCount::addRead(const regionLists & segments,const featureFileEx & gtf
 				}
 				else
 				{
-					if (messageCount++ < 30)
+					if (messageCount++ < MAX_MISMATCH_REPORT_COUNT)
 						optMessage("Mismatched paired end: ", segments.name, " Position: ",
 							references[segments.data.begin()->first].RefName, ":", segments.data.begin()->second.data.begin()->first);
 				}
@@ -916,7 +918,7 @@ string LiBiCount::addRead(const regionLists & segments,const featureFileEx & gtf
 				}
 				else
 				{
-					if (messageCount++ < 30)
+					if (messageCount++ < MAX_MISMATCH_REPORT_COUNT)
 						optMessage("Mismatched paired end: ", segments.name, " Position: ",
 							references[segments.data.begin()->first].RefName, ":", segments.data.begin()->second.data.begin()->first);
 				}
@@ -961,12 +963,10 @@ bool LiBiCount::AReadIsMapped(const BamAlignment & ba)
 			{
 				if (ba.IsFirstMate())
 					geneCounts.count(notAlignedString)++;
-
-				//	*****************************************
-				//	This may be in the wrong position.  As it stands we may be incorrectly indicating that the
-				//	entry is mapped in some circumstances
 				return false;
 			}
+			//	At this point although the read is not mapped the mate is, 
+			//	so return true
 		}
 		else
 		{
@@ -1235,7 +1235,7 @@ void LiBiCount::processCachedReads(size_t cacheFileCount)
 
 	vector<cacheEntry> cacheReads(cacheFileCount);
 
-	//	readIndex has a lits of the current reads, ordered by name.
+	//	readIndex has a list of the current reads, ordered by name.
 	class readCache : public map<string,map<int,vector<readData> > > 
 	{
 	public:
@@ -1260,10 +1260,13 @@ void LiBiCount::processCachedReads(size_t cacheFileCount)
 		}
 	} reads;
 
+	//	Open all of the cache read files in parallel
 	for (size_t i = 0;i < cacheFileCount;i++)
 	{
 		cacheReads[i].open(stringEx(tempDirectory,"file",i));
 		reads[cacheReads[i].name][i].emplace_back(cacheReads[i].currentRead);
+
+		//	and read the first 10 reads into memory 
 		for (int j = 0;(j < 10) && (cacheReads[i].readNext());j++)
 		{
 			reads[cacheReads[i].name][i].emplace_back(cacheReads[i].currentRead);

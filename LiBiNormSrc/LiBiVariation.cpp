@@ -12,6 +12,8 @@
 
 using namespace std;
 
+//
+//	This function is only available if LIBITOOLS is defined in Options.h
 int LiBiVariation::main(int argc, char **argv)
 {
 	stringEx landscapeFilename;
