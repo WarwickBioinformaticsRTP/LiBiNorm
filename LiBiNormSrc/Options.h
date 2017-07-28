@@ -2,7 +2,7 @@
 // Options.h (c) 2017 Nigel Dyer
 // School of Life Sciences, University of Warwick
 // ---------------------------------------------------------------------------
-// Last modified: 24 July 2017
+// Last modified: 28 July 2017
 // ---------------------------------------------------------------------------
 // Top level code options
 // ***************************************************************************
@@ -11,7 +11,7 @@
 #define OPTIONS_H
 
 
-#define LIBINORM_VERSION "1.10.1"
+#define LIBINORM_VERSION "1.11.0"
 //	Bam/gff file reading
 #define DEFAULT_FEATURE_TYPE_EXON "exon" 
 #define DEFAULT_GTF_ID_ATTRIBUTE "gene_id"
@@ -30,8 +30,7 @@
 #define READ_CACHE_SIZE 50000
 #else
 //	Put reads into cache file when number of reads exceed READ_CACHE_SIZE
-//#define READ_CACHE_SIZE 2000000
-#define READ_CACHE_SIZE 50000
+#define READ_CACHE_SIZE 2000000
 #endif
 
 //	Report progress every REP_LEN entries

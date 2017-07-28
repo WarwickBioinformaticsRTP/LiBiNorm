@@ -2,7 +2,7 @@
 // LiBiCount.cpp (c) 2017 Nigel Dyer
 // School of Life Sciences, University of Warwick
 // ---------------------------------------------------------------------------
-// Last modified: 24 July 2017
+// Last modified: 28 July 2017
 // ---------------------------------------------------------------------------
 // The top level code associated with "LiBiNorm count" modes
 // ***************************************************************************
@@ -1114,29 +1114,34 @@ bool LiBiCount::processNameOrderedBamData()
 	return true;
 }
 
+//	A class for caching the reads for which we have not yet found a pair.  When it exceeds a certain size
+//	it gets saved to disk
+class readCacheClass : public map<string, vector<readData> >
+{
+public:
+	void save(const stringEx & filename)
+	{
+		TsvFile outFile;
+		outFile.open(filename);
+		for (auto & i : This)
+			for (auto & j : i.second)
+				outFile.print(i.first, j);
+		clear();
+	}
+} readCache;
+
+
 //	Position ordered bam data, which makes it more tricky to find the mates.  Unpaired mates have to be held in memory anc cached if necessary
 bool LiBiCount::processPositionOrderedBamData()
 {
+
+	readCacheClass readCache;
+
 	BamAlignment ba;
 
 	bamCounter = 0;
 	int cacheCounter = 0;
 
-	//	A class for caching the reads for which we have not yet found a pair.  When it exceeds a certain size
-	//	it gets saved to disk
-	class readCacheClass : public map<string,vector<readData> >
-	{
-	public:
-		void save(const stringEx & filename)
-		{
-			TsvFile outFile;
-			outFile.open(filename);
-			for (auto & i : This)
-				for (auto & j : i.second)
-					outFile.print(i.first,j);
-			clear();
-		}
-	} readCache;
 
 	bool OK = reader.GetNextAlignment(ba,false);
 
@@ -1254,9 +1259,61 @@ bool LiBiCount::processPositionOrderedBamData()
 //	as a pair
 void LiBiCount::processCachedReads(size_t cacheFileCount)
 {
+	
+	struct returnedCacheData
+	{
+		returnedCacheData(const readData & data, int file) :data(data), file(file) {};
+		readData data;
+		int file;
+	};
 
-	vector<cacheEntry> cacheReads(cacheFileCount);
+	typedef multimap<string, returnedCacheData> readCacheClass;
+	readCacheClass readCache;
 
+	vector<cacheFile> cacheFiles(cacheFileCount);
+
+
+	//	Open all of the cache read files in parallel
+	for (size_t i = 0; i < cacheFileCount; i++)
+	{
+		cacheFiles[i].open(stringEx(tempDirectory, "file", i));
+
+		readCache.emplace(cacheFiles[i].name, returnedCacheData(cacheFiles[i].currentRead,i));
+	}
+
+	while (readCache.size())
+	{
+		readCacheClass::iterator i = readCache.begin();
+		vector<string> nameParts;
+		parser(i->first, "_", nameParts);
+
+		stringEx searchName(nameParts[0], "_", nameParts[1], "_", (nameParts[2] == "F") ? "S" : "F");
+		readCacheClass::iterator j = next(i);
+
+		while (i->first == j->first)
+			j++;
+
+		regionLists rl(i->second.data, nameParts[0]);
+		if (j->first == searchName)
+		{
+			rl.combine(j->second.data);
+			addRead(rl, genomeDef);
+			int fileId = j->second.file;
+			readCache.erase(j);
+			if (cacheFiles[fileId].readNext() && cacheFiles[fileId].name)
+				readCache.emplace(cacheFiles[fileId].name, returnedCacheData(cacheFiles[fileId].currentRead, fileId));
+		}
+		else
+		{
+			addRead(rl, genomeDef);
+		}
+		int fileId = i->second.file;
+		readCache.erase(i);
+		if (cacheFiles[fileId].readNext() && cacheFiles[fileId].name)
+			readCache.emplace(cacheFiles[fileId].name, returnedCacheData(cacheFiles[fileId].currentRead, fileId));
+	}
+
+/*
 	//	readIndex has a list of the current reads, ordered by name.
 	class readCache : public map<string,map<int,vector<readData> > > 
 	{
@@ -1298,7 +1355,6 @@ void LiBiCount::processCachedReads(size_t cacheFileCount)
 	int cacheReadCounter = 0;
 	while (reads.size())
 	{
-		_DBG( dbgFound = (reads.begin()->first == BAMNAME);)
 
 		readCache::iterator i1 = reads.begin();
 
@@ -1313,6 +1369,8 @@ void LiBiCount::processCachedReads(size_t cacheFileCount)
 			vector<string> nameParts;
 
 			parser(name,"_",nameParts);
+
+			_DBG(dbgFound = (nameParts[0] == BAMNAME);)
 
 			name = stringEx(nameParts[0],
 #ifdef MATCH_USING_POSITION
@@ -1339,7 +1397,8 @@ void LiBiCount::processCachedReads(size_t cacheFileCount)
 	}
 	
 	//	Closes all of the files and then deletes them
-	cacheReads.clear();
+	*/
+	cacheFiles.clear();
 }
 
 
@@ -1455,13 +1514,13 @@ void LiBiCount::fileCompare(int argc, char **argv)
 	to disk
 */
 
-LiBiCount::cacheEntry::~cacheEntry()
+LiBiCount::cacheFile::~cacheFile()
 {
 	close();
 };
 
 
-bool LiBiCount::cacheEntry::open(const std::string filename)
+bool LiBiCount::cacheFile::open(const std::string filename)
 {
 	file = new std::ifstream();
 	file ->open(filename);
@@ -1470,7 +1529,7 @@ bool LiBiCount::cacheEntry::open(const std::string filename)
 	readNext();
 	return true;
 }
-bool LiBiCount::cacheEntry::readNext()
+bool LiBiCount::cacheFile::readNext()
 {
 	if (file->eof())
 		return false;
@@ -1481,7 +1540,7 @@ bool LiBiCount::cacheEntry::readNext()
 		currentRead.cigar, currentRead.NH, currentRead.qual);
 	return true;
 }
-void LiBiCount::cacheEntry::close()
+void LiBiCount::cacheFile::close()
 {
 	if (file)
 	{

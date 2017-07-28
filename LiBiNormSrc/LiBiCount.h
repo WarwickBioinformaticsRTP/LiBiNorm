@@ -2,7 +2,7 @@
 // LiBiCount.h (c) 2017 Nigel Dyer
 // School of Life Sciences, University of Warwick
 // ---------------------------------------------------------------------------
-// Last modified: 24 July 2017
+// Last modified: 28 July 2017
 // ---------------------------------------------------------------------------
 // The top level code associated with "LiBiNorm count" modes
 // ***************************************************************************
@@ -32,11 +32,11 @@ enum mode {
 class LiBiCount : private LiBiNormCore
 {
 	//	Used for reading back cached read information from cache files
-	class cacheEntry
+	class cacheFile
 	{
 	public:
-		cacheEntry() : file(0) {};
-		~cacheEntry();
+		cacheFile() : file(0) {};
+		~cacheFile();
 
 		bool open(const std::string filename);
 		bool readNext();
@@ -44,7 +44,7 @@ class LiBiCount : private LiBiNormCore
 
 		//	Holds the name of the read, which is not in the readData class
 		readData currentRead;
-		std::string name;
+		stringEx name;
 	private:
 		std::string fname;
 		std::ifstream * file;
