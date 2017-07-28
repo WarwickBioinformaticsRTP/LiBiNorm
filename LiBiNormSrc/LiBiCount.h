@@ -16,6 +16,7 @@
 
 using namespace BamTools;
 
+#define DEBUG_OUT_FILE
 
 //	The htseq-count modes
 enum mode {
@@ -62,6 +63,7 @@ private:
 	bool processPositionOrderedBamData();
 	void processCachedReads(size_t cacheFileCount);
 
+
 	//Support functions for reading bam data
 	bool AReadIsMapped(const BamAlignment & ba);
 	std::string addRead(const regionLists & segments, const featureFileEx & gtfData);
@@ -82,11 +84,16 @@ private:
 	} bamOutMode;
 	RefVector references;
 
+#ifdef DEBUG_OUT_FILE
+	TsvFile debugOut;
+#endif
 	//	Config data for reading the bam file
-	bool useStrand, reverseStrand, nameOrder,landscapeFile;
+	bool useStrand, reverseStrand, nameOrder,landscapeFile, htSeqCompatible;
 	mode countMode;
 	int minqual;
 	size_t bamCounter, maxCacheSize;
+
+	setEx<std::string> nonUniqueReads;
 
 	//	Directory data for outputting results
 	stringEx tempDirectory;

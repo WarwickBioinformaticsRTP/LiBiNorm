@@ -25,6 +25,17 @@
 //	These are included in htseq_compatible mode
 #define IGNORED_GTF_TRANSCRIPT_TYPES  "retained_intron" 
 
+#ifdef _DEBUG
+//	Put reads into cache file when number of reads exceed READ_CACHE_SIZE
+#define READ_CACHE_SIZE 50000
+#else
+//	Put reads into cache file when number of reads exceed READ_CACHE_SIZE
+//#define READ_CACHE_SIZE 2000000
+#define READ_CACHE_SIZE 50000
+#endif
+
+//	Report progress every REP_LEN entries
+#define REP_LEN 100000
 
 //	Read selection for paremeter estimation
 #define DEF_MAX_READS_FOR_PARAM_ESTIMATION 100000000  // -d

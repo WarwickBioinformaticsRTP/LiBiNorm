@@ -30,15 +30,8 @@
 
 
 #ifdef _DEBUG
-//	Put reads into cache file when number of reads exceed READ_CACHE_SIZE
-#define READ_CACHE_SIZE 50000
-//	Report progress every REP_LEN entries
-#define REP_LEN 100000
-#define BAMNAME "DRR078784.4"
+#define BAMNAME "DRR078784.108"
 bool dbgFound = false;
-#else
-#define READ_CACHE_SIZE 2000000
-#define REP_LEN 100000
 #endif
 
 #define MAX_MISMATCH_REPORT_COUNT 30
@@ -50,9 +43,6 @@ bool dbgFound = false;
 #endif
 
 using namespace std;
-
-bool htSeqCompatible = false;
-
 
 int LiBiCount::main(int argc, char **argv)
 {
@@ -66,6 +56,7 @@ int LiBiCount::main(int argc, char **argv)
 	verbose = true;
 	minqual = 10;
 	nameOrder = true;
+	htSeqCompatible = false;
 	maxCacheSize = READ_CACHE_SIZE;
 
 	if (argc < 1)
@@ -243,8 +234,8 @@ int LiBiCount::main(int argc, char **argv)
 
 	if (htSeqCompatible)
 	{
-		if (theModel != noModel)
-			progMessage("-n option has no function in htseq-compatible mode");
+		if ((theModel != noModelSpecified) && (theModel != none))
+			progMessage("In htseq-compatible mode -n option must either be absent or 'none'");
 		if (maxReads != DEF_MAX_READS_FOR_PARAM_ESTIMATION)
 			progMessage("-d option has no function in htseq-compatible mode");
 		if (parameterFilename)
@@ -258,9 +249,13 @@ int LiBiCount::main(int argc, char **argv)
 	{
 		NrunsOtherModels = Nruns;
 	}
-	else if (theModel == noModel)
+	else if (theModel == noModelSpecified)
 	{
 		theModel = DEFAULT_MODEL;
+	}
+	else if (theModel == none)
+	{
+		normalise = false;
 	}
 
 	if (countsFilename)
@@ -299,6 +294,9 @@ int LiBiCount::main(int argc, char **argv)
 	// retrieve 'metadata' from BAM files.
 	references = reader.GetReferenceData();
 
+#ifdef DEBUG_OUT_FILE
+	debugOut.open(bamFileName.replaceSuffix(".debug.txt"));
+#endif
 	if (bamOutFileName)
 	{
 		if (!writer.Open(bamOutFileName, reader.GetHeader(), reader.GetReferenceData()))
@@ -411,7 +409,7 @@ int LiBiCount::main(int argc, char **argv)
 
 		if (outputFileroot)
 		{
-			if ((theModel == noModel) || (theModel == findBestModel))
+			if ((theModel == noModelSpecified) || (theModel == findBestModel))
 			{
 				bestModel = getBestModel();
 				progMessage("Best model is ", bestModel);
@@ -484,8 +482,29 @@ struct chromosomeGeneInfo: public map<string,overlapCounts>
 //	Returns a string if the read is to be added to the bam file
 string LiBiCount::addRead(const regionLists & segments,const featureFileEx & gtfData)
 {
+
+	if (!htSeqCompatible)
+	{
+		if (nonUniqueReads.contains(segments.name))
+		{
+#ifdef DEBUG_OUT_FILE
+			debugOut.printEnd(segments.name,":", duplicateNonUnique);
+#endif
+			if ((bamOutMode == outputAll) || (bamOutMode == outputUnmatched))
+				return duplicateNonUnique;
+			else
+				return "";
+		}
+	}
+
 	if (segments.NH > 1)
 	{
+		if (!htSeqCompatible)
+			nonUniqueReads.add(segments.name);
+
+#ifdef DEBUG_OUT_FILE
+		debugOut.printEnd(segments.name);
+#endif
 		geneCounts.count(notUnique)++;
 		if ((bamOutMode == outputAll) || (bamOutMode == outputUnmatched))
 			return notUnique;
@@ -1154,8 +1173,8 @@ bool LiBiCount::processPositionOrderedBamData()
 					i = readCache.find(thisIndex);
 					if (i == readCache.end())
 					{
-						auto i = readCache.emplace(thisIndex, vector<readData>());
-						i.first->second.emplace_back(move(ba));
+						auto j = readCache.emplace(thisIndex, vector<readData>());
+						j.first->second.emplace_back(move(ba));
 					}
 					else
 						i->second.emplace_back(move(ba));
@@ -1209,8 +1228,10 @@ bool LiBiCount::processPositionOrderedBamData()
 
 			for (auto & j: i.second)
 			{
+				string name;
+				parser(i.first, "_", name);
 
-				regionLists rl(j,i.first);
+				regionLists rl(j,name);
 				addRead(rl,genomeDef);
 
 				incBamCounter(0,cacheReadCounts++);
