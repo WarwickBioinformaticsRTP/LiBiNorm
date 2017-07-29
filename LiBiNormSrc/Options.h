@@ -30,7 +30,8 @@
 #define READ_CACHE_SIZE 50000
 #else
 //	Put reads into cache file when number of reads exceed READ_CACHE_SIZE
-#define READ_CACHE_SIZE 2000000
+//#define READ_CACHE_SIZE 2000000
+#define READ_CACHE_SIZE 2000
 #endif
 
 //	Report progress every REP_LEN entries
@@ -101,9 +102,10 @@
 // #define DEDUP_MODE
 
 //	When matching forward and reverse reads the position information can also used to pair the reads
-//	disabling this causes no problems for many datasets, but in the DRR078784 dataset it caused a 170
-//	shortfall in the alignment not unique count for position ordered data
-// #define MATCH_USING_POSITION
+//	anabling this tends to worsen the mismatch between htseq-count and LiBinomrm, particularly when data is
+//	cached
+#define MATCH_USING_BOTH_POSITIONS
+//#define MATCH_USING_ONE_POSITION
 
 //  Output detailed results of interpreting the Feature file
 // #define OUTPUT_FEATURE_DATA

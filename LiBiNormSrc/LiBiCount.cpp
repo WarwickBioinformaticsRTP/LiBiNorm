@@ -29,10 +29,11 @@
 #endif
 
 
-#ifdef _DEBUG
-#define BAMNAME "DRR078784.108"
+//#ifdef _DEBUG
+//#define BAMNAME "DRR078784.108"
+#define BAMNAME "DRR078784.109810"
 bool dbgFound = false;
-#endif
+//#endif
 
 #define MAX_MISMATCH_REPORT_COUNT 30
 
@@ -1016,8 +1017,9 @@ bool LiBiCount::processNameOrderedBamData()
 	while (OK)
 	{
 		string & name = ba[0].Name;
-		_DBG(dbgFound = (name == BAMNAME);)
-
+#ifdef BAMNAME
+		dbgFound = (name == BAMNAME);
+#endif
 		int Nreads = 0;
 
 		//	Load up a all the reads with the same name, up to the size of the buffer
@@ -1147,7 +1149,9 @@ bool LiBiCount::processPositionOrderedBamData()
 
 	while (OK)
 	{
-		_DBG(dbgFound = (ba.Name == BAMNAME);)
+#ifdef BAMNAME
+		dbgFound = (ba.Name == BAMNAME);
+#endif
 
 		//	The NH handling is complex is that there may be one NH (with NH = 1) at one end, and multiple NHs (with NH > 1) at the other
 		//	The NH > 1 samples have to be used to either pair with the other, or to remove the NH = 1 sample 
@@ -1158,8 +1162,10 @@ bool LiBiCount::processPositionOrderedBamData()
 			{
 				//	Store reads in a cache so they can be paired up.
 				stringEx mateIndex(ba.Name, "_",
-#ifdef MATCH_USING_POSITION
+#if defined MATCH_USING_BOTH_POSITIONS || defined MATCH_USING_ONE_POSITION
 					ba.IsMateMapped() ? stringEx(ba.MateRefID, ba.MatePosition) : "0", "_",
+#endif
+#if defined MATCH_USING_BOTH_POSITIONS
 					ba.IsMapped() ? stringEx(ba.RefID, ba.Position) : "0", "_",
 #endif
 					(ba.IsMapped() && ba.IsMateMapped()) ? insertConv(-ba.InsertSize) : 0, "_",
@@ -1168,8 +1174,10 @@ bool LiBiCount::processPositionOrderedBamData()
 				if (i == readCache.end())
 				{
 					stringEx thisIndex(ba.Name, "_",
-#ifdef MATCH_USING_POSITION
+#if defined MATCH_USING_BOTH_POSITIONS || defined MATCH_USING_ONE_POSITION
 						ba.IsMapped() ? stringEx(ba.RefID, ba.Position) : "0", "_",
+#endif
+#if defined MATCH_USING_BOTH_POSITIONS
 						ba.IsMateMapped() ? stringEx(ba.MateRefID, ba.MatePosition) : "0", "_",
 #endif
 						(ba.IsMapped() && ba.IsMateMapped()) ? insertConv(ba.InsertSize) : 0, "_",
@@ -1273,7 +1281,7 @@ void LiBiCount::processCachedReads(size_t cacheFileCount)
 	vector<cacheFile> cacheFiles(cacheFileCount);
 
 
-	//	Open all of the cache read files in parallel
+	//	Open all of the cache read files in parallel and read the first entry from each
 	for (size_t i = 0; i < cacheFileCount; i++)
 	{
 		cacheFiles[i].open(stringEx(tempDirectory, "file", i));
@@ -1283,21 +1291,39 @@ void LiBiCount::processCachedReads(size_t cacheFileCount)
 
 	while (readCache.size())
 	{
+		//	Find the 'lowest' BAM read name
 		readCacheClass::iterator i = readCache.begin();
 		vector<string> nameParts;
 		parser(i->first, "_", nameParts);
 
+#ifdef BAMNAME
+		dbgFound = (nameParts[0] == BAMNAME);
+#endif
+
+
+		// and identify what its match would be
+#if defined MATCH_USING_BOTH_POSITIONS
+		stringEx searchName(nameParts[0], "_", nameParts[2],"_", nameParts[1],"_",nameParts[3], "_", (nameParts[4] == "F") ? "S" : "F");
+#elif defined MATCH_USING_ONE_POSITION
+		stringEx searchName(nameParts[0], "_", i->second.data.mateRefId,i->second.data.matePosition,"_",nameParts[2], "_", (nameParts[3] == "F") ? "S" : "F");
+#else
 		stringEx searchName(nameParts[0], "_", nameParts[1], "_", (nameParts[2] == "F") ? "S" : "F");
+#endif
 		readCacheClass::iterator j = next(i);
 
-		while (i->first == j->first)
+		//	If we have multiple 'instances of the first read (because non-unique) scik them
+		while ((j != readCache.end()) && (i->first == j->first))
 			j++;
 
 		regionLists rl(i->second.data, nameParts[0]);
-		if (j->first == searchName)
+		
+		if ((j != readCache.end()) && (j->first == searchName))
 		{
+			//	We have a matching pair of reads, combine them
 			rl.combine(j->second.data);
+			//	store the result
 			addRead(rl, genomeDef);
+			//	And then get the next read from the file that the second read was in
 			int fileId = j->second.file;
 			readCache.erase(j);
 			if (cacheFiles[fileId].readNext() && cacheFiles[fileId].name)
@@ -1305,99 +1331,16 @@ void LiBiCount::processCachedReads(size_t cacheFileCount)
 		}
 		else
 		{
+			//	The lowest read is a singleton, so just process it.
 			addRead(rl, genomeDef);
 		}
+		//	And replace the first read from the next in the file that it came from
 		int fileId = i->second.file;
 		readCache.erase(i);
 		if (cacheFiles[fileId].readNext() && cacheFiles[fileId].name)
 			readCache.emplace(cacheFiles[fileId].name, returnedCacheData(cacheFiles[fileId].currentRead, fileId));
 	}
 
-/*
-	//	readIndex has a list of the current reads, ordered by name.
-	class readCache : public map<string,map<int,vector<readData> > > 
-	{
-	public:
-		void replace(iterator & i,vector<cacheEntry> & cacheReads)
-		{
-			int index = i->second.begin()->first;
-			vector<readData> & r = i->second.begin()->second;
-			if (r.size() > 1)
-				r.erase(r.begin());
-			else
-			{
-				map<int,vector<readData> > & s = i->second;
-				if (s.size() > 1)
-					s.erase(s.begin());
-				else
-					erase(i);
-			}
-
-			if(cacheReads[index].readNext())
-				This[cacheReads[index].name][index].emplace_back(cacheReads[index].currentRead);
-
-		}
-	} reads;
-
-	//	Open all of the cache read files in parallel
-	for (size_t i = 0;i < cacheFileCount;i++)
-	{
-		cacheReads[i].open(stringEx(tempDirectory,"file",i));
-		reads[cacheReads[i].name][i].emplace_back(cacheReads[i].currentRead);
-
-		//	and read the first 10 reads into memory 
-		for (int j = 0;(j < 10) && (cacheReads[i].readNext());j++)
-		{
-			reads[cacheReads[i].name][i].emplace_back(cacheReads[i].currentRead);
-		}
-	}
-
-	int cacheReadCounter = 0;
-	while (reads.size())
-	{
-
-		readCache::iterator i1 = reads.begin();
-
-		size_t nameLen = i1->first.length();
-		if (nameLen == 0)
-		{
-			reads.erase(i1);
-		}
-		else
-		{
-			string name = i1->first;
-			vector<string> nameParts;
-
-			parser(name,"_",nameParts);
-
-			_DBG(dbgFound = (nameParts[0] == BAMNAME);)
-
-			name = stringEx(nameParts[0],
-#ifdef MATCH_USING_POSITION
-				"_",nameParts[2],"_",nameParts[1],"_",-atoi(nameParts[3].c_str()),"_",(nameParts[4] == "F")?"S":"F");
-#else
-				"_",-atoi(nameParts[1].c_str()),"_",(nameParts[2] == "F")?"S":"F");
-#endif
-
-			regionLists rl(i1->second.begin()->second[0],nameParts[0]);
-
-			readCache::iterator i2 = reads.find(name);
-			if (i2 != reads.end())
-			{
-				//	We have the two ends of a paired end read.  Combine them and calculate counts
-				rl.combine(i2->second.begin()->second[0]);
-				reads.replace(i2,cacheReads);
-			}
-
-			addRead(rl,genomeDef);
-			reads.replace(i1,cacheReads);
-
-			incBamCounter(0,++cacheReadCounter);
-		}
-	}
-	
-	//	Closes all of the files and then deletes them
-	*/
 	cacheFiles.clear();
 }
 
@@ -1536,8 +1479,11 @@ bool LiBiCount::cacheFile::readNext()
 	currentRead.cigar.clear();
 	std::string line;
 	getline(*file,line);
-	parseTsv(line,name, currentRead.refId, currentRead.position, currentRead.strand, 
-		currentRead.cigar, currentRead.NH, currentRead.qual);
+	parseTsv(line,name, currentRead.refId, currentRead.position,
+#ifdef MATCH_USING_ONE_POSITION
+		currentRead.mateRefId, currentRead.matePosition,
+#endif
+		currentRead.strand,currentRead.cigar, currentRead.NH, currentRead.qual);
 	return true;
 }
 void LiBiCount::cacheFile::close()
