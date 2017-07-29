@@ -28,16 +28,17 @@ enum mode {
 };
 
 
-
 class LiBiCount : private LiBiNormCore
 {
 	//	Used for reading back cached read information from cache files
-	class cacheFile
+	class cacheData : public std::multimap<std::string, readData>
 	{
 	public:
-		cacheFile() : file(0) {};
-		~cacheFile();
+		cacheData() : file(0) {};
+		~cacheData();
 
+		void save(const stringEx & filename);
+			
 		bool open(const std::string filename);
 		bool readNext();
 		void close();

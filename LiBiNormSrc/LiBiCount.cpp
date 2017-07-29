@@ -1118,25 +1118,13 @@ bool LiBiCount::processNameOrderedBamData()
 
 //	A class for caching the reads for which we have not yet found a pair.  When it exceeds a certain size
 //	it gets saved to disk
-class readCacheClass : public multimap<string, readData>
-{
-public:
-	void save(const stringEx & filename)
-	{
-		TsvFile outFile;
-		outFile.open(filename);
-		for (auto & i : This)
-				outFile.print(i.first, i.second);
-		clear();
-	}
-} readCache;
 
 
 //	Position ordered bam data, which makes it more tricky to find the mates.  Unpaired mates have to be held in memory anc cached if necessary
 bool LiBiCount::processPositionOrderedBamData()
 {
 
-	readCacheClass readCache;
+	cacheData readCache;
 
 	BamAlignment ba;
 
@@ -1169,7 +1157,7 @@ bool LiBiCount::processPositionOrderedBamData()
 #endif
 					(ba.IsMapped() && ba.IsMateMapped()) ? insertConv(-ba.InsertSize) : 0, "_",
 					ba.IsFirstMate() ? "S" : "F");
-				readCacheClass::iterator i = readCache.find(mateIndex);
+				cacheData::iterator i = readCache.find(mateIndex);
 				if (i == readCache.end())
 				{
 					stringEx thisIndex(ba.Name, "_",
@@ -1264,7 +1252,7 @@ void LiBiCount::processCachedReads(size_t cacheFileCount)
 	typedef multimap<string, returnedCacheData> readCacheClass;
 	readCacheClass readCache;
 
-	vector<cacheFile> cacheFiles(cacheFileCount);
+	vector<cacheData> cacheFiles(cacheFileCount);
 
 
 	//	Open all of the cache read files in parallel and read the first entry from each
@@ -1443,13 +1431,23 @@ void LiBiCount::fileCompare(int argc, char **argv)
 	to disk
 */
 
-LiBiCount::cacheFile::~cacheFile()
+
+
+LiBiCount::cacheData::~cacheData()
 {
 	close();
 };
 
+void LiBiCount::cacheData::save(const stringEx & filename)
+{
+	TsvFile outFile;
+	outFile.open(filename);
+	for (auto & i : This)
+		outFile.print(i.first, i.second);
+	clear();
+};
 
-bool LiBiCount::cacheFile::open(const std::string filename)
+bool LiBiCount::cacheData::open(const std::string filename)
 {
 	file = new std::ifstream();
 	file ->open(filename);
@@ -1458,7 +1456,7 @@ bool LiBiCount::cacheFile::open(const std::string filename)
 	readNext();
 	return true;
 }
-bool LiBiCount::cacheFile::readNext()
+bool LiBiCount::cacheData::readNext()
 {
 	if (file->eof())
 		return false;
@@ -1472,7 +1470,7 @@ bool LiBiCount::cacheFile::readNext()
 		currentRead.strand,currentRead.cigar, currentRead.NH, currentRead.qual);
 	return true;
 }
-void LiBiCount::cacheFile::close()
+void LiBiCount::cacheData::close()
 {
 	if (file)
 	{
