@@ -1241,26 +1241,15 @@ bool LiBiCount::processPositionOrderedBamData()
 //	as a pair
 void LiBiCount::processCachedReads(size_t cacheFileCount)
 {
-	
-	struct returnedCacheData
-	{
-		returnedCacheData(const readData & data, int file) :data(data), file(file) {};
-		readData data;
-		int file;
-	};
-
-	typedef multimap<string, returnedCacheData> readCacheClass;
 	readCacheClass readCache;
 
 	vector<cacheData> cacheFiles(cacheFileCount);
 
-
 	//	Open all of the cache read files in parallel and read the first entry from each
 	for (size_t i = 0; i < cacheFileCount; i++)
 	{
-		cacheFiles[i].open(stringEx(tempDirectory, "file", i));
-
-		readCache.emplace(cacheFiles[i].name, returnedCacheData(cacheFiles[i].currentRead,i));
+		cacheFiles[i].open(stringEx(tempDirectory, "file", i),i);
+		cacheFiles[i].readNext(readCache);
 	}
 
 	while (readCache.size())
@@ -1300,8 +1289,7 @@ void LiBiCount::processCachedReads(size_t cacheFileCount)
 			//	And then get the next read from the file that the second read was in
 			int fileId = j->second.file;
 			readCache.erase(j);
-			if (cacheFiles[fileId].readNext() && cacheFiles[fileId].name)
-				readCache.emplace(cacheFiles[fileId].name, returnedCacheData(cacheFiles[fileId].currentRead, fileId));
+			cacheFiles[fileId].readNext(readCache);
 		}
 		else
 		{
@@ -1311,8 +1299,7 @@ void LiBiCount::processCachedReads(size_t cacheFileCount)
 		//	And replace the first read from the next in the file that it came from
 		int fileId = i->second.file;
 		readCache.erase(i);
-		if (cacheFiles[fileId].readNext() && cacheFiles[fileId].name)
-			readCache.emplace(cacheFiles[fileId].name, returnedCacheData(cacheFiles[fileId].currentRead, fileId));
+		cacheFiles[fileId].readNext(readCache);
 	}
 
 	cacheFiles.clear();
@@ -1447,16 +1434,16 @@ void LiBiCount::cacheData::save(const stringEx & filename)
 	clear();
 };
 
-bool LiBiCount::cacheData::open(const std::string filename)
+bool LiBiCount::cacheData::open(const std::string filename, int fId)
 {
 	file = new std::ifstream();
 	file ->open(filename);
 	if (!file ->is_open()) return false;
 	fname = filename;
-	readNext();
+	fileId = fId;
 	return true;
 }
-bool LiBiCount::cacheData::readNext()
+bool LiBiCount::cacheData::readNext(readCacheClass & dataCache)
 {
 	if (file->eof())
 		return false;
@@ -1468,6 +1455,9 @@ bool LiBiCount::cacheData::readNext()
 		currentRead.mateRefId, currentRead.matePosition,
 #endif
 		currentRead.strand,currentRead.cigar, currentRead.NH, currentRead.qual);
+
+	if (name)
+		dataCache.emplace(name, returnedCacheData(currentRead, fileId, true));
 	return true;
 }
 void LiBiCount::cacheData::close()

@@ -31,8 +31,8 @@
 #else
 //	Put reads into cache file when number of reads exceed READ_CACHE_SIZE
 //#define READ_CACHE_SIZE 2000000
-#define READ_CACHE_SIZE 20000
-//#define READ_CACHE_SIZE 2000
+//#define READ_CACHE_SIZE 20000
+#define READ_CACHE_SIZE 2000
 #endif
 
 //	Report progress every REP_LEN entries

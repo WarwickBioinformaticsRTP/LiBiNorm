@@ -30,6 +30,18 @@ enum mode {
 
 class LiBiCount : private LiBiNormCore
 {
+
+
+	struct returnedCacheData
+	{
+		returnedCacheData(const readData & data, int file,bool replace) :data(data), file(file),replace(replace) {};
+		readData data;
+		int file;
+		bool replace;
+	};
+
+	typedef std::multimap<std::string, returnedCacheData> readCacheClass;
+
 	//	Used for reading back cached read information from cache files
 	class cacheData : public std::multimap<std::string, readData>
 	{
@@ -39,8 +51,8 @@ class LiBiCount : private LiBiNormCore
 
 		void save(const stringEx & filename);
 			
-		bool open(const std::string filename);
-		bool readNext();
+		bool open(const std::string filename,int filedId);
+		bool readNext(readCacheClass & dataCache);
 		void close();
 
 		//	Holds the name of the read, which is not in the readData class
@@ -49,6 +61,7 @@ class LiBiCount : private LiBiNormCore
 	private:
 		std::string fname;
 		std::ifstream * file;
+		int fileId;
 	};
 
 
