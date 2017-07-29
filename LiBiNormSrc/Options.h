@@ -2,7 +2,7 @@
 // Options.h (c) 2017 Nigel Dyer
 // School of Life Sciences, University of Warwick
 // ---------------------------------------------------------------------------
-// Last modified: 28 July 2017
+// Last modified: 29 July 2017
 // ---------------------------------------------------------------------------
 // Top level code options
 // ***************************************************************************
@@ -30,9 +30,9 @@
 #define READ_CACHE_SIZE 50000
 #else
 //	Put reads into cache file when number of reads exceed READ_CACHE_SIZE
-//#define READ_CACHE_SIZE 2000000
+#define READ_CACHE_SIZE 2000000
 //#define READ_CACHE_SIZE 20000
-#define READ_CACHE_SIZE 2000
+//#define READ_CACHE_SIZE 2000
 #endif
 
 //	Report progress every REP_LEN entries

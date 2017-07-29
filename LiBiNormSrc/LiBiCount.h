@@ -2,7 +2,7 @@
 // LiBiCount.h (c) 2017 Nigel Dyer
 // School of Life Sciences, University of Warwick
 // ---------------------------------------------------------------------------
-// Last modified: 28 July 2017
+// Last modified: 29 July 2017
 // ---------------------------------------------------------------------------
 // The top level code associated with "LiBiNorm count" modes
 // ***************************************************************************
@@ -16,7 +16,8 @@
 
 using namespace BamTools;
 
-#define DEBUG_OUT_FILE
+//	
+// #define DEBUG_OUT_FILE
 
 //	The htseq-count modes
 enum mode {
@@ -52,13 +53,14 @@ class LiBiCount : private LiBiNormCore
 		void save(const stringEx & filename);
 			
 		bool open(const std::string filename,int filedId);
-		bool readNext(readCacheClass & dataCache);
+		void readNext(readCacheClass & dataCache);
 		void close();
 
 		//	Holds the name of the read, which is not in the readData class
 		readData currentRead;
 		stringEx name;
 	private:
+		bool readNext();
 		std::string fname;
 		std::ifstream * file;
 		int fileId;

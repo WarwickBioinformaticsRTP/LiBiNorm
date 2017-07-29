@@ -29,11 +29,11 @@
 #endif
 
 
-//#ifdef _DEBUG
+#ifdef _DEBUG
 //#define BAMNAME "DRR078784.108"
 #define BAMNAME "DRR078784.109810"
 bool dbgFound = false;
-//#endif
+#endif
 
 #define MAX_MISMATCH_REPORT_COUNT 30
 
@@ -1263,6 +1263,7 @@ void LiBiCount::processCachedReads(size_t cacheFileCount)
 		dbgFound = (nameParts[0] == BAMNAME);
 #endif
 
+		regionLists rl(i->second.data, nameParts[0]);
 
 		// and identify what its match would be
 #if defined MATCH_USING_BOTH_POSITIONS
@@ -1272,15 +1273,9 @@ void LiBiCount::processCachedReads(size_t cacheFileCount)
 #else
 		stringEx searchName(nameParts[0], "_", nameParts[1], "_", (nameParts[2] == "F") ? "S" : "F");
 #endif
-		readCacheClass::iterator j = next(i);
-
-		//	If we have multiple 'instances of the first read (because non-unique) scik them
-		while ((j != readCache.end()) && (i->first == j->first))
-			j++;
-
-		regionLists rl(i->second.data, nameParts[0]);
+		readCacheClass::iterator j = readCache.find(searchName);
 		
-		if ((j != readCache.end()) && (j->first == searchName))
+		if (j != readCache.end())
 		{
 			//	We have a matching pair of reads, combine them
 			rl.combine(j->second.data);
@@ -1288,8 +1283,10 @@ void LiBiCount::processCachedReads(size_t cacheFileCount)
 			addRead(rl, genomeDef);
 			//	And then get the next read from the file that the second read was in
 			int fileId = j->second.file;
+			bool getNew = j->second.replace;
 			readCache.erase(j);
-			cacheFiles[fileId].readNext(readCache);
+			if (getNew)
+				cacheFiles[fileId].readNext(readCache);
 		}
 		else
 		{
@@ -1298,8 +1295,10 @@ void LiBiCount::processCachedReads(size_t cacheFileCount)
 		}
 		//	And replace the first read from the next in the file that it came from
 		int fileId = i->second.file;
+		bool getNew = i->second.replace;
 		readCache.erase(i);
-		cacheFiles[fileId].readNext(readCache);
+		if (getNew)
+			cacheFiles[fileId].readNext(readCache);
 	}
 
 	cacheFiles.clear();
@@ -1417,9 +1416,6 @@ void LiBiCount::fileCompare(int argc, char **argv)
 	from the in memory cache until it reaches a certain size, when it is then written
 	to disk
 */
-
-
-
 LiBiCount::cacheData::~cacheData()
 {
 	close();
@@ -1436,29 +1432,67 @@ void LiBiCount::cacheData::save(const stringEx & filename)
 
 bool LiBiCount::cacheData::open(const std::string filename, int fId)
 {
+	fname = filename;
+	fileId = fId;
+
 	file = new std::ifstream();
 	file ->open(filename);
 	if (!file ->is_open()) return false;
-	fname = filename;
-	fileId = fId;
+
+	//	The code assumes that the next read has already been read from the file
+	readNext();
 	return true;
 }
-bool LiBiCount::cacheData::readNext(readCacheClass & dataCache)
+
+//	Gets the next bam record and loads it into 'currentRead'
+bool LiBiCount::cacheData::readNext()
 {
 	if (file->eof())
 		return false;
-	currentRead.cigar.clear();
-	std::string line;
-	getline(*file,line);
-	parseTsv(line,name, currentRead.refId, currentRead.position,
+
+	stringEx line;
+
+	getline(*file, line);
+	parseTsv(line, name, currentRead.refId, currentRead.position,
 #ifdef MATCH_USING_ONE_POSITION
 		currentRead.mateRefId, currentRead.matePosition,
 #endif
-		currentRead.strand,currentRead.cigar, currentRead.NH, currentRead.qual);
-
-	if (name)
-		dataCache.emplace(name, returnedCacheData(currentRead, fileId, true));
+		currentRead.strand, currentRead.cigar, currentRead.NH, currentRead.qual);
 	return true;
+
+}
+
+
+void LiBiCount::cacheData::readNext(readCacheClass & dataCache)
+{
+	//	Gets all of the reads associated with the same bam record and puts them into the in-memory cache
+	//	Only one of them is marked as requiring the next read to be performed when it is deleted
+	stringEx thisId, currentId;
+
+	//	If name is empty then we have reached the end of the file
+	while (name)
+	{
+		parser(name, "_", thisId);
+		if (!currentId)
+		{
+			currentId = thisId;
+			//	This is the read that will be replaced when it is finished with
+			dataCache.emplace(name, returnedCacheData(currentRead, fileId, true));
+			if (!readNext())
+				return;
+		}
+		else if (currentId == thisId)
+		{
+			//	These reads will not be replaced.
+			dataCache.emplace(name, returnedCacheData(currentRead, fileId, false));
+			if (!readNext())
+				return;
+		}
+		else
+		{
+			break;
+		}
+	}
 }
 void LiBiCount::cacheData::close()
 {
@@ -1467,6 +1501,7 @@ void LiBiCount::cacheData::close()
 		file->close();
 		delete (file);
 		file = 0;
+		//	delete the file from disk
 		remove(fname.c_str());
 	}
 }

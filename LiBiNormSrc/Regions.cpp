@@ -2,7 +2,7 @@
 // Regions.cpp (c) 2017 Nigel Dyer
 // School of Life Sciences, University of Warwick
 // ---------------------------------------------------------------------------
-// Last modified: 24 July 2017
+// Last modified: 29 July 2017
 // ---------------------------------------------------------------------------
 // For information relating to regions
 // ***************************************************************************
@@ -183,6 +183,7 @@ void regionLists::combine(const readData & read)
 //	Parse a text string and convert it into a cigar value.  Used when retrieving entries from cache files
 void parserInternal::parseval(const char *& start,Cigar & co,size_t & len)
 {
+	co.clear();
 	size_t i = 0;
 	while (i < len)
 	{
