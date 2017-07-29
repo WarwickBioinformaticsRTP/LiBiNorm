@@ -30,8 +30,9 @@
 #define READ_CACHE_SIZE 50000
 #else
 //	Put reads into cache file when number of reads exceed READ_CACHE_SIZE
-//#define READ_CACHE_SIZE 2000000
-#define READ_CACHE_SIZE 2000
+#define READ_CACHE_SIZE 2000000
+//#define READ_CACHE_SIZE 20000
+//#define READ_CACHE_SIZE 2000
 #endif
 
 //	Report progress every REP_LEN entries
@@ -104,7 +105,7 @@
 //	When matching forward and reverse reads the position information can also used to pair the reads
 //	anabling this tends to worsen the mismatch between htseq-count and LiBinomrm, particularly when data is
 //	cached
-#define MATCH_USING_BOTH_POSITIONS
+//#define MATCH_USING_BOTH_POSITIONS
 //#define MATCH_USING_ONE_POSITION
 
 //  Output detailed results of interpreting the Feature file

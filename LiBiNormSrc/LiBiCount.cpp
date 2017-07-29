@@ -1118,7 +1118,7 @@ bool LiBiCount::processNameOrderedBamData()
 
 //	A class for caching the reads for which we have not yet found a pair.  When it exceeds a certain size
 //	it gets saved to disk
-class readCacheClass : public map<string, vector<readData> >
+class readCacheClass : public multimap<string, readData>
 {
 public:
 	void save(const stringEx & filename)
@@ -1126,8 +1126,7 @@ public:
 		TsvFile outFile;
 		outFile.open(filename);
 		for (auto & i : This)
-			for (auto & j : i.second)
-				outFile.print(i.first, j);
+				outFile.print(i.first, i.second);
 		clear();
 	}
 } readCache;
@@ -1183,27 +1182,17 @@ bool LiBiCount::processPositionOrderedBamData()
 						(ba.IsMapped() && ba.IsMateMapped()) ? insertConv(ba.InsertSize) : 0, "_",
 						ba.IsFirstMate() ? "F" : "S");
 
-					i = readCache.find(thisIndex);
-					if (i == readCache.end())
-					{
-						auto j = readCache.emplace(thisIndex, vector<readData>());
-						j.first->second.emplace_back(move(ba));
-					}
-					else
-						i->second.emplace_back(move(ba));
+					readCache.emplace(thisIndex, move(ba));
 				}
 				else
 				{
-					regionLists regions(i->second.front(), ba.Name);
+					regionLists regions(i->second, ba.Name);
 
 					regions.combine(move(ba));
 
 					addRead(regions, genomeDef);
 
-					if (i->second.size() > 1)
-						i->second.erase(i->second.begin());
-					else
-						readCache.erase(i);
+					readCache.erase(i);
 
 					incBamCounter(&ba, readCache.size());
 
@@ -1239,16 +1228,13 @@ bool LiBiCount::processPositionOrderedBamData()
 				dbgFound = (tags[0] == BAMNAME);
 				)
 
-			for (auto & j: i.second)
-			{
-				string name;
-				parser(i.first, "_", name);
+			string name;
+			parser(i.first, "_", name);
 
-				regionLists rl(j,name);
-				addRead(rl,genomeDef);
+			regionLists rl(i.second,name);
+			addRead(rl,genomeDef);
 
-				incBamCounter(0,cacheReadCounts++);
-			}
+			incBamCounter(0,cacheReadCounts++);
 		}
 	}
 	else
