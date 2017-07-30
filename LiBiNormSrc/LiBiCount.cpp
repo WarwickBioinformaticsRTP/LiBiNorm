@@ -1149,10 +1149,8 @@ bool LiBiCount::processPositionOrderedBamData()
 			{
 				//	Store reads in a cache so they can be paired up.
 				stringEx mateIndex(ba.Name, "_",
-#if defined MATCH_USING_BOTH_POSITIONS || defined MATCH_USING_ONE_POSITION
+#ifdef MATCH_USING_BOTH_POSITIONS 
 					ba.IsMateMapped() ? stringEx(ba.MateRefID, ba.MatePosition) : "0", "_",
-#endif
-#if defined MATCH_USING_BOTH_POSITIONS
 					ba.IsMapped() ? stringEx(ba.RefID, ba.Position) : "0", "_",
 #endif
 					(ba.IsMapped() && ba.IsMateMapped()) ? insertConv(-ba.InsertSize) : 0, "_",
@@ -1161,10 +1159,8 @@ bool LiBiCount::processPositionOrderedBamData()
 				if (i == readCache.end())
 				{
 					stringEx thisIndex(ba.Name, "_",
-#if defined MATCH_USING_BOTH_POSITIONS || defined MATCH_USING_ONE_POSITION
+#ifdef MATCH_USING_BOTH_POSITIONS
 						ba.IsMapped() ? stringEx(ba.RefID, ba.Position) : "0", "_",
-#endif
-#if defined MATCH_USING_BOTH_POSITIONS
 						ba.IsMateMapped() ? stringEx(ba.MateRefID, ba.MatePosition) : "0", "_",
 #endif
 						(ba.IsMapped() && ba.IsMateMapped()) ? insertConv(ba.InsertSize) : 0, "_",
@@ -1266,10 +1262,8 @@ void LiBiCount::processCachedReads(size_t cacheFileCount)
 		regionLists rl(i->second.data, nameParts[0]);
 
 		// and identify what its match would be
-#if defined MATCH_USING_BOTH_POSITIONS
+#ifdef MATCH_USING_BOTH_POSITIONS
 		stringEx searchName(nameParts[0], "_", nameParts[2],"_", nameParts[1],"_",nameParts[3], "_", (nameParts[4] == "F") ? "S" : "F");
-#elif defined MATCH_USING_ONE_POSITION
-		stringEx searchName(nameParts[0], "_", i->second.data.mateRefId,i->second.data.matePosition,"_",nameParts[2], "_", (nameParts[3] == "F") ? "S" : "F");
 #else
 		stringEx searchName(nameParts[0], "_", nameParts[1], "_", (nameParts[2] == "F") ? "S" : "F");
 #endif
@@ -1454,9 +1448,6 @@ bool LiBiCount::cacheData::readNext()
 
 	getline(*file, line);
 	parseTsv(line, name, currentRead.refId, currentRead.position,
-#ifdef MATCH_USING_ONE_POSITION
-		currentRead.mateRefId, currentRead.matePosition,
-#endif
 		currentRead.strand, currentRead.cigar, currentRead.NH, currentRead.qual);
 	return true;
 
