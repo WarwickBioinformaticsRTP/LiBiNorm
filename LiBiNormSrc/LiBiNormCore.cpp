@@ -2,7 +2,7 @@
 // LiBiNormCore.cpp (c) 2017 Nigel Dyer
 // School of Life Sciences, University of Warwick
 // ---------------------------------------------------------------------------
-// Last modified: 24 July 2017
+// Last modified: 2 August 2017
 // ---------------------------------------------------------------------------
 // Common code associated with all of the LiBiNorm modes
 // ***************************************************************************
@@ -31,15 +31,15 @@ void LiBiNormCore::helpCommon()
 	printf("  -d N, --reads=N       Maximum number of reads using for normalisation\n");
 	printf("                        parameter determination (", DEF_MAX_READS_FOR_PARAM_ESTIMATION, ")\n");
 #ifdef INITIAL_VALUES
-	printf("  -i <filename>, --initial=FILENAME\n");
+	printf("  -v <filename>, --initial=FILENAME\n");
 	printf("                        Set initial values for parameter discoverey from file\n");
 #endif
 	printf("  -q, --quiet           suppress progress report\n");
 #ifdef OUTPUT_DEBUG_MESSAGES
-	printf("  -x, --debug           output debug messages\n");
+	printf("  -w, --debug           output debug messages\n");
 #endif
 #ifdef PAUSE_AT_END_OPTION
-	printf("  -w	                pause at end rather than simply exiting\n");
+	printf("  -x	                pause at end rather than simply exiting\n");
 #endif
 	printf("  -c FILENAME, --counts=FILENAME\n");
 	printf("                        Name of output file. default: writes to stdout\n");
@@ -79,14 +79,14 @@ bool LiBiNormCore::commandParseCommon(int & ni, int argc,char **argv)
 			return true;
 		}
 #ifdef OUTPUT_DEBUG_MESSAGES
-		if ((strcmp(argv[ni], "-x") == 0) || (opt2 = (strncmp(argv[ni], "--debug", 7) == 0)))
+		if ((strcmp(argv[ni], "-w") == 0) || (opt2 = (strncmp(argv[ni], "--debug", 7) == 0)))
 		{
 			debugPrint = true;
 			return true;
 		}
 #endif
 #ifdef PAUSE_AT_END_OPTION
-		if (strcmp(argv[ni], "-w") == 0)
+		if (strcmp(argv[ni], "-x") == 0)
 		{
 			pauseAtEnd = true;
 			return true;
@@ -99,7 +99,7 @@ bool LiBiNormCore::commandParseCommon(int & ni, int argc,char **argv)
 			return true;
 		}
 #ifdef INITIAL_VALUES
-		if ((strcmp(argv[ni], "-i") == 0) || (opt2 = (strncmp(argv[ni], "--intial=", 9) == 0)))
+		if ((strcmp(argv[ni], "-v") == 0) || (opt2 = (strncmp(argv[ni], "--intial=", 9) == 0)))
 		{
 			parameterFilename = (opt2 ? argv[ni] + 8 : argv[++ni]);
 			return true;

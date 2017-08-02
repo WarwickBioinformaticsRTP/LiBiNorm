@@ -2,7 +2,7 @@
 // Options.h (c) 2017 Nigel Dyer
 // School of Life Sciences, University of Warwick
 // ---------------------------------------------------------------------------
-// Last modified: 29 July 2017
+// Last modified: 2 August 2017
 // ---------------------------------------------------------------------------
 // Top level code options
 // ***************************************************************************
@@ -11,7 +11,7 @@
 #define OPTIONS_H
 
 
-#define LIBINORM_VERSION "1.11.0"
+#define LIBINORM_VERSION "1.11.1"
 //	Bam/gff file reading
 #define DEFAULT_FEATURE_TYPE_EXON "exon" 
 #define DEFAULT_GTF_ID_ATTRIBUTE "gene_id"
