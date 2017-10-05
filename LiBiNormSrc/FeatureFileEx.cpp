@@ -114,13 +114,13 @@ void featureFileEx::index(GeneCountData & geneCounts, bool useStrand)
 						if (k.feature().finish > finish)
 						{
 							finish = k.feature().finish;
-							type.add(k.feature().type);
+							type.emplace(k.feature().type);
 							chrom.data().erase(k);
 						}
 						//	If the second region is the same length or shorter then just add the type associated with the new region
 						else if (k.feature().finish <= finish)
 						{
-							type.add(k.feature().type);
+							type.emplace(k.feature().type);
 							chrom.data().erase(k);
 						}
 					}

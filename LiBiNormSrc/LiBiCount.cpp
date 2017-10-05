@@ -501,7 +501,7 @@ string LiBiCount::addRead(const regionLists & segments,const featureFileEx & gtf
 	if (segments.NH > 1)
 	{
 		if (!htSeqCompatible)
-			nonUniqueReads.add(segments.name);
+			nonUniqueReads.emplace(segments.name);
 
 #ifdef DEBUG_OUT_FILE
 		debugOut.printEnd(segments.name);

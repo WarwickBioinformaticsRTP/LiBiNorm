@@ -571,7 +571,7 @@ void GeneCountData::transferTo(mcmcGeneData & mcmcData, size_t maxLength, int ma
 	vectorEx<int> bins{ { 0,300 } };
 	for (size_t i = 500; i <= 10000; i += 500)
 		bins.push_back(i);
-	bins.add(11000, 12000, 15000, 30000);
+	bins += {11000, 12000, 15000, 30000};
 
 	histc(bins, maxGeneLengthForParameterEstimation);
 

@@ -138,7 +138,7 @@ void LiBiNormCore::mcmcThread(optionsType options)
 
 				while ((modelsLeftToDo = (nelderMeadCounter < allModels().size())))
 				{
-					m = allModels()[nelderMeadCounter++];
+					m = allModels()[allModels().size() - nelderMeadCounter++ -1];
 					if (threadLoopCounts[m].requested > 0)
 						break;
 				}
