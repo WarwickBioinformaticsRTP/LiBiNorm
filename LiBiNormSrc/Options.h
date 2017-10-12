@@ -123,10 +123,10 @@
 //	For consistent selection of reads and reproducing the MATLAB algorithms
 // #define REPRODUCE_MATLAB	
 
-//	Adds -w option where the program will pause at the end rather than simply exiting.  Useful for debugging
+//	Adds -x option where the program will pause at the end rather than simply exiting.  Useful for debugging
 // #define PAUSE_AT_END_OPTION	
 
-// Adds -x option which results in the output of additional debug messages
+// Adds -w option which results in the output of additional debug messages
 // #define OUTPUT_DEBUG_MESSAGES
 
 //	Some of the code in ModelData.cpp has also been writtent using vectors which is slower but the code

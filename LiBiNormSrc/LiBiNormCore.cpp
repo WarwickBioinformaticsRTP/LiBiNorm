@@ -499,11 +499,16 @@ void LiBiNormCore::printResults()
 	}
 
 	//	And the initial Values
-	if ((nelderMead) && (initialValues[ModelA].size()))
+	mcmcResult.printStart("Initial");
+	if (nelderMead)
 	{
-		mcmcResult.printStart("Initial");
 		for (modelType m : allModels())
-			mcmcResult.printMiddle(initialValues[m], "");
+		{
+			if (initialValues[m].size())
+				mcmcResult.printMiddle(initialValues[m], "");
+			else
+				mcmcResult.printRepeat(headers[m].size() + 2);
+		}
 	}
 	mcmcResult.printEnd();
 
