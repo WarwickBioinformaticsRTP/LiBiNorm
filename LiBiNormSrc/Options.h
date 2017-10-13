@@ -11,7 +11,7 @@
 #define OPTIONS_H
 
 
-#define LIBINORM_VERSION "1.11.2"
+#define LIBINORM_VERSION "1.11.3"
 //	Bam/gff file reading
 #define DEFAULT_FEATURE_TYPE_EXON "exon" 
 #define DEFAULT_GTF_ID_ATTRIBUTE "gene_id"
@@ -145,6 +145,9 @@
 
 //  Print full MCMC run data
 // #define PRINT_MCMC_RUN_DATA
+
+//	Create a landscape file using the reads that were actually used for parameter discovery
+// #define MAKE_LANDSCAPE_OF_USED_READS
 
 //	Causes the code to halt waiting for user input before exiting after a failure
 #ifdef _DEBUG

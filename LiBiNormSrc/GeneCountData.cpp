@@ -568,6 +568,14 @@ string GeneCountData::loadData(const string filename, int Ngenes)
 //	into the form which can be used by the mcmc chain
 void GeneCountData::transferTo(mcmcGeneData & mcmcData, size_t maxLength, int maxTotReads, int maxGeneLengthForParameterEstimation)
 {
+
+#ifdef MAKE_LANDSCAPE_OF_USED_READS
+	string filename("reduced_landscape.txt");
+	if (!output.open(filename))
+		exitFail("Unable to open ", filename, " for landscape data");
+	output.print("Landscape file", "Format", 2);
+#endif
+
 	vectorEx<int> bins{ { 0,300 } };
 	for (size_t i = 500; i <= 10000; i += 500)
 		bins.push_back(i);
@@ -598,6 +606,13 @@ void GeneCountData::transferTo(mcmcGeneData & mcmcData, size_t maxLength, int ma
 		//	ie do not overlap other genes, and are less than the current length threshold.
 		if ((info[i].useForParameterEstimation) && (lengths[0][i] <= maxGeneLengthForParameterEstimation))
 		{
+#ifdef MAKE_LANDSCAPE_OF_USED_READS
+			long count = counts[i];
+			long len = lengths[0][i];
+			string & name = info[i].name;
+			output.print(name, len, count, info[i].useForParameterEstimation ? "Y" : "N");
+#endif
+
 			//	For the forward and the reverse counts
 			for (size_t j = 0; j < 2; j++)
 			{
@@ -607,6 +622,10 @@ void GeneCountData::transferTo(mcmcGeneData & mcmcData, size_t maxLength, int ma
 				//	fragData contains the count 
 				size_t len = min(maxLength, positions.size());
 				mcmcData.fragData.append(positions,len);
+
+#ifdef MAKE_LANDSCAPE_OF_USED_READS
+				output.print(name, (j==0)?"plus":"minus", positions);
+#endif
 
 				mcmcData.geneIndex.insert(mcmcData.geneIndex.end(),len, geneIndex);
 				Nreads += positions.size();
