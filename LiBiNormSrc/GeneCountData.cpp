@@ -2,7 +2,7 @@
 // GeneCountData.cpp (c) 2017 Nigel Dyer
 // School of Life Sciences, University of Warwick
 // ---------------------------------------------------------------------------
-// Last modified: 24 July 2017
+// Last modified: 18 October 2017
 // ---------------------------------------------------------------------------
 // For processing count information associated with genes
 // ***************************************************************************
@@ -570,6 +570,7 @@ void GeneCountData::transferTo(mcmcGeneData & mcmcData, size_t maxLength, int ma
 {
 
 #ifdef MAKE_LANDSCAPE_OF_USED_READS
+	TsvFile output;
 	string filename("reduced_landscape.txt");
 	if (!output.open(filename))
 		exitFail("Unable to open ", filename, " for landscape data");

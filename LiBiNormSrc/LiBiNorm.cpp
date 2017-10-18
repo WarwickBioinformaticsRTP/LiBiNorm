@@ -2,7 +2,7 @@
 // LiBiNorm.cpp (c) 2017 Nigel Dyer
 // School of Life Sciences, University of Warwick
 // ---------------------------------------------------------------------------
-// Last modified: 24 July 2017
+// Last modified: 18 October 2017
 // ---------------------------------------------------------------------------
 // The top level code associated with "LiBiNorm model" mode
 // ***************************************************************************
@@ -167,8 +167,10 @@ int LiBiNorm::main(int argc, char **argv)
 		else if ((strcmp(argv[ni], "-g") == 0) || (opt2 = (strncmp(argv[ni], "--genes=", 8) == 0)))
 		{
 			Ngenes = atoi(opt2 ? argv[ni] + 8 : argv[++ni]);
+#ifndef USE_GROUPS_OF_GENES_FOR_DISCOVERY
 			if (Ngenes < 10)
 				exitFail("At least 10 genes must be specified");
+#endif
 		}
 		else if ((strcmp(argv[ni], "-r") == 0) || (opt2 = (strncmp(argv[ni], "--runs=", 7) == 0)))
 		{
@@ -216,7 +218,34 @@ int LiBiNorm::main(int argc, char **argv)
 	else
 		NrunsOtherModels = (Nruns ==1)?0:1;
 
+#ifdef USE_GROUPS_OF_GENES_FOR_DISCOVERY
+	geneCounts.loadData(landscapeFilename, 1000000);
+
+	bool useGene = true;
+	int geneCount = 0;
+	if (Ngenes < 0)
+	{
+		useGene = false;
+		Ngenes = -Ngenes;
+	}
+	for (int i = 0; i < geneCounts.info.size(); i++)
+	{
+		if (!useGene)
+		{
+			geneCounts.info[i].name = "XXX";
+			geneCounts.info[i].useForParameterEstimation = false;
+		}
+		if (++geneCount == Ngenes)
+		{
+			useGene = !useGene;
+			geneCount = 0;
+		}
+	}
+#else
 	geneCounts.loadData(landscapeFilename, Ngenes);
+#endif
+
+
 
 	if (outputFileroot)
 		geneCounts.outputHeatmapData(outputFileroot.replaceSuffix("_bias.txt"));

@@ -2,7 +2,7 @@
 // Options.h (c) 2017 Nigel Dyer
 // School of Life Sciences, University of Warwick
 // ---------------------------------------------------------------------------
-// Last modified: 2 August 2017
+// Last modified: 18 October 2017
 // ---------------------------------------------------------------------------
 // Top level code options
 // ***************************************************************************
@@ -148,6 +148,11 @@
 
 //	Create a landscape file using the reads that were actually used for parameter discovery
 // #define MAKE_LANDSCAPE_OF_USED_READS
+
+//	Just use some genes for parameter discovery.  The -g paremeter in model mode is used to group the genes into blocks of N such
+//	that only alternate blocks are used for parameter discovery.  The names of genes that are not used are output as XXX in the count
+//	file.  -N also divides the genes into blocks of N but swaps which blocks are used ano not used for parameter discoverey
+// #define USE_GROUPS_OF_GENES_FOR_DISCOVERY
 
 //	Causes the code to halt waiting for user input before exiting after a failure
 #ifdef _DEBUG
