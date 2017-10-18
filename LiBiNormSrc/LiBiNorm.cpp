@@ -151,9 +151,6 @@ int LiBiNorm::main(int argc, char **argv)
 #else
 		printf("  -s N, --mcmc=N        Length of each MCMC run (", MCMC_ITERATIONS, ")\n");
 #endif
-#ifdef SELECT_READ_SEED
-		printf("  -y N, --seed=N        Set seed used for selecting subset of reads\n");
-#endif
 		printf("  -f, --full            Output complete set of MCMC run data\n");
 		return EXIT_SUCCESS;
 	}
@@ -188,13 +185,6 @@ int LiBiNorm::main(int argc, char **argv)
 		{
 			maxGeneLength = atoi(opt2 ? argv[ni] + 13 : argv[++ni]);
 		}
-#ifdef SELECT_READ_SEED
-		else if ((strcmp(argv[ni], "-y") == 0) || (opt2 = (strncmp(argv[ni], "--seed=", 7) == 0)))
-		{
-			int seed = atoi(opt2 ? argv[ni] + 7 : argv[++ni]);
-			intRandClass::instance().reseed(seed);
-		}
-#endif
 #ifdef USE_NELDER_MEAD_FOR_INITIAL_VALUES
 		else if ((strcmp(argv[ni], "-k") == 0) || (opt2 = (strncmp(argv[ni], "--skip", 6) == 0)))
 		{

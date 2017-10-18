@@ -2,7 +2,7 @@
 // LiBiNormCore.cpp (c) 2017 Nigel Dyer
 // School of Life Sciences, University of Warwick
 // ---------------------------------------------------------------------------
-// Last modified: 2 August 2017
+// Last modified: 18 October 2017
 // ---------------------------------------------------------------------------
 // Common code associated with all of the LiBiNorm modes
 // ***************************************************************************
@@ -40,6 +40,9 @@ void LiBiNormCore::helpCommon()
 #endif
 #ifdef PAUSE_AT_END_OPTION
 	printf("  -x	                pause at end rather than simply exiting\n");
+#endif
+#ifdef SELECT_READ_SEED
+	printf("  -y N, --seed=N        Set seed used for selecting subset of reads\n");
 #endif
 	printf("  -c FILENAME, --counts=FILENAME\n");
 	printf("                        Name of output file. default: writes to stdout\n");
@@ -105,6 +108,15 @@ bool LiBiNormCore::commandParseCommon(int & ni, int argc,char **argv)
 			return true;
 		}
 #endif
+#ifdef SELECT_READ_SEED
+		if ((strcmp(argv[ni], "-y") == 0) || (opt2 = (strncmp(argv[ni], "--seed=", 7) == 0)))
+		{
+			int seed = atoi(opt2 ? argv[ni] + 7 : argv[++ni]);
+			intRandClass::instance().reseed(seed);
+			return true;
+		}
+#endif
+
 		return false;
 }
 
