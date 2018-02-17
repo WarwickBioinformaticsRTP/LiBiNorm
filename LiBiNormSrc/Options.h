@@ -11,7 +11,7 @@
 #define OPTIONS_H
 
 
-#define LIBINORM_VERSION "1.11.4"
+#define LIBINORM_VERSION "1.11.5"
 //	Bam/gff file reading
 #define DEFAULT_FEATURE_TYPE_EXON "exon" 
 #define DEFAULT_GTF_ID_ATTRIBUTE "gene_id"
@@ -124,10 +124,10 @@
 // #define REPRODUCE_MATLAB	
 
 //	Adds -x option where the program will pause at the end rather than simply exiting.  Useful for debugging
-// #define PAUSE_AT_END_OPTION	
+#define PAUSE_AT_END_OPTION	
 
 // Adds -w option which results in the output of additional debug messages
-// #define OUTPUT_DEBUG_MESSAGES
+#define OUTPUT_DEBUG_MESSAGES
 
 //	Some of the code in ModelData.cpp has also been writtent using vectors which is slower but the code
 //	more closely matches the MATLAB code
@@ -153,6 +153,14 @@
 //	that only alternate blocks are used for parameter discovery.  The names of genes that are not used are output as XXX in the count
 //	file.  -N also divides the genes into blocks of N but swaps which blocks are used ano not used for parameter discoverey
 // #define USE_GROUPS_OF_GENES_FOR_DISCOVERY
+
+//	Convert the input data into flattened data with the same number of reads in each gene, but distributed evenly through the gene
+//	but with spaces at either end.  Genes with fewer than N genes are excluded
+// #define CREATE_FLAT_DATA
+
+//
+//	Use absolute rather than log h value when doing Nelder Mead and MCMC
+// #define ABS_H_PARAM
 
 //	Causes the code to halt waiting for user input before exiting after a failure
 #ifdef _DEBUG

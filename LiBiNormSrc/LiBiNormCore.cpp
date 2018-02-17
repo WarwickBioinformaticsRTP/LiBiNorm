@@ -348,10 +348,19 @@ bool LiBiNormCore::coreParameterEstimation()
 				{
 					VEC_DATA_TYPE v = orderedParams[p].median();
 					br.params[logValue][p] = v;
-					if (p < 4)
-						br.params[absValue][p] = pow(10, v);
+					if (p == 1)
+#ifdef ABS_H_PARAM
+						br.params[absValue][1] = v;
+#else
+						br.params[absValue][1] = pow(10, v);
+#endif
 					else
-						br.params[absValue][p] = v;
+					{
+						if (p < 4)
+							br.params[absValue][p] = pow(10, v);
+						else
+							br.params[absValue][p] = v;
+					}
 				}
 			}
 #endif
@@ -385,10 +394,19 @@ bool LiBiNormCore::coreParameterEstimation()
 						diffs[maxLog][p].add(br.params[logValue][p] - v);
 						diffs[logValue][p].add(br.params[logValue][p] - v);
 					}
-					if (p < 4)
-						diffs[absValue][p].add(abs(br.params[absValue][p] - pow(10, v)));
-					else
+					if (p == 1)
+#ifdef ABS_H_PARAM
 						diffs[absValue][p].add(abs(br.params[absValue][p] - v));
+#else
+						diffs[absValue][p].add(abs(br.params[absValue][p] - pow(10, v)));
+#endif
+					else
+					{
+						if (p < 4)
+							diffs[absValue][p].add(abs(br.params[absValue][p] - pow(10, v)));
+						else
+							diffs[absValue][p].add(abs(br.params[absValue][p] - v));
+					}
 				}
 			}
 			//	And then find the medians
@@ -512,16 +530,15 @@ void LiBiNormCore::printResults()
 
 	//	And the initial Values
 	mcmcResult.printStart("Initial");
-	if (nelderMead)
+	for (modelType m : allModels())
 	{
-		for (modelType m : allModels())
-		{
-			if (initialValues[m].size())
-				mcmcResult.printMiddle(initialValues[m], "");
-			else
-				mcmcResult.printRepeat(headers[m].size() + 2);
-		}
+
+		if (nelderMead && (initialValues[m].size()))
+			mcmcResult.printMiddle(initialValues[m], "");
+		else
+			mcmcResult.printRepeat(headers[m].size() + 2);
 	}
+
 	mcmcResult.printEnd();
 
 	//	A row for the deviations for each model

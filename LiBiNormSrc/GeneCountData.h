@@ -176,6 +176,8 @@ public:
 
 	void useSelectedGenes(const geneListFilenameData & filename);
 
+	void flatten();
+
 	//	Names, bias, lengths and RPM data are held in a series of vectors sharing a common gene order
 	std::vector<countInfo> info;
 	dataVec bias;

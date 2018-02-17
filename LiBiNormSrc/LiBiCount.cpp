@@ -395,6 +395,9 @@ int LiBiCount::main(int argc, char **argv)
 		genomeDef.outputChromData(outputFileroot.replaceSuffix("_genome.txt"), geneCounts);
 #endif
 
+#ifdef CREATE_FLAT_DATA
+	geneCounts.flatten();
+#endif
 	//	Need to output landscape file now because the data will be modified during the process
 	//	of selecting reads for normalisation.  Exits with error message if unable to create file
 	if ((landscapeFile) && (outputFileroot))

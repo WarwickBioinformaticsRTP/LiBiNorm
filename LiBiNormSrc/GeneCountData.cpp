@@ -39,7 +39,7 @@ rnaPosVec & rnaPosVec::removeInvalidValues(rna_pos_type maxVal)
 	iterator i = begin(), j = end();
 	while (i != j)
 	{
-		if ((*i < 0) || (*i >= maxVal))
+		if ((*i <= 0) || (*i >= maxVal))
 			std::swap(*i, *--j);
 		else
 			i++;
@@ -564,6 +564,42 @@ string GeneCountData::loadData(const string filename, int Ngenes)
 	return lastGene;
 }
 
+#define MIN_COUNT 20
+#define H_GAP 10
+void GeneCountData::flatten()
+{
+
+	for (auto & geneData : readPositionData)
+	{
+		size_t length = lengths[0][geneData.second.index];
+		static int countMess = 0;
+		if (countMess == 0)
+		{
+			cout << "flattening data\n";
+			countMess = 1;
+		}
+
+		if (counts[geneData.second.index] > MIN_COUNT)
+		{
+			size_t N = geneData.second.positions[0].size();
+			geneData.second.positions[0].clear();
+			for (size_t i = 1; i < N + 1; i++)
+				geneData.second.positions[0].push_back(H_GAP + (length- (2*H_GAP)) * i / (N + 1));
+
+			N = geneData.second.positions[1].size();
+			geneData.second.positions[1].clear();
+			for (size_t i = 1; i < (N + 1); i++)
+				geneData.second.positions[1].push_back(H_GAP + (length- (2*H_GAP)) * i / (N + 1));
+		}
+		else
+		{
+			geneData.second.positions[0].clear();
+			geneData.second.positions[1].clear();
+			counts[geneData.second.index] = 0;
+		}
+	}
+
+}
 //	Transfers information for up to maxLength reads from up to Ngenes genes or transcripts
 //	into the form which can be used by the mcmc chain
 void GeneCountData::transferTo(mcmcGeneData & mcmcData, size_t maxLength, int maxTotReads, int maxGeneLengthForParameterEstimation)

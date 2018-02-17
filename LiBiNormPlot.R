@@ -102,7 +102,7 @@ if (!file.exists(filename)) {
   
   LLParams$"Abs Opt" <- LLParams$"Abs Opt"/1000 
   LLParams$"Spread Abs" <- LLParams$"Spread Abs"/1000 
-  ymin = floor(min(LLParams$"Abs Opt"))
+  ymin = floor(min(LLParams$"Abs Opt")*10)/10
     # The wonders of R means that ggplot must be inside a print statement if it 
   # is inside an if statement.   Why???
   print(ggplot(LLParams, aes(x=Name, y=LLParams$"Abs Opt", fill=Model)) +  theme_bw() +
