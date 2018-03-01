@@ -66,6 +66,7 @@ protected:
 
 	void printResults();
 	void printBias();
+	void printDistribution();
 	void printAllMcmcRunData();
 	void printConsolidatedMcmcRunData();
 

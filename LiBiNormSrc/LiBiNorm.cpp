@@ -277,6 +277,9 @@ int LiBiNorm::main(int argc, char **argv)
 
 			printResults();
 			printBias();
+#ifdef PRINT_DISTRIBUTION
+			printDistribution();
+#endif
 		}
 
 		//	Optional print out of all of the data for the full set of mcmc runs for each model

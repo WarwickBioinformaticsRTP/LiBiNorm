@@ -785,3 +785,93 @@ void getBias(modelType m,dataVec & params,const dataVec & l, dataVec & bias)
 	bias = bias * l[0] / bias[0];
 	bias /= l;
 }
+
+dataVec getDistribution(modelType m, size_t length, size_t points, dataVec & params)
+{
+
+	double d = pow(10, params[0]);
+#ifdef ABS_H_PARAM
+	double h = params[1];
+#else
+	double h = pow(10, params[1]);
+#endif
+	double t1, t2, a;
+	switch (m)
+	{
+	case noModelSpecified:	//This should not happen
+	case ModelA:
+		break;
+	case ModelB:
+	case ModelD:
+	case ModelE:
+		t1 = pow(10, params[2]);
+		t2 = pow(10, params[3]);
+		break;
+	case ModelC:
+		t1 = 0;
+		t2 = pow(10, params[2]);
+		break;
+	case ModelBD:
+		t1 = pow(10, params[2]);
+		t2 = pow(10, params[3]);
+		a = params[4];
+		break;
+	case findBestModel:
+		break;
+	}
+
+
+	//	VEC_DATA_TYPE l = geneCountData.lengths[0][i];
+	VEC_DATA_TYPE l = length;
+	dataVec x(points + 1), dist(points), dist2(points);
+	for (size_t j = 0; j < points; j++)
+		x[j] = (l / points) * (j + 0.5);
+
+	switch (m)
+	{
+	case noModelSpecified:	//This should not happen
+	case ModelA:
+		dist = exp(-l*(t1 + t2)) * ((x > h) * (x < (l - h)) + 1 / d);
+		break;
+	case ModelB:
+	case ModelD:
+	case ModelBD:
+	{
+		if ((m == ModelB) || (m == ModelBD))
+			//				dist = 1 / (d*(t1 + t2))*(t1 * exp((-2 * l * (t1 + t2)) + (t1 + t2) * (l + x)) + t2 * exp(-l * (t1 + t2))) +
+			//					((x > h) * (x < (l - h))) * 1 / (t1 + t2) * (t1*exp(-2 / (t1 + t2) + (t1 + t2) / (l - h - x)) + t2 * exp((-1 / (t1 + t2))));
+			dist = (x > h)*(x < l - h) / (t1 + t2) * (t1*exp(-2 * l*(t1 + t2) + (t1 + t2)*(l - h + x)) + t2*exp(-l*(t1 + t2))) +
+			1 / (t1 + t2) * (t1 *exp(-2 * l*(t1 + t2) + (t1 + t2)*(l + x)) + t2*exp(-l*(t1 + t2))) / d;
+
+		if ((m == ModelD) || (m == ModelBD))
+		{
+			/*				dataVec temp1 = t1 * exp(-t1 * (l - x));
+			dataVec temp2 = t2 * exp(-t1 *l - t2 * x);
+			dataVec temp3 = 1 / (d*(t1 + t2)) * (temp1 + temp2);
+			dataVec temp4 = ((x > h) * (x < (l - h)));
+			dataVec temp5 = temp4 * 1 / (t1 + t2);
+			dataVec temp6 = t1*exp((-t1*(l - x)) - (t1*h) - (2 * t2 * h));
+			dataVec temp7 = t2*exp((-t1*l) - t2*(x + h));
+			dataVec temp8 = temp5 * (temp6 + temp7);
+			dataVec temp9 = temp3 + temp8;
+			*/
+			//				dist2 = 1 / (d*(t1 + t2))*((t1 * exp(-t1 * (l - x))) + (t2 * exp(-t1 *l - t2 * x))) +
+			//					((x > h) * (x < (l - h))) * 1 / (t1 + t2) * (t1*exp((-t1*(l - x)) - (t1*h) - (2 * t2 * h)) + t2*exp((-t1*l) - t2*(x + h)));
+			dist2 = (x > h)*(x < l - h) / (t1 + t2) * (t1*exp(-t1*(l - x) - 2 * t2*h - t1*h) + t2*exp(-t1*l - t2*(x + h))) +
+				1 / (t1 + t2) * (t1*exp(-t1*(l - x)) + t2*exp(-t1*l - t2*(x))) / d;
+		}
+		if (m)
+		if (m == ModelBD)
+			dist = a * dist + (1 - a) * dist2;
+		else if (m == ModelD)
+			swap(dist2, dist);
+	}
+	break;
+	case ModelE:
+	case ModelC:
+	case findBestModel:
+		break;
+	}
+	dist.normalise();
+	return dist;
+}

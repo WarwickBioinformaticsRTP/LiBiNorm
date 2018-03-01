@@ -69,23 +69,9 @@ MCMCLIBSRC =  $(shell find $(MCMCLIBDIR) -name *.cpp)
 
 BIOLIBSRC = $(shell find ../$(BIOINFORMATICSLIBDIR) -name *.cpp)
 
-BAMTOOLSSRC = $(addprefix ../$(BAMTOOLSDIR), \
-	api/BamAlignment.cpp api/BamReader.cpp api/BamWriter.cpp api/SamHeader.cpp api/SamProgram.cpp api/SamProgramChain.cpp \
-    api/SamReadGroup.cpp api/SamReadGroupDictionary.cpp api/SamSequence.cpp api/SamSequenceDictionary.cpp \
-    api/BamMultiReader.cpp \
-    api/internal/bam/BamHeader_p.cpp api/internal/bam/BamMultiReader_p.cpp api/internal/bam/BamRandomAccessController_p.cpp \
-    api/internal/bam/BamReader_p.cpp api/internal/bam/BamWriter_p.cpp api/internal/index/BamIndexFactory_p.cpp \
-    api/internal/index/BamStandardIndex_p.cpp api/internal/index/BamToolsIndex_p.cpp api/internal/sam/SamFormatParser_p.cpp \
-    api/internal/sam/SamFormatPrinter_p.cpp api/internal/sam/SamHeaderValidator_p.cpp \
-    api/internal/utils/BamException_p.cpp api/internal/io/BamDeviceFactory_p.cpp \
-    api/internal/io/BamFile_p.cpp api/internal/io/BamFtp_p.cpp \
-    api/internal/io/BamHttp_p.cpp api/internal/io/BamPipe_p.cpp api/internal/io/BgzfStream_p.cpp \
-    api/internal/io/ByteArray_p.cpp api/internal/io/HostAddress_p.cpp \
-    api/internal/io/HostInfo_p.cpp api/internal/io/HttpHeader_p.cpp \
-    api/internal/io/ILocalIODevice_p.cpp api/internal/io/RollingBuffer_p.cpp \
-    api/internal/io/TcpSocket_p.cpp api/internal/io/TcpSocketEngine_p.cpp \
-    api/internal/io/TcpSocketEngine_unix_p.cpp \
-    toolkit/bamtools_sort.cpp utils/bamtools_options.cpp )
+BAMTOOLSSRC = $(filter-out ../bamtools/src/api/internal/io/TcpSocketEngine_win_p.cpp, \
+	$(shell find ../$(BAMTOOLSDIR)api/ -name *.cpp) ) \
+	$(addprefix ../$(BAMTOOLSDIR), toolkit/bamtools_sort.cpp utils/bamtools_options.cpp )
        
 COREOBJS :=  $(addprefix $(BUILD)/, \
 		$(LIBINORMSRCEX:%.cpp=%.o) $(MCMCLIBSRC:%.cpp=%.o) \
@@ -93,15 +79,12 @@ COREOBJS :=  $(addprefix $(BUILD)/, \
 
 
 ################################################################################
-# For building necessary outout directories.  DIRMARKERS are a set of empty files called .z.   If they are not present then the
-# mkdir, touch code will make the directory and insert the file.
+# For building necessary outout directories.  The sort method is used to remove duplicated entries
 
+DIRS = $(sort $(dir $(COREOBJS)  ) )
 
-DIRMARKERS = $(addsuffix .z , $(dir $(COREOBJS) ) )
-
-%.z:
-	mkdir -p $(@D)
-	touch $@
+$(DIRS):
+	mkdir -p $(DIRS)
 
 
 ##################################################################
@@ -125,7 +108,7 @@ debug : all
 	
 release : all    
 
-all:   $(DIRMARKERS) $(TARGS)
+all:   $(DIRS) $(TARGS)
 	@echo "%% $(BUILD) LiBiNorm code built"
 
 #	The final make rule
@@ -160,7 +143,7 @@ $(BUILD)/LiBiNormSrc/LiBiNorm.o: ../bioinformaticsLib/stringEx.h
 $(BUILD)/LiBiNormSrc/LiBiNorm.o: ../bioinformaticsLib/inQuotes.h
 $(BUILD)/LiBiNormSrc/LiBiNorm.o: ../bioinformaticsLib/containerEx.h
 $(BUILD)/LiBiNormSrc/LiBiNorm.o: LiBiNormSrc/GeneCountData.h
-$(BUILD)/LiBiNormSrc/LiBiNorm.o: ../bioinformaticsLib/parser.h
+$(BUILD)/LiBiNormSrc/LiBiNorm.o: ../bioinformaticsLib/libParser.h
 $(BUILD)/LiBiNormSrc/LiBiNorm.o: ../bioinformaticsLib/libCommon.h
 $(BUILD)/LiBiNormSrc/LiBiNorm.o: mcmcLib/mcmc.h mcmcLib/params.h
 $(BUILD)/LiBiNormSrc/LiBiNorm.o: ../bioinformaticsLib/nelderMeadOptimiser.h
@@ -213,7 +196,7 @@ $(BUILD)/LiBiNormSrc/LiBiNormCore.o: ../bioinformaticsLib/stringEx.h
 $(BUILD)/LiBiNormSrc/LiBiNormCore.o: ../bioinformaticsLib/inQuotes.h
 $(BUILD)/LiBiNormSrc/LiBiNormCore.o: ../bioinformaticsLib/containerEx.h
 $(BUILD)/LiBiNormSrc/LiBiNormCore.o: LiBiNormSrc/GeneCountData.h
-$(BUILD)/LiBiNormSrc/LiBiNormCore.o: ../bioinformaticsLib/parser.h
+$(BUILD)/LiBiNormSrc/LiBiNormCore.o: ../bioinformaticsLib/libParser.h
 $(BUILD)/LiBiNormSrc/LiBiNormCore.o: ../bioinformaticsLib/libCommon.h
 $(BUILD)/LiBiNormSrc/LiBiNormCore.o: mcmcLib/mcmc.h mcmcLib/params.h
 $(BUILD)/LiBiNormSrc/LiBiNormCore.o: ../bioinformaticsLib/nelderMeadOptimiser.h
@@ -265,7 +248,7 @@ $(BUILD)/LiBiNormSrc/LiBiCount.o: ../bamtools/src/api/SamReadGroup.h
 $(BUILD)/LiBiNormSrc/LiBiCount.o: ../bamtools/src/api/SamSequenceDictionary.h
 $(BUILD)/LiBiNormSrc/LiBiCount.o: ../bamtools/src/api/SamSequence.h
 $(BUILD)/LiBiNormSrc/LiBiCount.o: LiBiNormSrc/Options.h
-$(BUILD)/LiBiNormSrc/LiBiCount.o: ../bioinformaticsLib/parser.h
+$(BUILD)/LiBiNormSrc/LiBiCount.o: ../bioinformaticsLib/libParser.h
 $(BUILD)/LiBiNormSrc/LiBiCount.o: LiBiNormSrc/LiBiCount.h
 $(BUILD)/LiBiNormSrc/LiBiCount.o: LiBiNormSrc/FeatureFileEx.h
 $(BUILD)/LiBiNormSrc/LiBiCount.o: ../bioinformaticsLib/featureFile.h
@@ -354,13 +337,13 @@ $(BUILD)/LiBiNormSrc/LiBiConv.o: ../bioinformaticsLib/featureFile.h
 $(BUILD)/LiBiNormSrc/LiBiConv.o: ../bioinformaticsLib/genbankFile.h
 $(BUILD)/LiBiNormSrc/LiBiConv.o: ../bioinformaticsLib/dataVec.h
 $(BUILD)/LiBiNormSrc/LiBiConv.o: LiBiNormSrc/GeneCountData.h
-$(BUILD)/LiBiNormSrc/LiBiConv.o: ../bioinformaticsLib/parser.h mcmcLib/mcmc.h
-$(BUILD)/LiBiNormSrc/LiBiConv.o: mcmcLib/params.h
+$(BUILD)/LiBiNormSrc/LiBiConv.o: ../bioinformaticsLib/libParser.h
+$(BUILD)/LiBiNormSrc/LiBiConv.o: mcmcLib/mcmc.h mcmcLib/params.h
 $(BUILD)/LiBiNormSrc/LiBiConv.o: ../bioinformaticsLib/nelderMeadOptimiser.h
 $(BUILD)/LiBiNormSrc/GeneCountData.o: LiBiNormSrc/Options.h
 $(BUILD)/LiBiNormSrc/GeneCountData.o: LiBiNormSrc/GeneCountData.h
 $(BUILD)/LiBiNormSrc/GeneCountData.o: ../bioinformaticsLib/containerEx.h
-$(BUILD)/LiBiNormSrc/GeneCountData.o: ../bioinformaticsLib/parser.h
+$(BUILD)/LiBiNormSrc/GeneCountData.o: ../bioinformaticsLib/libParser.h
 $(BUILD)/LiBiNormSrc/GeneCountData.o: ../bioinformaticsLib/libCommon.h
 $(BUILD)/LiBiNormSrc/GeneCountData.o: mcmcLib/mcmc.h mcmcLib/params.h
 $(BUILD)/LiBiNormSrc/GeneCountData.o: ../bioinformaticsLib/nelderMeadOptimiser.h
@@ -394,7 +377,7 @@ $(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bioinformaticsLib/genbankFile.h
 $(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bioinformaticsLib/stringEx.h
 $(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bioinformaticsLib/dataVec.h
 $(BUILD)/LiBiNormSrc/FeatureFileEx.o: LiBiNormSrc/GeneCountData.h
-$(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bioinformaticsLib/parser.h
+$(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bioinformaticsLib/libParser.h
 $(BUILD)/LiBiNormSrc/FeatureFileEx.o: mcmcLib/mcmc.h mcmcLib/params.h
 $(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bioinformaticsLib/nelderMeadOptimiser.h
 $(BUILD)/LiBiNormSrc/LiBiOptimiser.o: ../bioinformaticsLib/rand.h
@@ -408,7 +391,7 @@ $(BUILD)/LiBiNormSrc/LiBiOptimiser.o: ../bioinformaticsLib/nelderMeadOptimiser.h
 $(BUILD)/LiBiNormSrc/LiBiOptimiser.o: ../bioinformaticsLib/stringEx.h
 $(BUILD)/LiBiNormSrc/LiBiOptimiser.o: LiBiNormSrc/ModelData.h mcmcLib/mcmc.h
 $(BUILD)/LiBiNormSrc/LiBiOptimiser.o: mcmcLib/params.h
-$(BUILD)/LiBiNormSrc/LiBiVariation.o: ../bioinformaticsLib/parser.h
+$(BUILD)/LiBiNormSrc/LiBiVariation.o: ../bioinformaticsLib/libParser.h
 $(BUILD)/LiBiNormSrc/LiBiVariation.o: ../bioinformaticsLib/libCommon.h
 $(BUILD)/LiBiNormSrc/LiBiVariation.o: LiBiNormSrc/LiBiVariation.h
 $(BUILD)/LiBiNormSrc/LiBiVariation.o: LiBiNormSrc/LiBiNormCore.h
@@ -449,21 +432,25 @@ $(BUILD)/LiBiNormSrc/LiBiTools.o: ../bioinformaticsLib/featureFile.h
 $(BUILD)/LiBiNormSrc/LiBiTools.o: ../bioinformaticsLib/genbankFile.h
 $(BUILD)/LiBiNormSrc/LiBiTools.o: ../bioinformaticsLib/dataVec.h
 $(BUILD)/LiBiNormSrc/LiBiTools.o: LiBiNormSrc/GeneCountData.h
-$(BUILD)/LiBiNormSrc/LiBiTools.o: ../bioinformaticsLib/parser.h
+$(BUILD)/LiBiNormSrc/LiBiTools.o: ../bioinformaticsLib/libParser.h
 $(BUILD)/LiBiNormSrc/LiBiTools.o: mcmcLib/mcmc.h mcmcLib/params.h
 $(BUILD)/LiBiNormSrc/LiBiTools.o: ../bioinformaticsLib/nelderMeadOptimiser.h
 $(BUILD)/LiBiNormSrc/LiBiTools.o: LiBiNormSrc/LiBiTools.h
 
+$(BUILD)/bioinformaticsLib/codFile.o: ../bioinformaticsLib/codFile.h
+$(BUILD)/bioinformaticsLib/codFile.o: ../bioinformaticsLib/genomicPosition.h
+$(BUILD)/bioinformaticsLib/codFile.o: ../bioinformaticsLib/libParser.h
+$(BUILD)/bioinformaticsLib/codFile.o: ../bioinformaticsLib/libCommon.h
 $(BUILD)/bioinformaticsLib/dataVec.o: ../bioinformaticsLib/dataVec.h
 $(BUILD)/bioinformaticsLib/dataVec.o: ../bioinformaticsLib/libCommon.h
 $(BUILD)/bioinformaticsLib/dataVec.o: ../bioinformaticsLib/printEx.h
 $(BUILD)/bioinformaticsLib/dataVec.o: ../bioinformaticsLib/inQuotes.h
 $(BUILD)/bioinformaticsLib/dataVec.o: ../bioinformaticsLib/containerEx.h
-$(BUILD)/bioinformaticsLib/dataVec.o: ../bioinformaticsLib/parser.h
+$(BUILD)/bioinformaticsLib/dataVec.o: ../bioinformaticsLib/libParser.h
 $(BUILD)/bioinformaticsLib/dataVec.o: ../bioinformaticsLib/rand.h
 $(BUILD)/bioinformaticsLib/fastaFile.o: ../bioinformaticsLib/printEx.h
 $(BUILD)/bioinformaticsLib/fastaFile.o: ../bioinformaticsLib/inQuotes.h
-$(BUILD)/bioinformaticsLib/fastaFile.o: ../bioinformaticsLib/parser.h
+$(BUILD)/bioinformaticsLib/fastaFile.o: ../bioinformaticsLib/libParser.h
 $(BUILD)/bioinformaticsLib/fastaFile.o: ../bioinformaticsLib/libCommon.h
 $(BUILD)/bioinformaticsLib/fastaFile.o: ../bioinformaticsLib/fastaFile.h
 $(BUILD)/bioinformaticsLib/featureFile.o: ../bioinformaticsLib/stringEx.h
@@ -472,7 +459,7 @@ $(BUILD)/bioinformaticsLib/featureFile.o: ../bioinformaticsLib/featureFile.h
 $(BUILD)/bioinformaticsLib/featureFile.o: ../bioinformaticsLib/containerEx.h
 $(BUILD)/bioinformaticsLib/featureFile.o: ../bioinformaticsLib/genbankFile.h
 $(BUILD)/bioinformaticsLib/featureFile.o: ../bioinformaticsLib/printEx.h
-$(BUILD)/bioinformaticsLib/featureFile.o: ../bioinformaticsLib/parser.h
+$(BUILD)/bioinformaticsLib/featureFile.o: ../bioinformaticsLib/libParser.h
 $(BUILD)/bioinformaticsLib/featureFile.o: ../bioinformaticsLib/libCommon.h
 $(BUILD)/bioinformaticsLib/genbankFile.o: ../bioinformaticsLib/libCommon.h
 $(BUILD)/bioinformaticsLib/genbankFile.o: ../bioinformaticsLib/genbankFile.h
@@ -480,18 +467,24 @@ $(BUILD)/bioinformaticsLib/genbankFile.o: ../bioinformaticsLib/containerEx.h
 $(BUILD)/bioinformaticsLib/genbankFile.o: ../bioinformaticsLib/stringEx.h
 $(BUILD)/bioinformaticsLib/genbankFile.o: ../bioinformaticsLib/inQuotes.h
 $(BUILD)/bioinformaticsLib/genbankFile.o: ../bioinformaticsLib/printEx.h
-$(BUILD)/bioinformaticsLib/genbankFile.o: ../bioinformaticsLib/parser.h
+$(BUILD)/bioinformaticsLib/genbankFile.o: ../bioinformaticsLib/libParser.h
+$(BUILD)/bioinformaticsLib/genomicPosition.o: ../bioinformaticsLib/stringEx.h
+$(BUILD)/bioinformaticsLib/genomicPosition.o: ../bioinformaticsLib/inQuotes.h
+$(BUILD)/bioinformaticsLib/genomicPosition.o: ../bioinformaticsLib/genomicPosition.h
+$(BUILD)/bioinformaticsLib/genomicPosition.o: ../bioinformaticsLib/libParser.h
+$(BUILD)/bioinformaticsLib/genomicPosition.o: ../bioinformaticsLib/libCommon.h
+$(BUILD)/bioinformaticsLib/genomicPosition.o: ../bioinformaticsLib/printEx.h
 $(BUILD)/bioinformaticsLib/libCommon.o: ../bioinformaticsLib/libCommon.h
 $(BUILD)/bioinformaticsLib/libCommon.o: ../bioinformaticsLib/stringEx.h
 $(BUILD)/bioinformaticsLib/libCommon.o: ../bioinformaticsLib/inQuotes.h
+$(BUILD)/bioinformaticsLib/libParser.o: ../bioinformaticsLib/libCommon.h
+$(BUILD)/bioinformaticsLib/libParser.o: ../bioinformaticsLib/libParser.h
 $(BUILD)/bioinformaticsLib/nelderMeadOptimiser.o: ../bioinformaticsLib/libCommon.h
 $(BUILD)/bioinformaticsLib/nelderMeadOptimiser.o: ../bioinformaticsLib/nelderMeadOptimiser.h
 $(BUILD)/bioinformaticsLib/nelderMeadOptimiser.o: ../bioinformaticsLib/stringEx.h
 $(BUILD)/bioinformaticsLib/nelderMeadOptimiser.o: ../bioinformaticsLib/inQuotes.h
 $(BUILD)/bioinformaticsLib/nelderMeadOptimiser.o: ../bioinformaticsLib/dataVec.h
 $(BUILD)/bioinformaticsLib/nelderMeadOptimiser.o: ../bioinformaticsLib/printEx.h
-$(BUILD)/bioinformaticsLib/parser.o: ../bioinformaticsLib/libCommon.h
-$(BUILD)/bioinformaticsLib/parser.o: ../bioinformaticsLib/parser.h
 $(BUILD)/bioinformaticsLib/printEx.o: ../bioinformaticsLib/printEx.h
 $(BUILD)/bioinformaticsLib/printEx.o: ../bioinformaticsLib/inQuotes.h
 $(BUILD)/bioinformaticsLib/printEx.o: ../bioinformaticsLib/stringEx.h
@@ -500,12 +493,31 @@ $(BUILD)/bioinformaticsLib/rand.o: ../bioinformaticsLib/dataVec.h
 $(BUILD)/bioinformaticsLib/rand.o: ../bioinformaticsLib/libCommon.h
 $(BUILD)/bioinformaticsLib/rand.o: ../bioinformaticsLib/printEx.h
 $(BUILD)/bioinformaticsLib/rand.o: ../bioinformaticsLib/inQuotes.h
+$(BUILD)/bioinformaticsLib/smithWaterman.o: ../bioinformaticsLib/smithWaterman.h
 
 $(BUILD)/bamtools/src/api/BamAlignment.o: ../bamtools/src/api/BamAlignment.h
 $(BUILD)/bamtools/src/api/BamAlignment.o: ../bamtools/src/api/api_global.h
 $(BUILD)/bamtools/src/api/BamAlignment.o: ../bamtools/src/shared/bamtools_global.h
 $(BUILD)/bamtools/src/api/BamAlignment.o: ../bamtools/src/api/BamAux.h
 $(BUILD)/bamtools/src/api/BamAlignment.o: ../bamtools/src/api/BamConstants.h
+$(BUILD)/bamtools/src/api/BamMultiReader.o: ../bamtools/src/api/BamMultiReader.h
+$(BUILD)/bamtools/src/api/BamMultiReader.o: ../bamtools/src/api/api_global.h
+$(BUILD)/bamtools/src/api/BamMultiReader.o: ../bamtools/src/shared/bamtools_global.h
+$(BUILD)/bamtools/src/api/BamMultiReader.o: ../bamtools/src/api/BamReader.h
+$(BUILD)/bamtools/src/api/BamMultiReader.o: ../bamtools/src/api/BamAlignment.h
+$(BUILD)/bamtools/src/api/BamMultiReader.o: ../bamtools/src/api/BamAux.h
+$(BUILD)/bamtools/src/api/BamMultiReader.o: ../bamtools/src/api/BamConstants.h
+$(BUILD)/bamtools/src/api/BamMultiReader.o: ../bamtools/src/api/BamIndex.h
+$(BUILD)/bamtools/src/api/BamMultiReader.o: ../bamtools/src/api/SamHeader.h
+$(BUILD)/bamtools/src/api/BamMultiReader.o: ../bamtools/src/api/SamProgramChain.h
+$(BUILD)/bamtools/src/api/BamMultiReader.o: ../bamtools/src/api/SamProgram.h
+$(BUILD)/bamtools/src/api/BamMultiReader.o: ../bamtools/src/api/SamReadGroupDictionary.h
+$(BUILD)/bamtools/src/api/BamMultiReader.o: ../bamtools/src/api/SamReadGroup.h
+$(BUILD)/bamtools/src/api/BamMultiReader.o: ../bamtools/src/api/SamSequenceDictionary.h
+$(BUILD)/bamtools/src/api/BamMultiReader.o: ../bamtools/src/api/SamSequence.h
+$(BUILD)/bamtools/src/api/BamMultiReader.o: ../bamtools/src/api/internal/bam/BamMultiReader_p.h
+$(BUILD)/bamtools/src/api/BamMultiReader.o: ../bamtools/src/api/internal/bam/BamMultiMerger_p.h
+$(BUILD)/bamtools/src/api/BamMultiReader.o: ../bamtools/src/api/algorithms/Sort.h
 $(BUILD)/bamtools/src/api/BamReader.o: ../bamtools/src/api/BamReader.h
 $(BUILD)/bamtools/src/api/BamReader.o: ../bamtools/src/api/api_global.h
 $(BUILD)/bamtools/src/api/BamReader.o: ../bamtools/src/shared/bamtools_global.h
@@ -541,66 +553,6 @@ $(BUILD)/bamtools/src/api/BamWriter.o: ../bamtools/src/api/SamSequence.h
 $(BUILD)/bamtools/src/api/BamWriter.o: ../bamtools/src/api/internal/bam/BamWriter_p.h
 $(BUILD)/bamtools/src/api/BamWriter.o: ../bamtools/src/api/internal/io/BgzfStream_p.h
 $(BUILD)/bamtools/src/api/BamWriter.o: ../bamtools/src/api/IBamIODevice.h
-$(BUILD)/bamtools/src/api/SamHeader.o: ../bamtools/src/api/SamConstants.h
-$(BUILD)/bamtools/src/api/SamHeader.o: ../bamtools/src/api/api_global.h
-$(BUILD)/bamtools/src/api/SamHeader.o: ../bamtools/src/shared/bamtools_global.h
-$(BUILD)/bamtools/src/api/SamHeader.o: ../bamtools/src/api/SamHeader.h
-$(BUILD)/bamtools/src/api/SamHeader.o: ../bamtools/src/api/BamAux.h
-$(BUILD)/bamtools/src/api/SamHeader.o: ../bamtools/src/api/SamProgramChain.h
-$(BUILD)/bamtools/src/api/SamHeader.o: ../bamtools/src/api/SamProgram.h
-$(BUILD)/bamtools/src/api/SamHeader.o: ../bamtools/src/api/SamReadGroupDictionary.h
-$(BUILD)/bamtools/src/api/SamHeader.o: ../bamtools/src/api/SamReadGroup.h
-$(BUILD)/bamtools/src/api/SamHeader.o: ../bamtools/src/api/SamSequenceDictionary.h
-$(BUILD)/bamtools/src/api/SamHeader.o: ../bamtools/src/api/SamSequence.h
-$(BUILD)/bamtools/src/api/SamHeader.o: ../bamtools/src/api/internal/utils/BamException_p.h
-$(BUILD)/bamtools/src/api/SamHeader.o: ../bamtools/src/api/internal/sam/SamFormatParser_p.h
-$(BUILD)/bamtools/src/api/SamHeader.o: ../bamtools/src/api/internal/sam/SamFormatPrinter_p.h
-$(BUILD)/bamtools/src/api/SamHeader.o: ../bamtools/src/api/internal/sam/SamHeaderValidator_p.h
-$(BUILD)/bamtools/src/api/SamProgram.o: ../bamtools/src/api/SamProgram.h
-$(BUILD)/bamtools/src/api/SamProgram.o: ../bamtools/src/api/api_global.h
-$(BUILD)/bamtools/src/api/SamProgram.o: ../bamtools/src/shared/bamtools_global.h
-$(BUILD)/bamtools/src/api/SamProgram.o: ../bamtools/src/api/BamAux.h
-$(BUILD)/bamtools/src/api/SamProgramChain.o: ../bamtools/src/api/SamProgramChain.h
-$(BUILD)/bamtools/src/api/SamProgramChain.o: ../bamtools/src/api/api_global.h
-$(BUILD)/bamtools/src/api/SamProgramChain.o: ../bamtools/src/shared/bamtools_global.h
-$(BUILD)/bamtools/src/api/SamProgramChain.o: ../bamtools/src/api/SamProgram.h
-$(BUILD)/bamtools/src/api/SamProgramChain.o: ../bamtools/src/api/BamAux.h
-$(BUILD)/bamtools/src/api/SamReadGroup.o: ../bamtools/src/api/SamReadGroup.h
-$(BUILD)/bamtools/src/api/SamReadGroup.o: ../bamtools/src/api/api_global.h
-$(BUILD)/bamtools/src/api/SamReadGroup.o: ../bamtools/src/shared/bamtools_global.h
-$(BUILD)/bamtools/src/api/SamReadGroup.o: ../bamtools/src/api/BamAux.h
-$(BUILD)/bamtools/src/api/SamReadGroupDictionary.o: ../bamtools/src/api/SamReadGroupDictionary.h
-$(BUILD)/bamtools/src/api/SamReadGroupDictionary.o: ../bamtools/src/api/api_global.h
-$(BUILD)/bamtools/src/api/SamReadGroupDictionary.o: ../bamtools/src/shared/bamtools_global.h
-$(BUILD)/bamtools/src/api/SamReadGroupDictionary.o: ../bamtools/src/api/SamReadGroup.h
-$(BUILD)/bamtools/src/api/SamReadGroupDictionary.o: ../bamtools/src/api/BamAux.h
-$(BUILD)/bamtools/src/api/SamSequence.o: ../bamtools/src/api/SamSequence.h
-$(BUILD)/bamtools/src/api/SamSequence.o: ../bamtools/src/api/api_global.h
-$(BUILD)/bamtools/src/api/SamSequence.o: ../bamtools/src/shared/bamtools_global.h
-$(BUILD)/bamtools/src/api/SamSequence.o: ../bamtools/src/api/BamAux.h
-$(BUILD)/bamtools/src/api/SamSequenceDictionary.o: ../bamtools/src/api/SamSequenceDictionary.h
-$(BUILD)/bamtools/src/api/SamSequenceDictionary.o: ../bamtools/src/api/api_global.h
-$(BUILD)/bamtools/src/api/SamSequenceDictionary.o: ../bamtools/src/shared/bamtools_global.h
-$(BUILD)/bamtools/src/api/SamSequenceDictionary.o: ../bamtools/src/api/SamSequence.h
-$(BUILD)/bamtools/src/api/SamSequenceDictionary.o: ../bamtools/src/api/BamAux.h
-$(BUILD)/bamtools/src/api/BamMultiReader.o: ../bamtools/src/api/BamMultiReader.h
-$(BUILD)/bamtools/src/api/BamMultiReader.o: ../bamtools/src/api/api_global.h
-$(BUILD)/bamtools/src/api/BamMultiReader.o: ../bamtools/src/shared/bamtools_global.h
-$(BUILD)/bamtools/src/api/BamMultiReader.o: ../bamtools/src/api/BamReader.h
-$(BUILD)/bamtools/src/api/BamMultiReader.o: ../bamtools/src/api/BamAlignment.h
-$(BUILD)/bamtools/src/api/BamMultiReader.o: ../bamtools/src/api/BamAux.h
-$(BUILD)/bamtools/src/api/BamMultiReader.o: ../bamtools/src/api/BamConstants.h
-$(BUILD)/bamtools/src/api/BamMultiReader.o: ../bamtools/src/api/BamIndex.h
-$(BUILD)/bamtools/src/api/BamMultiReader.o: ../bamtools/src/api/SamHeader.h
-$(BUILD)/bamtools/src/api/BamMultiReader.o: ../bamtools/src/api/SamProgramChain.h
-$(BUILD)/bamtools/src/api/BamMultiReader.o: ../bamtools/src/api/SamProgram.h
-$(BUILD)/bamtools/src/api/BamMultiReader.o: ../bamtools/src/api/SamReadGroupDictionary.h
-$(BUILD)/bamtools/src/api/BamMultiReader.o: ../bamtools/src/api/SamReadGroup.h
-$(BUILD)/bamtools/src/api/BamMultiReader.o: ../bamtools/src/api/SamSequenceDictionary.h
-$(BUILD)/bamtools/src/api/BamMultiReader.o: ../bamtools/src/api/SamSequence.h
-$(BUILD)/bamtools/src/api/BamMultiReader.o: ../bamtools/src/api/internal/bam/BamMultiReader_p.h
-$(BUILD)/bamtools/src/api/BamMultiReader.o: ../bamtools/src/api/internal/bam/BamMultiMerger_p.h
-$(BUILD)/bamtools/src/api/BamMultiReader.o: ../bamtools/src/api/algorithms/Sort.h
 $(BUILD)/bamtools/src/api/internal/bam/BamHeader_p.o: ../bamtools/src/api/BamAux.h
 $(BUILD)/bamtools/src/api/internal/bam/BamHeader_p.o: ../bamtools/src/api/api_global.h
 $(BUILD)/bamtools/src/api/internal/bam/BamHeader_p.o: ../bamtools/src/shared/bamtools_global.h
@@ -740,45 +692,6 @@ $(BUILD)/bamtools/src/api/internal/index/BamToolsIndex_p.o: ../bamtools/src/api/
 $(BUILD)/bamtools/src/api/internal/index/BamToolsIndex_p.o: ../bamtools/src/api/internal/index/BamToolsIndex_p.h
 $(BUILD)/bamtools/src/api/internal/index/BamToolsIndex_p.o: ../bamtools/src/api/internal/io/BamDeviceFactory_p.h
 $(BUILD)/bamtools/src/api/internal/index/BamToolsIndex_p.o: ../bamtools/src/api/internal/utils/BamException_p.h
-$(BUILD)/bamtools/src/api/internal/sam/SamFormatParser_p.o: ../bamtools/src/api/SamConstants.h
-$(BUILD)/bamtools/src/api/internal/sam/SamFormatParser_p.o: ../bamtools/src/api/api_global.h
-$(BUILD)/bamtools/src/api/internal/sam/SamFormatParser_p.o: ../bamtools/src/shared/bamtools_global.h
-$(BUILD)/bamtools/src/api/internal/sam/SamFormatParser_p.o: ../bamtools/src/api/SamHeader.h
-$(BUILD)/bamtools/src/api/internal/sam/SamFormatParser_p.o: ../bamtools/src/api/BamAux.h
-$(BUILD)/bamtools/src/api/internal/sam/SamFormatParser_p.o: ../bamtools/src/api/SamProgramChain.h
-$(BUILD)/bamtools/src/api/internal/sam/SamFormatParser_p.o: ../bamtools/src/api/SamProgram.h
-$(BUILD)/bamtools/src/api/internal/sam/SamFormatParser_p.o: ../bamtools/src/api/SamReadGroupDictionary.h
-$(BUILD)/bamtools/src/api/internal/sam/SamFormatParser_p.o: ../bamtools/src/api/SamReadGroup.h
-$(BUILD)/bamtools/src/api/internal/sam/SamFormatParser_p.o: ../bamtools/src/api/SamSequenceDictionary.h
-$(BUILD)/bamtools/src/api/internal/sam/SamFormatParser_p.o: ../bamtools/src/api/SamSequence.h
-$(BUILD)/bamtools/src/api/internal/sam/SamFormatParser_p.o: ../bamtools/src/api/internal/sam/SamFormatParser_p.h
-$(BUILD)/bamtools/src/api/internal/sam/SamFormatParser_p.o: ../bamtools/src/api/internal/utils/BamException_p.h
-$(BUILD)/bamtools/src/api/internal/sam/SamFormatPrinter_p.o: ../bamtools/src/api/SamConstants.h
-$(BUILD)/bamtools/src/api/internal/sam/SamFormatPrinter_p.o: ../bamtools/src/api/api_global.h
-$(BUILD)/bamtools/src/api/internal/sam/SamFormatPrinter_p.o: ../bamtools/src/shared/bamtools_global.h
-$(BUILD)/bamtools/src/api/internal/sam/SamFormatPrinter_p.o: ../bamtools/src/api/SamHeader.h
-$(BUILD)/bamtools/src/api/internal/sam/SamFormatPrinter_p.o: ../bamtools/src/api/BamAux.h
-$(BUILD)/bamtools/src/api/internal/sam/SamFormatPrinter_p.o: ../bamtools/src/api/SamProgramChain.h
-$(BUILD)/bamtools/src/api/internal/sam/SamFormatPrinter_p.o: ../bamtools/src/api/SamProgram.h
-$(BUILD)/bamtools/src/api/internal/sam/SamFormatPrinter_p.o: ../bamtools/src/api/SamReadGroupDictionary.h
-$(BUILD)/bamtools/src/api/internal/sam/SamFormatPrinter_p.o: ../bamtools/src/api/SamReadGroup.h
-$(BUILD)/bamtools/src/api/internal/sam/SamFormatPrinter_p.o: ../bamtools/src/api/SamSequenceDictionary.h
-$(BUILD)/bamtools/src/api/internal/sam/SamFormatPrinter_p.o: ../bamtools/src/api/SamSequence.h
-$(BUILD)/bamtools/src/api/internal/sam/SamFormatPrinter_p.o: ../bamtools/src/api/internal/sam/SamFormatPrinter_p.h
-$(BUILD)/bamtools/src/api/internal/sam/SamHeaderValidator_p.o: ../bamtools/src/api/SamConstants.h
-$(BUILD)/bamtools/src/api/internal/sam/SamHeaderValidator_p.o: ../bamtools/src/api/api_global.h
-$(BUILD)/bamtools/src/api/internal/sam/SamHeaderValidator_p.o: ../bamtools/src/shared/bamtools_global.h
-$(BUILD)/bamtools/src/api/internal/sam/SamHeaderValidator_p.o: ../bamtools/src/api/SamHeader.h
-$(BUILD)/bamtools/src/api/internal/sam/SamHeaderValidator_p.o: ../bamtools/src/api/BamAux.h
-$(BUILD)/bamtools/src/api/internal/sam/SamHeaderValidator_p.o: ../bamtools/src/api/SamProgramChain.h
-$(BUILD)/bamtools/src/api/internal/sam/SamHeaderValidator_p.o: ../bamtools/src/api/SamProgram.h
-$(BUILD)/bamtools/src/api/internal/sam/SamHeaderValidator_p.o: ../bamtools/src/api/SamReadGroupDictionary.h
-$(BUILD)/bamtools/src/api/internal/sam/SamHeaderValidator_p.o: ../bamtools/src/api/SamReadGroup.h
-$(BUILD)/bamtools/src/api/internal/sam/SamHeaderValidator_p.o: ../bamtools/src/api/SamSequenceDictionary.h
-$(BUILD)/bamtools/src/api/internal/sam/SamHeaderValidator_p.o: ../bamtools/src/api/SamSequence.h
-$(BUILD)/bamtools/src/api/internal/sam/SamHeaderValidator_p.o: ../bamtools/src/api/internal/sam/SamHeaderValidator_p.h
-$(BUILD)/bamtools/src/api/internal/sam/SamHeaderValidator_p.o: ../bamtools/src/api/internal/sam/SamHeaderVersion_p.h
-$(BUILD)/bamtools/src/api/internal/utils/BamException_p.o: ../bamtools/src/api/internal/utils/BamException_p.h
 $(BUILD)/bamtools/src/api/internal/io/BamDeviceFactory_p.o: ../bamtools/src/api/internal/io/BamDeviceFactory_p.h
 $(BUILD)/bamtools/src/api/internal/io/BamDeviceFactory_p.o: ../bamtools/src/api/IBamIODevice.h
 $(BUILD)/bamtools/src/api/internal/io/BamDeviceFactory_p.o: ../bamtools/src/api/api_global.h
@@ -849,15 +762,6 @@ $(BUILD)/bamtools/src/api/internal/io/RollingBuffer_p.o: ../bamtools/src/api/int
 $(BUILD)/bamtools/src/api/internal/io/RollingBuffer_p.o: ../bamtools/src/api/api_global.h
 $(BUILD)/bamtools/src/api/internal/io/RollingBuffer_p.o: ../bamtools/src/shared/bamtools_global.h
 $(BUILD)/bamtools/src/api/internal/io/RollingBuffer_p.o: ../bamtools/src/api/internal/io/ByteArray_p.h
-$(BUILD)/bamtools/src/api/internal/io/TcpSocket_p.o: ../bamtools/src/api/internal/io/ByteArray_p.h
-$(BUILD)/bamtools/src/api/internal/io/TcpSocket_p.o: ../bamtools/src/api/api_global.h
-$(BUILD)/bamtools/src/api/internal/io/TcpSocket_p.o: ../bamtools/src/shared/bamtools_global.h
-$(BUILD)/bamtools/src/api/internal/io/TcpSocket_p.o: ../bamtools/src/api/internal/io/TcpSocket_p.h
-$(BUILD)/bamtools/src/api/internal/io/TcpSocket_p.o: ../bamtools/src/api/IBamIODevice.h
-$(BUILD)/bamtools/src/api/internal/io/TcpSocket_p.o: ../bamtools/src/api/internal/io/HostInfo_p.h
-$(BUILD)/bamtools/src/api/internal/io/TcpSocket_p.o: ../bamtools/src/api/internal/io/HostAddress_p.h
-$(BUILD)/bamtools/src/api/internal/io/TcpSocket_p.o: ../bamtools/src/api/internal/io/RollingBuffer_p.h
-$(BUILD)/bamtools/src/api/internal/io/TcpSocket_p.o: ../bamtools/src/api/internal/io/TcpSocketEngine_p.h
 $(BUILD)/bamtools/src/api/internal/io/TcpSocketEngine_p.o: ../bamtools/src/api/internal/io/HostInfo_p.h
 $(BUILD)/bamtools/src/api/internal/io/TcpSocketEngine_p.o: ../bamtools/src/api/internal/io/HostAddress_p.h
 $(BUILD)/bamtools/src/api/internal/io/TcpSocketEngine_p.o: ../bamtools/src/api/api_global.h
@@ -877,6 +781,96 @@ $(BUILD)/bamtools/src/api/internal/io/TcpSocketEngine_unix_p.o: ../bamtools/src/
 $(BUILD)/bamtools/src/api/internal/io/TcpSocketEngine_unix_p.o: ../bamtools/src/api/internal/io/RollingBuffer_p.h
 $(BUILD)/bamtools/src/api/internal/io/TcpSocketEngine_unix_p.o: ../bamtools/src/api/internal/io/ByteArray_p.h
 $(BUILD)/bamtools/src/api/internal/io/TcpSocketEngine_unix_p.o: ../bamtools/src/api/internal/io/NetUnix_p.h
+$(BUILD)/bamtools/src/api/internal/io/TcpSocket_p.o: ../bamtools/src/api/internal/io/ByteArray_p.h
+$(BUILD)/bamtools/src/api/internal/io/TcpSocket_p.o: ../bamtools/src/api/api_global.h
+$(BUILD)/bamtools/src/api/internal/io/TcpSocket_p.o: ../bamtools/src/shared/bamtools_global.h
+$(BUILD)/bamtools/src/api/internal/io/TcpSocket_p.o: ../bamtools/src/api/internal/io/TcpSocket_p.h
+$(BUILD)/bamtools/src/api/internal/io/TcpSocket_p.o: ../bamtools/src/api/IBamIODevice.h
+$(BUILD)/bamtools/src/api/internal/io/TcpSocket_p.o: ../bamtools/src/api/internal/io/HostInfo_p.h
+$(BUILD)/bamtools/src/api/internal/io/TcpSocket_p.o: ../bamtools/src/api/internal/io/HostAddress_p.h
+$(BUILD)/bamtools/src/api/internal/io/TcpSocket_p.o: ../bamtools/src/api/internal/io/RollingBuffer_p.h
+$(BUILD)/bamtools/src/api/internal/io/TcpSocket_p.o: ../bamtools/src/api/internal/io/TcpSocketEngine_p.h
+$(BUILD)/bamtools/src/api/internal/sam/SamFormatParser_p.o: ../bamtools/src/api/SamConstants.h
+$(BUILD)/bamtools/src/api/internal/sam/SamFormatParser_p.o: ../bamtools/src/api/api_global.h
+$(BUILD)/bamtools/src/api/internal/sam/SamFormatParser_p.o: ../bamtools/src/shared/bamtools_global.h
+$(BUILD)/bamtools/src/api/internal/sam/SamFormatParser_p.o: ../bamtools/src/api/SamHeader.h
+$(BUILD)/bamtools/src/api/internal/sam/SamFormatParser_p.o: ../bamtools/src/api/BamAux.h
+$(BUILD)/bamtools/src/api/internal/sam/SamFormatParser_p.o: ../bamtools/src/api/SamProgramChain.h
+$(BUILD)/bamtools/src/api/internal/sam/SamFormatParser_p.o: ../bamtools/src/api/SamProgram.h
+$(BUILD)/bamtools/src/api/internal/sam/SamFormatParser_p.o: ../bamtools/src/api/SamReadGroupDictionary.h
+$(BUILD)/bamtools/src/api/internal/sam/SamFormatParser_p.o: ../bamtools/src/api/SamReadGroup.h
+$(BUILD)/bamtools/src/api/internal/sam/SamFormatParser_p.o: ../bamtools/src/api/SamSequenceDictionary.h
+$(BUILD)/bamtools/src/api/internal/sam/SamFormatParser_p.o: ../bamtools/src/api/SamSequence.h
+$(BUILD)/bamtools/src/api/internal/sam/SamFormatParser_p.o: ../bamtools/src/api/internal/sam/SamFormatParser_p.h
+$(BUILD)/bamtools/src/api/internal/sam/SamFormatParser_p.o: ../bamtools/src/api/internal/utils/BamException_p.h
+$(BUILD)/bamtools/src/api/internal/sam/SamFormatPrinter_p.o: ../bamtools/src/api/SamConstants.h
+$(BUILD)/bamtools/src/api/internal/sam/SamFormatPrinter_p.o: ../bamtools/src/api/api_global.h
+$(BUILD)/bamtools/src/api/internal/sam/SamFormatPrinter_p.o: ../bamtools/src/shared/bamtools_global.h
+$(BUILD)/bamtools/src/api/internal/sam/SamFormatPrinter_p.o: ../bamtools/src/api/SamHeader.h
+$(BUILD)/bamtools/src/api/internal/sam/SamFormatPrinter_p.o: ../bamtools/src/api/BamAux.h
+$(BUILD)/bamtools/src/api/internal/sam/SamFormatPrinter_p.o: ../bamtools/src/api/SamProgramChain.h
+$(BUILD)/bamtools/src/api/internal/sam/SamFormatPrinter_p.o: ../bamtools/src/api/SamProgram.h
+$(BUILD)/bamtools/src/api/internal/sam/SamFormatPrinter_p.o: ../bamtools/src/api/SamReadGroupDictionary.h
+$(BUILD)/bamtools/src/api/internal/sam/SamFormatPrinter_p.o: ../bamtools/src/api/SamReadGroup.h
+$(BUILD)/bamtools/src/api/internal/sam/SamFormatPrinter_p.o: ../bamtools/src/api/SamSequenceDictionary.h
+$(BUILD)/bamtools/src/api/internal/sam/SamFormatPrinter_p.o: ../bamtools/src/api/SamSequence.h
+$(BUILD)/bamtools/src/api/internal/sam/SamFormatPrinter_p.o: ../bamtools/src/api/internal/sam/SamFormatPrinter_p.h
+$(BUILD)/bamtools/src/api/internal/sam/SamHeaderValidator_p.o: ../bamtools/src/api/SamConstants.h
+$(BUILD)/bamtools/src/api/internal/sam/SamHeaderValidator_p.o: ../bamtools/src/api/api_global.h
+$(BUILD)/bamtools/src/api/internal/sam/SamHeaderValidator_p.o: ../bamtools/src/shared/bamtools_global.h
+$(BUILD)/bamtools/src/api/internal/sam/SamHeaderValidator_p.o: ../bamtools/src/api/SamHeader.h
+$(BUILD)/bamtools/src/api/internal/sam/SamHeaderValidator_p.o: ../bamtools/src/api/BamAux.h
+$(BUILD)/bamtools/src/api/internal/sam/SamHeaderValidator_p.o: ../bamtools/src/api/SamProgramChain.h
+$(BUILD)/bamtools/src/api/internal/sam/SamHeaderValidator_p.o: ../bamtools/src/api/SamProgram.h
+$(BUILD)/bamtools/src/api/internal/sam/SamHeaderValidator_p.o: ../bamtools/src/api/SamReadGroupDictionary.h
+$(BUILD)/bamtools/src/api/internal/sam/SamHeaderValidator_p.o: ../bamtools/src/api/SamReadGroup.h
+$(BUILD)/bamtools/src/api/internal/sam/SamHeaderValidator_p.o: ../bamtools/src/api/SamSequenceDictionary.h
+$(BUILD)/bamtools/src/api/internal/sam/SamHeaderValidator_p.o: ../bamtools/src/api/SamSequence.h
+$(BUILD)/bamtools/src/api/internal/sam/SamHeaderValidator_p.o: ../bamtools/src/api/internal/sam/SamHeaderValidator_p.h
+$(BUILD)/bamtools/src/api/internal/sam/SamHeaderValidator_p.o: ../bamtools/src/api/internal/sam/SamHeaderVersion_p.h
+$(BUILD)/bamtools/src/api/internal/utils/BamException_p.o: ../bamtools/src/api/internal/utils/BamException_p.h
+$(BUILD)/bamtools/src/api/SamHeader.o: ../bamtools/src/api/SamConstants.h
+$(BUILD)/bamtools/src/api/SamHeader.o: ../bamtools/src/api/api_global.h
+$(BUILD)/bamtools/src/api/SamHeader.o: ../bamtools/src/shared/bamtools_global.h
+$(BUILD)/bamtools/src/api/SamHeader.o: ../bamtools/src/api/SamHeader.h
+$(BUILD)/bamtools/src/api/SamHeader.o: ../bamtools/src/api/BamAux.h
+$(BUILD)/bamtools/src/api/SamHeader.o: ../bamtools/src/api/SamProgramChain.h
+$(BUILD)/bamtools/src/api/SamHeader.o: ../bamtools/src/api/SamProgram.h
+$(BUILD)/bamtools/src/api/SamHeader.o: ../bamtools/src/api/SamReadGroupDictionary.h
+$(BUILD)/bamtools/src/api/SamHeader.o: ../bamtools/src/api/SamReadGroup.h
+$(BUILD)/bamtools/src/api/SamHeader.o: ../bamtools/src/api/SamSequenceDictionary.h
+$(BUILD)/bamtools/src/api/SamHeader.o: ../bamtools/src/api/SamSequence.h
+$(BUILD)/bamtools/src/api/SamHeader.o: ../bamtools/src/api/internal/utils/BamException_p.h
+$(BUILD)/bamtools/src/api/SamHeader.o: ../bamtools/src/api/internal/sam/SamFormatParser_p.h
+$(BUILD)/bamtools/src/api/SamHeader.o: ../bamtools/src/api/internal/sam/SamFormatPrinter_p.h
+$(BUILD)/bamtools/src/api/SamHeader.o: ../bamtools/src/api/internal/sam/SamHeaderValidator_p.h
+$(BUILD)/bamtools/src/api/SamProgram.o: ../bamtools/src/api/SamProgram.h
+$(BUILD)/bamtools/src/api/SamProgram.o: ../bamtools/src/api/api_global.h
+$(BUILD)/bamtools/src/api/SamProgram.o: ../bamtools/src/shared/bamtools_global.h
+$(BUILD)/bamtools/src/api/SamProgram.o: ../bamtools/src/api/BamAux.h
+$(BUILD)/bamtools/src/api/SamProgramChain.o: ../bamtools/src/api/SamProgramChain.h
+$(BUILD)/bamtools/src/api/SamProgramChain.o: ../bamtools/src/api/api_global.h
+$(BUILD)/bamtools/src/api/SamProgramChain.o: ../bamtools/src/shared/bamtools_global.h
+$(BUILD)/bamtools/src/api/SamProgramChain.o: ../bamtools/src/api/SamProgram.h
+$(BUILD)/bamtools/src/api/SamProgramChain.o: ../bamtools/src/api/BamAux.h
+$(BUILD)/bamtools/src/api/SamReadGroup.o: ../bamtools/src/api/SamReadGroup.h
+$(BUILD)/bamtools/src/api/SamReadGroup.o: ../bamtools/src/api/api_global.h
+$(BUILD)/bamtools/src/api/SamReadGroup.o: ../bamtools/src/shared/bamtools_global.h
+$(BUILD)/bamtools/src/api/SamReadGroup.o: ../bamtools/src/api/BamAux.h
+$(BUILD)/bamtools/src/api/SamReadGroupDictionary.o: ../bamtools/src/api/SamReadGroupDictionary.h
+$(BUILD)/bamtools/src/api/SamReadGroupDictionary.o: ../bamtools/src/api/api_global.h
+$(BUILD)/bamtools/src/api/SamReadGroupDictionary.o: ../bamtools/src/shared/bamtools_global.h
+$(BUILD)/bamtools/src/api/SamReadGroupDictionary.o: ../bamtools/src/api/SamReadGroup.h
+$(BUILD)/bamtools/src/api/SamReadGroupDictionary.o: ../bamtools/src/api/BamAux.h
+$(BUILD)/bamtools/src/api/SamSequence.o: ../bamtools/src/api/SamSequence.h
+$(BUILD)/bamtools/src/api/SamSequence.o: ../bamtools/src/api/api_global.h
+$(BUILD)/bamtools/src/api/SamSequence.o: ../bamtools/src/shared/bamtools_global.h
+$(BUILD)/bamtools/src/api/SamSequence.o: ../bamtools/src/api/BamAux.h
+$(BUILD)/bamtools/src/api/SamSequenceDictionary.o: ../bamtools/src/api/SamSequenceDictionary.h
+$(BUILD)/bamtools/src/api/SamSequenceDictionary.o: ../bamtools/src/api/api_global.h
+$(BUILD)/bamtools/src/api/SamSequenceDictionary.o: ../bamtools/src/shared/bamtools_global.h
+$(BUILD)/bamtools/src/api/SamSequenceDictionary.o: ../bamtools/src/api/SamSequence.h
+$(BUILD)/bamtools/src/api/SamSequenceDictionary.o: ../bamtools/src/api/BamAux.h
 $(BUILD)/bamtools/src/toolkit/bamtools_sort.o: ../bamtools/src/toolkit/bamtools_sort.h
 $(BUILD)/bamtools/src/toolkit/bamtools_sort.o: ../bamtools/src/toolkit/bamtools_tool.h
 $(BUILD)/bamtools/src/toolkit/bamtools_sort.o: ../bamtools/src/api/SamConstants.h

@@ -7,7 +7,7 @@
 // The top level code associated with "LiBiNorm count" modes
 // ***************************************************************************
 
-#include "parser.h"
+#include "libParser.h"
 #include "LiBiVariation.h"
 
 using namespace std;

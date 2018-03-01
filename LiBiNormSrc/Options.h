@@ -158,6 +158,11 @@
 //	but with spaces at either end.  Genes with fewer than N genes are excluded
 // #define CREATE_FLAT_DATA
 
+
+//	Prints a file containing the predicted read distrubtion for different mRNA lengths
+#define PRINT_DISTRIBUTION
+
+
 //
 //	Use absolute rather than log h value when doing Nelder Mead and MCMC
 // #define ABS_H_PARAM

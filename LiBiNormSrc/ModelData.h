@@ -61,6 +61,10 @@ inline void parseval(const char * start, modelType & value, size_t & len)
 //  Returns mcmc paremetyers associated with a model
 paramDescriptionSet GetModelParams(modelType model,dataVec * defaults = 0,VEC_DATA_TYPE offset = 0);
 
+//	Get distribution associated with a partcular model
+dataVec getDistribution(modelType m, size_t length, size_t points, dataVec & params);
+
+
 //	getHeaders returns the set of headers associated with the model parameters, extracted from the data provided 
 //	by GetModelParams.  Used when printing results
 typedef std::map<modelType, std::vector<std::string> > headerType;

@@ -127,6 +127,9 @@ void LiBiNormCore::SetInitialParamsFromFile(const string & filename)
 		exitFail("Unable to read parameters from ", filename);
 	paramFile.read(initialValues);
 
+
+	cout << "Need to check that SetIntialValuesFromFile works correctly" << endl;
+
 	//	Get rid of spurious values (possibly as a result of trailing tabs in the text file)
 	for (modelType m : allModels())
 		initialValues[m].resize(headers[m].size());
@@ -631,6 +634,30 @@ void LiBiNormCore::printBias()
 	}
 	mcmcResult.close();
 }
+
+#define BIN_COUNT 100
+
+void LiBiNormCore::printDistribution()
+{
+	TsvFile distResult;
+	string filename(outputFileroot.replaceSuffix("_distribution.txt"));
+	if (!distResult.open(filename))
+		exitFail("Unable to open output File ", filename);
+
+	for (modelType modl : allModels())
+	{
+		distResult.print(modl);
+		vector<int> lengths{ 200,500,1000,2000,3000,4000,6000,8000,10000,15000,20000 };
+
+		for (auto l : lengths)
+		{
+			dataVec dist = getDistribution(modl, l, BIN_COUNT, bestResults[modl].params[logValue]);
+			distResult.print(l, dist);
+		}
+		distResult.print();
+	}
+}
+
 
 void LiBiNormCore::printAllMcmcRunData()
 {

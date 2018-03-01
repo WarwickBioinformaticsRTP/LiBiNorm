@@ -19,7 +19,7 @@
 #include "containerEx.h"
 #include "bamAlignmentEx.h"
 #include "Regions.h"
-#include "parser.h"
+#include "libParser.h"
 #include "LiBiCount.h"
 
 #ifdef USE_ABS_INSERT_TO_MATCH_READS
@@ -436,7 +436,9 @@ int LiBiCount::main(int argc, char **argv)
 
 			//	And then the bias predicted by all 6 models
 			printBias();
-
+#ifdef PRINT_DISTRIBUTION
+			printDistribution();
+#endif
 			//	And then the counts and the bias for the genes themselves
 			string filename = outputFileroot.replaceSuffix("_expression.txt");
 			if (!geneCounts.outputGeneCounts(filename, 2, conv(theModel)))
