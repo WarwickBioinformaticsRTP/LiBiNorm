@@ -838,25 +838,12 @@ dataVec getDistribution(modelType m, size_t length, size_t points, dataVec & par
 	case ModelBD:
 	{
 		if ((m == ModelB) || (m == ModelBD))
-			//				dist = 1 / (d*(t1 + t2))*(t1 * exp((-2 * l * (t1 + t2)) + (t1 + t2) * (l + x)) + t2 * exp(-l * (t1 + t2))) +
-			//					((x > h) * (x < (l - h))) * 1 / (t1 + t2) * (t1*exp(-2 / (t1 + t2) + (t1 + t2) / (l - h - x)) + t2 * exp((-1 / (t1 + t2))));
+		{
 			dist = (x > h)*(x < l - h) / (t1 + t2) * (t1*exp(-2 * l*(t1 + t2) + (t1 + t2)*(l - h + x)) + t2*exp(-l*(t1 + t2))) +
-			1 / (t1 + t2) * (t1 *exp(-2 * l*(t1 + t2) + (t1 + t2)*(l + x)) + t2*exp(-l*(t1 + t2))) / d;
-
+				1 / (t1 + t2) * (t1 *exp(-2 * l*(t1 + t2) + (t1 + t2)*(l + x)) + t2*exp(-l*(t1 + t2))) / d;
+		}
 		if ((m == ModelD) || (m == ModelBD))
 		{
-			/*				dataVec temp1 = t1 * exp(-t1 * (l - x));
-			dataVec temp2 = t2 * exp(-t1 *l - t2 * x);
-			dataVec temp3 = 1 / (d*(t1 + t2)) * (temp1 + temp2);
-			dataVec temp4 = ((x > h) * (x < (l - h)));
-			dataVec temp5 = temp4 * 1 / (t1 + t2);
-			dataVec temp6 = t1*exp((-t1*(l - x)) - (t1*h) - (2 * t2 * h));
-			dataVec temp7 = t2*exp((-t1*l) - t2*(x + h));
-			dataVec temp8 = temp5 * (temp6 + temp7);
-			dataVec temp9 = temp3 + temp8;
-			*/
-			//				dist2 = 1 / (d*(t1 + t2))*((t1 * exp(-t1 * (l - x))) + (t2 * exp(-t1 *l - t2 * x))) +
-			//					((x > h) * (x < (l - h))) * 1 / (t1 + t2) * (t1*exp((-t1*(l - x)) - (t1*h) - (2 * t2 * h)) + t2*exp((-t1*l) - t2*(x + h)));
 			dist2 = (x > h)*(x < l - h) / (t1 + t2) * (t1*exp(-t1*(l - x) - 2 * t2*h - t1*h) + t2*exp(-t1*l - t2*(x + h))) +
 				1 / (t1 + t2) * (t1*exp(-t1*(l - x)) + t2*exp(-t1*l - t2*(x))) / d;
 		}
@@ -868,6 +855,9 @@ dataVec getDistribution(modelType m, size_t length, size_t points, dataVec & par
 	}
 	break;
 	case ModelE:
+		dist = (x> h)*(x < l-h)/t1/(t1+ t2)*(exp(-2*h*(t1+ t2))-exp(-(h +x)*(t1+t2)) - exp(-t1*h-2*h*t2-(l-x)*t1) + exp(-h*t2-l*t1-x*t2)) + 
+			     1/t1/(t1+ t2) *(1 - exp(-x*(t1+t2)) - exp(-(l-x)*t1) + exp(-l*t1-x*t2))/d;
+		break;
 	case ModelC:
 	case findBestModel:
 		break;

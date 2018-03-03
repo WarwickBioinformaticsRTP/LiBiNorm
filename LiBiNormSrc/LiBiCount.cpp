@@ -437,7 +437,7 @@ int LiBiCount::main(int argc, char **argv)
 			//	And then the bias predicted by all 6 models
 			printBias();
 #ifdef PRINT_DISTRIBUTION
-			printDistribution();
+			printDistribution(geneCounts);
 #endif
 			//	And then the counts and the bias for the genes themselves
 			string filename = outputFileroot.replaceSuffix("_expression.txt");

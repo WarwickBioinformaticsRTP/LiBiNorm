@@ -66,7 +66,7 @@ protected:
 
 	void printResults();
 	void printBias();
-	void printDistribution();
+	void printDistribution(GeneCountData & geneCounts);
 	void printAllMcmcRunData();
 	void printConsolidatedMcmcRunData();
 

@@ -58,12 +58,9 @@ LIBPATH     =
 #  The files that are from the external directories are handled slightly differently so that their object files
 #  are also placed within the $(BUILD) directory and so are deleted with a make clean
 
-LIBINORMSRC = LiBiNormSrc/LiBiNorm.cpp
+LIBINORMSRC = $(LIBINORMSRCDIR)LiBiNorm.cpp
 
-LIBINORMSRCEX = $(addprefix $(LIBINORMSRCDIR), \
-	LiBiNormCore.cpp LiBiDedup.cpp LiBiCount.cpp ModelData.cpp \
-	Regions.cpp MakeFastq.cpp LiBiConv.cpp GeneCountData.cpp \
-	FeatureFileEx.cpp LiBiOptimiser.cpp LiBiVariation.cpp LiBiTools.cpp ) 
+LIBINORMSRCEX = $(filter-out $(LIBINORMSRC), $(shell find $(LIBINORMSRCDIR) -name *.cpp) )
 
 MCMCLIBSRC =  $(shell find $(MCMCLIBDIR) -name *.cpp)
 
@@ -72,33 +69,32 @@ BIOLIBSRC = $(shell find ../$(BIOINFORMATICSLIBDIR) -name *.cpp)
 BAMTOOLSSRC = $(filter-out ../bamtools/src/api/internal/io/TcpSocketEngine_win_p.cpp, \
 	$(shell find ../$(BAMTOOLSDIR)api/ -name *.cpp) ) \
 	$(addprefix ../$(BAMTOOLSDIR), toolkit/bamtools_sort.cpp utils/bamtools_options.cpp )
-       
-COREOBJS :=  $(addprefix $(BUILD)/, \
-		$(LIBINORMSRCEX:%.cpp=%.o) $(MCMCLIBSRC:%.cpp=%.o) \
+
+COREOBJS :=  $(addprefix $(BUILD)/, $(LIBINORMSRCEX:%.cpp=%.o) $(MCMCLIBSRC:%.cpp=%.o)  \
 		$(subst ../,,$(BIOLIBSRC:%.cpp=%.o) $(BAMTOOLSSRC:%.cpp=%.o) ) ) 
 
 
 ################################################################################
 # For building necessary outout directories.  The sort method is used to remove duplicated entries
 
-DIRS = $(sort $(dir $(COREOBJS)  ) )
+DIRS = $(sort $(dir $(COREOBJS)  ) ) 
 
-$(DIRS):
-	mkdir -p $(DIRS)
+$(DIRS) :
+	mkdir -p $@
 
 
 ##################################################################
 #
 #	Instructions for building release and debug object files  These are dependant on the Makefile so Makefile changes
-#	force a rebuild.  
+#	force a rebuild.  Specific rules for source files in libraries in other directories
 
-$(BUILD)/%.o : %.cpp Makefile
+$(BUILD)/%.o : %.cpp  Makefile
 	$(CCC) -c $(CCCALLFLAGS) $(INCLUDES) -o $@ $<
 
 $(BUILD)/$(BIOINFORMATICSLIBDIR)%.o : ../$(BIOINFORMATICSLIBDIR)%.cpp Makefile
 	$(CCC) -c $(CCCALLFLAGS) $(INCLUDES) -o $@ $<
 
-$(BUILD)/$(BAMTOOLSDIR)%.o : ../$(BAMTOOLSDIR)%.cpp Makefile
+$(BUILD)/$(BAMTOOLSDIR)%.o : ../$(BAMTOOLSDIR)%.cpp  Makefile
 	$(CCC) -c $(CCCALLFLAGS) $(INCLUDES) -Wno-sign-compare -o $@ $<
 
 ################################################################################
@@ -108,7 +104,7 @@ debug : all
 	
 release : all    
 
-all:   $(DIRS) $(TARGS)
+all:  $(DIRS) $(TARGS)
 	@echo "%% $(BUILD) LiBiNorm code built"
 
 #	The final make rule
@@ -131,8 +127,7 @@ clean :
 
 depend :
 	makedepend  -Y $(CCCAALLFLAGS) $(INCLUDES) $(LIBINORMSRC) $(MCMCLIBSRC) $(LIBINORMSRCEX) -p'$$(BUILD)/'
-	makedepend  -Y -a $(CCCAALLFLAGS) $(INCLUDES) $(BIOLIBSRC) -p'$$(BUILD)/XXZZ/'
-	makedepend  -Y -a $(CCCAALLFLAGS) $(INCLUDES) $(BAMTOOLSSRC) -p'$$(BUILD)/XXZZ/'
+	makedepend  -Y -a $(CCCAALLFLAGS) $(INCLUDES) $(BIOLIBSRC) $(BAMTOOLSSRC) -p'$$(BUILD)/XXZZ/'
 	sed -i -- 's/\/XXZZ\/..//g' Makefile	
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
@@ -191,42 +186,76 @@ $(BUILD)/mcmcLib/params.o: ../bioinformaticsLib/printEx.h
 $(BUILD)/mcmcLib/params.o: ../bioinformaticsLib/inQuotes.h mcmcLib/params.h
 $(BUILD)/mcmcLib/params.o: ../bioinformaticsLib/nelderMeadOptimiser.h
 $(BUILD)/mcmcLib/params.o: ../bioinformaticsLib/stringEx.h
-$(BUILD)/LiBiNormSrc/LiBiNormCore.o: LiBiNormSrc/LiBiNormCore.h
-$(BUILD)/LiBiNormSrc/LiBiNormCore.o: ../bioinformaticsLib/stringEx.h
-$(BUILD)/LiBiNormSrc/LiBiNormCore.o: ../bioinformaticsLib/inQuotes.h
-$(BUILD)/LiBiNormSrc/LiBiNormCore.o: ../bioinformaticsLib/containerEx.h
-$(BUILD)/LiBiNormSrc/LiBiNormCore.o: LiBiNormSrc/GeneCountData.h
-$(BUILD)/LiBiNormSrc/LiBiNormCore.o: ../bioinformaticsLib/libParser.h
-$(BUILD)/LiBiNormSrc/LiBiNormCore.o: ../bioinformaticsLib/libCommon.h
-$(BUILD)/LiBiNormSrc/LiBiNormCore.o: mcmcLib/mcmc.h mcmcLib/params.h
-$(BUILD)/LiBiNormSrc/LiBiNormCore.o: ../bioinformaticsLib/nelderMeadOptimiser.h
-$(BUILD)/LiBiNormSrc/LiBiNormCore.o: ../bioinformaticsLib/dataVec.h
-$(BUILD)/LiBiNormSrc/LiBiNormCore.o: ../bioinformaticsLib/printEx.h
-$(BUILD)/LiBiNormSrc/LiBiNormCore.o: LiBiNormSrc/Options.h
-$(BUILD)/LiBiNormSrc/LiBiNormCore.o: LiBiNormSrc/ModelData.h
-$(BUILD)/LiBiNormSrc/LiBiNormCore.o: LiBiNormSrc/LiBiOptimiser.h
-$(BUILD)/LiBiNormSrc/LiBiDedup.o: LiBiNormSrc/LiBiDedup.h
-$(BUILD)/LiBiNormSrc/LiBiDedup.o: ../bamtools/src/api/BamReader.h
-$(BUILD)/LiBiNormSrc/LiBiDedup.o: ../bamtools/src/api/api_global.h
-$(BUILD)/LiBiNormSrc/LiBiDedup.o: ../bamtools/src/shared/bamtools_global.h
-$(BUILD)/LiBiNormSrc/LiBiDedup.o: ../bamtools/src/api/BamAlignment.h
-$(BUILD)/LiBiNormSrc/LiBiDedup.o: ../bamtools/src/api/BamAux.h
-$(BUILD)/LiBiNormSrc/LiBiDedup.o: ../bamtools/src/api/BamConstants.h
-$(BUILD)/LiBiNormSrc/LiBiDedup.o: ../bamtools/src/api/BamIndex.h
-$(BUILD)/LiBiNormSrc/LiBiDedup.o: ../bamtools/src/api/SamHeader.h
-$(BUILD)/LiBiNormSrc/LiBiDedup.o: ../bamtools/src/api/SamProgramChain.h
-$(BUILD)/LiBiNormSrc/LiBiDedup.o: ../bamtools/src/api/SamProgram.h
-$(BUILD)/LiBiNormSrc/LiBiDedup.o: ../bamtools/src/api/SamReadGroupDictionary.h
-$(BUILD)/LiBiNormSrc/LiBiDedup.o: ../bamtools/src/api/SamReadGroup.h
-$(BUILD)/LiBiNormSrc/LiBiDedup.o: ../bamtools/src/api/SamSequenceDictionary.h
-$(BUILD)/LiBiNormSrc/LiBiDedup.o: ../bamtools/src/api/SamSequence.h
-$(BUILD)/LiBiNormSrc/LiBiDedup.o: ../bamtools/src/api/BamWriter.h
-$(BUILD)/LiBiNormSrc/LiBiDedup.o: ../bioinformaticsLib/libCommon.h
-$(BUILD)/LiBiNormSrc/LiBiDedup.o: ../bioinformaticsLib/stringEx.h
-$(BUILD)/LiBiNormSrc/LiBiDedup.o: ../bioinformaticsLib/inQuotes.h
-$(BUILD)/LiBiNormSrc/LiBiDedup.o: LiBiNormSrc/Regions.h
-$(BUILD)/LiBiNormSrc/LiBiDedup.o: ../bioinformaticsLib/printEx.h
-$(BUILD)/LiBiNormSrc/LiBiDedup.o: LiBiNormSrc/Options.h
+$(BUILD)/LiBiNormSrc/FeatureFileEx.o: LiBiNormSrc/FeatureFileEx.h
+$(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bioinformaticsLib/containerEx.h
+$(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bioinformaticsLib/libCommon.h
+$(BUILD)/LiBiNormSrc/FeatureFileEx.o: LiBiNormSrc/Regions.h
+$(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bioinformaticsLib/printEx.h
+$(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bioinformaticsLib/inQuotes.h
+$(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bamtools/src/api/BamReader.h
+$(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bamtools/src/api/api_global.h
+$(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bamtools/src/shared/bamtools_global.h
+$(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bamtools/src/api/BamAlignment.h
+$(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bamtools/src/api/BamAux.h
+$(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bamtools/src/api/BamConstants.h
+$(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bamtools/src/api/BamIndex.h
+$(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bamtools/src/api/SamHeader.h
+$(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bamtools/src/api/SamProgramChain.h
+$(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bamtools/src/api/SamProgram.h
+$(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bamtools/src/api/SamReadGroupDictionary.h
+$(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bamtools/src/api/SamReadGroup.h
+$(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bamtools/src/api/SamSequenceDictionary.h
+$(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bamtools/src/api/SamSequence.h
+$(BUILD)/LiBiNormSrc/FeatureFileEx.o: LiBiNormSrc/Options.h
+$(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bioinformaticsLib/featureFile.h
+$(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bioinformaticsLib/genbankFile.h
+$(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bioinformaticsLib/stringEx.h
+$(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bioinformaticsLib/dataVec.h
+$(BUILD)/LiBiNormSrc/FeatureFileEx.o: LiBiNormSrc/GeneCountData.h
+$(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bioinformaticsLib/libParser.h
+$(BUILD)/LiBiNormSrc/FeatureFileEx.o: mcmcLib/mcmc.h mcmcLib/params.h
+$(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bioinformaticsLib/nelderMeadOptimiser.h
+$(BUILD)/LiBiNormSrc/GeneCountData.o: LiBiNormSrc/Options.h
+$(BUILD)/LiBiNormSrc/GeneCountData.o: LiBiNormSrc/GeneCountData.h
+$(BUILD)/LiBiNormSrc/GeneCountData.o: ../bioinformaticsLib/containerEx.h
+$(BUILD)/LiBiNormSrc/GeneCountData.o: ../bioinformaticsLib/libParser.h
+$(BUILD)/LiBiNormSrc/GeneCountData.o: ../bioinformaticsLib/libCommon.h
+$(BUILD)/LiBiNormSrc/GeneCountData.o: mcmcLib/mcmc.h mcmcLib/params.h
+$(BUILD)/LiBiNormSrc/GeneCountData.o: ../bioinformaticsLib/nelderMeadOptimiser.h
+$(BUILD)/LiBiNormSrc/GeneCountData.o: ../bioinformaticsLib/stringEx.h
+$(BUILD)/LiBiNormSrc/GeneCountData.o: ../bioinformaticsLib/inQuotes.h
+$(BUILD)/LiBiNormSrc/GeneCountData.o: ../bioinformaticsLib/dataVec.h
+$(BUILD)/LiBiNormSrc/GeneCountData.o: ../bioinformaticsLib/printEx.h
+$(BUILD)/LiBiNormSrc/LiBiConv.o: ../bamtools/src/api/BamReader.h
+$(BUILD)/LiBiNormSrc/LiBiConv.o: ../bamtools/src/api/api_global.h
+$(BUILD)/LiBiNormSrc/LiBiConv.o: ../bamtools/src/shared/bamtools_global.h
+$(BUILD)/LiBiNormSrc/LiBiConv.o: ../bamtools/src/api/BamAlignment.h
+$(BUILD)/LiBiNormSrc/LiBiConv.o: ../bamtools/src/api/BamAux.h
+$(BUILD)/LiBiNormSrc/LiBiConv.o: ../bamtools/src/api/BamConstants.h
+$(BUILD)/LiBiNormSrc/LiBiConv.o: ../bamtools/src/api/BamIndex.h
+$(BUILD)/LiBiNormSrc/LiBiConv.o: ../bamtools/src/api/SamHeader.h
+$(BUILD)/LiBiNormSrc/LiBiConv.o: ../bamtools/src/api/SamProgramChain.h
+$(BUILD)/LiBiNormSrc/LiBiConv.o: ../bamtools/src/api/SamProgram.h
+$(BUILD)/LiBiNormSrc/LiBiConv.o: ../bamtools/src/api/SamReadGroupDictionary.h
+$(BUILD)/LiBiNormSrc/LiBiConv.o: ../bamtools/src/api/SamReadGroup.h
+$(BUILD)/LiBiNormSrc/LiBiConv.o: ../bamtools/src/api/SamSequenceDictionary.h
+$(BUILD)/LiBiNormSrc/LiBiConv.o: ../bamtools/src/api/SamSequence.h
+$(BUILD)/LiBiNormSrc/LiBiConv.o: ../bioinformaticsLib/libCommon.h
+$(BUILD)/LiBiNormSrc/LiBiConv.o: ../bioinformaticsLib/stringEx.h
+$(BUILD)/LiBiNormSrc/LiBiConv.o: ../bioinformaticsLib/inQuotes.h
+$(BUILD)/LiBiNormSrc/LiBiConv.o: LiBiNormSrc/LiBiConv.h
+$(BUILD)/LiBiNormSrc/LiBiConv.o: LiBiNormSrc/FeatureFileEx.h
+$(BUILD)/LiBiNormSrc/LiBiConv.o: ../bioinformaticsLib/containerEx.h
+$(BUILD)/LiBiNormSrc/LiBiConv.o: LiBiNormSrc/Regions.h
+$(BUILD)/LiBiNormSrc/LiBiConv.o: ../bioinformaticsLib/printEx.h
+$(BUILD)/LiBiNormSrc/LiBiConv.o: LiBiNormSrc/Options.h
+$(BUILD)/LiBiNormSrc/LiBiConv.o: ../bioinformaticsLib/featureFile.h
+$(BUILD)/LiBiNormSrc/LiBiConv.o: ../bioinformaticsLib/genbankFile.h
+$(BUILD)/LiBiNormSrc/LiBiConv.o: ../bioinformaticsLib/dataVec.h
+$(BUILD)/LiBiNormSrc/LiBiConv.o: LiBiNormSrc/GeneCountData.h
+$(BUILD)/LiBiNormSrc/LiBiConv.o: ../bioinformaticsLib/libParser.h
+$(BUILD)/LiBiNormSrc/LiBiConv.o: mcmcLib/mcmc.h mcmcLib/params.h
+$(BUILD)/LiBiNormSrc/LiBiConv.o: ../bioinformaticsLib/nelderMeadOptimiser.h
 $(BUILD)/LiBiNormSrc/LiBiCount.o: ../bioinformaticsLib/libCommon.h
 $(BUILD)/LiBiNormSrc/LiBiCount.o: ../bioinformaticsLib/containerEx.h
 $(BUILD)/LiBiNormSrc/LiBiCount.o: ../bioinformaticsLib/bamAlignmentEx.h
@@ -262,124 +291,42 @@ $(BUILD)/LiBiNormSrc/LiBiCount.o: ../bamtools/src/api/BamWriter.h
 $(BUILD)/LiBiNormSrc/LiBiCount.o: LiBiNormSrc/LiBiNorm.h
 $(BUILD)/LiBiNormSrc/LiBiCount.o: LiBiNormSrc/LiBiNormCore.h
 $(BUILD)/LiBiNormSrc/LiBiCount.o: LiBiNormSrc/ModelData.h
-$(BUILD)/LiBiNormSrc/ModelData.o: ../bioinformaticsLib/rand.h
-$(BUILD)/LiBiNormSrc/ModelData.o: ../bioinformaticsLib/dataVec.h
-$(BUILD)/LiBiNormSrc/ModelData.o: ../bioinformaticsLib/libCommon.h
-$(BUILD)/LiBiNormSrc/ModelData.o: ../bioinformaticsLib/printEx.h
-$(BUILD)/LiBiNormSrc/ModelData.o: ../bioinformaticsLib/inQuotes.h
-$(BUILD)/LiBiNormSrc/ModelData.o: ../bioinformaticsLib/stringEx.h
-$(BUILD)/LiBiNormSrc/ModelData.o: ../bioinformaticsLib/containerEx.h
-$(BUILD)/LiBiNormSrc/ModelData.o: LiBiNormSrc/ModelData.h mcmcLib/mcmc.h
-$(BUILD)/LiBiNormSrc/ModelData.o: mcmcLib/params.h
-$(BUILD)/LiBiNormSrc/ModelData.o: ../bioinformaticsLib/nelderMeadOptimiser.h
-$(BUILD)/LiBiNormSrc/ModelData.o: LiBiNormSrc/Options.h
-$(BUILD)/LiBiNormSrc/Regions.o: LiBiNormSrc/Regions.h
-$(BUILD)/LiBiNormSrc/Regions.o: ../bioinformaticsLib/printEx.h
-$(BUILD)/LiBiNormSrc/Regions.o: ../bioinformaticsLib/inQuotes.h
-$(BUILD)/LiBiNormSrc/Regions.o: ../bamtools/src/api/BamReader.h
-$(BUILD)/LiBiNormSrc/Regions.o: ../bamtools/src/api/api_global.h
-$(BUILD)/LiBiNormSrc/Regions.o: ../bamtools/src/shared/bamtools_global.h
-$(BUILD)/LiBiNormSrc/Regions.o: ../bamtools/src/api/BamAlignment.h
-$(BUILD)/LiBiNormSrc/Regions.o: ../bamtools/src/api/BamAux.h
-$(BUILD)/LiBiNormSrc/Regions.o: ../bamtools/src/api/BamConstants.h
-$(BUILD)/LiBiNormSrc/Regions.o: ../bamtools/src/api/BamIndex.h
-$(BUILD)/LiBiNormSrc/Regions.o: ../bamtools/src/api/SamHeader.h
-$(BUILD)/LiBiNormSrc/Regions.o: ../bamtools/src/api/SamProgramChain.h
-$(BUILD)/LiBiNormSrc/Regions.o: ../bamtools/src/api/SamProgram.h
-$(BUILD)/LiBiNormSrc/Regions.o: ../bamtools/src/api/SamReadGroupDictionary.h
-$(BUILD)/LiBiNormSrc/Regions.o: ../bamtools/src/api/SamReadGroup.h
-$(BUILD)/LiBiNormSrc/Regions.o: ../bamtools/src/api/SamSequenceDictionary.h
-$(BUILD)/LiBiNormSrc/Regions.o: ../bamtools/src/api/SamSequence.h
-$(BUILD)/LiBiNormSrc/Regions.o: LiBiNormSrc/Options.h
-$(BUILD)/LiBiNormSrc/MakeFastq.o: LiBiNormSrc/MakeFastq.h
-$(BUILD)/LiBiNormSrc/MakeFastq.o: ../bamtools/src/api/BamReader.h
-$(BUILD)/LiBiNormSrc/MakeFastq.o: ../bamtools/src/api/api_global.h
-$(BUILD)/LiBiNormSrc/MakeFastq.o: ../bamtools/src/shared/bamtools_global.h
-$(BUILD)/LiBiNormSrc/MakeFastq.o: ../bamtools/src/api/BamAlignment.h
-$(BUILD)/LiBiNormSrc/MakeFastq.o: ../bamtools/src/api/BamAux.h
-$(BUILD)/LiBiNormSrc/MakeFastq.o: ../bamtools/src/api/BamConstants.h
-$(BUILD)/LiBiNormSrc/MakeFastq.o: ../bamtools/src/api/BamIndex.h
-$(BUILD)/LiBiNormSrc/MakeFastq.o: ../bamtools/src/api/SamHeader.h
-$(BUILD)/LiBiNormSrc/MakeFastq.o: ../bamtools/src/api/SamProgramChain.h
-$(BUILD)/LiBiNormSrc/MakeFastq.o: ../bamtools/src/api/SamProgram.h
-$(BUILD)/LiBiNormSrc/MakeFastq.o: ../bamtools/src/api/SamReadGroupDictionary.h
-$(BUILD)/LiBiNormSrc/MakeFastq.o: ../bamtools/src/api/SamReadGroup.h
-$(BUILD)/LiBiNormSrc/MakeFastq.o: ../bamtools/src/api/SamSequenceDictionary.h
-$(BUILD)/LiBiNormSrc/MakeFastq.o: ../bamtools/src/api/SamSequence.h
-$(BUILD)/LiBiNormSrc/MakeFastq.o: ../bioinformaticsLib/libCommon.h
-$(BUILD)/LiBiNormSrc/MakeFastq.o: ../bioinformaticsLib/stringEx.h
-$(BUILD)/LiBiNormSrc/MakeFastq.o: ../bioinformaticsLib/inQuotes.h
-$(BUILD)/LiBiNormSrc/MakeFastq.o: ../bioinformaticsLib/fastaFile.h
-$(BUILD)/LiBiNormSrc/LiBiConv.o: ../bamtools/src/api/BamReader.h
-$(BUILD)/LiBiNormSrc/LiBiConv.o: ../bamtools/src/api/api_global.h
-$(BUILD)/LiBiNormSrc/LiBiConv.o: ../bamtools/src/shared/bamtools_global.h
-$(BUILD)/LiBiNormSrc/LiBiConv.o: ../bamtools/src/api/BamAlignment.h
-$(BUILD)/LiBiNormSrc/LiBiConv.o: ../bamtools/src/api/BamAux.h
-$(BUILD)/LiBiNormSrc/LiBiConv.o: ../bamtools/src/api/BamConstants.h
-$(BUILD)/LiBiNormSrc/LiBiConv.o: ../bamtools/src/api/BamIndex.h
-$(BUILD)/LiBiNormSrc/LiBiConv.o: ../bamtools/src/api/SamHeader.h
-$(BUILD)/LiBiNormSrc/LiBiConv.o: ../bamtools/src/api/SamProgramChain.h
-$(BUILD)/LiBiNormSrc/LiBiConv.o: ../bamtools/src/api/SamProgram.h
-$(BUILD)/LiBiNormSrc/LiBiConv.o: ../bamtools/src/api/SamReadGroupDictionary.h
-$(BUILD)/LiBiNormSrc/LiBiConv.o: ../bamtools/src/api/SamReadGroup.h
-$(BUILD)/LiBiNormSrc/LiBiConv.o: ../bamtools/src/api/SamSequenceDictionary.h
-$(BUILD)/LiBiNormSrc/LiBiConv.o: ../bamtools/src/api/SamSequence.h
-$(BUILD)/LiBiNormSrc/LiBiConv.o: ../bioinformaticsLib/libCommon.h
-$(BUILD)/LiBiNormSrc/LiBiConv.o: ../bioinformaticsLib/stringEx.h
-$(BUILD)/LiBiNormSrc/LiBiConv.o: ../bioinformaticsLib/inQuotes.h
-$(BUILD)/LiBiNormSrc/LiBiConv.o: LiBiNormSrc/LiBiConv.h
-$(BUILD)/LiBiNormSrc/LiBiConv.o: LiBiNormSrc/FeatureFileEx.h
-$(BUILD)/LiBiNormSrc/LiBiConv.o: ../bioinformaticsLib/containerEx.h
-$(BUILD)/LiBiNormSrc/LiBiConv.o: LiBiNormSrc/Regions.h
-$(BUILD)/LiBiNormSrc/LiBiConv.o: ../bioinformaticsLib/printEx.h
-$(BUILD)/LiBiNormSrc/LiBiConv.o: LiBiNormSrc/Options.h
-$(BUILD)/LiBiNormSrc/LiBiConv.o: ../bioinformaticsLib/featureFile.h
-$(BUILD)/LiBiNormSrc/LiBiConv.o: ../bioinformaticsLib/genbankFile.h
-$(BUILD)/LiBiNormSrc/LiBiConv.o: ../bioinformaticsLib/dataVec.h
-$(BUILD)/LiBiNormSrc/LiBiConv.o: LiBiNormSrc/GeneCountData.h
-$(BUILD)/LiBiNormSrc/LiBiConv.o: ../bioinformaticsLib/libParser.h
-$(BUILD)/LiBiNormSrc/LiBiConv.o: mcmcLib/mcmc.h mcmcLib/params.h
-$(BUILD)/LiBiNormSrc/LiBiConv.o: ../bioinformaticsLib/nelderMeadOptimiser.h
-$(BUILD)/LiBiNormSrc/GeneCountData.o: LiBiNormSrc/Options.h
-$(BUILD)/LiBiNormSrc/GeneCountData.o: LiBiNormSrc/GeneCountData.h
-$(BUILD)/LiBiNormSrc/GeneCountData.o: ../bioinformaticsLib/containerEx.h
-$(BUILD)/LiBiNormSrc/GeneCountData.o: ../bioinformaticsLib/libParser.h
-$(BUILD)/LiBiNormSrc/GeneCountData.o: ../bioinformaticsLib/libCommon.h
-$(BUILD)/LiBiNormSrc/GeneCountData.o: mcmcLib/mcmc.h mcmcLib/params.h
-$(BUILD)/LiBiNormSrc/GeneCountData.o: ../bioinformaticsLib/nelderMeadOptimiser.h
-$(BUILD)/LiBiNormSrc/GeneCountData.o: ../bioinformaticsLib/stringEx.h
-$(BUILD)/LiBiNormSrc/GeneCountData.o: ../bioinformaticsLib/inQuotes.h
-$(BUILD)/LiBiNormSrc/GeneCountData.o: ../bioinformaticsLib/dataVec.h
-$(BUILD)/LiBiNormSrc/GeneCountData.o: ../bioinformaticsLib/printEx.h
-$(BUILD)/LiBiNormSrc/FeatureFileEx.o: LiBiNormSrc/FeatureFileEx.h
-$(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bioinformaticsLib/containerEx.h
-$(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bioinformaticsLib/libCommon.h
-$(BUILD)/LiBiNormSrc/FeatureFileEx.o: LiBiNormSrc/Regions.h
-$(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bioinformaticsLib/printEx.h
-$(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bioinformaticsLib/inQuotes.h
-$(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bamtools/src/api/BamReader.h
-$(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bamtools/src/api/api_global.h
-$(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bamtools/src/shared/bamtools_global.h
-$(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bamtools/src/api/BamAlignment.h
-$(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bamtools/src/api/BamAux.h
-$(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bamtools/src/api/BamConstants.h
-$(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bamtools/src/api/BamIndex.h
-$(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bamtools/src/api/SamHeader.h
-$(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bamtools/src/api/SamProgramChain.h
-$(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bamtools/src/api/SamProgram.h
-$(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bamtools/src/api/SamReadGroupDictionary.h
-$(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bamtools/src/api/SamReadGroup.h
-$(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bamtools/src/api/SamSequenceDictionary.h
-$(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bamtools/src/api/SamSequence.h
-$(BUILD)/LiBiNormSrc/FeatureFileEx.o: LiBiNormSrc/Options.h
-$(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bioinformaticsLib/featureFile.h
-$(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bioinformaticsLib/genbankFile.h
-$(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bioinformaticsLib/stringEx.h
-$(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bioinformaticsLib/dataVec.h
-$(BUILD)/LiBiNormSrc/FeatureFileEx.o: LiBiNormSrc/GeneCountData.h
-$(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bioinformaticsLib/libParser.h
-$(BUILD)/LiBiNormSrc/FeatureFileEx.o: mcmcLib/mcmc.h mcmcLib/params.h
-$(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bioinformaticsLib/nelderMeadOptimiser.h
+$(BUILD)/LiBiNormSrc/LiBiDedup.o: LiBiNormSrc/LiBiDedup.h
+$(BUILD)/LiBiNormSrc/LiBiDedup.o: ../bamtools/src/api/BamReader.h
+$(BUILD)/LiBiNormSrc/LiBiDedup.o: ../bamtools/src/api/api_global.h
+$(BUILD)/LiBiNormSrc/LiBiDedup.o: ../bamtools/src/shared/bamtools_global.h
+$(BUILD)/LiBiNormSrc/LiBiDedup.o: ../bamtools/src/api/BamAlignment.h
+$(BUILD)/LiBiNormSrc/LiBiDedup.o: ../bamtools/src/api/BamAux.h
+$(BUILD)/LiBiNormSrc/LiBiDedup.o: ../bamtools/src/api/BamConstants.h
+$(BUILD)/LiBiNormSrc/LiBiDedup.o: ../bamtools/src/api/BamIndex.h
+$(BUILD)/LiBiNormSrc/LiBiDedup.o: ../bamtools/src/api/SamHeader.h
+$(BUILD)/LiBiNormSrc/LiBiDedup.o: ../bamtools/src/api/SamProgramChain.h
+$(BUILD)/LiBiNormSrc/LiBiDedup.o: ../bamtools/src/api/SamProgram.h
+$(BUILD)/LiBiNormSrc/LiBiDedup.o: ../bamtools/src/api/SamReadGroupDictionary.h
+$(BUILD)/LiBiNormSrc/LiBiDedup.o: ../bamtools/src/api/SamReadGroup.h
+$(BUILD)/LiBiNormSrc/LiBiDedup.o: ../bamtools/src/api/SamSequenceDictionary.h
+$(BUILD)/LiBiNormSrc/LiBiDedup.o: ../bamtools/src/api/SamSequence.h
+$(BUILD)/LiBiNormSrc/LiBiDedup.o: ../bamtools/src/api/BamWriter.h
+$(BUILD)/LiBiNormSrc/LiBiDedup.o: ../bioinformaticsLib/libCommon.h
+$(BUILD)/LiBiNormSrc/LiBiDedup.o: ../bioinformaticsLib/stringEx.h
+$(BUILD)/LiBiNormSrc/LiBiDedup.o: ../bioinformaticsLib/inQuotes.h
+$(BUILD)/LiBiNormSrc/LiBiDedup.o: LiBiNormSrc/Regions.h
+$(BUILD)/LiBiNormSrc/LiBiDedup.o: ../bioinformaticsLib/printEx.h
+$(BUILD)/LiBiNormSrc/LiBiDedup.o: LiBiNormSrc/Options.h
+$(BUILD)/LiBiNormSrc/LiBiNormCore.o: LiBiNormSrc/LiBiNormCore.h
+$(BUILD)/LiBiNormSrc/LiBiNormCore.o: ../bioinformaticsLib/stringEx.h
+$(BUILD)/LiBiNormSrc/LiBiNormCore.o: ../bioinformaticsLib/inQuotes.h
+$(BUILD)/LiBiNormSrc/LiBiNormCore.o: ../bioinformaticsLib/containerEx.h
+$(BUILD)/LiBiNormSrc/LiBiNormCore.o: LiBiNormSrc/GeneCountData.h
+$(BUILD)/LiBiNormSrc/LiBiNormCore.o: ../bioinformaticsLib/libParser.h
+$(BUILD)/LiBiNormSrc/LiBiNormCore.o: ../bioinformaticsLib/libCommon.h
+$(BUILD)/LiBiNormSrc/LiBiNormCore.o: mcmcLib/mcmc.h mcmcLib/params.h
+$(BUILD)/LiBiNormSrc/LiBiNormCore.o: ../bioinformaticsLib/nelderMeadOptimiser.h
+$(BUILD)/LiBiNormSrc/LiBiNormCore.o: ../bioinformaticsLib/dataVec.h
+$(BUILD)/LiBiNormSrc/LiBiNormCore.o: ../bioinformaticsLib/printEx.h
+$(BUILD)/LiBiNormSrc/LiBiNormCore.o: LiBiNormSrc/Options.h
+$(BUILD)/LiBiNormSrc/LiBiNormCore.o: LiBiNormSrc/ModelData.h
+$(BUILD)/LiBiNormSrc/LiBiNormCore.o: LiBiNormSrc/LiBiOptimiser.h
 $(BUILD)/LiBiNormSrc/LiBiOptimiser.o: ../bioinformaticsLib/rand.h
 $(BUILD)/LiBiNormSrc/LiBiOptimiser.o: ../bioinformaticsLib/dataVec.h
 $(BUILD)/LiBiNormSrc/LiBiOptimiser.o: ../bioinformaticsLib/libCommon.h
@@ -391,20 +338,6 @@ $(BUILD)/LiBiNormSrc/LiBiOptimiser.o: ../bioinformaticsLib/nelderMeadOptimiser.h
 $(BUILD)/LiBiNormSrc/LiBiOptimiser.o: ../bioinformaticsLib/stringEx.h
 $(BUILD)/LiBiNormSrc/LiBiOptimiser.o: LiBiNormSrc/ModelData.h mcmcLib/mcmc.h
 $(BUILD)/LiBiNormSrc/LiBiOptimiser.o: mcmcLib/params.h
-$(BUILD)/LiBiNormSrc/LiBiVariation.o: ../bioinformaticsLib/libParser.h
-$(BUILD)/LiBiNormSrc/LiBiVariation.o: ../bioinformaticsLib/libCommon.h
-$(BUILD)/LiBiNormSrc/LiBiVariation.o: LiBiNormSrc/LiBiVariation.h
-$(BUILD)/LiBiNormSrc/LiBiVariation.o: LiBiNormSrc/LiBiNormCore.h
-$(BUILD)/LiBiNormSrc/LiBiVariation.o: ../bioinformaticsLib/stringEx.h
-$(BUILD)/LiBiNormSrc/LiBiVariation.o: ../bioinformaticsLib/inQuotes.h
-$(BUILD)/LiBiNormSrc/LiBiVariation.o: ../bioinformaticsLib/containerEx.h
-$(BUILD)/LiBiNormSrc/LiBiVariation.o: LiBiNormSrc/GeneCountData.h
-$(BUILD)/LiBiNormSrc/LiBiVariation.o: mcmcLib/mcmc.h mcmcLib/params.h
-$(BUILD)/LiBiNormSrc/LiBiVariation.o: ../bioinformaticsLib/nelderMeadOptimiser.h
-$(BUILD)/LiBiNormSrc/LiBiVariation.o: ../bioinformaticsLib/dataVec.h
-$(BUILD)/LiBiNormSrc/LiBiVariation.o: ../bioinformaticsLib/printEx.h
-$(BUILD)/LiBiNormSrc/LiBiVariation.o: LiBiNormSrc/Options.h
-$(BUILD)/LiBiNormSrc/LiBiVariation.o: LiBiNormSrc/ModelData.h
 $(BUILD)/LiBiNormSrc/LiBiTools.o: ../bamtools/src/api/BamReader.h
 $(BUILD)/LiBiNormSrc/LiBiTools.o: ../bamtools/src/api/api_global.h
 $(BUILD)/LiBiNormSrc/LiBiTools.o: ../bamtools/src/shared/bamtools_global.h
@@ -436,6 +369,68 @@ $(BUILD)/LiBiNormSrc/LiBiTools.o: ../bioinformaticsLib/libParser.h
 $(BUILD)/LiBiNormSrc/LiBiTools.o: mcmcLib/mcmc.h mcmcLib/params.h
 $(BUILD)/LiBiNormSrc/LiBiTools.o: ../bioinformaticsLib/nelderMeadOptimiser.h
 $(BUILD)/LiBiNormSrc/LiBiTools.o: LiBiNormSrc/LiBiTools.h
+$(BUILD)/LiBiNormSrc/LiBiVariation.o: ../bioinformaticsLib/libParser.h
+$(BUILD)/LiBiNormSrc/LiBiVariation.o: ../bioinformaticsLib/libCommon.h
+$(BUILD)/LiBiNormSrc/LiBiVariation.o: LiBiNormSrc/LiBiVariation.h
+$(BUILD)/LiBiNormSrc/LiBiVariation.o: LiBiNormSrc/LiBiNormCore.h
+$(BUILD)/LiBiNormSrc/LiBiVariation.o: ../bioinformaticsLib/stringEx.h
+$(BUILD)/LiBiNormSrc/LiBiVariation.o: ../bioinformaticsLib/inQuotes.h
+$(BUILD)/LiBiNormSrc/LiBiVariation.o: ../bioinformaticsLib/containerEx.h
+$(BUILD)/LiBiNormSrc/LiBiVariation.o: LiBiNormSrc/GeneCountData.h
+$(BUILD)/LiBiNormSrc/LiBiVariation.o: mcmcLib/mcmc.h mcmcLib/params.h
+$(BUILD)/LiBiNormSrc/LiBiVariation.o: ../bioinformaticsLib/nelderMeadOptimiser.h
+$(BUILD)/LiBiNormSrc/LiBiVariation.o: ../bioinformaticsLib/dataVec.h
+$(BUILD)/LiBiNormSrc/LiBiVariation.o: ../bioinformaticsLib/printEx.h
+$(BUILD)/LiBiNormSrc/LiBiVariation.o: LiBiNormSrc/Options.h
+$(BUILD)/LiBiNormSrc/LiBiVariation.o: LiBiNormSrc/ModelData.h
+$(BUILD)/LiBiNormSrc/MakeFastq.o: LiBiNormSrc/MakeFastq.h
+$(BUILD)/LiBiNormSrc/MakeFastq.o: ../bamtools/src/api/BamReader.h
+$(BUILD)/LiBiNormSrc/MakeFastq.o: ../bamtools/src/api/api_global.h
+$(BUILD)/LiBiNormSrc/MakeFastq.o: ../bamtools/src/shared/bamtools_global.h
+$(BUILD)/LiBiNormSrc/MakeFastq.o: ../bamtools/src/api/BamAlignment.h
+$(BUILD)/LiBiNormSrc/MakeFastq.o: ../bamtools/src/api/BamAux.h
+$(BUILD)/LiBiNormSrc/MakeFastq.o: ../bamtools/src/api/BamConstants.h
+$(BUILD)/LiBiNormSrc/MakeFastq.o: ../bamtools/src/api/BamIndex.h
+$(BUILD)/LiBiNormSrc/MakeFastq.o: ../bamtools/src/api/SamHeader.h
+$(BUILD)/LiBiNormSrc/MakeFastq.o: ../bamtools/src/api/SamProgramChain.h
+$(BUILD)/LiBiNormSrc/MakeFastq.o: ../bamtools/src/api/SamProgram.h
+$(BUILD)/LiBiNormSrc/MakeFastq.o: ../bamtools/src/api/SamReadGroupDictionary.h
+$(BUILD)/LiBiNormSrc/MakeFastq.o: ../bamtools/src/api/SamReadGroup.h
+$(BUILD)/LiBiNormSrc/MakeFastq.o: ../bamtools/src/api/SamSequenceDictionary.h
+$(BUILD)/LiBiNormSrc/MakeFastq.o: ../bamtools/src/api/SamSequence.h
+$(BUILD)/LiBiNormSrc/MakeFastq.o: ../bioinformaticsLib/libCommon.h
+$(BUILD)/LiBiNormSrc/MakeFastq.o: ../bioinformaticsLib/stringEx.h
+$(BUILD)/LiBiNormSrc/MakeFastq.o: ../bioinformaticsLib/inQuotes.h
+$(BUILD)/LiBiNormSrc/MakeFastq.o: ../bioinformaticsLib/fastaFile.h
+$(BUILD)/LiBiNormSrc/ModelData.o: ../bioinformaticsLib/rand.h
+$(BUILD)/LiBiNormSrc/ModelData.o: ../bioinformaticsLib/dataVec.h
+$(BUILD)/LiBiNormSrc/ModelData.o: ../bioinformaticsLib/libCommon.h
+$(BUILD)/LiBiNormSrc/ModelData.o: ../bioinformaticsLib/printEx.h
+$(BUILD)/LiBiNormSrc/ModelData.o: ../bioinformaticsLib/inQuotes.h
+$(BUILD)/LiBiNormSrc/ModelData.o: ../bioinformaticsLib/stringEx.h
+$(BUILD)/LiBiNormSrc/ModelData.o: ../bioinformaticsLib/containerEx.h
+$(BUILD)/LiBiNormSrc/ModelData.o: LiBiNormSrc/ModelData.h mcmcLib/mcmc.h
+$(BUILD)/LiBiNormSrc/ModelData.o: mcmcLib/params.h
+$(BUILD)/LiBiNormSrc/ModelData.o: ../bioinformaticsLib/nelderMeadOptimiser.h
+$(BUILD)/LiBiNormSrc/ModelData.o: LiBiNormSrc/Options.h
+$(BUILD)/LiBiNormSrc/Regions.o: LiBiNormSrc/Regions.h
+$(BUILD)/LiBiNormSrc/Regions.o: ../bioinformaticsLib/printEx.h
+$(BUILD)/LiBiNormSrc/Regions.o: ../bioinformaticsLib/inQuotes.h
+$(BUILD)/LiBiNormSrc/Regions.o: ../bamtools/src/api/BamReader.h
+$(BUILD)/LiBiNormSrc/Regions.o: ../bamtools/src/api/api_global.h
+$(BUILD)/LiBiNormSrc/Regions.o: ../bamtools/src/shared/bamtools_global.h
+$(BUILD)/LiBiNormSrc/Regions.o: ../bamtools/src/api/BamAlignment.h
+$(BUILD)/LiBiNormSrc/Regions.o: ../bamtools/src/api/BamAux.h
+$(BUILD)/LiBiNormSrc/Regions.o: ../bamtools/src/api/BamConstants.h
+$(BUILD)/LiBiNormSrc/Regions.o: ../bamtools/src/api/BamIndex.h
+$(BUILD)/LiBiNormSrc/Regions.o: ../bamtools/src/api/SamHeader.h
+$(BUILD)/LiBiNormSrc/Regions.o: ../bamtools/src/api/SamProgramChain.h
+$(BUILD)/LiBiNormSrc/Regions.o: ../bamtools/src/api/SamProgram.h
+$(BUILD)/LiBiNormSrc/Regions.o: ../bamtools/src/api/SamReadGroupDictionary.h
+$(BUILD)/LiBiNormSrc/Regions.o: ../bamtools/src/api/SamReadGroup.h
+$(BUILD)/LiBiNormSrc/Regions.o: ../bamtools/src/api/SamSequenceDictionary.h
+$(BUILD)/LiBiNormSrc/Regions.o: ../bamtools/src/api/SamSequence.h
+$(BUILD)/LiBiNormSrc/Regions.o: LiBiNormSrc/Options.h
 
 $(BUILD)/bioinformaticsLib/codFile.o: ../bioinformaticsLib/codFile.h
 $(BUILD)/bioinformaticsLib/codFile.o: ../bioinformaticsLib/genomicPosition.h
@@ -494,7 +489,6 @@ $(BUILD)/bioinformaticsLib/rand.o: ../bioinformaticsLib/libCommon.h
 $(BUILD)/bioinformaticsLib/rand.o: ../bioinformaticsLib/printEx.h
 $(BUILD)/bioinformaticsLib/rand.o: ../bioinformaticsLib/inQuotes.h
 $(BUILD)/bioinformaticsLib/smithWaterman.o: ../bioinformaticsLib/smithWaterman.h
-
 $(BUILD)/bamtools/src/api/BamAlignment.o: ../bamtools/src/api/BamAlignment.h
 $(BUILD)/bamtools/src/api/BamAlignment.o: ../bamtools/src/api/api_global.h
 $(BUILD)/bamtools/src/api/BamAlignment.o: ../bamtools/src/shared/bamtools_global.h

@@ -637,25 +637,45 @@ void LiBiNormCore::printBias()
 
 #define BIN_COUNT 100
 
-void LiBiNormCore::printDistribution()
+void LiBiNormCore::printDistribution(GeneCountData & geneCounts)
 {
 	TsvFile distResult;
 	string filename(outputFileroot.replaceSuffix("_distribution.txt"));
 	if (!distResult.open(filename))
 		exitFail("Unable to open output File ", filename);
 
+	vector<int> lengths{ 200,500,1000,2000,3000,4000,6000,8000,10000,15000,20000 };
+
 	for (modelType modl : allModels())
 	{
 		distResult.print(modl);
-		vector<int> lengths{ 200,500,1000,2000,3000,4000,6000,8000,10000,15000,20000 };
 
 		for (auto l : lengths)
 		{
-			dataVec dist = getDistribution(modl, l, BIN_COUNT, bestResults[modl].params[logValue]);
-			distResult.print(l, dist);
+			if (bestResults[modl].params[logValue].size())
+			{
+				dataVec dist = getDistribution(modl, l, BIN_COUNT, bestResults[modl].params[logValue]);
+				distResult.print(l, dist);
+			}
+			else
+				distResult.print();
 		}
 		distResult.print();
 	}
+
+	vector<dataVec> counts(lengths.size(),dataVec(BIN_COUNT));
+	geneCounts.getDistribution(lengths, BIN_COUNT,counts);
+
+	distResult.print("Reads");
+
+	for (size_t i = 0;i < lengths.size();i++)
+	{
+		counts[i].smooth(2);
+		counts[i].normalise();
+		distResult.print(lengths[i], counts[i]);
+	}
+	distResult.print();
+
 }
 
 

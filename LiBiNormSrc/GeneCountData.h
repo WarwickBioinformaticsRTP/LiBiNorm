@@ -174,6 +174,10 @@ public:
 	bool outputLandscape(const std::string & filename);
 	bool outputHeatmapData(const stringEx & filename);
 
+	//	Get read distribution 
+	void getDistribution(const std::vector<int> & lengths, size_t points, std::vector<dataVec>  & counts);
+
+
 	void useSelectedGenes(const geneListFilenameData & filename);
 
 	void flatten();

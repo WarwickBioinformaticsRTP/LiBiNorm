@@ -278,7 +278,7 @@ int LiBiNorm::main(int argc, char **argv)
 			printResults();
 			printBias();
 #ifdef PRINT_DISTRIBUTION
-			printDistribution();
+			printDistribution(geneCounts);
 #endif
 		}
 

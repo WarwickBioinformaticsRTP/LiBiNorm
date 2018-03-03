@@ -408,6 +408,58 @@ bool GeneCountData::outputHeatmapData(const stringEx & filename)
 	return true;
 }
 
+
+void GeneCountData::getDistribution(const vector<int> & histLengths, size_t points, vector<dataVec> & counts)
+{
+	map<VEC_DATA_TYPE,size_t> breakpoints;
+	for (size_t i = 0; i < histLengths.size() - 1; i++)
+		breakpoints.emplace(sqrt(histLengths[i] * histLengths[i + 1]),i);
+	breakpoints.emplace(1E99, histLengths.size()-1);
+
+	vector<double> E(points);
+
+	//	Increment from 1 because the first entry is the reference length
+	for (size_t i = 1; i < info.size(); i++)
+	{
+		if (info[i].useForParameterEstimation)
+		{
+
+			string name = info[i].name;
+			const rnaSeqPositionData & data = readPositionData[name];
+
+			size_t pos = breakpoints.lower_bound(lengths[0][i])->second;
+			double lengthInc = (double)lengths[0][i] / points;
+			for (size_t j = 0; j < points; j++)
+				E[j] = lengthInc * j;
+
+			for (size_t strand = 0; strand < 2; strand++)
+			{
+				const rnaPosVec & readPositions = data.positions[strand];
+				for (auto v : readPositions)
+				{
+					size_t l = 0;
+					size_t h = points - 1;
+					size_t k = l;
+					while ((h - l) > 1)
+					{
+						k = (h + l) / 2;
+						if (v < E[k])
+							h = k;
+						else
+							l = k;
+					}
+					if (v >= E[h])
+						k = h;
+					else
+						k = l;
+					counts[pos][k]++;
+				}
+			}
+		}
+	}
+}
+
+
 //	Find the number of read position values in 'this' (a vector) that sits within each bin of the
 //	histogram defined by E.   The results go into the 'freq'vector
 //	This is used as part of the liklyhood calculations
