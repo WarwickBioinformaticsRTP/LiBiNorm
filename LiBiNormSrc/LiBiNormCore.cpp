@@ -153,7 +153,8 @@ void LiBiNormCore::mcmcThread(optionsType options)
 
 				while ((modelsLeftToDo = (nelderMeadCounter < allModels().size())))
 				{
-					m = allModels()[allModels().size() - nelderMeadCounter++ -1];
+//					m = allModels()[allModels().size() - nelderMeadCounter++ -1];
+					m = allModels()[nelderMeadCounter++];
 					if (threadLoopCounts[m].requested > 0)
 						break;
 				}
@@ -646,6 +647,19 @@ void LiBiNormCore::printDistribution(GeneCountData & geneCounts)
 
 	vector<int> lengths{ 200,500,1000,2000,3000,4000,6000,8000,10000,15000,20000 };
 
+	vector<dataVec> counts(lengths.size(), dataVec(BIN_COUNT));
+	geneCounts.getDistribution(lengths, BIN_COUNT, counts);
+
+	distResult.print("Reads");
+
+	for (size_t i = 0; i < lengths.size(); i++)
+	{
+		counts[i].smooth(2);
+		counts[i].normalise();
+		distResult.print(lengths[i], counts[i]);
+	}
+	distResult.print();
+
 	for (modelType modl : allModels())
 	{
 		distResult.print(modl);
@@ -662,20 +676,6 @@ void LiBiNormCore::printDistribution(GeneCountData & geneCounts)
 		}
 		distResult.print();
 	}
-
-	vector<dataVec> counts(lengths.size(),dataVec(BIN_COUNT));
-	geneCounts.getDistribution(lengths, BIN_COUNT,counts);
-
-	distResult.print("Reads");
-
-	for (size_t i = 0;i < lengths.size();i++)
-	{
-		counts[i].smooth(2);
-		counts[i].normalise();
-		distResult.print(lengths[i], counts[i]);
-	}
-	distResult.print();
-
 }
 
 

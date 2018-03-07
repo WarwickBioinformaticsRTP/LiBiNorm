@@ -54,7 +54,7 @@ void setSSfun(optionsType & options,modelType m)
 //	Returns a list of all the models, which is used to iterate through the list
 const vector<modelType> & allModels()
 {
-	static vector<modelType> list{ ModelA ,ModelB ,ModelC,ModelD,ModelE,ModelBD };
+	static vector<modelType> list{ModelBD, ModelA ,ModelB ,ModelC,ModelD,ModelE };
 	return list;
 };
 
@@ -859,6 +859,8 @@ dataVec getDistribution(modelType m, size_t length, size_t points, dataVec & par
 			     1/t1/(t1+ t2) *(1 - exp(-x*(t1+t2)) - exp(-(l-x)*t1) + exp(-l*t1-x*t2))/d;
 		break;
 	case ModelC:
+		dist = (x> h)*(x < l-h)*exp(-t2*(x+h)) +  exp(-t2*(x))/d;
+		break;
 	case findBestModel:
 		break;
 	}
