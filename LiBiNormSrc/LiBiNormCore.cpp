@@ -677,20 +677,20 @@ void LiBiNormCore::printDistribution(GeneCountData & geneCounts)
 
 	if (Nmodels)
 	{
-		distResult.printStart(bestModel);
+		distResult.printStart(theModel);
 
 		for (int i : entries)
 		{
-			dataVec dist = getDistribution(bestModel, lengths[i], BIN_COUNT, bestResults[bestModel].params[logValue]);
+			dataVec dist = getDistribution(theModel, lengths[i], BIN_COUNT, bestResults[theModel].params[logValue]);
 			distResult.printMiddle(dist);
 		}
 		distResult.printEnd();
 
 		for (modelType modl : allModels())
 		{
-			distResult.printStart(_s(conv(modl)," LL=",$("%7.0f",-bestResults[modl].LLresult)));
 			if (bestResults[modl].params[logValue].size())
 			{
+				distResult.printStart(_s(conv(modl), " LL=", $("%7.0f", -bestResults[modl].LLresult)));
 				for (int i : entries)
 				{
 					dataVec dist = getDistribution(modl, lengths[i], BIN_COUNT, bestResults[modl].params[logValue]);
@@ -699,6 +699,7 @@ void LiBiNormCore::printDistribution(GeneCountData & geneCounts)
 			}
 			else
 			{
+				distResult.printStart(modl);
 				distResult.printRepeat(BIN_COUNT * entries.size());
 			}
 			distResult.printEnd();

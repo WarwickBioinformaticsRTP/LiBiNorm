@@ -254,12 +254,15 @@ int LiBiCount::main(int argc, char **argv)
 	else if (theModel == noModelSpecified)
 	{
 		theModel = DEFAULT_MODEL;
+		Nmodels = 1;
 	}
 	else if (theModel == none)
 	{
 		normalise = false;
 		Nmodels = 0;
 	}
+	else
+		Nmodels = 1;
 
 	if (countsFilename)
 		tempDirectory = countsFilename.replaceSuffix("_tempFiles");

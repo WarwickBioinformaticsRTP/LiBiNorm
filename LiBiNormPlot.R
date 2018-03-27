@@ -6,7 +6,7 @@ library(gridExtra)
 library (scales)
 
 ##  For debugging, otherwise pass in file root as parameter
-base = "Y:\\LiBiNorm validate\\Combs\\testModel\\SRR1743157"
+## base = "Y:\\LiBiNorm validate\\Combs\\testCount\\SRR1743157"
 if (!exists("base")) {
 args = commandArgs(trailingOnly=TRUE)
 if (length(args) != 1) {
