@@ -6,7 +6,7 @@ library(gridExtra)
 library (scales)
 
 ##  For debugging, otherwise pass in file root as parameter
-base = "Y:\\LiBiNorm validate\\Combs\\testCount\\SRR1743157"
+base = "Y:\\LiBiNorm validate\\Combs\\testModel\\SRR1743157"
 if (!exists("base")) {
 args = commandArgs(trailingOnly=TRUE)
 if (length(args) != 1) {
@@ -75,18 +75,17 @@ if (!file.exists(filename)) {
   close(con)
   for (i in c(3:10)) {params[,i] <- as.numeric(as.character(params[,i]))}
   nulls <- c(0,0,0,0,0,0,0,0)
-  # And now fill in the mussing data
-  params <-  rbind(params[1:9,],c("t1","A",nulls),c("t2","A",nulls),c("a","A",nulls),params[-(1:9),])
-  params <-  rbind(params[1:18,],c("a","B",nulls),params[-(1:18),])
-  params <-  rbind(params[1:23,],c("t1","C",nulls),params[-(1:23),])
-  params <-  rbind(params[1:25,],c("a","C",nulls),params[-(1:25),])
-  params <-  rbind(params[1:32,],c("a","D",nulls),params[-(1:32),])
-  params <-  rbind(params[1:39,],c("a","E",nulls),params[-(1:39),])
+  params <-  rbind(params[1:2,],c("t1","A",nulls),c("t2","A",nulls),c("a","A",nulls),params[-(1:2),])
+  params <-  rbind(params[1:11,],c("a","B",nulls),params[-(1:11),])
+  params <-  rbind(params[1:16,],c("t1","C",nulls),params[-(1:16),])
+  params <-  rbind(params[1:18,],c("a","C",nulls),params[-(1:18),])
+  params <-  rbind(params[1:25,],c("a","D",nulls),params[-(1:25),])
+  params <-  rbind(params[1:32,],c("a","E",nulls),params[-(1:32),])
 
   for (i in c(3:10)) {params[,i] <- as.numeric(as.character(params[,i]))}
 
   # So that the models are plotted in the right order
-  params$Model <- factor(params$Model, levels = c("BD","A","B","C","D","E"))
+  params$Model <- factor(params$Model, levels = c("A","B","C","D","E","BD"))
 
   # Extract out data for each parameter
   dParams = params[c(1,8,15,22,29,36),]
@@ -97,9 +96,9 @@ if (!file.exists(filename)) {
 
   # t1 and t2 are premultipled  
   tParams$"Abs Opt" <- tParams$"Abs Opt"*10000
-  tParams$"Abs Opt"[c(11,12)] <- tParams$"Abs Opt"[c(11,12)]/100
+  tParams$"Abs Opt"[c(9,10)] <- tParams$"Abs Opt"[c(9,10)]/100
   tParams$"Spread Abs" <- tParams$"Spread Abs"*10000
-  tParams$"Spread Abs"[c(11,12)] <- tParams$"Spread Abs"[c(11,12)]/100
+  tParams$"Spread Abs"[c(9,10)] <- tParams$"Spread Abs"[c(9,10)]/100
 
   errSize <- 0.5
 
@@ -176,12 +175,8 @@ if (!file.exists(filename)) {
   #  into a single dataframe using rbind
   con = file(filename, "r")
   models <- as.data.frame(t(read.table(con,skip=2,nrows=2,row.names=1)))
-  models <- cbind (models,"BD")
+  models <- cbind (models,"A")
   colnames(models)[3] <- "Model";
-  model <- as.data.frame(t(read.table(con,skip=3,nrows=2,row.names=1)))
-  model <- cbind (model,"A")
-  colnames(model)[3] <- "Model";
-  models <- rbind(models,model)
   model <- as.data.frame(t(read.table(con,skip=3,nrows=2,row.names=1)))
   model <- cbind (model,"B")
   colnames(model)[3] <- "Model";
@@ -196,6 +191,10 @@ if (!file.exists(filename)) {
   models <- rbind(models,model)
   model <- as.data.frame(t(read.table(con,skip=3,nrows=2,row.names=1)))
   model <- cbind (model,"E")
+  colnames(model)[3] <- "Model";
+  models <- rbind(models,model)
+  model <- as.data.frame(t(read.table(con,skip=3,nrows=2,row.names=1)))
+  model <- cbind (model,"BD")
   colnames(model)[3] <- "Model";
   models <- rbind(models,model)
   close(con)
