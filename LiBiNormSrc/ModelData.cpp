@@ -54,12 +54,12 @@ void setSSfun(optionsType & options,modelType m)
 //	Returns a list of all the models, which is used to iterate through the list
 const vector<modelType> & allModels()
 {
-	static vector<modelType> list{ModelBD, ModelA ,ModelB ,ModelC,ModelD,ModelE };
+	static vector<modelType> list{ModelA ,ModelB ,ModelC,ModelD,ModelE,ModelBD };
 	return list;
 };
 
 //	Converts a modelType to a string
-string conv(const modelType m, bool removeGaps)
+stringEx conv(const modelType m, bool removeGaps)
 {
 	stringEx retVal;
 	switch (m)
@@ -820,13 +820,13 @@ dataVec getDistribution(modelType m, size_t length, size_t points, dataVec & par
 		break;
 	}
 
-
-	//	VEC_DATA_TYPE l = geneCountData.lengths[0][i];
+	
 	VEC_DATA_TYPE l = length;
-	dataVec x(points + 1), dist(points), dist2(points);
+	dataVec x(points), dist(points), dist2(points);
 	for (size_t j = 0; j < points; j++)
 		x[j] = (l / points) * (j + 0.5);
 
+	//	This is all vector arithmetic, as supported by DataVec
 	switch (m)
 	{
 	case noModelSpecified:	//This should not happen

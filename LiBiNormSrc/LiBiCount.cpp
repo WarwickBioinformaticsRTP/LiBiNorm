@@ -246,6 +246,7 @@ int LiBiCount::main(int argc, char **argv)
 	}
 
 	//	If we have specified -N then we run all of the models for preset number of runs.
+	Nmodels = allModels().size();
 	if (theModel == findBestModel)
 	{
 		NrunsOtherModels = Nruns;
@@ -257,6 +258,7 @@ int LiBiCount::main(int argc, char **argv)
 	else if (theModel == none)
 	{
 		normalise = false;
+		Nmodels = 0;
 	}
 
 	if (countsFilename)

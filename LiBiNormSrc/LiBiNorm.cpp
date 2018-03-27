@@ -201,14 +201,21 @@ int LiBiNorm::main(int argc, char **argv)
 	landscapeFilename = argv[argc - 1];
 
 	//	If we specifiy the model then run the other models just once 
+	Nmodels = allModels().size();
 	if (theModel == none)
+	{
 		normalise = false;
+		Nmodels = 0;
+	}
 	else if (theModel == noModelSpecified)
 		NrunsOtherModels = Nruns;
 	else if (theModel == findBestModel)
 		NrunsOtherModels = Nruns;
 	else
-		NrunsOtherModels = (Nruns ==1)?0:1;
+	{
+		NrunsOtherModels = (Nruns == 1) ? 0 : 1;
+		Nmodels = 1;
+	}
 
 
 #ifdef USE_GROUPS_OF_GENES_FOR_DISCOVERY

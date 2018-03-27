@@ -74,7 +74,7 @@ protected:
 protected:
 
 	bool normalise, pauseAtEnd,nelderMead;
-	size_t Nsimu;
+	size_t Nsimu,Nmodels;
 	modelType theModel, bestModel;
 	size_t maxReads,maxGeneLength,Nthreads;
 	mcmcRunId Nruns,NrunsOtherModels;

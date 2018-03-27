@@ -650,31 +650,80 @@ void LiBiNormCore::printDistribution(GeneCountData & geneCounts)
 	vector<dataVec> counts(lengths.size(), dataVec(BIN_COUNT));
 	geneCounts.getDistribution(lengths, BIN_COUNT, counts);
 
-	distResult.print("Reads");
-
 	for (size_t i = 0; i < lengths.size(); i++)
 	{
 		counts[i].smooth(2);
 		counts[i].normalise();
-		distResult.print(lengths[i], counts[i]);
 	}
+
+	vector<int> entries = { 1,2,3,5,7 };
+
+	distResult.print("ModelCount",Nmodels);
+	distResult.printStart("Position");
+	for (int i : entries)
+	{	
+		for (int j = 0;j < counts[i].size();j++)
+			distResult.printMiddle((double)j/counts[i].size());
+	}
+
+	distResult.print();
+	distResult.printStart("Reads");
+	distResult.printEnd(counts[1], counts[2], counts[3], counts[5], counts[7]);
+	distResult.printStart("Length");
+	for (int i : entries)
+		distResult.printRepeat(counts[i].size(), lengths[i]);
+	distResult.printEnd();
+
+
+	if (Nmodels)
+	{
+		distResult.printStart(bestModel);
+
+		for (int i : entries)
+		{
+			dataVec dist = getDistribution(bestModel, lengths[i], BIN_COUNT, bestResults[bestModel].params[logValue]);
+			distResult.printMiddle(dist);
+		}
+		distResult.printEnd();
+
+		for (modelType modl : allModels())
+		{
+			distResult.printStart(_s(conv(modl)," LL=",$("%7.0f",-bestResults[modl].LLresult)));
+			if (bestResults[modl].params[logValue].size())
+			{
+				for (int i : entries)
+				{
+					dataVec dist = getDistribution(modl, lengths[i], BIN_COUNT, bestResults[modl].params[logValue]);
+					distResult.printMiddle(dist);
+				}
+			}
+			else
+			{
+				distResult.printRepeat(BIN_COUNT * entries.size());
+			}
+			distResult.printEnd();
+		}
+		distResult.print();
+	}
+
+	distResult.print("Reads");
+	for (size_t i = 0; i < lengths.size(); i++)
+			distResult.print(lengths[i], counts[i]);
 	distResult.print();
 
 	for (modelType modl : allModels())
 	{
-		distResult.print(modl);
-
-		for (auto l : lengths)
+		if (bestResults[modl].params[logValue].size())
 		{
-			if (bestResults[modl].params[logValue].size())
+			distResult.print(modl);
+
+			for (auto l : lengths)
 			{
 				dataVec dist = getDistribution(modl, l, BIN_COUNT, bestResults[modl].params[logValue]);
 				distResult.print(l, dist);
 			}
-			else
-				distResult.print();
+			distResult.print();
 		}
-		distResult.print();
 	}
 }
 

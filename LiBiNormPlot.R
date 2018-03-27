@@ -6,7 +6,7 @@ library(gridExtra)
 library (scales)
 
 ##  For debugging, otherwise pass in file root as parameter
-# base = "Y:\\LiBiNorm validate\\Combs\\test\\SRR1743157"
+base = "Y:\\LiBiNorm validate\\Combs\\testCount\\SRR1743157"
 if (!exists("base")) {
 args = commandArgs(trailingOnly=TRUE)
 if (length(args) != 1) {
@@ -15,7 +15,56 @@ if (length(args) != 1) {
 base = args[1]
 }
 
+## Change this for better, or worse resolution
 ppi <- 300
+
+
+filename <- paste(base,"_distribution.txt",sep="")
+
+if (!file.exists(filename)) {
+  cat("Unable to open ",filename,"\n")
+} else {
+
+  con = file(filename, "r")
+  info <- read.table(con,skip=0,nrows=1,row.names=1,sep="\t")
+
+  if (info[1,1] > 0) 
+  {
+    dist <- as.data.frame(t(read.table(con,skip=0,nrows=4,row.names=1,sep="\t")))
+    dist[, 'Length'] <- as.factor(dist[, 'Length'])
+  
+    ymin = min(min(dist$Reads),min(dist[4]))
+    png(paste(base,"_distribution.png",sep=""),units = "in",height=5,width=6,res=ppi)
+    print(ggplot(dist,aes(Position,Reads,colour=Length)) + theme_bw() + geom_line() + 
+            geom_line(aes(Position,dist[4],colour=Length),linetype="dashed") +
+            annotate("text",0.5,ymin+0.05,label = colnames(dist)[4]))
+
+    invisible(dev.off())
+
+    if (info[1,1] > 1) 
+    {
+      dist2 <- as.data.frame(t(read.table(con,skip=0,nrows=6,row.names=1,sep="\t")))
+      plots <- list()
+
+      for (i in 1:6)
+      local({
+        i <- i
+        ymin = min(min(dist$Reads),min(dist2[i]))
+        p1 <- ggplot(dist,aes(Position,Reads,colour=Length)) + theme_bw() + geom_line(linetype="dashed") + 
+        geom_line(aes(Position,dist2[i],colour=Length))  +scale_colour_discrete(guide = FALSE) + 
+          annotate("text",0.5,ymin+0.05,label = colnames(dist2)[i])
+        plots[[i]] <<- p1
+      })
+      png(paste(base,"_distAll.png",sep=""),units = "in",height=6,width=9,res=ppi)
+      grid.arrange(grobs = plots, ncol=3,nrow=2)
+
+      invisible(dev.off())
+      }
+    }
+    close(con)
+ }
+
+
 
 filename <- paste(base,"_results.txt",sep="")
 if (!file.exists(filename)) {
@@ -119,9 +168,9 @@ if (!file.exists(filename)) {
 }
 
 filename <-paste(base,"_norm.txt",sep="") 
-#if (!file.exists(filename)) {
-#  cat("Unable to open ",filename,"\n")
-#} else {
+if (!file.exists(filename)) {
+  cat("Unable to open ",filename,"\n")
+} else {
   
   #  Read in each of the sets of data for each line, add an identifier and stack them
   #  into a single dataframe using rbind
@@ -158,7 +207,7 @@ filename <-paste(base,"_norm.txt",sep="")
     xlab ("Length (bp)") + ylab ("Abundance relative to 1 kb"))
     
   invisible(dev.off())
-#}
+}
 
 filename <- paste(base,"_bias.txt",sep="")
 
