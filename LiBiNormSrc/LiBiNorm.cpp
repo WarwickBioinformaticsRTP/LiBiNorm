@@ -295,6 +295,10 @@ int LiBiNorm::main(int argc, char **argv)
 		printConsolidatedMcmcRunData();
 #endif
 	}
+#ifdef PRINT_DISTRIBUTION
+	else if(outputFileroot)
+		printDistribution(geneCounts);
+#endif
 
 	//	The basic count data in htseq-count format
 	if (!geneCounts.outputGeneCounts(countsFilename, normalise?1:0, conv(theModel)))

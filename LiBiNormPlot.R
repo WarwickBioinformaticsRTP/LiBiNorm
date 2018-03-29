@@ -6,7 +6,7 @@ library(gridExtra)
 library (scales)
 
 ##  For debugging, otherwise pass in file root as parameter
-## base = "Y:\\LiBiNorm validate\\Combs\\testCount\\SRR1743157"
+## base = "Y:\\LiBiNorm validate\\Combs\\testModel2\\SRR1743145"
 if (!exists("base")) {
 args = commandArgs(trailingOnly=TRUE)
 if (length(args) != 1) {
@@ -28,8 +28,17 @@ if (!file.exists(filename)) {
   con = file(filename, "r")
   info <- read.table(con,skip=0,nrows=1,row.names=1,sep="\t")
 
-  if (info[1,1] > 0) 
+  if (info[1,1] == 0) 
   {
+    dist <- as.data.frame(t(read.table(con,skip=0,nrows=3,row.names=1,sep="\t")))
+    dist[, 'Length'] <- as.factor(dist[, 'Length'])
+    
+    ymin = min(dist$Reads)
+    png(paste(base,"_distribution.png",sep=""),units = "in",height=5,width=6,res=ppi)
+    print(ggplot(dist,aes(Position,Reads,colour=Length)) + theme_bw() + geom_line() + 
+              annotate("text",0.5,ymin+0.05,label = "Read distribution") ) 
+    invisible(dev.off())
+  }  else   {
     dist <- as.data.frame(t(read.table(con,skip=0,nrows=4,row.names=1,sep="\t")))
     dist[, 'Length'] <- as.factor(dist[, 'Length'])
   

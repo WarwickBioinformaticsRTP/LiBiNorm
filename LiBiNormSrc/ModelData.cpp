@@ -81,7 +81,7 @@ stringEx conv(const modelType m, bool removeGaps)
 
 //	The following are needed by the stringEx class, but are useful in other contexts
 //	Used by microsoft stringEx
-string to_string(const modelType & m)
+string std::to_string(const modelType & m)
 {
 	return conv(m);
 }
@@ -831,7 +831,7 @@ dataVec getDistribution(modelType m, size_t length, size_t points, dataVec & par
 	{
 	case noModelSpecified:	//This should not happen
 	case ModelA:
-		dist = exp(-l*(t1 + t2)) * ((x > h) * (x < (l - h)) + 1 / d);
+		dist = ((x > h) * (x < (l - h)) + 1 / d);
 		break;
 	case ModelB:
 	case ModelD:

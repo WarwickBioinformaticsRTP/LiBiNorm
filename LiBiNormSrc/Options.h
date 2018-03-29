@@ -11,7 +11,7 @@
 #define OPTIONS_H
 
 
-#define LIBINORM_VERSION "1.11.5"
+#define LIBINORM_VERSION "1.12"
 //	Bam/gff file reading
 #define DEFAULT_FEATURE_TYPE_EXON "exon" 
 #define DEFAULT_GTF_ID_ATTRIBUTE "gene_id"
@@ -87,6 +87,8 @@
 //	insert size we can ensure that the pairs are still matched up
 #define USE_ABS_INSERT_TO_MATCH_READS
 
+//	Prints a file containing the predicted read distrubtion for different mRNA lengths
+#define PRINT_DISTRIBUTION
 
 //	******************************************************************************
 //	The following are options that would normally be disabled in the release version of the code
@@ -157,11 +159,6 @@
 //	Convert the input data into flattened data with the same number of reads in each gene, but distributed evenly through the gene
 //	but with spaces at either end.  Genes with fewer than N genes are excluded
 // #define CREATE_FLAT_DATA
-
-
-//	Prints a file containing the predicted read distrubtion for different mRNA lengths
-#define PRINT_DISTRIBUTION
-
 
 //
 //	Use absolute rather than log h value when doing Nelder Mead and MCMC

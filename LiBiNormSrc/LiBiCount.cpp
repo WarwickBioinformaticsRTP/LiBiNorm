@@ -450,6 +450,10 @@ int LiBiCount::main(int argc, char **argv)
 				exitFail("Unable to output counts to :", filename);
 		}
 	}
+#ifdef PRINT_DISTRIBUTION
+	else if (outputFileroot)
+		printDistribution(geneCounts);
+#endif
 
 	if(!geneCounts.outputGeneCounts(countsFilename,normalise?1:0,conv(theModel)))
 		exitFail("Unable to output counts to :",countsFilename);

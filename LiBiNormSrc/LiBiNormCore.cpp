@@ -690,7 +690,7 @@ void LiBiNormCore::printDistribution(GeneCountData & geneCounts)
 		{
 			if (bestResults[modl].params[logValue].size())
 			{
-				distResult.printStart(_s(conv(modl), " LL=", $("%7.0f", -bestResults[modl].LLresult)));
+				distResult.printStart(_s(modl, " LL=", $("%7.0f", -bestResults[modl].LLresult)));
 				for (int i : entries)
 				{
 					dataVec dist = getDistribution(modl, lengths[i], BIN_COUNT, bestResults[modl].params[logValue]);
