@@ -122,6 +122,10 @@
 //	command.  This affects how the values are setin ModelParameters.cpp
 #define INITIAL_VALUES
 
+//	Data from longer and shorter genes are given additional weightings.  The current values differ from the original
+//	Use this to reset to the original
+// #define ORIGINAL_WEIGHTING
+
 //	For consistent selection of reads and reproducing the MATLAB algorithms
 // #define REPRODUCE_MATLAB	
 

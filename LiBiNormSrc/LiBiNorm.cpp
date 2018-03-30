@@ -213,7 +213,8 @@ int LiBiNorm::main(int argc, char **argv)
 		NrunsOtherModels = Nruns;
 	else
 	{
-		NrunsOtherModels = (Nruns == 1) ? 0 : 1;
+//		NrunsOtherModels = (Nruns == 1) ? 0 : 1;
+		NrunsOtherModels = 0;
 		Nmodels = 1;
 	}
 

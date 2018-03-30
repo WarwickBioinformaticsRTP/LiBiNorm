@@ -25,7 +25,7 @@
 class intRandClass
 {
 private:
-	intRandClass() 
+	intRandClass()
 	{
 #ifdef SELECT_READS_SEED
 		seed = SELECT_READS_SEED;
@@ -37,19 +37,11 @@ private:
 
 public:
 	//	A single instance is used for generating random numbers
-	static intRandClass & instance()
-	{
-		static intRandClass instance;
-		return instance;
-	}
+	static intRandClass & instance();
 	//	Use simple modulus function to generate a number between 0 and max-1
-	unsigned int value(unsigned int max) { return gen() % max; };
-	
+	unsigned int value(unsigned int max);
 	//	Set a specific seed
-	void reseed(unsigned int value) {
-		seed = value;  
-		gen.seed(seed);
-	};
+	void reseed(unsigned int value);
 
 private:
 	unsigned int seed;

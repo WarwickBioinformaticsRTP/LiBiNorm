@@ -12,6 +12,23 @@
 
 using namespace std;
 
+intRandClass & intRandClass::instance()
+{
+	static intRandClass instance;
+	return instance;
+}
+unsigned int intRandClass::value(unsigned int max)
+{
+	auto v = gen();
+	return v % max;
+};
+//	Set a specific seed
+void intRandClass::reseed(unsigned int value) {
+	seed = value;
+	gen.seed(seed);
+};
+
+
 //  Remove reads that, apparently, start before the beginning or after the end of the gene.
 //	The first version reproduces the less efficient algorithm that was used in th eoriginal matlab
 //	code
@@ -672,12 +689,22 @@ void GeneCountData::transferTo(mcmcGeneData & mcmcData, size_t maxLength, int ma
 
 	histc(bins, maxGeneLengthForParameterEstimation);
 
+#ifdef ORIGINAL_WEIGHTING
 	freq[0] = freq[0] * 2;
 	freq[1] = freq[1] * 2;
 	freq[21] = freq[21] / 2;
 	freq[22] = freq[22] / 2;
 	freq[23] = freq[23] / 6;
 	freq[24] = freq[24] / 6;
+#else
+	freq[0] = freq[0] * 2;
+	freq[1] = freq[1] * 1.5;
+	freq[21] = freq[21] / 1.3;
+	freq[22] = freq[22] / 1.7;
+	freq[23] = freq[23] / 2;
+	freq[24] = freq[24] / 2.5;
+
+#endif
 
 	size_t geneIndex = 0;
 	mcmcData.geneLengths.resize(readPositionData.size());

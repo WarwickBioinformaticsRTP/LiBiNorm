@@ -58,7 +58,7 @@ LIBPATH     =
 #  The files that are from the external directories are handled slightly differently so that their object files
 #  are also placed within the $(BUILD) directory and so are deleted with a make clean
 
-LIBINORMSRC = $(LIBINORMSRCDIR)LiBiNorm.cpp
+LIBINORMSRC = $(LIBINORMSRCDIR)$(LIBINORM).cpp
 
 LIBINORMSRCEX = $(filter-out $(LIBINORMSRC), $(shell find $(LIBINORMSRCDIR) -name *.cpp) )
 
@@ -66,7 +66,7 @@ MCMCLIBSRC =  $(shell find $(MCMCLIBDIR) -name *.cpp)
 
 BIOLIBSRC = $(shell find ../$(BIOINFORMATICSLIBDIR) -name *.cpp)
 
-BAMTOOLSSRC = $(filter-out ../bamtools/src/api/internal/io/TcpSocketEngine_win_p.cpp, \
+BAMTOOLSSRC = $(filter-out ../$(BAMTOOLSDIR)api/internal/io/TcpSocketEngine_win_p.cpp, \
 	$(shell find ../$(BAMTOOLSDIR)api/ -name *.cpp) ) \
 	$(addprefix ../$(BAMTOOLSDIR), toolkit/bamtools_sort.cpp utils/bamtools_options.cpp )
 
