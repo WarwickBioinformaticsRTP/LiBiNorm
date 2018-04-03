@@ -45,7 +45,11 @@ protected:
 		nelderMead(false),
 		Nsimu(MCMC_ITERATIONS),
 #endif
+#ifdef SELECT_BY_LL
 		theModel(noModelSpecified), bestModel(noModelSpecified),
+#else
+		theModel(ModelBD), calcAllModels(false),
+#endif
 		maxReads(DEF_MAX_READS_FOR_PARAM_ESTIMATION),
 		maxGeneLength(DEF_LENGTH_OF_GENE_FOR_PARAM_ESTIMATION),
 		Nthreads(DEF_THREADS),
@@ -62,7 +66,6 @@ protected:
 
 	void mcmcThread(optionsType options);
 	bool coreParameterEstimation();
-	modelType getBestModel();
 
 	void printResults();
 	void printBias();
@@ -75,7 +78,15 @@ protected:
 
 	bool normalise, pauseAtEnd,nelderMead;
 	size_t Nsimu,Nmodels;
-	modelType theModel, bestModel;
+	modelType theModel;
+
+#ifdef SELECT_BY_LL
+	modelType bestModel;
+	modelType getBestModel();
+#else
+	bool calcAllModels;
+#endif
+
 	size_t maxReads,maxGeneLength,Nthreads;
 	mcmcRunId Nruns,NrunsOtherModels;
 

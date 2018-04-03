@@ -93,6 +93,10 @@
 //	******************************************************************************
 //	The following are options that would normally be disabled in the release version of the code
 
+
+//	Use the original option wehere 'best' selected the model with the lowest log liklihood.
+// #define SELECT_BY_LL
+
 //	The seed for the random number generator used to select reads.  If undefined then a random seed is generated
 // #define SELECT_READS_SEED 2017
 

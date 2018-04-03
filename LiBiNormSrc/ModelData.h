@@ -14,6 +14,7 @@
 #include <map>
 #include <algorithm>
 #include <vector>
+#include "Options.h"
 #include "mcmc.h"
 
 /*
@@ -28,10 +29,12 @@ enum modelType
 	ModelC = 2,
 	ModelD = 3,
 	ModelE = 4,
-	ModelBD = 5,
-	noModelSpecified = 6,
-	findBestModel = 7,
-	none = 8
+	ModelBD = 5
+#ifdef SELECT_BY_LL
+	, noModelSpecified = 6
+	, findBestModel = 7
+#endif
+	, none = 8
 };
 
 //	A collection of all the models, allowing code to iterate through them

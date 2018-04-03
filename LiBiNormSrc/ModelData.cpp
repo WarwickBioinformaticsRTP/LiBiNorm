@@ -11,7 +11,6 @@
 #include "stringEx.h"
 #include "containerEx.h"
 #include "ModelData.h"
-#include "Options.h"
 using namespace std;
 
 //	Sets the methods to be used for the liklihood (sum of squares) and prior functions
@@ -19,7 +18,10 @@ void setSSfun(optionsType & options,modelType m)
 {
 	switch (m)
 	{
+#ifdef SELECT_BY_LL
 	case noModelSpecified: break;
+	case findBestModel:	break;
+#endif
 	case ModelA:
 		options.ssfun = &FLL_ModelA;
 		options.priorfun = &priorFunc;
@@ -44,8 +46,6 @@ void setSSfun(optionsType & options,modelType m)
 		options.ssfun = &FLL_ModelBD;
 		options.priorfun = &priorFunc;
 		break;
-	case findBestModel:
-			break;
 	}
 }
 
@@ -64,14 +64,16 @@ stringEx conv(const modelType m, bool removeGaps)
 	stringEx retVal;
 	switch (m)
 	{
+#ifdef SELECT_BY_LL
 	case noModelSpecified: retVal = "No model specified"; break;
+	case findBestModel: retVal = "Best"; break;
+#endif
 	case ModelA: retVal = "Model A"; break;
 	case ModelB: retVal = "Model B"; break;
 	case ModelC: retVal = "Model C"; break;
 	case ModelD: retVal = "Model D"; break;
 	case ModelE: retVal = "Model E"; break;
 	case ModelBD: retVal = "Model BD"; break;
-	case findBestModel: retVal = "Best"; break;
 	case none: retVal = "None"; break;
 	}
 	if (removeGaps)
@@ -103,7 +105,9 @@ modelType modelFromString(const string & desc)
 		{ "PolyA",ModelD },{"polya",ModelD },{ "POLYA",ModelD },{ "polyA",ModelD },
 		{"random",ModelE},{ "RANDOM",ModelE },
 		{ "smart",ModelBD },{ "SMART",ModelBD },{ "Smart",ModelBD },
+#ifdef SELECT_BY_LL
 		{"best",findBestModel },{"BEST",findBestModel },{ "Best",findBestModel },
+#endif
 		{"none",none},{"NONE",none},{ "None",none }
 	};
 	auto iter = mappings.find(desc);
@@ -141,8 +145,10 @@ paramDescriptionSet GetModelParams(modelType model,dataVec * defaults, VEC_DATA_
 
 	switch (model)
 	{
-	case noModelSpecified:
-		break;
+#ifdef SELECT_BY_LL
+	case findBestModel:
+	case noModelSpecified:	break;
+#endif
 	case ModelB: case ModelD: case ModelE:
 		params = { PARAM_D   // average length of fragments
 			, PARAM_H   // the minimum length of fragmenation
@@ -169,7 +175,6 @@ paramDescriptionSet GetModelParams(modelType model,dataVec * defaults, VEC_DATA_
 			, PARAM_A // alpha strength of model B
 		};
 		break;
-	case findBestModel:
 	case none:
 		break;
 	};
@@ -714,7 +719,11 @@ void getBias(modelType m,dataVec & params,const dataVec & l, dataVec & bias)
 	double t1, t2, a;
 	switch (m)
 	{
+#ifdef SELECT_BY_LL
 	case noModelSpecified:	//This should not happen
+	case findBestModel:
+		break;
+#endif
 	case ModelA:
 		break;
 	case ModelB:
@@ -732,16 +741,17 @@ void getBias(modelType m,dataVec & params,const dataVec & l, dataVec & bias)
 		t2 = pow(10, params[3]);
 		a = params[4];
 		break;
-	case findBestModel:
-		break;
 	}
 
 	bias.resize(l.size());
 
 	switch (m)
 	{
+#ifdef SELECT_BY_LL
 	case noModelSpecified:
+	case findBestModel:
 		break;
+#endif
 	case ModelA:
 		bias = (2 * h < l)*(l - 2 * h) + l / d;
 		break;
@@ -779,8 +789,6 @@ void getBias(modelType m,dataVec & params,const dataVec & l, dataVec & bias)
 			(1 - exp(-l*(t1 + t2))) / (t1 + t2) / d);
 		break;
 	}
-	case findBestModel:
-		break;
 	}
 	bias = bias * l[0] / bias[0];
 	bias /= l;
@@ -798,7 +806,11 @@ dataVec getDistribution(modelType m, size_t length, size_t points, dataVec & par
 	double t1, t2, a;
 	switch (m)
 	{
+#ifdef SELECT_BY_LL
+	case findBestModel:
 	case noModelSpecified:	//This should not happen
+		break;
+#endif
 	case ModelA:
 		break;
 	case ModelB:
@@ -816,8 +828,6 @@ dataVec getDistribution(modelType m, size_t length, size_t points, dataVec & par
 		t2 = pow(10, params[3]);
 		a = params[4];
 		break;
-	case findBestModel:
-		break;
 	}
 
 	
@@ -829,7 +839,11 @@ dataVec getDistribution(modelType m, size_t length, size_t points, dataVec & par
 	//	This is all vector arithmetic, as supported by DataVec
 	switch (m)
 	{
+#ifdef SELECT_BY_LL
 	case noModelSpecified:	//This should not happen
+	case findBestModel:
+		break;
+#endif
 	case ModelA:
 		dist = ((x > h) * (x < (l - h)) + 1 / d);
 		break;
@@ -860,8 +874,6 @@ dataVec getDistribution(modelType m, size_t length, size_t points, dataVec & par
 		break;
 	case ModelC:
 		dist = (x> h)*(x < l-h)*exp(-t2*(x+h)) +  exp(-t2*(x))/d;
-		break;
-	case findBestModel:
 		break;
 	}
 	dist.normalise();

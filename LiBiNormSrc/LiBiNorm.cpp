@@ -207,6 +207,7 @@ int LiBiNorm::main(int argc, char **argv)
 		normalise = false;
 		Nmodels = 0;
 	}
+#ifdef SELECT_BY_LL
 	else if (theModel == noModelSpecified)
 		NrunsOtherModels = Nruns;
 	else if (theModel == findBestModel)
@@ -217,8 +218,14 @@ int LiBiNorm::main(int argc, char **argv)
 		NrunsOtherModels = 0;
 		Nmodels = 1;
 	}
+#else
+	else if (calcAllModels)
+	{
+		NrunsOtherModels = Nruns;
+	}
 
 
+#endif
 #ifdef USE_GROUPS_OF_GENES_FOR_DISCOVERY
 	geneCounts.loadData(landscapeFilename, 1000000);
 
@@ -263,6 +270,7 @@ int LiBiNorm::main(int argc, char **argv)
 		coreParameterEstimation();
 
 		//	If we have explicitly specified the model then use it instead
+#ifdef SELECT_BY_LL
 		if ((theModel == noModelSpecified) || (theModel == findBestModel))
 		{
 			bestModel = getBestModel();
@@ -270,6 +278,7 @@ int LiBiNorm::main(int argc, char **argv)
 			theModel = bestModel;
 		}
 		else
+#endif
 		{
 			progMessage("Model selected by command line is ", theModel);
 		}

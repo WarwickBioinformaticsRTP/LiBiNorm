@@ -30,6 +30,9 @@ void LiBiNormCore::helpCommon()
 	printf("                        determination (", DEF_THREADS, ")\n");
 	printf("  -d N, --reads=N       Maximum number of reads using for normalisation\n");
 	printf("                        parameter determination (", DEF_MAX_READS_FOR_PARAM_ESTIMATION, ")\n");
+#ifndef SELECT_BY_LL
+	printf("  -f, --full            Calculate full set of models\n");
+#endif
 #ifdef INITIAL_VALUES
 	printf("  -v <filename>, --initial=FILENAME\n");
 	printf("                        Set initial values for parameter discoverey from file\n");
@@ -81,6 +84,13 @@ bool LiBiNormCore::commandParseCommon(int & ni, int argc,char **argv)
 			countsFilename = opt2 ? argv[++ni] + 9 : argv[++ni];
 			return true;
 		}
+#ifndef SELECT_BY_LL
+		if ((strcmp(argv[ni], "-f") == 0) || (opt2 = (strncmp(argv[ni], "--full", 6) == 0)))
+		{
+			calcAllModels = true;
+			return true;
+		}
+#endif
 #ifdef OUTPUT_DEBUG_MESSAGES
 		if ((strcmp(argv[ni], "-w") == 0) || (opt2 = (strncmp(argv[ni], "--debug", 7) == 0)))
 		{
@@ -465,6 +475,7 @@ bool LiBiNormCore::coreParameterEstimation()
 	return true;
 }
 
+#ifdef SELECT_BY_LL
 //	Find which model performed best based on the Log Liklihood
 modelType LiBiNormCore::getBestModel()
 {
@@ -480,7 +491,7 @@ modelType LiBiNormCore::getBestModel()
 	}
 	return bestModel;
 }
-
+#endif
 
 //	The top level summary of the results, showing best LL and associated paremeters for each model
 void LiBiNormCore::printResults()

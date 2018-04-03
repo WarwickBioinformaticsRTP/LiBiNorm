@@ -235,8 +235,12 @@ int LiBiCount::main(int argc, char **argv)
 
 	if (htSeqCompatible)
 	{
+#ifdef SELECT_BY_LL
 		if ((theModel != noModelSpecified) && (theModel != none))
-			progMessage("In htseq-compatible mode -n option must either be absent or 'none'");
+#else
+		if (theModel != none)
+#endif
+		progMessage("In htseq-compatible mode -n option must either be absent or 'none'");
 		if (maxReads != DEF_MAX_READS_FOR_PARAM_ESTIMATION)
 			progMessage("-d option has no function in htseq-compatible mode");
 		if (parameterFilename)
@@ -246,6 +250,7 @@ int LiBiCount::main(int argc, char **argv)
 	}
 
 	//	If we have specified -N then we run all of the models for preset number of runs.
+#ifdef SELECT_BY_LL
 	Nmodels = allModels().size();
 	if (theModel == findBestModel)
 	{
@@ -263,6 +268,18 @@ int LiBiCount::main(int argc, char **argv)
 	}
 	else
 		Nmodels = 1;
+#else
+	if (theModel == none)
+	{
+		normalise = false;
+		Nmodels = 0;
+	}
+	else
+	{
+		Nmodels = 1;
+		calcAllModels = true;
+	}
+#endif
 
 	if (countsFilename)
 		tempDirectory = countsFilename.replaceSuffix("_tempFiles");
@@ -416,6 +433,7 @@ int LiBiCount::main(int argc, char **argv)
 
 		elapsedTime("Parameter estimation complete");
 
+#ifdef SELECT_BY_LL
 		if (outputFileroot)
 		{
 			if ((theModel == noModelSpecified) || (theModel == findBestModel))
@@ -428,6 +446,7 @@ int LiBiCount::main(int argc, char **argv)
 				progMessage("Model selected by command line is ", theModel);
 		}
 		else
+#endif
 		{
 			progMessage("Model used is ", theModel);
 		}
