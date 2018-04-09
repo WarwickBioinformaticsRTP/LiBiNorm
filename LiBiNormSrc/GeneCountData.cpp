@@ -171,11 +171,14 @@ bool GeneCountData::outputGeneCounts(const string & filename, int detailLevel, s
 			VEC_DATA_TYPE scalingFactor = sum(counts) / 1000000;
 
 			RPM[i] = counts / scalingFactor;
-			RPKM[i] = RPM[i] / lengths[i];
+			RPKM[i] = RPM[i] / lengths[i]*1000;
 
 			RPK[i] = counts / lengths[i];
 			scalingFactor = sum(RPK[i]) / 1000000;
 			TPM[i] = RPK[i] / scalingFactor;
+
+			//	TPM  = counts/lengths/scaling factor
+			//  RPKM  = counts/scalingfactor/lengths
 		}
 
 		switch (detailLevel)

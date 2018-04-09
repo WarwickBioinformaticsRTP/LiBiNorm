@@ -55,7 +55,7 @@ protected:
 		Nthreads(DEF_THREADS),
 		Nruns(NUMBER_OF_MCMC_RUNS),
 		NrunsOtherModels(0),
-		outputFull(false)
+		outputFPKM(false)
 	{
 		headers = getHeaders();
 	};
@@ -117,7 +117,7 @@ private:
 	struct loop_counts { mcmcRunId requested, counter; };
 	std::map<modelType, loop_counts> threadLoopCounts;
 protected:
-	bool outputFull;
+	bool outputFPKM;
 	size_t nelderMeadCounter;
 
 };

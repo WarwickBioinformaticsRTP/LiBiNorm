@@ -189,8 +189,6 @@ int LiBiNorm::main(int argc, char **argv)
 			nelderMead = false;
 		}
 #endif
-		else if ((strcmp(argv[ni], "-f") == 0) || (opt2 = (strncmp(argv[ni], "--full", 6) == 0)))
-			outputFull = true;
 		else
 		{
 			exitFail("Invalid parameter: ",argv[ni]);
@@ -289,7 +287,7 @@ int LiBiNorm::main(int argc, char **argv)
 		if (outputFileroot)
 		{
 			string filename = outputFileroot.replaceSuffix("_expression.txt");
-			if (!geneCounts.outputGeneCounts(filename, outputFull ? 3 : 2, conv(theModel)))
+			if (!geneCounts.outputGeneCounts(filename, outputFPKM ? 3 : 2, conv(theModel)))
 				exitFail("Unable to output counts to :", filename);
 
 			printResults();

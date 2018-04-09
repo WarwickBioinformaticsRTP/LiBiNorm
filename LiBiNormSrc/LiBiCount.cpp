@@ -274,10 +274,14 @@ int LiBiCount::main(int argc, char **argv)
 		normalise = false;
 		Nmodels = 0;
 	}
+	else if (calcAllModels)
+	{
+		Nmodels = allModels().size();;
+		NrunsOtherModels = Nruns;
+	}
 	else
 	{
 		Nmodels = 1;
-		calcAllModels = true;
 	}
 #endif
 
@@ -465,7 +469,7 @@ int LiBiCount::main(int argc, char **argv)
 #endif
 			//	And then the counts and the bias for the genes themselves
 			string filename = outputFileroot.replaceSuffix("_expression.txt");
-			if (!geneCounts.outputGeneCounts(filename, 2, conv(theModel)))
+			if (!geneCounts.outputGeneCounts(filename, outputFPKM?3:2, conv(theModel)))
 				exitFail("Unable to output counts to :", filename);
 		}
 	}

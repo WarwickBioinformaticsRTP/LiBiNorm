@@ -84,6 +84,12 @@ bool LiBiNormCore::commandParseCommon(int & ni, int argc,char **argv)
 			countsFilename = opt2 ? argv[++ni] + 9 : argv[++ni];
 			return true;
 		}
+		if ((strcmp(argv[ni], "-j") == 0) || (opt2 = (strncmp(argv[ni], "--fkpm", 6) == 0)))
+		{
+			outputFPKM = true;
+			return true;
+		}
+
 #ifndef SELECT_BY_LL
 		if ((strcmp(argv[ni], "-f") == 0) || (opt2 = (strncmp(argv[ni], "--full", 6) == 0)))
 		{
