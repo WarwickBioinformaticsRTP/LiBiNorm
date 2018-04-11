@@ -204,6 +204,9 @@
     <ProjectReference Include="..\..\bioinformaticsLib\bioinformaticsLib.vcxproj">
       <Project>{1bb748f9-a024-405e-8286-a2d2f85953f2}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\hisat2Lib\hiSat2Lib.vcxproj">
+      <Project>{9dbf8528-c8cf-423d-9018-7dfb8891df02}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\mcmcLib\mcmcLib.vcxproj">
       <Project>{24fd17ee-ecc8-4abc-8f5f-0d29d10aba5c}</Project>
     </ProjectReference>

@@ -94,6 +94,8 @@
 //	The following are options that would normally be disabled in the release version of the code
 
 
+#define HISAT2
+
 //	Use the original option wehere 'best' selected the model with the lowest log liklihood.
 // #define SELECT_BY_LL
 
