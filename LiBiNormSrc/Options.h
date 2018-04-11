@@ -113,6 +113,9 @@
 //  Output detailed results of interpreting the Feature file
 // #define OUTPUT_FEATURE_DATA
 
+//  Output gtf file as bed data
+#define OUTPUT_BED_DATA
+
 //	Output info on how each read is identified
 // #define OUTPUT_READ_MAPPING_INFO
 

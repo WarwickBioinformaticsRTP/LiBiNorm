@@ -393,6 +393,12 @@ int LiBiCount::main(int argc, char **argv)
 
 	elapsedTime("Feature file consolidated.");
 
+#ifdef	OUTPUT_BED_DATA
+	if (outputFileroot)
+		genomeDef.outputBedData(outputFileroot.replaceSuffix("_genome.bed"));
+#endif
+
+
 #ifdef OUTPUT_READ_MAPPING_INFO
 	if ((outputFileroot) && !genomeDataFile.open(outputFileroot.replaceSuffix("_read_mappings.txt")))
 		progMessage("Unable to open output file: ", outputFileroot.replaceSuffix("_read_mappings.txt"));

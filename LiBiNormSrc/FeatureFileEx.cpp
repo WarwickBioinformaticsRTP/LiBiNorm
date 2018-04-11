@@ -232,3 +232,21 @@ bool featureFileEx::outputChromData(const string & filename, const GeneCountData
 	return true;
 }
 
+bool featureFileEx::outputBedData(const string & filename)
+{
+	TsvFile output;
+	output.open(filename);
+
+	if (!output.is_open())
+	{
+		progMessage("Unable to open ", filename, " for outputting genome bed data");
+		return false;
+	}
+
+	for (auto & i : genomeGtfData)
+		for (featureRegion::chromosomeFeatureData::Pair j : i.second)
+			output.print(i.first,j.feature.start,j.feature.finish, j.feature.name, 1,j.feature.strand);
+
+	return true;
+}
+

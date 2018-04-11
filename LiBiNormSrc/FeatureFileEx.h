@@ -116,6 +116,8 @@ public:
 	void index(GeneCountData & geneCounts,bool useStrand);
 	//	Print feature data and counts to a file
 	bool outputChromData(const std::string & filename, const GeneCountData & geneCounts);
+	//	Print feature data as bed file
+	bool outputBedData(const std::string & filename);
 
 	//	A container of all the consolidated feature regions
 	genomeFeatureRegions genomeGtfData; 
