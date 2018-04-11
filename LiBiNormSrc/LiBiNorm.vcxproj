@@ -110,7 +110,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>..\..\bamtools\src;../../bioinformaticsLib;../mcmcLib</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\bamtools\src;../../bioinformaticsLib;../mcmcLib;../hisat2Lib</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>ZLIB_WINAPI;STATIC_LINK;WIN32;BAM_LIBRARY</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <MinimalRebuild>false</MinimalRebuild>
@@ -121,7 +121,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>..\..\bamtools\src;../../bioinformaticsLib;../mcmcLib</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\bamtools\src;../../bioinformaticsLib;../mcmcLib;../hisat2Lib</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>ZLIB_WINAPI;STATIC_LINK;WIN32;BAM_LIBRARY</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
@@ -137,7 +137,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='release notOptimised|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>..\..\bamtools\src;../../bioinformaticsLib;../mcmcLib</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\bamtools\src;../../bioinformaticsLib;../mcmcLib;../hisat2Lib</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>ZLIB_WINAPI;STATIC_LINK;WIN32;BAM_LIBRARY</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>

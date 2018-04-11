@@ -107,7 +107,7 @@
 
 //	Use this to enable various addditional tools for exploring LiBiNorm data.  This currently
 //	provides the additional land, land2 and gene run modes
-// #define LIBITOOLS
+#define LIBITOOLS
 
 //	Use this to add the mode where duplicates in bam files can be removed
 // #define DEDUP_MODE

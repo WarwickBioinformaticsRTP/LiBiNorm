@@ -4,7 +4,7 @@
 
 
 //	When obtaining transcript sequences, this is added to either end
-#define SEQ_PADDING 20
+#define SEQ_PADDING 0
 
 using namespace std;
 

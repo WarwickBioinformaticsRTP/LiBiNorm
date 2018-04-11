@@ -47,18 +47,6 @@
     <ClInclude Include="hisat2Lib.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="breakOptimiser.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="breakData.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="readStartBias.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="mcReadStartBias.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="refSeqs.h">
       <Filter>Header Files</Filter>
     </ClInclude>

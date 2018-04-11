@@ -182,13 +182,9 @@
   <ItemGroup>
     <ClInclude Include="alphabet.h" />
     <ClInclude Include="assert_helpers.h" />
-    <ClInclude Include="breakData.h" />
-    <ClInclude Include="breakOptimiser.h" />
     <ClInclude Include="btypes.h" />
     <ClInclude Include="endian_swap.h" />
     <ClInclude Include="hisat2Lib.h" />
-    <ClInclude Include="mcReadStartBias.h" />
-    <ClInclude Include="readStartBias.h" />
     <ClInclude Include="reference.h" />
     <ClInclude Include="refSeqs.h" />
     <ClInclude Include="ref_read.h" />

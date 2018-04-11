@@ -190,7 +190,8 @@ void readEbwtRefnamesAndLengths(string instr, vector<string>& refnames, vector<i
 		}
 	}
 	else {
-		size_t r = in.readsome((char *)refLengths.data(), nPat * sizeof(index_t));
+		in.read((char *)refLengths.data(), nPat * sizeof(index_t));
+		size_t r = in.gcount();
 		if (r != (nPat * sizeof(index_t))) {
 			cerr << "Error reading lengths array: " << r << ", " << nPat * sizeof(index_t) << endl;
 			throw 1;
