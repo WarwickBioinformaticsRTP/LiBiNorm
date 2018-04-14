@@ -14,7 +14,7 @@ using namespace std;
 * actual data arrays and other text-specific parameters defined in
 * class Ebwt constitute the entire Ebwt.
 */
-template <typename index_t = uint32_t>
+template <typename index_t>
 class GFMParams {
 
 public:
@@ -148,6 +148,8 @@ void readEbwtRefnamesAndLengths(string instr, vector<string>& refnames, vector<i
 	// beginning and no error flags set.
 
 	ifstream in;
+	string gfm_ext = (sizeof(index_t) == 4) ? "ht2" : "ht21";
+
 	// Initialize our primary and secondary input-stream fields
 	in.open((instr + ".1." + gfm_ext).c_str(), ios_base::in | ios::binary);
 	if (!in.is_open()) {

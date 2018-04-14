@@ -15,9 +15,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="reference.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="refSeqs.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -33,9 +30,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="endian_swap.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="btypes.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="assert_helpers.h">

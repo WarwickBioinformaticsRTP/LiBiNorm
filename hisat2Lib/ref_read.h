@@ -27,7 +27,6 @@
 #include <fstream>
 #include <stdexcept>
 #include "alphabet.h"
-#include "btypes.h"
 #include "word_io.h"
 #include "endian_swap.h"
 
@@ -39,7 +38,8 @@ using namespace std;
  * lose information about stretches of ambiguous characters at the end
  * of reference sequences).
  */
-struct RefRecord {
+template <typename TIndexOffU> class RefRecord {
+public:
 	RefRecord() : off(), len(), first() { }
 	RefRecord(TIndexOffU _off, TIndexOffU _len, bool _first) :
 		off(_off), len(_len), first(_first)
@@ -47,12 +47,12 @@ struct RefRecord {
 
 	RefRecord(FILE *in, bool swap) {
 		assert(in != NULL);
-		if(!fread(&off, OFF_SIZE, 1, in)) {
+		if(!fread(&off, sizeof(TIndexOffU), 1, in)) {
 			cerr << "Error reading RefRecord offset from FILE" << endl;
 			throw 1;
 		}
 		if(swap) off = endianSwapIndex(off);
-		if(!fread(&len, OFF_SIZE, 1, in)) {
+		if(!fread(&len, sizeof(TIndexOffU), 1, in)) {
 			cerr << "Error reading RefRecord offset from FILE" << endl;
 			throw 1;
 		}

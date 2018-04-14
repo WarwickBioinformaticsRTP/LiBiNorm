@@ -28,6 +28,7 @@ using namespace BamTools;
 
 #define LOOKAHEAD 1000
 #define MAX_READS 1000
+#define POLYA 125
 
 string prefix(const string & s)
 {
@@ -466,12 +467,19 @@ int LiBiTools::refSeqsMain(int argc, char **argv)
 
 	FILE * fout = stdout;
 
+#ifdef POLYA
+	stringEx polyA = stringEx("A")*POLYA;
+#endif
 	for (std::map<std::string, geneData>::iterator i = genomeDef.genes.begin(); i != genomeDef.genes.end(); i++)
 	{
 		fprintf(fout, ">%s\n", i->first.c_str());
 		fprintf(fout, i->second.priorSeq.c_str());
 		for (auto j : i->second.regions)
 			fprintf(fout, j->sequence.c_str());
+		fprintf(fout, i->second.postSeq.c_str());
+#ifdef POLYA
+		fprintf(fout, polyA.c_str());
+#endif
 		fprintf(fout, "\n");
 	}
 	fclose(fout);

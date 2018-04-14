@@ -176,13 +176,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="reference.cpp" />
     <ClCompile Include="refSeqs.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="alphabet.h" />
     <ClInclude Include="assert_helpers.h" />
-    <ClInclude Include="btypes.h" />
     <ClInclude Include="endian_swap.h" />
     <ClInclude Include="hisat2Lib.h" />
     <ClInclude Include="reference.h" />
