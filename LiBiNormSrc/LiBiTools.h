@@ -18,6 +18,7 @@ public:
 	int landMain2(int argc, char **argv);
 	int geneMain(int argc, char **argv);
 	int refSeqsMain(int argc, char **argv);
+	int bedMain(int argc, char **argv);
 };
 
 #endif // !LIBITOOLS_H

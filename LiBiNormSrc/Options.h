@@ -90,6 +90,10 @@
 //	Prints a file containing the predicted read distrubtion for different mRNA lengths
 #define PRINT_DISTRIBUTION
 
+//  Output gtf file as bed data
+#define OUTPUT_BED_DATA
+
+
 //	******************************************************************************
 //	The following are options that would normally be disabled in the release version of the code
 
@@ -114,9 +118,6 @@
 
 //  Output detailed results of interpreting the Feature file
 // #define OUTPUT_FEATURE_DATA
-
-//  Output gtf file as bed data
-#define OUTPUT_BED_DATA
 
 //	Output info on how each read is identified
 // #define OUTPUT_READ_MAPPING_INFO

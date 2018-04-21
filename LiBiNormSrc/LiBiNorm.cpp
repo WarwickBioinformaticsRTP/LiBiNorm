@@ -38,13 +38,16 @@ int main(int argc, char **argv)
 		printf("     count            htseq-count replacement with optional bias correction\n");
 		printf("     model            further bias correction analysis\n");
 		printf("     conv	          renames chromosomes in a .gff3 file to match those in a bam file\n");
+		printf("     refSeq           creates a fasta file with the gene reference sequences\n");
+#ifdef OUTPUT_BED_DATA
+		printf("     bed			  creates a bed file listing exons used for analysis\n");
+#endif
 #ifdef INITIAL_VALUES
 		printf("     variation        shows variation in Log Liklyhood with parameter\n");
 #endif
 #ifdef LIBITOOLS
 		printf("     land             compares two different landscape files\n");
 		printf("     land2            compares a landscape file and a gene list\n");
-		printf("     refSeq           creates a fasta file with the gene reference sequences\n");
 #endif
 #ifdef DEDUP_MODE
 		printf("     dedup            removes duplicates\n");
@@ -73,6 +76,18 @@ int main(int argc, char **argv)
 			LiBiConv conv;
 			return conv.main(argc - 1, argv + 1);
 		}
+		if (command == "refSeq")
+		{
+			LiBiTools tools;
+			return tools.refSeqsMain(argc - 1, argv + 1);
+		}
+#ifdef OUTPUT_BED_DATA
+		if (command == "bed")
+		{
+			LiBiTools tools;
+			return tools.bedMain(argc - 1, argv + 1);
+		}
+#endif
 #ifdef LIBITOOLS
 		if (command == "variation")
 		{
@@ -93,11 +108,6 @@ int main(int argc, char **argv)
 		{
 			LiBiTools tools;
 			return tools.geneMain(argc - 1, argv + 1);
-		}
-		if (command == "refSeq")
-		{
-			LiBiTools tools;
-			return tools.refSeqsMain(argc - 1, argv + 1);
 		}
 #endif
 #ifdef DEDUP_MODE
