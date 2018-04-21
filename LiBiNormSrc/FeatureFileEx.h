@@ -56,6 +56,10 @@ public:
 	const std::string bioType;
 	char strand;
 	chromosomeFeatureData::iterator overlaps;
+
+#ifdef HISAT2
+	std::string sequence;
+#endif
 };
 
 
@@ -104,6 +108,13 @@ public:
 	std::string chromosome;
 	bool overlapsAnotherGene;
 	char strand;
+
+#ifdef HISAT2
+	size_t length;
+	std::string priorSeq, postSeq;
+	std::map<rna_pos_type, size_t> mRNAtoSeq;
+#endif
+
 };
 
 //

@@ -16,6 +16,9 @@
 #include "fastaFile.h"
 
 #include "Options.h"
+#ifdef HISAT2
+#include "refSeqs.h"
+#endif
 #include "FeatureFileEx.h"
 #include "GeneCountData.h"
 #include "LiBiTools.h"
@@ -25,6 +28,7 @@ using namespace BamTools;
 
 #define LOOKAHEAD 1000
 #define MAX_READS 1000
+#define POLYA 125
 
 string prefix(const string & s)
 {
@@ -377,6 +381,109 @@ int LiBiTools::geneMain(int argc, char **argv)
 		resFile.print(fasta.NameStr());
 		OK = fasta.readEntry();
 	};
+	return EXIT_SUCCESS;
+
+}
+
+int LiBiTools::refSeqsMain(int argc, char **argv)
+{
+	stringEx featureFileName, hisat2_fileroot;
+	stringEx id_attribute, feature_type;
+
+	bool useStrand = true;
+
+	verbose = true;
+
+	if (argc < 1)
+	{
+		printf("Error: parameter wrong!\n");
+		return EXIT_FAILURE;
+	}
+	else if ((argc == 1) || ((argc == 2) && ((strcmp(argv[1], "-h") == 0) || (strcmp(argv[1], "--help") == 0))))
+	{
+		printf("Usage: LiBiNorm refSeqs <gtfFile> <hisat2Ref>\n");
+		printf("Extracts the sequences for the genes in the gtfFile and creates a fastfile containing the reference sequences\n");
+		return EXIT_SUCCESS;
+	}
+	int ni = 1;
+
+	if (argc < 3)
+		exitFail("Insufficient arguments");
+
+	while (ni < argc - 2)
+	{
+		bool opt2 = false;
+		if ((strcmp(argv[ni], "-t") == 0) || (opt2 = (strncmp(argv[ni], "--type=", 7) == 0)))
+		{
+			feature_type = opt2 ? argv[ni] + 7 : argv[++ni];
+		}
+		else if ((strcmp(argv[ni], "-i") == 0) || (opt2 = (strncmp(argv[ni], "--idattr=", 9) == 0)))
+		{
+			id_attribute = opt2 ? argv[ni] + 9 : argv[++ni];
+		}
+		else
+		{
+			exitFail("Invalid parameter: ", string(argv[ni]));
+		}
+		ni++;
+
+	}
+	featureFileName = argv[argc - 2];
+	hisat2_fileroot = argv[argc - 1];
+
+	if (!feature_type)
+		feature_type = DEFAULT_FEATURE_TYPE_EXON;
+
+	if (!id_attribute)
+	{
+		if (featureFileName.suffix() == "gtf")
+			id_attribute = DEFAULT_GTF_ID_ATTRIBUTE;
+		else if (featureFileName.suffix().startsWith("gff"))
+			id_attribute = DEFAULT_GFF_ID_ATTRIBUTE;
+		else
+			exitFail("Unable to identify feature file type in order to specifiy default id attribute");
+	}
+
+	featureFileEx genomeDef;
+
+#ifdef IGNORED_GTF_TRANSCRIPT_TYPES
+	//	Retained intron transcripts dramatically change the apparent lengths of genes so are ignored, unless
+	//	we are running in htseq compatible mode
+
+	genomeDef.ignoreTranscriptTypes({ { IGNORED_GTF_TRANSCRIPT_TYPES } });
+#endif
+
+	//	Load up the gtf/gff3 file
+	if (!genomeDef.open(featureFileName, id_attribute, feature_type))
+		exitFail("Could not open feature file: ", featureFileName);
+
+	GeneCountData geneCounts;
+	genomeDef.index(geneCounts, useStrand);
+
+	refSeqs referenceSequences;
+
+	if (!referenceSequences.get(hisat2_fileroot, genomeDef.genes))
+		exitFail("Problem getting sequence data from : ", hisat2_fileroot);
+
+	FILE * fout = stdout;
+
+#ifdef POLYA
+	stringEx polyA = stringEx("A")*POLYA;
+#endif
+	for (std::map<std::string, geneData>::iterator i = genomeDef.genes.begin(); i != genomeDef.genes.end(); i++)
+	{
+		fprintf(fout, ">%s\n", i->first.c_str());
+		fprintf(fout, i->second.priorSeq.c_str());
+		for (auto j : i->second.regions)
+			fprintf(fout, j->sequence.c_str());
+		fprintf(fout, i->second.postSeq.c_str());
+#ifdef POLYA
+		fprintf(fout, polyA.c_str());
+#endif
+		fprintf(fout, "\n");
+	}
+	fclose(fout);
+
 	return EXIT_SUCCESS;
 
 }

@@ -44,6 +44,7 @@ int main(int argc, char **argv)
 #ifdef LIBITOOLS
 		printf("     land             compares two different landscape files\n");
 		printf("     land2            compares a landscape file and a gene list\n");
+		printf("     refSeq           creates a fasta file with the gene reference sequences\n");
 #endif
 #ifdef DEDUP_MODE
 		printf("     dedup            removes duplicates\n");
@@ -92,6 +93,11 @@ int main(int argc, char **argv)
 		{
 			LiBiTools tools;
 			return tools.geneMain(argc - 1, argv + 1);
+		}
+		if (command == "refSeq")
+		{
+			LiBiTools tools;
+			return tools.refSeqsMain(argc - 1, argv + 1);
 		}
 #endif
 #ifdef DEDUP_MODE
