@@ -46,6 +46,7 @@ void setSSfun(optionsType & options,modelType m)
 		options.ssfun = &FLL_ModelBD;
 		options.priorfun = &priorFunc;
 		break;
+	case none:;
 	}
 }
 
@@ -741,6 +742,7 @@ void getBias(modelType m,dataVec & params,const dataVec & l, dataVec & bias)
 		t2 = pow(10, params[3]);
 		a = params[4];
 		break;
+	case none:;
 	}
 
 	bias.resize(l.size());
@@ -789,6 +791,7 @@ void getBias(modelType m,dataVec & params,const dataVec & l, dataVec & bias)
 			(1 - exp(-l*(t1 + t2))) / (t1 + t2) / d);
 		break;
 	}
+	case none:;
 	}
 	bias = bias * l[0] / bias[0];
 	bias /= l;

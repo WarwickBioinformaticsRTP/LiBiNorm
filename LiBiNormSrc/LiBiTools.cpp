@@ -448,12 +448,12 @@ int LiBiTools::refSeqsMain(int argc, char **argv)
 	for (std::map<std::string, geneData>::iterator i = genomeDef.genes.begin(); i != genomeDef.genes.end(); i++)
 	{
 		fprintf(fout, ">%s\n", i->first.c_str());
-		fprintf(fout, i->second.priorSeq.c_str());
+		fprintf(fout, "%s",i->second.priorSeq.c_str());
 		for (auto j : i->second.regions)
 			fprintf(fout, j->sequence.c_str());
-		fprintf(fout, i->second.postSeq.c_str());
+		fprintf(fout, "%s",i->second.postSeq.c_str());
 #ifdef POLYA
-		fprintf(fout, polyA.c_str());
+		fprintf(fout, "%s",polyA.c_str());
 #endif
 		fprintf(fout, "\n");
 	}
