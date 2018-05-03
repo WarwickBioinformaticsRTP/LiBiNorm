@@ -831,6 +831,7 @@ dataVec getDistribution(modelType m, size_t length, size_t points, dataVec & par
 		t2 = pow(10, params[3]);
 		a = params[4];
 		break;
+	case none:;
 	}
 
 	
@@ -864,7 +865,6 @@ dataVec getDistribution(modelType m, size_t length, size_t points, dataVec & par
 			dist2 = (x > h)*(x < l - h) / (t1 + t2) * (t1*exp(-t1*(l - x) - 2 * t2*h - t1*h) + t2*exp(-t1*l - t2*(x + h))) +
 				1 / (t1 + t2) * (t1*exp(-t1*(l - x)) + t2*exp(-t1*l - t2*(x))) / d;
 		}
-		if (m)
 		if (m == ModelBD)
 			dist = a * dist + (1 - a) * dist2;
 		else if (m == ModelD)
@@ -878,6 +878,7 @@ dataVec getDistribution(modelType m, size_t length, size_t points, dataVec & par
 	case ModelC:
 		dist = (x> h)*(x < l-h)*exp(-t2*(x+h)) +  exp(-t2*(x))/d;
 		break;
+	case none:;
 	}
 	dist.normalise();
 	return dist;

@@ -450,7 +450,7 @@ int LiBiTools::refSeqsMain(int argc, char **argv)
 		fprintf(fout, ">%s\n", i->first.c_str());
 		fprintf(fout, "%s",i->second.priorSeq.c_str());
 		for (auto j : i->second.regions)
-			fprintf(fout, j->sequence.c_str());
+			fprintf(fout, "%s",j->sequence.c_str());
 		fprintf(fout, "%s",i->second.postSeq.c_str());
 #ifdef POLYA
 		fprintf(fout, "%s",polyA.c_str());
