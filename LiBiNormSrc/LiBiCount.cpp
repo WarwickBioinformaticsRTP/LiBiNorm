@@ -49,8 +49,7 @@ int LiBiCount::main(int argc, char **argv)
 {
 	vector<geneListFilenameData> geneListFilenames;
 
-	stringEx bamFileName, featureFileName, bamOutFileName;
-	stringEx id_attribute, feature_type;
+	stringEx bamFileName, bamOutFileName;
 
 	reverseStrand = false;
 	useStrand = true;
@@ -88,14 +87,7 @@ int LiBiCount::main(int argc, char **argv)
 		printf("  -a MINAQUAL, --minaqual=MINAQUAL\n");
 		printf("                        skip all reads with alignment quality lower than the\n");
 		printf("                        given minimum value (default: 10)\n");
-		printf("  -t FEATURETYPE, --type=FEATURETYPE\n");
-		printf("                        feature type (3rd column in GFF file) to be used, all\n");
-		printf("                        features of other type are ignored (default for \n");
-		printf("                        Ensemble GTF and GFF files: ", DEFAULT_FEATURE_TYPE_EXON, ")\n");
-		printf("  -i IDATTR, --idattr=IDATTR\n");
-		printf("                        GFF attribute to be used as feature ID\n");
-		printf("                        (default for Ensembl GTF files: ", DEFAULT_GTF_ID_ATTRIBUTE, "\n");
-		printf("                        default for GFF3 files: ", DEFAULT_GFF_ID_ATTRIBUTE, ")\n");
+		featureAndIdAttributeHelp();
 		printf("  -m MODE, --mode=MODE  mode to handle reads overlapping more than one feature\n");
 		printf("                        (choices: union, intersection-strict, intersection-\n");
 		printf("                        nonempty; default: union)\n");
@@ -162,13 +154,8 @@ int LiBiCount::main(int argc, char **argv)
 				bamOutFileName = argv[++ni];
 			}
 		}
-		else if ((strcmp(argv[ni], "-t") == 0) || (opt2 = (strncmp(argv[ni], "--type=", 7) == 0)))
+		else if (commandParseIdAndType(ni, argv))
 		{
-			feature_type = opt2 ? argv[ni] + 7 : argv[++ni];
-		}
-		else if ((strcmp(argv[ni], "-i") == 0) || (opt2 = (strncmp(argv[ni], "--idattr=", 9) == 0)))
-		{
-			id_attribute = opt2 ? argv[ni] + 9 : argv[++ni];
 		}
 		else if ((strcmp(argv[ni], "-r") == 0) || (opt2 = (strncmp(argv[ni], "--order=", 8) == 0)))
 		{
@@ -207,7 +194,7 @@ int LiBiCount::main(int argc, char **argv)
 		{
 			landscapeFile = true;
 		}
-		else if (commandParseCommon(ni, argc - 2, argv)) //argc -2 to allow for the two fixed end parameters
+		else if (commandParseCommon(ni, argv)) 
 		{
 		}
 #ifdef USE_GENES_FROM_GENELIST
@@ -229,6 +216,8 @@ int LiBiCount::main(int argc, char **argv)
 		}
 		ni++;
 	}
+	if (ni > argc -2)
+		exitFail("Insufficient parameters");
 
 	bamFileName = argv[argc - 2];
 	featureFileName = argv[argc - 1];
@@ -288,9 +277,6 @@ int LiBiCount::main(int argc, char **argv)
 	if (countsFilename)
 		tempDirectory = countsFilename.replaceSuffix("_tempFiles");
 
-	if (!feature_type)
-		feature_type = DEFAULT_FEATURE_TYPE_EXON;
-
 	if (countMode == mode_none)
 	{
 		if (htSeqCompatible)
@@ -299,15 +285,7 @@ int LiBiCount::main(int argc, char **argv)
 			countMode = DEFAULT_COUNT_MODE;
 	}
 
-	if (!id_attribute)
-	{
-		if (featureFileName.suffix() == "gtf")
-			id_attribute = DEFAULT_GTF_ID_ATTRIBUTE;
-		else if (featureFileName.suffix().startsWith("gff"))
-			id_attribute = DEFAULT_GFF_ID_ATTRIBUTE;
-		else
-			exitFail("Unable to identify feature file type in order to specifiy default id attribute");
-	}
+	checkFeatureAndIdAttribute();
 
 	if (normalise && (feature_type != "exon"))
 		exitFail("Can only normalise data when 'exon' is the feature specified");
@@ -363,18 +341,18 @@ int LiBiCount::main(int argc, char **argv)
 
 	// geneCounts will hold a list of the genes being analysed, together with an initial 'reference' gene 
 	//	that is the gene length used for normalisation
-	geneCounts.addEntry("reference", false, DEFAULT_NORMALISATION_GENE_LENGTH);
+	allGeneCounts.addEntry("reference", false, DEFAULT_NORMALISATION_GENE_LENGTH);
 
 	//	If this option was selected at the command line, load up the list of genes to be analysed
 	for (auto & glfn : geneListFilenames)
 	{
 		progMessage("Using genes/transcripts listed in ", glfn.geneListFilename);
-		geneCounts.useSelectedGenes(glfn);
+		allGeneCounts.useSelectedGenes(glfn);
 	}
 
 	//	And then index the genome so we know where all of the exons associated with the genes being analysed are, and their
 	//	relationship to each other, e.g. if there are any overlaps.
-	genomeDef.index(geneCounts, useStrand);
+	genomeDef.index(allGeneCounts, useStrand);
 
 #ifdef COMPARE_RESULTS
 	transcriptDataMap transData;
@@ -433,9 +411,9 @@ int LiBiCount::main(int argc, char **argv)
 	//	Need to output landscape file now because the data will be modified during the process
 	//	of selecting reads for normalisation.  Exits with error message if unable to create file
 	if ((landscapeFile) && (outputFileroot))
-		geneCounts.outputLandscape(outputFileroot.replaceSuffix("_landscape.txt"));
+		allGeneCounts.outputLandscape(outputFileroot.replaceSuffix("_landscape.txt"));
 	if (outputFileroot)
-		geneCounts.outputHeatmapData(outputFileroot.replaceSuffix("_bias.txt"));
+		allGeneCounts.outputHeatmapData(outputFileroot.replaceSuffix("_bias.txt"));
 
 	if (normalise)
 	{
@@ -461,7 +439,7 @@ int LiBiCount::main(int argc, char **argv)
 			progMessage("Model used is ", theModel);
 		}
 
-		getBias(theModel, bestResults[theModel].params[logValue], geneCounts.lengths[0], geneCounts.bias);
+		getBias(theModel, bestResults[theModel].params[logValue], allGeneCounts.lengths[0], allGeneCounts.bias);
 
 		if (outputFileroot)
 		{
@@ -471,20 +449,20 @@ int LiBiCount::main(int argc, char **argv)
 			//	And then the bias predicted by all 6 models
 			printBias();
 #ifdef PRINT_DISTRIBUTION
-			printDistribution(geneCounts);
+			printDistribution(allGeneCounts);
 #endif
 			//	And then the counts and the bias for the genes themselves
 			string filename = outputFileroot.replaceSuffix("_expression.txt");
-			if (!geneCounts.outputGeneCounts(filename, outputFPKM?3:2, conv(theModel)))
+			if (!allGeneCounts.outputGeneCounts(filename, outputFPKM?3:2, conv(theModel)))
 				exitFail("Unable to output counts to :", filename);
 		}
 	}
 #ifdef PRINT_DISTRIBUTION
 	else if (outputFileroot)
-		printDistribution(geneCounts);
+		printDistribution(allGeneCounts);
 #endif
 
-	if(!geneCounts.outputGeneCounts(countsFilename,normalise?1:0,conv(theModel)))
+	if(!allGeneCounts.outputGeneCounts(countsFilename,normalise?1:0,conv(theModel)))
 		exitFail("Unable to output counts to :",countsFilename);
 
 	elapsedTime("All results output");
@@ -549,7 +527,7 @@ string LiBiCount::addRead(const regionLists & segments,const featureFileEx & gtf
 #ifdef DEBUG_OUT_FILE
 		debugOut.printEnd(segments.name);
 #endif
-		geneCounts.count(notUnique)++;
+		allGeneCounts.count(notUnique)++;
 		if ((bamOutMode == outputAll) || (bamOutMode == outputUnmatched))
 			return notUnique;
 		else
@@ -557,7 +535,7 @@ string LiBiCount::addRead(const regionLists & segments,const featureFileEx & gtf
 	}
 	else if (segments.qual < minqual)
 	{
-		geneCounts.count(lowQualString)++;
+		allGeneCounts.count(lowQualString)++;
 		if ((bamOutMode == outputAll) || (bamOutMode == outputUnmatched))
 			return lowQualString;
 		else
@@ -819,8 +797,8 @@ string LiBiCount::addRead(const regionLists & segments,const featureFileEx & gtf
 							//	a single fragment
 							if (genomeDataFile.is_open())
 								genomeDataFile.printEnd(*mode, *result, location, segments.name);
-							geneCounts.count(*result)++;
-							geneCounts.readPositionData[*result].positions[0].emplace_back(RNAstartPos);
+							allGeneCounts.count(*result)++;
+							allGeneCounts.readPositionData[*result].positions[0].emplace_back(RNAstartPos);
 							result = &gene.geneName;
 							RNAstartPos = gene.geneOverlapCounts.RNAstartPos;
 							RNAendPos = gene.geneOverlapCounts.RNAendPos;
@@ -925,9 +903,9 @@ string LiBiCount::addRead(const regionLists & segments,const featureFileEx & gtf
 	if (genomeDataFile.is_open())
 		genomeDataFile.printEnd(*mode,*result,location,segments.name);
 
-	geneCounts.count(*result)++;
+	allGeneCounts.count(*result)++;
 
-	rna_pos_type geneLen = geneCounts.length(*result);
+	rna_pos_type geneLen = allGeneCounts.length(*result);
 	
 	if (geneLen == 0)
 	{
@@ -943,16 +921,16 @@ string LiBiCount::addRead(const regionLists & segments,const featureFileEx & gtf
 			if (genomeDef.genes[*result].strand == '+')
 			{
 				if (segments.strands[0] == '+')
-					geneCounts.readPositionData.at(*result).positions[0].emplace_back(max(min(RNAstartPos, geneLen - 1),(rna_pos_type)1));
+					allGeneCounts.readPositionData.at(*result).positions[0].emplace_back(max(min(RNAstartPos, geneLen - 1),(rna_pos_type)1));
 				else
-					geneCounts.readPositionData.at(*result).positions[1].emplace_back(max(min(RNAendPos,geneLen-1), (rna_pos_type)1));
+					allGeneCounts.readPositionData.at(*result).positions[1].emplace_back(max(min(RNAendPos,geneLen-1), (rna_pos_type)1));
 			}
 			else
 			{
 				if (segments.strands[0] == '+')
-					geneCounts.readPositionData.at(*result).positions[1].emplace_back(max(geneLen - RNAstartPos + 1,(rna_pos_type)1));
+					allGeneCounts.readPositionData.at(*result).positions[1].emplace_back(max(geneLen - RNAstartPos + 1,(rna_pos_type)1));
 				else
-					geneCounts.readPositionData.at(*result).positions[0].emplace_back(max(geneLen - RNAendPos + 1,(rna_pos_type)1));
+					allGeneCounts.readPositionData.at(*result).positions[0].emplace_back(max(geneLen - RNAendPos + 1,(rna_pos_type)1));
 			}
 		}
 		else
@@ -963,8 +941,8 @@ string LiBiCount::addRead(const regionLists & segments,const featureFileEx & gtf
 			{
 				if (segments.strands[0] == segments.strands[1])
 				{
-					geneCounts.readPositionData.at(*result).positions[0].emplace_back(max(min(RNAstartPos, geneLen - 1), (rna_pos_type)1));
-					geneCounts.readPositionData.at(*result).positions[1].emplace_back(max(min(RNAendPos, geneLen - 1), (rna_pos_type)1));
+					allGeneCounts.readPositionData.at(*result).positions[0].emplace_back(max(min(RNAstartPos, geneLen - 1), (rna_pos_type)1));
+					allGeneCounts.readPositionData.at(*result).positions[1].emplace_back(max(min(RNAendPos, geneLen - 1), (rna_pos_type)1));
 				}
 				else
 				{
@@ -977,8 +955,8 @@ string LiBiCount::addRead(const regionLists & segments,const featureFileEx & gtf
 			{
 				if (segments.strands[0] == segments.strands[1])
 				{
-					geneCounts.readPositionData.at(*result).positions[1].emplace_back(max(geneLen - RNAstartPos + 1,(rna_pos_type)1));
-					geneCounts.readPositionData.at(*result).positions[0].emplace_back(max(geneLen - RNAendPos + 1,(rna_pos_type)1));
+					allGeneCounts.readPositionData.at(*result).positions[1].emplace_back(max(geneLen - RNAstartPos + 1,(rna_pos_type)1));
+					allGeneCounts.readPositionData.at(*result).positions[0].emplace_back(max(geneLen - RNAendPos + 1,(rna_pos_type)1));
 				}
 				else
 				{
@@ -1026,7 +1004,7 @@ bool LiBiCount::AReadIsMapped(const BamAlignment & ba)
 			if (!ba.IsMateMapped())
 			{
 				if (ba.IsFirstMate())
-					geneCounts.count(notAlignedString)++;
+					allGeneCounts.count(notAlignedString)++;
 				return false;
 			}
 			//	At this point although the read is not mapped the mate is, 
@@ -1035,7 +1013,7 @@ bool LiBiCount::AReadIsMapped(const BamAlignment & ba)
 		else
 		{
 			//	If it is not paired then increement the 'not Aligned' count
-			geneCounts.count(notAlignedString)++;
+			allGeneCounts.count(notAlignedString)++;
 			return false;
 		}
 	}

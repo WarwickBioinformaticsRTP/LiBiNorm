@@ -11,7 +11,7 @@
 #define OPTIONS_H
 
 
-#define LIBINORM_VERSION "1.12"
+#define LIBINORM_VERSION "2.0"
 //	Bam/gff file reading
 #define DEFAULT_FEATURE_TYPE_EXON "exon" 
 #define DEFAULT_GTF_ID_ATTRIBUTE "gene_id"
@@ -93,12 +93,16 @@
 //  Output gtf file as bed data
 #define OUTPUT_BED_DATA
 
+//	Output selected genes from gtf file as FASTA file
+#define OUTPUT_FASTA_FILE
+
+#ifdef OUTPUT_FASTA_FILE
+#define HISAT2
+#endif
 
 //	******************************************************************************
 //	The following are options that would normally be disabled in the release version of the code
 
-
-#define HISAT2
 
 //	Use the original option wehere 'best' selected the model with the lowest log liklihood.
 // #define SELECT_BY_LL
@@ -111,7 +115,7 @@
 
 //	Use this to enable various addditional tools for exploring LiBiNorm data.  This currently
 //	provides the additional land, land2 and gene run modes
-#define LIBITOOLS
+// #define LIBITOOLS
 
 //	Use this to add the mode where duplicates in bam files can be removed
 // #define DEDUP_MODE
@@ -123,14 +127,14 @@
 // #define OUTPUT_READ_MAPPING_INFO
 
 //	Adds option of just use selected genes (cont mode)
-#define USE_GENES_FROM_GENELIST
+// #define USE_GENES_FROM_GENELIST
 
 //	Adds a menu option that allows the seed to be specified
-#define SELECT_READ_SEED
+// #define SELECT_READ_SEED
 
 //	Use this mode to run a model with specific parameters which are loaded in using the -i
 //	command.  This affects how the values are setin ModelParameters.cpp
-#define INITIAL_VALUES
+// #define INITIAL_VALUES
 
 //	Data from longer and shorter genes are given additional weightings.  The current values differ from the original
 //	Use this to reset to the original
@@ -140,10 +144,10 @@
 // #define REPRODUCE_MATLAB	
 
 //	Adds -x option where the program will pause at the end rather than simply exiting.  Useful for debugging
-#define PAUSE_AT_END_OPTION	
+// #define PAUSE_AT_END_OPTION	
 
 // Adds -w option which results in the output of additional debug messages
-#define OUTPUT_DEBUG_MESSAGES
+// #define OUTPUT_DEBUG_MESSAGES
 
 //	Some of the code in ModelData.cpp has also been writtent using vectors which is slower but the code
 //	more closely matches the MATLAB code
@@ -174,7 +178,6 @@
 //	but with spaces at either end.  Genes with fewer than N genes are excluded
 // #define CREATE_FLAT_DATA
 
-//
 //	Use absolute rather than log h value when doing Nelder Mead and MCMC
 // #define ABS_H_PARAM
 

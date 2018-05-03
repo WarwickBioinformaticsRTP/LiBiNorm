@@ -39,7 +39,6 @@ string prefix(const string & s)
 int LiBiTools::landMain(int argc, char **argv)
 {
 	stringEx land_filename1, land_filename2, gff_filename, bamFileName;
-	stringEx id_attribute;
 
 	if (argc < 1)
 	{
@@ -280,14 +279,8 @@ int LiBiTools::landMain2(int argc, char **argv)
 	landFilename = argv[argc - 2];
 	geneFilename = argv[argc - 1];
 
-	featureFileEx genomeDef;
-	stringEx id_attribute = DEFAULT_GFF_ID_ATTRIBUTE,
-		feature_type = DEFAULT_FEATURE_TYPE_EXON;
-
-
 	GeneCountData geneCounts;
 	geneCounts.loadData(landFilename);
-
 
 	ifstream file;
 	file.open(geneFilename);
@@ -387,8 +380,7 @@ int LiBiTools::geneMain(int argc, char **argv)
 
 int LiBiTools::refSeqsMain(int argc, char **argv)
 {
-	stringEx featureFileName, hisat2_fileroot;
-	stringEx id_attribute, feature_type;
+	stringEx hisat2_fileroot;
 
 	bool useStrand = true;
 
@@ -401,8 +393,10 @@ int LiBiTools::refSeqsMain(int argc, char **argv)
 	}
 	else if ((argc == 1) || ((argc == 2) && ((strcmp(argv[1], "-h") == 0) || (strcmp(argv[1], "--help") == 0))))
 	{
-		printf("Usage: LiBiNorm refSeqs <gtfFile> <hisat2Ref>\n");
-		printf("Extracts the sequences for the genes in the gtfFile and creates a fastfile containing the reference sequences\n");
+		printf("Usage: LiBiNorm refSeqs [options] <gtfFile> <hisat2Ref>\n");
+		printf("Extracts the sequences for the genes in the gtfFile and outputs a fastfile containing the reference sequences\n");
+		printf("Options:\n");
+		featureAndIdAttributeHelp();
 		return EXIT_SUCCESS;
 	}
 	int ni = 1;
@@ -412,37 +406,18 @@ int LiBiTools::refSeqsMain(int argc, char **argv)
 
 	while (ni < argc - 2)
 	{
-		bool opt2 = false;
-		if ((strcmp(argv[ni], "-t") == 0) || (opt2 = (strncmp(argv[ni], "--type=", 7) == 0)))
-		{
-			feature_type = opt2 ? argv[ni] + 7 : argv[++ni];
-		}
-		else if ((strcmp(argv[ni], "-i") == 0) || (opt2 = (strncmp(argv[ni], "--idattr=", 9) == 0)))
-		{
-			id_attribute = opt2 ? argv[ni] + 9 : argv[++ni];
-		}
-		else
-		{
+		if (!commandParseIdAndType(ni, argv))
 			exitFail("Invalid parameter: ", string(argv[ni]));
-		}
 		ni++;
-
 	}
+
+	if (ni > argc - 2)
+		exitFail("Insufficient parameters");
+
 	featureFileName = argv[argc - 2];
 	hisat2_fileroot = argv[argc - 1];
 
-	if (!feature_type)
-		feature_type = DEFAULT_FEATURE_TYPE_EXON;
-
-	if (!id_attribute)
-	{
-		if (featureFileName.suffix() == "gtf")
-			id_attribute = DEFAULT_GTF_ID_ATTRIBUTE;
-		else if (featureFileName.suffix().startsWith("gff"))
-			id_attribute = DEFAULT_GFF_ID_ATTRIBUTE;
-		else
-			exitFail("Unable to identify feature file type in order to specifiy default id attribute");
-	}
+	checkFeatureAndIdAttribute();
 
 	featureFileEx genomeDef;
 
@@ -491,8 +466,6 @@ int LiBiTools::refSeqsMain(int argc, char **argv)
 
 int LiBiTools::bedMain(int argc, char **argv)
 {
-	stringEx featureFileName;
-	stringEx id_attribute, feature_type;
 
 	bool useStrand = true;
 
@@ -503,10 +476,12 @@ int LiBiTools::bedMain(int argc, char **argv)
 		printf("Error: parameter wrong!\n");
 		return EXIT_FAILURE;
 	}
-	else if ((argc == 0) || ((argc == 1) && ((strcmp(argv[1], "-h") == 0) || (strcmp(argv[1], "--help") == 0))))
+	else if ((argc == 1) || ((argc == 2) && ((strcmp(argv[1], "-h") == 0) || (strcmp(argv[1], "--help") == 0))))
 	{
-		printf("Usage: LiBiNorm bed <gtfFile>\n");
-		printf("Creates a bed file from the gtf file\n");
+		printf("Usage: LiBiNorm bed [options] <gtfFile>\n");
+		printf("Outputs a bed file created from information in the gtf file\n");
+		printf("Options:\n");
+		featureAndIdAttributeHelp();
 		return EXIT_SUCCESS;
 	}
 	int ni = 1;
@@ -516,36 +491,16 @@ int LiBiTools::bedMain(int argc, char **argv)
 
 	while (ni < argc - 1)
 	{
-		bool opt2 = false;
-		if ((strcmp(argv[ni], "-t") == 0) || (opt2 = (strncmp(argv[ni], "--type=", 7) == 0)))
-		{
-			feature_type = opt2 ? argv[ni] + 7 : argv[++ni];
-		}
-		else if ((strcmp(argv[ni], "-i") == 0) || (opt2 = (strncmp(argv[ni], "--idattr=", 9) == 0)))
-		{
-			id_attribute = opt2 ? argv[ni] + 9 : argv[++ni];
-		}
-		else
-		{
+		if(!commandParseIdAndType(ni,argv))
 			exitFail("Invalid parameter: ", string(argv[ni]));
-		}
 		ni++;
-
 	}
+	if (ni > argc - 1)
+		exitFail("Insufficient parameters");
+
 	featureFileName = argv[argc - 1];
 
-	if (!feature_type)
-		feature_type = DEFAULT_FEATURE_TYPE_EXON;
-
-	if (!id_attribute)
-	{
-		if (featureFileName.suffix() == "gtf")
-			id_attribute = DEFAULT_GTF_ID_ATTRIBUTE;
-		else if (featureFileName.suffix().startsWith("gff"))
-			id_attribute = DEFAULT_GFF_ID_ATTRIBUTE;
-		else
-			exitFail("Unable to identify feature file type in order to specifiy default id attribute");
-	}
+	checkFeatureAndIdAttribute();
 
 	featureFileEx genomeDef;
 
@@ -562,7 +517,6 @@ int LiBiTools::bedMain(int argc, char **argv)
 
 	GeneCountData geneCounts;
 	genomeDef.index(geneCounts, useStrand);
-
 
 	// Outputs to stdout
 	genomeDef.outputBedData("");

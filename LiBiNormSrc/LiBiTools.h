@@ -10,8 +10,9 @@
 #ifndef LIBITOOLS_H
 #define LIBITOOLS_H
 
+#include "LiBiNormCore.h"
 
-class LiBiTools
+class LiBiTools : public LiBiNormCore
 {
 public:
 	int landMain(int argc, char **argv);

@@ -37,10 +37,12 @@ int main(int argc, char **argv)
 		printf("Commands:\n");	
 		printf("     count            htseq-count replacement with optional bias correction\n");
 		printf("     model            further bias correction analysis\n");
-		printf("     conv	          renames chromosomes in a .gff3 file to match those in a bam file\n");
+		printf("     conv             renames chromosomes in a .gff3 file to match those in a bam file\n");
+#ifdef OUTPUT_FASTA_FILE
 		printf("     refSeq           creates a fasta file with the gene reference sequences\n");
+#endif
 #ifdef OUTPUT_BED_DATA
-		printf("     bed			  creates a bed file listing exons used for analysis\n");
+		printf("     bed              creates a bed file listing exons used for analysis\n");
 #endif
 #ifdef INITIAL_VALUES
 		printf("     variation        shows variation in Log Liklyhood with parameter\n");
@@ -60,7 +62,8 @@ int main(int argc, char **argv)
 	}
 	else if (argc > 1)
 	{
-		string command(argv[1]);
+		string command = stringEx(argv[1]).toLower();
+//		string command = (argv[1]);
 		if (command == "count")
 		{
 			LiBiCount libiC;
@@ -76,11 +79,13 @@ int main(int argc, char **argv)
 			LiBiConv conv;
 			return conv.main(argc - 1, argv + 1);
 		}
-		if (command == "refSeq")
+#ifdef OUTPUT_FASTA_FILE
+		if (command == "refseq")
 		{
 			LiBiTools tools;
 			return tools.refSeqsMain(argc - 1, argv + 1);
 		}
+#endif
 #ifdef OUTPUT_BED_DATA
 		if (command == "bed")
 		{
@@ -172,7 +177,7 @@ int LiBiNorm::main(int argc, char **argv)
 	while(ni < argc -1)
 	{
 		bool opt2 = false;
-		if (commandParseCommon(ni, argc,argv))
+		if (commandParseCommon(ni, argv))
 		{
 		}
 		else if ((strcmp(argv[ni], "-g") == 0) || (opt2 = (strncmp(argv[ni], "--genes=", 8) == 0)))
@@ -264,13 +269,13 @@ int LiBiNorm::main(int argc, char **argv)
 		}
 	}
 #else
-	geneCounts.loadData(landscapeFilename, Ngenes);
+	allGeneCounts.loadData(landscapeFilename, Ngenes);
 #endif
 
 
 
 	if (outputFileroot)
-		geneCounts.outputHeatmapData(outputFileroot.replaceSuffix("_bias.txt"));
+		allGeneCounts.outputHeatmapData(outputFileroot.replaceSuffix("_bias.txt"));
 
 	//	Load up the initial values
 	if (parameterFilename)
@@ -297,19 +302,19 @@ int LiBiNorm::main(int argc, char **argv)
 			progMessage("Model selected by command line is ", theModel);
 		}
 
-		getBias(theModel, bestResults[theModel].params[logValue], geneCounts.lengths[0], geneCounts.bias);
+		getBias(theModel, bestResults[theModel].params[logValue], allGeneCounts.lengths[0], allGeneCounts.bias);
 
 		//	If a file root was specified then output the detailed output files
 		if (outputFileroot)
 		{
 			string filename = outputFileroot.replaceSuffix("_expression.txt");
-			if (!geneCounts.outputGeneCounts(filename, outputFPKM ? 3 : 2, conv(theModel)))
+			if (!allGeneCounts.outputGeneCounts(filename, outputFPKM ? 3 : 2, conv(theModel)))
 				exitFail("Unable to output counts to :", filename);
 
 			printResults();
 			printBias();
 #ifdef PRINT_DISTRIBUTION
-			printDistribution(geneCounts);
+			printDistribution(allGeneCounts);
 #endif
 		}
 
@@ -321,11 +326,11 @@ int LiBiNorm::main(int argc, char **argv)
 	}
 #ifdef PRINT_DISTRIBUTION
 	else if(outputFileroot)
-		printDistribution(geneCounts);
+		printDistribution(allGeneCounts);
 #endif
 
 	//	The basic count data in htseq-count format
-	if (!geneCounts.outputGeneCounts(countsFilename, normalise?1:0, conv(theModel)))
+	if (!allGeneCounts.outputGeneCounts(countsFilename, normalise?1:0, conv(theModel)))
 		exitFail("Unable to output counts to :", countsFilename);
 
 	progMessage("Data modelled");

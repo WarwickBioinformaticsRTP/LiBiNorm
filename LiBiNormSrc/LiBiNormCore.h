@@ -61,8 +61,13 @@ protected:
 	};
 
 	void helpCommon();
-	bool commandParseCommon(int & ni, int argc, char **argv);
+	void featureAndIdAttributeHelp();
+
+	bool commandParseCommon(int & ni, char **argv);
+	bool commandParseIdAndType(int & ni, char **argv);
+
 	void SetInitialParamsFromFile(const std::string & filename);
+	void checkFeatureAndIdAttribute();
 
 	void mcmcThread(optionsType options);
 	bool coreParameterEstimation();
@@ -87,6 +92,11 @@ protected:
 	bool calcAllModels;
 #endif
 
+	//	Information relating to the gtf/gff file being used
+	//	use by LiBiNorm count and some tools
+	stringEx featureFileName;
+	stringEx id_attribute, feature_type;
+
 	size_t maxReads,maxGeneLength,Nthreads;
 	mcmcRunId Nruns,NrunsOtherModels;
 
@@ -110,8 +120,8 @@ protected:
 	std::map<modelType, bestResult> bestResults;
 
 	//	The specific data that will be used for the mcmc parameter determination
-	mcmcGeneData geneData;
-	GeneCountData geneCounts;
+	mcmcGeneData allGeneData;
+	GeneCountData allGeneCounts;
 private:
 	//	Counts of the number of mcmc runs that will be done for each model
 	struct loop_counts { mcmcRunId requested, counter; };

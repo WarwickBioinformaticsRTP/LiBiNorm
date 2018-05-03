@@ -21,9 +21,13 @@ using namespace std;
 void LiBiNormCore::helpCommon()
 {
 	printf("  -n M, --normModel=M   Specifies that model M should be used rather than the default\n");
-	printf("                        Model BD. M options: best,A,B,C,D or polyA,\n");
-	printf("                        E or random,BD or smart.  best causes all models to be evaluated\n");
-	printf("                        and the best, based on liklihood selected\n");
+	printf("                        Model BD. M options: A,B,C,D or polyA,\n");
+	printf("                        E or random,BD or smart");
+#ifdef SELECT_BY_LL
+	printf(",best.  best causes all models to\n");
+	printf("                        be evaluated and the best, based on liklihood selected\n");
+#endif
+	printf("\n");
 	printf("  -u FILEROOT, --normFileroot=FILEROOT\n");
 	printf("                        All output summary info is sent to files with root FILEROOT\n");
 	printf("  -p N, --threads=N     Number of threads for normalisation parameter\n");
@@ -52,7 +56,20 @@ void LiBiNormCore::helpCommon()
 
 }
 
-bool LiBiNormCore::commandParseCommon(int & ni, int argc,char **argv)
+void LiBiNormCore::featureAndIdAttributeHelp()
+{
+	printf("  -t FEATURETYPE, --type=FEATURETYPE\n");
+	printf("                        feature type (3rd column in GFF file) to be used, all\n");
+	printf("                        features of other type are ignored (default for \n");
+	printf("                        Ensemble GTF and GFF files: ", DEFAULT_FEATURE_TYPE_EXON, ")\n");
+	printf("  -i IDATTR, --idattr=IDATTR\n");
+	printf("                        GFF attribute to be used to identify the feature ID\n");
+	printf("                        (default for Ensembl GTF files: ", DEFAULT_GTF_ID_ATTRIBUTE, "\n");
+	printf("                        default for GFF3 files: ", DEFAULT_GFF_ID_ATTRIBUTE, ")\n");
+}
+
+
+bool LiBiNormCore::commandParseCommon(int & ni, char **argv)
 {
 		bool opt2 = false;
 		if ((strcmp(argv[ni], "-u") == 0) || (opt2 = (strncmp(argv[ni], "--outputFileroot=", 17) == 0)))
@@ -81,7 +98,7 @@ bool LiBiNormCore::commandParseCommon(int & ni, int argc,char **argv)
 		}
 		if ((strcmp(argv[ni], "-c") == 0) || (opt2 = (strncmp(argv[ni], "--counts=", 9) == 0)))
 		{
-			countsFilename = opt2 ? argv[++ni] + 9 : argv[++ni];
+			countsFilename = opt2 ? argv[ni] + 9 : argv[++ni];
 			return true;
 		}
 		if ((strcmp(argv[ni], "-j") == 0) || (opt2 = (strncmp(argv[ni], "--fkpm", 6) == 0)))
@@ -136,6 +153,23 @@ bool LiBiNormCore::commandParseCommon(int & ni, int argc,char **argv)
 		return false;
 }
 
+
+bool LiBiNormCore::commandParseIdAndType(int & ni, char **argv)
+{
+	bool opt2 = false;
+	if ((strcmp(argv[ni], "-t") == 0) || (opt2 = (strncmp(argv[ni], "--type=", 7) == 0)))
+	{
+		feature_type = opt2 ? argv[ni] + 7 : argv[++ni];
+		return true;
+	}
+	if ((strcmp(argv[ni], "-i") == 0) || (opt2 = (strncmp(argv[ni], "--idattr=", 9) == 0)))
+	{
+		id_attribute = opt2 ? argv[ni] + 9 : argv[++ni];
+		return true;
+	}
+	return false;
+}
+
 void LiBiNormCore::SetInitialParamsFromFile(const string & filename)
 {
 	parseTsvFile paramFile;
@@ -180,7 +214,7 @@ void LiBiNormCore::mcmcThread(optionsType options)
 				progMessage("Starting intial values ", m);
 			}
 
-			LiBiOptimiser  optimiser(geneData, m, bestResults[m].nelderMeadIterations);
+			LiBiOptimiser  optimiser(allGeneData, m, bestResults[m].nelderMeadIterations);
 			setSSfun(options, m);
 			initialValues[m] = optimiser.getParams(m, options, initialValues[m]);
 
@@ -227,7 +261,7 @@ void LiBiNormCore::mcmcThread(optionsType options)
 		options.qcov = dataVec(params.size(), options.jumpSize);
 
 		mcmc mcmcEngine;
-		mcmcEngine.mcmcrun(geneData, params, options);
+		mcmcEngine.mcmcrun(allGeneData, params, options);
 
 		//  Make sure only one thread at a time is outputting results
 		lock_guard<mutex> lock(mtx1);
@@ -246,11 +280,26 @@ void LiBiNormCore::mcmcThread(optionsType options)
 	}
 }
 
+void LiBiNormCore::checkFeatureAndIdAttribute()
+{
+	if (!feature_type)
+	feature_type = DEFAULT_FEATURE_TYPE_EXON;
+
+	if (!id_attribute)
+	{
+		if (featureFileName.suffix() == "gtf")
+			id_attribute = DEFAULT_GTF_ID_ATTRIBUTE;
+		else if (featureFileName.suffix().startsWith("gff"))
+			id_attribute = DEFAULT_GFF_ID_ATTRIBUTE;
+		else
+			exitFail("Unable to identify feature file type in order to specifiy default id attribute");
+	}
+}
 
 bool LiBiNormCore::coreParameterEstimation()
 {
-	geneCounts.remove_invalid_values();
-	geneCounts.transferTo(geneData, MAX_READS_GENE, maxReads, maxGeneLength);
+	allGeneCounts.remove_invalid_values();
+	allGeneCounts.transferTo(allGeneData, MAX_READS_GENE, maxReads, maxGeneLength);
 
 	elapsedTime("Data loaded");
 

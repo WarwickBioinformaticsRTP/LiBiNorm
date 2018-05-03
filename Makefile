@@ -410,6 +410,8 @@ $(BUILD)/LiBiNormSrc/LiBiTools.o: ../bioinformaticsLib/libParser.h
 $(BUILD)/LiBiNormSrc/LiBiTools.o: mcmcLib/mcmc.h mcmcLib/params.h
 $(BUILD)/LiBiNormSrc/LiBiTools.o: ../bioinformaticsLib/nelderMeadOptimiser.h
 $(BUILD)/LiBiNormSrc/LiBiTools.o: LiBiNormSrc/LiBiTools.h
+$(BUILD)/LiBiNormSrc/LiBiTools.o: LiBiNormSrc/LiBiNormCore.h
+$(BUILD)/LiBiNormSrc/LiBiTools.o: LiBiNormSrc/ModelData.h
 $(BUILD)/LiBiNormSrc/LiBiVariation.o: ../bioinformaticsLib/libParser.h
 $(BUILD)/LiBiNormSrc/LiBiVariation.o: ../bioinformaticsLib/libCommon.h
 $(BUILD)/LiBiNormSrc/LiBiVariation.o: LiBiNormSrc/LiBiVariation.h
@@ -530,6 +532,8 @@ $(BUILD)/bioinformaticsLib/rand.o: ../bioinformaticsLib/libCommon.h
 $(BUILD)/bioinformaticsLib/rand.o: ../bioinformaticsLib/printEx.h
 $(BUILD)/bioinformaticsLib/rand.o: ../bioinformaticsLib/inQuotes.h
 $(BUILD)/bioinformaticsLib/smithWaterman.o: ../bioinformaticsLib/smithWaterman.h
+$(BUILD)/bioinformaticsLib/stringEx.o: ../bioinformaticsLib/stringEx.h
+$(BUILD)/bioinformaticsLib/stringEx.o: ../bioinformaticsLib/inQuotes.h
 $(BUILD)/bamtools/src/api/BamAlignment.o: ../bamtools/src/api/BamAlignment.h
 $(BUILD)/bamtools/src/api/BamAlignment.o: ../bamtools/src/api/api_global.h
 $(BUILD)/bamtools/src/api/BamAlignment.o: ../bamtools/src/shared/bamtools_global.h

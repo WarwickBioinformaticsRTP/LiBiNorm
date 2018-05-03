@@ -380,9 +380,12 @@ bool GeneCountData::outputHeatmapData(const stringEx & filename)
 #ifdef N_BIAS_GENE_SEGMENTS
 	//	And now consolidate the data down to N_BIAS_GENE_SEGMENTS (500) rows by combining genes
 	dataArray consolidatedBins(N_BIAS_GENE_SEGMENTS, N_BIAS_BINS);
+	dataVec averageLength(N_BIAS_GENE_SEGMENTS);
 
 	size_t lastPos = 0;
 	size_t section_count = 0;
+	float length_accumulator = 0;
+	auto currentLength = orderedLengths.begin();
 	for (size_t i = 0; i < allBins.size(); i++)
 	{
 		size_t currPos = (i * N_BIAS_GENE_SEGMENTS)/ allBins.size();
@@ -391,11 +394,16 @@ bool GeneCountData::outputHeatmapData(const stringEx & filename)
 #ifndef PEAKVALUES
 			//	Normalise by the number of genes in this section
 			consolidatedBins[lastPos] /= section_count;
+			averageLength[lastPos] = length_accumulator / section_count;
 
 			//	This does infill if there are fewer than N_BIAS_GENE_SEGMENTS genes
 			for (size_t i = lastPos + 1; i < currPos; i++)
+			{
 				consolidatedBins[i] = consolidatedBins[lastPos];
+				averageLength[i] = averageLength[lastPos];
+			}
 #endif
+			length_accumulator = 0;
 			section_count = 0;
 			lastPos = currPos;
 		}
@@ -406,6 +414,7 @@ bool GeneCountData::outputHeatmapData(const stringEx & filename)
 #else
 		consolidatedBins[currPos] += allBins[i];
 #endif
+		length_accumulator += (currentLength++ ->first);
 		section_count++;
 	}
 #ifndef PEAKVALUES
@@ -418,7 +427,7 @@ bool GeneCountData::outputHeatmapData(const stringEx & filename)
 #endif
 	//	Output in reverse order so that it is plotted correctly by R
 	for ( int i = consolidatedBins.size()-1; i >= 0;i--)
-		tsvFile.print(fmt("%f", consolidatedBins[i]));
+		tsvFile.print($("%f",averageLength[i]), $("%f", consolidatedBins[i]));
 #else
 	//	This is the code for if we are not consolidating but outputting all of the genes
 	for (int i = allBins.size() - 1; i >= 0; i--)
