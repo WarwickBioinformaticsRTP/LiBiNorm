@@ -1,4 +1,15 @@
-#pragma once
+// ***************************************************************************
+// refSeqs.h (c) 2018 Nigel Dyer
+// School of Life Sciences, University of Warwick
+// ---------------------------------------------------------------------------
+// Last modified: 6 May 2018
+// ---------------------------------------------------------------------------
+// Extends featureFile class in bioinformaticsLib to support processing of 
+// gff and gtf files
+// ***************************************************************************
+
+#ifndef REFSEQS_HEADER
+#define REFSEQS_HEADER
 
 #include <string>
 #include <map>
@@ -127,3 +138,5 @@ private:
 		return true;
 	}
 };
+
+#endif

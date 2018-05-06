@@ -65,15 +65,13 @@ LIBINORMSRCEX = $(filter-out $(LIBINORMSRC), $(shell find $(LIBINORMSRCDIR) -nam
 
 MCMCLIBSRC =  $(shell find $(MCMCLIBDIR) -name *.cpp)
 
-HISAT2SRC =  $(shell find $(HISAT2DIR) -name *.cpp)
-
 BIOLIBSRC = $(shell find ../$(BIOINFORMATICSLIBDIR) -name *.cpp)
 
 BAMTOOLSSRC = $(filter-out ../$(BAMTOOLSDIR)api/internal/io/TcpSocketEngine_win_p.cpp, \
 	$(shell find ../$(BAMTOOLSDIR)api -name *.cpp) ) \
 	$(addprefix ../$(BAMTOOLSDIR), toolkit/bamtools_sort.cpp utils/bamtools_options.cpp )
 
-COREOBJS :=  $(addprefix $(BUILD)/, $(LIBINORMSRCEX:%.cpp=%.o) $(MCMCLIBSRC:%.cpp=%.o) $(HISAT2SRC:%.cpp=%.o) \
+COREOBJS :=  $(addprefix $(BUILD)/, $(LIBINORMSRCEX:%.cpp=%.o) $(MCMCLIBSRC:%.cpp=%.o) \
 		$(subst ../,,$(BIOLIBSRC:%.cpp=%.o) $(BAMTOOLSSRC:%.cpp=%.o) ) ) 
 
 
@@ -129,7 +127,7 @@ clean :
 #   but it looks neater if they are removed.
 
 depend :
-	makedepend  -Y $(CCCAALLFLAGS) $(INCLUDES) $(LIBINORMSRC) $(MCMCLIBSRC) $(HISAT2SRC) $(LIBINORMSRCEX) -p'$$(BUILD)/'
+	makedepend  -Y $(CCCAALLFLAGS) $(INCLUDES) $(LIBINORMSRC) $(MCMCLIBSRC) $(LIBINORMSRCEX) -p'$$(BUILD)/'
 	makedepend  -Y -a $(CCCAALLFLAGS) $(INCLUDES) $(BIOLIBSRC) $(BAMTOOLSSRC) -p'$$(BUILD)/XXZZ/'
 	sed -i -- 's/\/XXZZ\/..//g' Makefile	
 
@@ -189,39 +187,6 @@ $(BUILD)/mcmcLib/params.o: ../bioinformaticsLib/printEx.h
 $(BUILD)/mcmcLib/params.o: ../bioinformaticsLib/inQuotes.h mcmcLib/params.h
 $(BUILD)/mcmcLib/params.o: ../bioinformaticsLib/nelderMeadOptimiser.h
 $(BUILD)/mcmcLib/params.o: ../bioinformaticsLib/stringEx.h
-$(BUILD)/hisat2Lib/refSeqs.o: hisat2Lib/refSeqs.h hisat2Lib/reference.h
-$(BUILD)/hisat2Lib/refSeqs.o: hisat2Lib/ref_read.h hisat2Lib/alphabet.h
-$(BUILD)/hisat2Lib/refSeqs.o: hisat2Lib/assert_helpers.h hisat2Lib/word_io.h
-$(BUILD)/hisat2Lib/refSeqs.o: hisat2Lib/endian_swap.h hisat2Lib/hisat2Lib.h
-$(BUILD)/hisat2Lib/refSeqs.o: LiBiNormSrc/FeatureFileEx.h
-$(BUILD)/hisat2Lib/refSeqs.o: ../bioinformaticsLib/containerEx.h
-$(BUILD)/hisat2Lib/refSeqs.o: ../bioinformaticsLib/libCommon.h
-$(BUILD)/hisat2Lib/refSeqs.o: LiBiNormSrc/Regions.h
-$(BUILD)/hisat2Lib/refSeqs.o: ../bioinformaticsLib/printEx.h
-$(BUILD)/hisat2Lib/refSeqs.o: ../bioinformaticsLib/inQuotes.h
-$(BUILD)/hisat2Lib/refSeqs.o: ../bamtools/src/api/BamReader.h
-$(BUILD)/hisat2Lib/refSeqs.o: ../bamtools/src/api/api_global.h
-$(BUILD)/hisat2Lib/refSeqs.o: ../bamtools/src/shared/bamtools_global.h
-$(BUILD)/hisat2Lib/refSeqs.o: ../bamtools/src/api/BamAlignment.h
-$(BUILD)/hisat2Lib/refSeqs.o: ../bamtools/src/api/BamAux.h
-$(BUILD)/hisat2Lib/refSeqs.o: ../bamtools/src/api/BamConstants.h
-$(BUILD)/hisat2Lib/refSeqs.o: ../bamtools/src/api/BamIndex.h
-$(BUILD)/hisat2Lib/refSeqs.o: ../bamtools/src/api/SamHeader.h
-$(BUILD)/hisat2Lib/refSeqs.o: ../bamtools/src/api/SamProgramChain.h
-$(BUILD)/hisat2Lib/refSeqs.o: ../bamtools/src/api/SamProgram.h
-$(BUILD)/hisat2Lib/refSeqs.o: ../bamtools/src/api/SamReadGroupDictionary.h
-$(BUILD)/hisat2Lib/refSeqs.o: ../bamtools/src/api/SamReadGroup.h
-$(BUILD)/hisat2Lib/refSeqs.o: ../bamtools/src/api/SamSequenceDictionary.h
-$(BUILD)/hisat2Lib/refSeqs.o: ../bamtools/src/api/SamSequence.h
-$(BUILD)/hisat2Lib/refSeqs.o: LiBiNormSrc/Options.h
-$(BUILD)/hisat2Lib/refSeqs.o: ../bioinformaticsLib/featureFile.h
-$(BUILD)/hisat2Lib/refSeqs.o: ../bioinformaticsLib/genbankFile.h
-$(BUILD)/hisat2Lib/refSeqs.o: ../bioinformaticsLib/stringEx.h
-$(BUILD)/hisat2Lib/refSeqs.o: ../bioinformaticsLib/dataVec.h
-$(BUILD)/hisat2Lib/refSeqs.o: LiBiNormSrc/GeneCountData.h
-$(BUILD)/hisat2Lib/refSeqs.o: ../bioinformaticsLib/libParser.h mcmcLib/mcmc.h
-$(BUILD)/hisat2Lib/refSeqs.o: mcmcLib/params.h
-$(BUILD)/hisat2Lib/refSeqs.o: ../bioinformaticsLib/nelderMeadOptimiser.h
 $(BUILD)/LiBiNormSrc/FeatureFileEx.o: LiBiNormSrc/FeatureFileEx.h
 $(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bioinformaticsLib/containerEx.h
 $(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bioinformaticsLib/libCommon.h
@@ -392,7 +357,7 @@ $(BUILD)/LiBiNormSrc/LiBiTools.o: ../bioinformaticsLib/libCommon.h
 $(BUILD)/LiBiNormSrc/LiBiTools.o: ../bioinformaticsLib/stringEx.h
 $(BUILD)/LiBiNormSrc/LiBiTools.o: ../bioinformaticsLib/inQuotes.h
 $(BUILD)/LiBiNormSrc/LiBiTools.o: ../bioinformaticsLib/fastaFile.h
-$(BUILD)/LiBiNormSrc/LiBiTools.o: LiBiNormSrc/Options.h hisat2Lib/refSeqs.h
+$(BUILD)/LiBiNormSrc/LiBiTools.o: LiBiNormSrc/Options.h LiBiNormSrc/refSeqs.h
 $(BUILD)/LiBiNormSrc/LiBiTools.o: hisat2Lib/reference.h hisat2Lib/ref_read.h
 $(BUILD)/LiBiNormSrc/LiBiTools.o: hisat2Lib/alphabet.h
 $(BUILD)/LiBiNormSrc/LiBiTools.o: hisat2Lib/assert_helpers.h
@@ -456,6 +421,40 @@ $(BUILD)/LiBiNormSrc/ModelData.o: LiBiNormSrc/ModelData.h
 $(BUILD)/LiBiNormSrc/ModelData.o: LiBiNormSrc/Options.h mcmcLib/mcmc.h
 $(BUILD)/LiBiNormSrc/ModelData.o: mcmcLib/params.h
 $(BUILD)/LiBiNormSrc/ModelData.o: ../bioinformaticsLib/nelderMeadOptimiser.h
+$(BUILD)/LiBiNormSrc/refSeqs.o: LiBiNormSrc/refSeqs.h hisat2Lib/reference.h
+$(BUILD)/LiBiNormSrc/refSeqs.o: hisat2Lib/ref_read.h hisat2Lib/alphabet.h
+$(BUILD)/LiBiNormSrc/refSeqs.o: hisat2Lib/assert_helpers.h
+$(BUILD)/LiBiNormSrc/refSeqs.o: hisat2Lib/word_io.h hisat2Lib/endian_swap.h
+$(BUILD)/LiBiNormSrc/refSeqs.o: hisat2Lib/hisat2Lib.h
+$(BUILD)/LiBiNormSrc/refSeqs.o: LiBiNormSrc/FeatureFileEx.h
+$(BUILD)/LiBiNormSrc/refSeqs.o: ../bioinformaticsLib/containerEx.h
+$(BUILD)/LiBiNormSrc/refSeqs.o: ../bioinformaticsLib/libCommon.h
+$(BUILD)/LiBiNormSrc/refSeqs.o: LiBiNormSrc/Regions.h
+$(BUILD)/LiBiNormSrc/refSeqs.o: ../bioinformaticsLib/printEx.h
+$(BUILD)/LiBiNormSrc/refSeqs.o: ../bioinformaticsLib/inQuotes.h
+$(BUILD)/LiBiNormSrc/refSeqs.o: ../bamtools/src/api/BamReader.h
+$(BUILD)/LiBiNormSrc/refSeqs.o: ../bamtools/src/api/api_global.h
+$(BUILD)/LiBiNormSrc/refSeqs.o: ../bamtools/src/shared/bamtools_global.h
+$(BUILD)/LiBiNormSrc/refSeqs.o: ../bamtools/src/api/BamAlignment.h
+$(BUILD)/LiBiNormSrc/refSeqs.o: ../bamtools/src/api/BamAux.h
+$(BUILD)/LiBiNormSrc/refSeqs.o: ../bamtools/src/api/BamConstants.h
+$(BUILD)/LiBiNormSrc/refSeqs.o: ../bamtools/src/api/BamIndex.h
+$(BUILD)/LiBiNormSrc/refSeqs.o: ../bamtools/src/api/SamHeader.h
+$(BUILD)/LiBiNormSrc/refSeqs.o: ../bamtools/src/api/SamProgramChain.h
+$(BUILD)/LiBiNormSrc/refSeqs.o: ../bamtools/src/api/SamProgram.h
+$(BUILD)/LiBiNormSrc/refSeqs.o: ../bamtools/src/api/SamReadGroupDictionary.h
+$(BUILD)/LiBiNormSrc/refSeqs.o: ../bamtools/src/api/SamReadGroup.h
+$(BUILD)/LiBiNormSrc/refSeqs.o: ../bamtools/src/api/SamSequenceDictionary.h
+$(BUILD)/LiBiNormSrc/refSeqs.o: ../bamtools/src/api/SamSequence.h
+$(BUILD)/LiBiNormSrc/refSeqs.o: LiBiNormSrc/Options.h
+$(BUILD)/LiBiNormSrc/refSeqs.o: ../bioinformaticsLib/featureFile.h
+$(BUILD)/LiBiNormSrc/refSeqs.o: ../bioinformaticsLib/genbankFile.h
+$(BUILD)/LiBiNormSrc/refSeqs.o: ../bioinformaticsLib/stringEx.h
+$(BUILD)/LiBiNormSrc/refSeqs.o: ../bioinformaticsLib/dataVec.h
+$(BUILD)/LiBiNormSrc/refSeqs.o: LiBiNormSrc/GeneCountData.h
+$(BUILD)/LiBiNormSrc/refSeqs.o: ../bioinformaticsLib/libParser.h
+$(BUILD)/LiBiNormSrc/refSeqs.o: mcmcLib/mcmc.h mcmcLib/params.h
+$(BUILD)/LiBiNormSrc/refSeqs.o: ../bioinformaticsLib/nelderMeadOptimiser.h
 $(BUILD)/LiBiNormSrc/Regions.o: LiBiNormSrc/Regions.h
 $(BUILD)/LiBiNormSrc/Regions.o: ../bioinformaticsLib/printEx.h
 $(BUILD)/LiBiNormSrc/Regions.o: ../bioinformaticsLib/inQuotes.h

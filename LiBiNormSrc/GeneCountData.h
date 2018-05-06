@@ -1,8 +1,8 @@
 // ***************************************************************************
-// GeneCountData.h (c) 2017 Nigel Dyer
+// GeneCountData.h (c) 2018 Nigel Dyer
 // School of Life Sciences, University of Warwick
 // ---------------------------------------------------------------------------
-// Last modified: 24 July 2017
+// Last modified: 30 March 2018
 // ---------------------------------------------------------------------------
 // For processing count information associated with genes
 // ***************************************************************************

@@ -17,6 +17,11 @@
  * along with Bowtie 2.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+ // ***************************************************************************
+ // Modifications (c) 2018 Nigel Dyer
+ // School of Life Sciences, University of Warwick
+ // ---------------------------------------------------------------------------
+
 #ifndef REF_READ_H_
 #define REF_READ_H_
 

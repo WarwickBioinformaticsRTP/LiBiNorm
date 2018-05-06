@@ -2,9 +2,9 @@
 // ModelData.h (c) 2017 Nigel Dyer
 // School of Life Sciences, University of Warwick
 // ---------------------------------------------------------------------------
-// Last modified: 24 July 2017
+// Last modified: 3 April 2018
 // ---------------------------------------------------------------------------
-// Code for each of the five models
+// Code for each of the six models
 // ***************************************************************************
 
 #ifndef MODELDATA_H

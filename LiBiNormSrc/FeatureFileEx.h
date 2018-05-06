@@ -1,8 +1,8 @@
 // ***************************************************************************
-// FeatureFileEx.h (c) 2017 Nigel Dyer
+// FeatureFileEx.h (c) 2018 Nigel Dyer
 // School of Life Sciences, University of Warwick
 // ---------------------------------------------------------------------------
-// Last modified: 24 July 2017
+// Last modified: 21 April 2018
 // ---------------------------------------------------------------------------
 // Extends featureFile class in bioinformaticsLib to support processing of 
 // gff and gtf files
