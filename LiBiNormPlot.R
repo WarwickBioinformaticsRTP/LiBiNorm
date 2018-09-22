@@ -50,10 +50,9 @@ if (!file.exists(filename)) {
     png(paste(base,"_distribution.png",sep=""),units = "in",height=5,width=6,res=ppi)
     print(ggplot(dist,aes(Position,Reads,colour=Length)) + theme_bw() + geom_line() + 
             theme(axis.text = element_text(colour = "black")) +
-            geom_line(aes(Position,dist[4],colour=Length),linetype="dashed") +
+            geom_line(aes(Position,dist[,4],colour=Length),linetype="dashed") +
             labs(x = xlab,y=ylab) +
             annotate("text",0.5,ymin+0.05,label = colnames(dist)[4]))
-
     invisible(dev.off())
 
     if (info[1,1] > 1) 
@@ -66,7 +65,7 @@ if (!file.exists(filename)) {
         i <- i
         ymin = min(min(dist$Reads),min(dist2[i]))
         p1 <- ggplot(dist,aes(Position,Reads,colour=Length)) + theme_bw() + geom_line(linetype="dashed") + 
-        geom_line(aes(Position,dist2[i],colour=Length))  +scale_colour_discrete(guide = FALSE) + 
+        geom_line(aes(Position,dist2[,i],colour=Length))  +scale_colour_discrete(guide = FALSE) + 
           annotate("text",0.5,ymin+0.05,label = colnames(dist2)[i])
         plots[[i]] <<- p1
       })
@@ -142,7 +141,7 @@ if (!file.exists(filename)) {
   p3 <- ggplot(tParams, aes(x=Name, y=tParams$"Abs Opt", fill=Model)) +  theme_bw() +
     theme(axis.text = element_text(colour = "black")) +
     geom_bar(position=position_dodge(), stat="identity") +
-    geom_errorbar(aes(ymin=tParams$"Abs Opt" - tParams[7], ymax=tParams$"Abs Opt" + tParams[7]), 
+    geom_errorbar(aes(ymin=tParams$"Abs Opt" - tParams[,7], ymax=tParams$"Abs Opt" + tParams[,7]), 
                 width=.5,position=position_dodge(width=0.9),size=errSize) +  
     ylab(bquote('x10'^-4~' Model E: x10'^-2~'')) +
     scale_y_continuous() +guides(fill=FALSE) +
