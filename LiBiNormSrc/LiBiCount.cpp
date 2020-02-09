@@ -90,7 +90,7 @@ int LiBiCount::main(int argc, char **argv)
 		featureAndIdAttributeHelp();
 		printf("  -m MODE, --mode=MODE  mode to handle reads overlapping more than one feature\n");
 		printf("                        (choices: union, intersection-strict, intersection-\n");
-		printf("                        nonempty; default: union)\n");
+		printf("                        nonempty; default:intersection-strict, or union with -z option)\n");
 		printf("  -z, --htseq-compatible\n");
 		printf("                        Run in htseq-compatible mode\n");
 		printf("  -l --landscape        A landscape file will be produced named <fileroot>_landscape.txt where)\n");
