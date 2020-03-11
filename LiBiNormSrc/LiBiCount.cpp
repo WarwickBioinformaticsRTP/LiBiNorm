@@ -1,8 +1,8 @@
 // ***************************************************************************
-// LiBiCount.cpp (c) 2018 Nigel Dyer
+// LiBiCount.cpp (c) 2020 Nigel Dyer
 // School of Life Sciences, University of Warwick
 // ---------------------------------------------------------------------------
-// Last modified: 3 May 2018
+// Last modified: 11 March 2020
 // ---------------------------------------------------------------------------
 // The top level code associated with "LiBiNorm count" modes
 // ***************************************************************************
@@ -226,10 +226,10 @@ int LiBiCount::main(int argc, char **argv)
 	{
 #ifdef SELECT_BY_LL
 		if ((theModel != noModelSpecified) && (theModel != none))
-#else
-		if (theModel != none)
+			progMessage("In htseq-compatible mode -n option must either be absent or 'none'");
+//#else
+//		if (theModel != none)
 #endif
-		progMessage("In htseq-compatible mode -n option must either be absent or 'none'");
 		if (maxReads != DEF_MAX_READS_FOR_PARAM_ESTIMATION)
 			progMessage("-d option has no function in htseq-compatible mode");
 		if (parameterFilename)
@@ -323,13 +323,19 @@ int LiBiCount::main(int argc, char **argv)
 	{
 		if (strncasecmp(i.RefName.c_str(), "chr", 3) == 0)
 			i.RefName = i.RefName.substr(3);
+#ifdef NEWVER
+		else if (strcasecmp(i.RefName.c_str(), "mitochondria") == 0)
+			i.RefName = "M";
+		else if (strcasecmp(i.RefName.c_str(), "chloroplast") == 0)
+			i.RefName = "C";
+#endif
 		genomeDef.addToChromosomeMap(i.RefLength, i.RefName);
 	}
 
 	initClock();
 
 	//	Load up the gtf/gff3 file
-	if (!genomeDef.open(featureFileName, id_attribute, feature_type))
+	if (!genomeDef.open(featureFileName, id_attribute, feature_type,false, htSeqCompatible))
 		exitFail("Could not open feature file: ", featureFileName);
 
 	/*
@@ -402,7 +408,7 @@ int LiBiCount::main(int argc, char **argv)
 
 #ifdef	OUTPUT_FEATURE_DATA
 	if (outputFileroot)
-		genomeDef.outputChromData(outputFileroot.replaceSuffix("_genome.txt"), geneCounts);
+		genomeDef.outputChromData(outputFileroot.replaceSuffix("_genome.txt"), allGeneCounts);
 #endif
 
 #ifdef CREATE_FLAT_DATA
