@@ -1,8 +1,8 @@
 // ***************************************************************************
-// GeneCountData.cpp (c) 2018 Nigel Dyer
+// GeneCountData.cpp (c) 2020 Nigel Dyer
 // School of Life Sciences, University of Warwick
 // ---------------------------------------------------------------------------
-// Last modified: 3 May 2018
+// Last modified: 12 Mar 2020
 // ---------------------------------------------------------------------------
 // For processing count information associated with genes
 // ***************************************************************************
@@ -161,9 +161,10 @@ bool GeneCountData::outputGeneCounts(const string & filename, int detailLevel, s
 	if (!output.open(filename))
 		return false;
 
-	if ((bias.size()) && (detailLevel > 0))
+	if (((bias.size()) && (detailLevel > 0)) || (detailLevel == 4))
 	{
-		lengths[1] = lengths[0] * bias;
+		if (bias.size())
+			lengths[1] = lengths[0] * bias;
 
 		// Definitions taken from http://www.rna-seqblog.com/rpkm-fpkm-and-tpm-clearly-explained/
 		for (size_t i = 0; i < ((bias.size()) ? 2 : 1); i++)
@@ -196,6 +197,11 @@ bool GeneCountData::outputGeneCounts(const string & filename, int detailLevel, s
 			output.print("Gene", "count", "length", model, "RPM", "RPKM", "RPK", "TPM", "RPM", "RPKM", "RPK", "TPM");
 			output.print();
 			break;
+		case 4:
+			output.print("", "", "RNA");
+			output.print("Gene", "count", "length", "RPM", "RPKM", "RPK", "TPM");
+			output.print();
+			break;
 		}
 
 		//	Dont start at 0 as 0 is the reference for normalisation
@@ -212,6 +218,10 @@ bool GeneCountData::outputGeneCounts(const string & filename, int detailLevel, s
 			case 3:
 				output.printMiddle(lengths[0][i], bias[i],
 					RPM[1][i], RPKM[1][i], RPK[1][i], TPM[1][i],
+					RPM[0][i], RPKM[0][i], RPK[0][i], TPM[0][i]);
+				break;
+			case 4:
+				output.printMiddle(lengths[0][i],
 					RPM[0][i], RPKM[0][i], RPK[0][i], TPM[0][i]);
 				break;
 			}

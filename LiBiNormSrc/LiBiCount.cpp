@@ -2,7 +2,7 @@
 // LiBiCount.cpp (c) 2020 Nigel Dyer
 // School of Life Sciences, University of Warwick
 // ---------------------------------------------------------------------------
-// Last modified: 11 March 2020
+// Last modified: 12 March 2020
 // ---------------------------------------------------------------------------
 // The top level code associated with "LiBiNorm count" modes
 // ***************************************************************************
@@ -226,16 +226,23 @@ int LiBiCount::main(int argc, char **argv)
 	{
 #ifdef SELECT_BY_LL
 		if ((theModel != noModelSpecified) && (theModel != none))
-			progMessage("In htseq-compatible mode -n option must either be absent or 'none'");
-//#else
-//		if (theModel != none)
+#else
+		if (theModel == noModelSpecified)
+			theModel = none;
+		if (theModel != none)
 #endif
+		progMessage("In htseq-compatible mode -n option must either be absent or 'none'");
 		if (maxReads != DEF_MAX_READS_FOR_PARAM_ESTIMATION)
 			progMessage("-d option has no function in htseq-compatible mode");
 		if (parameterFilename)
 			progMessage("-i option has no function in htseq-compatible mode");
 		if (Nthreads != DEF_THREADS)
 			progMessage("htseq-count operation is only ever single threaded");
+	}
+	else
+	{
+		if (theModel == noModelSpecified)
+			theModel = ModelBD;
 	}
 
 	//	If we have specified -N then we run all of the models for preset number of runs.
@@ -465,7 +472,15 @@ int LiBiCount::main(int argc, char **argv)
 	}
 #ifdef PRINT_DISTRIBUTION
 	else if (outputFileroot)
+	{
 		printDistribution(allGeneCounts);
+		if (outputFPKM)
+		{
+			string filename = outputFileroot.replaceSuffix("_expression.txt");
+			if (!allGeneCounts.outputGeneCounts(filename, 4, conv(theModel)))
+				exitFail("Unable to output counts to :", filename);
+		}
+	}
 #endif
 
 	if(!allGeneCounts.outputGeneCounts(countsFilename,normalise?1:0,conv(theModel)))

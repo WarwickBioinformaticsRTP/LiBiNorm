@@ -1,8 +1,8 @@
 // ***************************************************************************
-// LiBiNormCore.h (c) 2018 Nigel Dyer
+// LiBiNormCore.h (c) 2020 Nigel Dyer
 // School of Life Sciences, University of Warwick
 // ---------------------------------------------------------------------------
-// Last modified: 3 May 2018
+// Last modified: 12 Mar 2020
 // ---------------------------------------------------------------------------
 // Common code associated with all of the LiBiNorm modes
 // ***************************************************************************
@@ -37,7 +37,7 @@ public:
 
 
 protected:
-	LiBiNormCore() :normalise(true), pauseAtEnd(false), 
+	LiBiNormCore() :normalise(true), pauseAtEnd(false),
 #ifdef USE_NELDER_MEAD_FOR_INITIAL_VALUES
 		nelderMead(true),
 		Nsimu(NELDER_MCMC_ITERATIONS),
@@ -45,10 +45,11 @@ protected:
 		nelderMead(false),
 		Nsimu(MCMC_ITERATIONS),
 #endif
+		theModel(noModelSpecified),
 #ifdef SELECT_BY_LL
-		theModel(noModelSpecified), bestModel(noModelSpecified),
+		bestModel(noModelSpecified),
 #else
-		theModel(ModelBD), calcAllModels(false),
+		calcAllModels(false),
 #endif
 		maxReads(DEF_MAX_READS_FOR_PARAM_ESTIMATION),
 		maxGeneLength(DEF_LENGTH_OF_GENE_FOR_PARAM_ESTIMATION),

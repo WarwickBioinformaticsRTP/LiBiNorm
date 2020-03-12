@@ -1,8 +1,8 @@
 // ***************************************************************************
-// ModelData.h (c) 2017 Nigel Dyer
+// ModelData.h (c) 2020 Nigel Dyer
 // School of Life Sciences, University of Warwick
 // ---------------------------------------------------------------------------
-// Last modified: 3 April 2018
+// Last modified: 12 Mar 2020
 // ---------------------------------------------------------------------------
 // Code for each of the six models
 // ***************************************************************************
@@ -29,9 +29,9 @@ enum modelType
 	ModelC = 2,
 	ModelD = 3,
 	ModelE = 4,
-	ModelBD = 5
+	ModelBD = 5,
+	noModelSpecified = 6
 #ifdef SELECT_BY_LL
-	, noModelSpecified = 6
 	, findBestModel = 7
 #endif
 	, none = 8
