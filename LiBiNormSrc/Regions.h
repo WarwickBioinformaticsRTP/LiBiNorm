@@ -30,7 +30,7 @@ public:
 class readData
 {
 	public:
-		readData(void):NH(0),qual(0),refId(0),position(0) 
+		readData(bool paired = false):NH(0),qual(0),refId(0),position(0), paired(paired)
 		{}
 		readData(BamTools::BamAlignment && ba);
 		readData(const BamTools::BamAlignment & ba);
@@ -38,6 +38,7 @@ class readData
 		int refId, position;
 		char strand;
 		short NH, qual;
+		bool paired;
 		Cigar cigar;
 };
 
@@ -86,6 +87,7 @@ public:
 	const std::string & name;
 	int NH;
 	int qual;
+	bool paired;
 	std::vector<char> strands;
 
 	//	Creates a regionList from one of the reads, either from a bam entry or from cachedData.  

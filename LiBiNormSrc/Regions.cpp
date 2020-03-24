@@ -21,7 +21,8 @@ readData::readData(BamTools::BamAlignment && ba) :
 	refId(ba.RefID),
 	position(ba.Position + 1),
 	qual(ba.MapQuality),
-	cigar(move(ba.CigarData))
+	cigar(move(ba.CigarData)),
+	paired(ba.IsPaired())
 {
 	//	This simulates line 155 in count py.  If there is no optional NH field in the first read
 	//	then the python code throws an error, which we simulate by setting NH to zero
@@ -42,7 +43,8 @@ readData::readData(const BamTools::BamAlignment & ba) :
 	refId(ba.RefID),
 	position(ba.Position + 1),
 	qual(ba.MapQuality),
-	cigar(ba.CigarData)
+	cigar(ba.CigarData),
+	paired(ba.IsPaired())
 {
 	//	This simulates line 155 in count py.  If there is no optional NH field in the first read
 	//	then the python code throws an error, which we simulate by setting NH to zero
@@ -149,7 +151,8 @@ regionList::regionList(const readData & read)
 regionLists::regionLists(const readData & read, const std::string & name) :
 	name(name), NH(read.NH),
 	qual(read.qual),
-	strands(1, read.strand)
+	strands(1, read.strand),
+	paired(read.paired)
 {
 	data.emplace(read.refId, regionList(read));
 };

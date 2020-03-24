@@ -11,7 +11,7 @@
 #define OPTIONS_H
 
 
-#define LIBINORM_VERSION "2.3"
+#define LIBINORM_VERSION "2.4"
 //	Bam/gff file reading
 #define DEFAULT_FEATURE_TYPE_EXON "exon" 
 #define DEFAULT_GTF_ID_ATTRIBUTE "gene_id"
@@ -29,7 +29,8 @@
 #ifdef _DEBUG
 #define READ_CACHE_SIZE 50000
 #else
-#define READ_CACHE_SIZE 2000000
+//#define READ_CACHE_SIZE 2000000
+#define READ_CACHE_SIZE 5000
 #endif
 
 //	Report progress every REP_LEN entries

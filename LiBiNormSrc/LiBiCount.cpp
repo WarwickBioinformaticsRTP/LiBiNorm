@@ -29,11 +29,11 @@
 #endif
 
 
-#ifdef _DEBUG
+//#ifdef _DEBUG
 //#define BAMNAME "DRR078784.108"
-#define BAMNAME "DRR078784.109810"
+#define BAMNAME "V300046256L1C001R0010001363"
 bool dbgFound = false;
-#endif
+//#endif
 
 #define MAX_MISMATCH_REPORT_COUNT 30
 
@@ -542,13 +542,29 @@ string LiBiCount::addRead(const regionLists & segments,const featureFileEx & gtf
 
 	if (segments.NH > 1)
 	{
-		if (!htSeqCompatible)
-			nonUniqueReads.emplace(segments.name);
-
 #ifdef DEBUG_OUT_FILE
 		debugOut.printEnd(segments.name);
 #endif
+
+#if HTSEQ060MODE
+		if (!htSeqCompatible)
+			nonUniqueReads.emplace(segments.name);
 		allGeneCounts.count(notUnique)++;
+#else
+		if (!nonUniqueReads.contains(segments.name))
+		{	
+			if (!segments.paired || (segments.strands.size() > 1))
+			{
+				nonUniqueReads.emplace(segments.name);
+				allGeneCounts.count(notUnique)++;
+			}
+			else
+			{
+				int a = 1;
+			}
+		}
+#endif
+
 		if ((bamOutMode == outputAll) || (bamOutMode == outputUnmatched))
 			return notUnique;
 		else
@@ -1095,22 +1111,29 @@ bool LiBiCount::processNameOrderedBamData()
 			}
 			else
 			{
+				//	Go through all the reads
 				for (int i = 0;i < Nreads;i++)
 				{
 					if (!used[i])
 					{
+						//	If we are not writing the data then we can move the data into the readData object
+						//	otherwise we need to make a copy so that it is still available to be written
 						regionLists regions(readData(writer.IsOpen()?ba[i]:move(ba[i])),name);
+						//	Looking for its mate
 						for (int j = i+1;j < Nreads;j++)
 						{
 							if (!used[j])
 							{
+								//	They are not a pair if they are both first or second mates
+								//	or their respective mapping info does not agree
 								if ((ba[i].IsFirstMate() == ba[j].IsFirstMate())
 									|| (ba[i].IsMapped() != ba[j].IsMateMapped())
 									|| (ba[i].IsMateMapped() != ba[j].IsMapped()))
 									continue;
 
+								//	If they are both not mapped
 								if (!(ba[i].IsMapped() && ba[j].IsMapped())  ||
-
+									//	Or they agree about each others positions
 									((ba[i].RefID == ba[j].MateRefID)
 										&& (ba[i].MateRefID == ba[j].RefID)
 										&& (ba[i].Position == ba[j].MatePosition)
@@ -1139,8 +1162,12 @@ bool LiBiCount::processNameOrderedBamData()
 								}
 							}
 						}
+						//	If it is not used because it is a pair then 
 						if (!used[i])
 						{
+							bool isPaired = ba[i].IsPaired();
+							bool isProperPair = ba[i].IsProperPair();
+
 							string feature = addRead(regions, genomeDef);
 							if (feature.size())
 							{

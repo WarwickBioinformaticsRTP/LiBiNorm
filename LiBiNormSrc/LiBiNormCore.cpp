@@ -1,8 +1,8 @@
 // ***************************************************************************
-// LiBiNormCore.cpp (c) 2018 Nigel Dyer
+// LiBiNormCore.cpp (c) 2020 Nigel Dyer
 // School of Life Sciences, University of Warwick
 // ---------------------------------------------------------------------------
-// Last modified: 3 May 2018
+// Last modified: 22 Marchy 2020
 // ---------------------------------------------------------------------------
 // Common code associated with all of the LiBiNorm modes
 // ***************************************************************************
@@ -22,7 +22,7 @@ void LiBiNormCore::helpCommon()
 {
 	printf("  -n M, --normModel=M   Specifies that model M should be used rather than the default\n");
 	printf("                        Model BD. M options: A,B,C,D or polyA,\n");
-	printf("                        E or random,BD or smart");
+	printf("                        E or random,BD or smart,none");
 #ifdef SELECT_BY_LL
 	printf(",best.  best causes all models to\n");
 	printf("                        be evaluated and the best, based on liklihood selected\n");

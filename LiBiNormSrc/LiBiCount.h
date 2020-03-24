@@ -47,7 +47,8 @@ class LiBiCount : private LiBiNormCore
 	class cacheData : public std::multimap<std::string, readData>
 	{
 	public:
-		cacheData() : file(0) {};
+		//	Current read paired set to true, because we only mark reads that are set as paired
+		cacheData() : file(0),currentRead(true) {};
 		~cacheData();
 
 		void save(const stringEx & filename);
