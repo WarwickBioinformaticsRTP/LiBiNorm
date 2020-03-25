@@ -29,11 +29,10 @@
 #endif
 
 
-//#ifdef _DEBUG
-//#define BAMNAME "DRR078784.108"
+#ifdef _DEBUG
 #define BAMNAME "V300046256L1C001R0010001363"
 bool dbgFound = false;
-//#endif
+#endif
 
 #define MAX_MISMATCH_REPORT_COUNT 30
 
@@ -1319,49 +1318,96 @@ void LiBiCount::processCachedReads(size_t cacheFileCount)
 
 	while (readCache.size())
 	{
+		readCacheClass oneReadCache;
+
 		//	Find the 'lowest' BAM read name
 		readCacheClass::iterator i = readCache.begin();
-		vector<string> nameParts;
-		parser(i->first, "_", nameParts);
+		string readName,nextName;
+		parser(i->first, "_", readName);
 
 #ifdef BAMNAME
 		dbgFound = (nameParts[0] == BAMNAME);
 #endif
 
-		regionLists rl(i->second.data, nameParts[0]);
+		int currentFile = i->second.file;
+		int file;
+		do
+		{
+			oneReadCache.emplace(i->first, i->second);
+			readCache.erase(i);
+			if (readCache.empty())
+				break;
+			i = readCache.begin();
+			file = i->second.file;
+		} while (file == currentFile);
 
-		// and identify what its match would be
+		//	If all that the read cache had left was records associated with one read in one file then
+		//	there are no pairs.   Leave here
+		if (readCache.empty())	
+			break;
+
+		parser(i->first, "_", nextName);
+
+		while (nextName == readName)
+		{
+			if (currentFile != file)
+			{
+				cacheFiles[currentFile].readNext(readCache);
+				currentFile = file;
+			}
+
+			map<int, pair<string, returnedCacheData> > readsInThisCacheFile;
+
+			while (file == currentFile)
+			{
+				readsInThisCacheFile.emplace(i->second.data.refId, pair<string, returnedCacheData>(i->first, i->second));
+				readCache.erase(i);
+				if (readCache.empty())
+					break;
+				i = readCache.begin();
+				file = i->second.file;
+			}
+
+			for (auto j : readsInThisCacheFile)
+			{
+				vector<string> nameParts;
+				parser(j.second.first, "_", nameParts);
+				regionLists rl(j.second.second.data, nameParts[0]);
+
+				// and identify what its match would be
 #ifdef MATCH_USING_BOTH_POSITIONS
-		stringEx searchName(nameParts[0], "_", nameParts[2],"_", nameParts[1],"_",nameParts[3], "_", (nameParts[4] == "F") ? "S" : "F");
+				stringEx searchName(nameParts[0], "_", nameParts[2], "_", nameParts[1], "_", nameParts[3], "_", (nameParts[4] == "F") ? "S" : "F");
 #else
-		stringEx searchName(nameParts[0], "_", nameParts[1], "_", (nameParts[2] == "F") ? "S" : "F");
+				stringEx searchName(nameParts[0], "_", nameParts[1], "_", (nameParts[2] == "F") ? "S" : "F");
 #endif
-		readCacheClass::iterator j = readCache.find(searchName);
-		
-		if (j != readCache.end())
-		{
-			//	We have a matching pair of reads, combine them
-			rl.combine(j->second.data);
-			//	store the result
-			addRead(rl, genomeDef);
-			//	And then get the next read from the file that the second read was in
-			int fileId = j->second.file;
-			bool getNew = j->second.replace;
-			readCache.erase(j);
-			if (getNew)
-				cacheFiles[fileId].readNext(readCache);
+				readCacheClass::iterator k = oneReadCache.find(searchName);
+
+				if (k != oneReadCache.end())
+				{
+					//	We have a matching pair of reads, combine them
+					rl.combine(k->second.data);
+					//	store the result
+					addRead(rl, genomeDef);
+					oneReadCache.erase(k);
+				}
+				else
+				{
+					oneReadCache.emplace(j.second.first,j.second.second);
+				}
+			}
+
+			i = readCache.begin();
+			file = i->second.file;
+			parser(i->first, "_", nextName);
 		}
-		else
+		cacheFiles[currentFile].readNext(readCache);
+
+		for (auto j : oneReadCache)
 		{
-			//	The lowest read is a singleton, so just process it.
+			regionLists rl(j.second.data, readName);
 			addRead(rl, genomeDef);
 		}
-		//	And replace the first read from the next in the file that it came from
-		int fileId = i->second.file;
-		bool getNew = i->second.replace;
-		readCache.erase(i);
-		if (getNew)
-			cacheFiles[fileId].readNext(readCache);
+
 	}
 
 	cacheFiles.clear();
