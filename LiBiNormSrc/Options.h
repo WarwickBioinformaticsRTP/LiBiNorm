@@ -2,7 +2,7 @@
 // Options.h (c) 2020 Nigel Dyer
 // School of Life Sciences, University of Warwick
 // ---------------------------------------------------------------------------
-// Last modified: 12 March 2020
+// Last modified: 20 March 2020
 // ---------------------------------------------------------------------------
 // Top level code options
 // ***************************************************************************
@@ -29,8 +29,8 @@
 #ifdef _DEBUG
 #define READ_CACHE_SIZE 50000
 #else
-//#define READ_CACHE_SIZE 2000000
-#define READ_CACHE_SIZE 5000
+#define READ_CACHE_SIZE 2000000
+//#define READ_CACHE_SIZE 2000
 #endif
 
 //	Report progress every REP_LEN entries
@@ -160,6 +160,9 @@
 
 //	Output landscape files in the original format
 // #define LANDSCAPE_FORMAT_1
+
+//  Reverts to the __alignment_not_unique figure produced by release 0.6.0
+//  #define HTSEQ060MODE
 
 //	Enable this to produce a heatmap data file that can be used by the mathematica script
 // #define MATHMATICA_FILE

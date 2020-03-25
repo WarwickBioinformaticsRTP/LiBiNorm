@@ -2,7 +2,7 @@
 // LiBiCount.cpp (c) 2020 Nigel Dyer
 // School of Life Sciences, University of Warwick
 // ---------------------------------------------------------------------------
-// Last modified: 12 March 2020
+// Last modified: 25 March 2020
 // ---------------------------------------------------------------------------
 // The top level code associated with "LiBiNorm count" modes
 // ***************************************************************************
@@ -30,7 +30,7 @@
 
 
 #ifdef _DEBUG
-#define BAMNAME "V300046256L1C001R0010001363"
+#define BAMNAME "V300046256L1C001R0010347956"
 bool dbgFound = false;
 #endif
 
@@ -530,7 +530,7 @@ string LiBiCount::addRead(const regionLists & segments,const featureFileEx & gtf
 		if (nonUniqueReads.contains(segments.name))
 		{
 #ifdef DEBUG_OUT_FILE
-			debugOut.printEnd(segments.name,":", duplicateNonUnique);
+//			debugOut.printEnd(segments.name,":", duplicateNonUnique);
 #endif
 			if ((bamOutMode == outputAll) || (bamOutMode == outputUnmatched))
 				return duplicateNonUnique;
@@ -541,9 +541,6 @@ string LiBiCount::addRead(const regionLists & segments,const featureFileEx & gtf
 
 	if (segments.NH > 1)
 	{
-#ifdef DEBUG_OUT_FILE
-		debugOut.printEnd(segments.name);
-#endif
 
 #if HTSEQ060MODE
 		if (!htSeqCompatible)
@@ -557,10 +554,6 @@ string LiBiCount::addRead(const regionLists & segments,const featureFileEx & gtf
 				nonUniqueReads.emplace(segments.name);
 				allGeneCounts.count(notUnique)++;
 			}
-			else
-			{
-				int a = 1;
-			}
 		}
 #endif
 
@@ -571,6 +564,10 @@ string LiBiCount::addRead(const regionLists & segments,const featureFileEx & gtf
 	}
 	else if (segments.qual < minqual)
 	{
+#ifdef DEBUG_OUT_FILE
+		debugOut.printEnd(segments.name);
+#endif
+
 		allGeneCounts.count(lowQualString)++;
 		if ((bamOutMode == outputAll) || (bamOutMode == outputUnmatched))
 			return lowQualString;
@@ -1211,7 +1208,7 @@ bool LiBiCount::processPositionOrderedBamData()
 		//	The NH handling is complex is that there may be one NH (with NH = 1) at one end, and multiple NHs (with NH > 1) at the other
 		//	The NH > 1 samples have to be used to either pair with the other, or to remove the NH = 1 sample 
 
-		if (AReadIsMapped(ba))
+		if (ba.IsPrimaryAlignment() && AReadIsMapped(ba))
 		{
 			if (ba.IsPaired())
 			{
@@ -1318,96 +1315,51 @@ void LiBiCount::processCachedReads(size_t cacheFileCount)
 
 	while (readCache.size())
 	{
-		readCacheClass oneReadCache;
-
 		//	Find the 'lowest' BAM read name
 		readCacheClass::iterator i = readCache.begin();
-		string readName,nextName;
-		parser(i->first, "_", readName);
+		vector<string> nameParts;
+		parser(i->first, "_", nameParts);
 
 #ifdef BAMNAME
 		dbgFound = (nameParts[0] == BAMNAME);
 #endif
 
-		int currentFile = i->second.file;
-		int file;
-		do
-		{
-			oneReadCache.emplace(i->first, i->second);
-			readCache.erase(i);
-			if (readCache.empty())
-				break;
-			i = readCache.begin();
-			file = i->second.file;
-		} while (file == currentFile);
+//		regionLists rl(i->second.data, nameParts[0]);
 
-		//	If all that the read cache had left was records associated with one read in one file then
-		//	there are no pairs.   Leave here
-		if (readCache.empty())	
-			break;
-
-		parser(i->first, "_", nextName);
-
-		while (nextName == readName)
-		{
-			if (currentFile != file)
-			{
-				cacheFiles[currentFile].readNext(readCache);
-				currentFile = file;
-			}
-
-			map<int, pair<string, returnedCacheData> > readsInThisCacheFile;
-
-			while (file == currentFile)
-			{
-				readsInThisCacheFile.emplace(i->second.data.refId, pair<string, returnedCacheData>(i->first, i->second));
-				readCache.erase(i);
-				if (readCache.empty())
-					break;
-				i = readCache.begin();
-				file = i->second.file;
-			}
-
-			for (auto j : readsInThisCacheFile)
-			{
-				vector<string> nameParts;
-				parser(j.second.first, "_", nameParts);
-				regionLists rl(j.second.second.data, nameParts[0]);
-
-				// and identify what its match would be
+		// and identify what its match would be
 #ifdef MATCH_USING_BOTH_POSITIONS
-				stringEx searchName(nameParts[0], "_", nameParts[2], "_", nameParts[1], "_", nameParts[3], "_", (nameParts[4] == "F") ? "S" : "F");
+		stringEx searchName(nameParts[0], "_", nameParts[2],"_", nameParts[1],"_",nameParts[3], "_", (nameParts[4] == "F") ? "S" : "F");
 #else
-				stringEx searchName(nameParts[0], "_", nameParts[1], "_", (nameParts[2] == "F") ? "S" : "F");
+		stringEx searchName(nameParts[0], "_", nameParts[1], "_", (nameParts[2] == "F") ? "S" : "F");
 #endif
-				readCacheClass::iterator k = oneReadCache.find(searchName);
-
-				if (k != oneReadCache.end())
-				{
-					//	We have a matching pair of reads, combine them
-					rl.combine(k->second.data);
-					//	store the result
-					addRead(rl, genomeDef);
-					oneReadCache.erase(k);
-				}
-				else
-				{
-					oneReadCache.emplace(j.second.first,j.second.second);
-				}
-			}
-
-			i = readCache.begin();
-			file = i->second.file;
-			parser(i->first, "_", nextName);
-		}
-		cacheFiles[currentFile].readNext(readCache);
-
-		for (auto j : oneReadCache)
+		readCacheClass::iterator j = readCache.find(searchName);
+		
+		if (j != readCache.end())
 		{
-			regionLists rl(j.second.data, readName);
+			//	We have a matching pair of reads, combine them
+			regionLists rl(j->second.data, nameParts[0]);
+			rl.combine(i->second.data);
+			//	store the result
+			addRead(rl, genomeDef);
+			//	And then get the next read from the file that the second read was in
+			int fileId = j->second.file;
+			bool getNew = j->second.replace;
+			readCache.erase(j);
+			if (getNew)
+				cacheFiles[fileId].readNext(readCache);
+		}
+		else
+		{
+			//	The lowest read is a singleton, so just process it.
+			regionLists rl(i->second.data, nameParts[0]);
 			addRead(rl, genomeDef);
 		}
-
+		//	And replace the first read from the next in the file that it came from
+		int fileId = i->second.file;
+		bool getNew = i->second.replace;
+		readCache.erase(i);
+		if (getNew)
+			cacheFiles[fileId].readNext(readCache);
 	}
 
 	cacheFiles.clear();
@@ -1579,6 +1531,9 @@ void LiBiCount::cacheData::readNext(readCacheClass & dataCache)
 	while (name)
 	{
 		parser(name, "_", thisId);
+		bool found = false;
+		if (name == "V300046256L1C001R0010344427_024614557_024614515_142_F")
+			found = true;
 		if (!currentId)
 		{
 			currentId = thisId;
