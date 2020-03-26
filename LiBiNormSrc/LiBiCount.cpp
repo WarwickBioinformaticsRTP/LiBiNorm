@@ -280,8 +280,6 @@ int LiBiCount::main(int argc, char **argv)
 	}
 #endif
 
-	if (countsFilename)
-		tempDirectory = countsFilename.replaceSuffix("_tempFiles");
 
 	if (countMode == mode_none)
 	{
@@ -314,8 +312,10 @@ int LiBiCount::main(int argc, char **argv)
 			exitFail("Could not open ", bamOutFileName, " for outputting bam data");
 	}
 
+	if (countsFilename)
+		tempDirectory = countsFilename.replaceSuffix("_tempFiles");
 	if (!nameOrder)
-		tempDirectory = tempDirectory::get(tempDirectory);
+		tempDirectory = tempDirectory::make("LiBiNorm",tempDirectory);
 
 #ifdef IGNORED_GTF_TRANSCRIPT_TYPES
 	//	Retained intron transcripts dramatically change the apparent lengths of genes so are ignored, unless
@@ -1531,9 +1531,6 @@ void LiBiCount::cacheData::readNext(readCacheClass & dataCache)
 	while (name)
 	{
 		parser(name, "_", thisId);
-		bool found = false;
-		if (name == "V300046256L1C001R0010344427_024614557_024614515_142_F")
-			found = true;
 		if (!currentId)
 		{
 			currentId = thisId;

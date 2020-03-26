@@ -30,7 +30,7 @@
 #define READ_CACHE_SIZE 50000
 #else
 #define READ_CACHE_SIZE 2000000
-//#define READ_CACHE_SIZE 2000
+//#define READ_CACHE_SIZE 200
 #endif
 
 //	Report progress every REP_LEN entries
