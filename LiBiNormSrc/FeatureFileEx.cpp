@@ -42,12 +42,19 @@ void featureRegion::checkOverlap(const region & segment,vector<featureOverlap> &
 //	from the associated values
 featureRegion::featureRegion(featureRegion && gtf) : start(gtf.start), finish(gtf.finish), RNAstart(gtf.RNAstart), name(std::move(gtf.name)), type(std::move(gtf.type)),
 bioType(std::move(gtf.bioType)), strand(gtf.strand), overlaps(gtf.overlaps)
+#ifdef GET_GENE_NAME 
+	, id(gtf.id)
+#endif
 {};
 
-featureRegion::featureRegion(size_t start, size_t finish, const std::string & name, char strand, const std::string & type, const std::string & bioType) :
-	start(start), finish(finish),  RNAstart(0), name(name), type(type), bioType(bioType),strand(strand)
+featureRegion::featureRegion(size_t start, size_t finish, const std::string & name, char strand, const std::string & type, const std::string & bioType 
+#ifdef GET_GENE_NAME 
+	, const std::string & id) : id(id) ,
+#else
+	) :	
+#endif
+	start(start), finish(finish), RNAstart(0), name(name), type(type), bioType(bioType), strand(strand)
 {};
-
 
 void featureFileEx::index(GeneCountData & geneCounts, bool useStrand)
 {
@@ -128,7 +135,11 @@ void featureFileEx::index(GeneCountData & geneCounts, bool useStrand)
 			}
 			static const string nullString;
 			thisChromData.emplace(i.position(),featureRegion(i.feature().start,finish,i.feature().name,
-				i.feature().strand,i.feature().type , i.feature().biotype));
+				i.feature().strand,i.feature().type , i.feature().biotype
+#ifdef GET_GENE_NAME 
+				, i.feature().id
+#endif
+			));
 		}
 
 		//	And now for each region find the regions that it overlaps and produce overlap list:  The list of all regions that start before this region has ended.
@@ -226,7 +237,12 @@ bool featureFileEx::outputChromData(const string & filename, const GeneCountData
 			bool beingUsed = geneCounts.info[index].useForParameterEstimation;
 			int length = geneCounts.lengths[0][index];
 			output.printEnd(i.first, _s("chr",i.first, ":", j.feature.start, "-", j.feature.finish), j.feature.RNAstart, j.feature.strand,
-				j.feature.name, j.feature.type, j.feature.bioType,beingUsed, length,countF, countR);
+				j.feature.name,
+#ifdef GET_GENE_NAME 
+				j.feature.id,
+#endif
+			
+				j.feature.type, j.feature.bioType,beingUsed, length,countF, countR);
 		}
 	}
 	return true;

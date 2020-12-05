@@ -12,7 +12,7 @@
 CCC = g++
 
 # Flags required by all stages of C++ compiler
-CCCALLFLAGS= -std=gnu++11 -DBAM_LIBRARY
+CCCALLFLAGS= -DBAM_LIBRARY
 
 # Directory information
 BAMTOOLSDIR = bamtools/src/
@@ -176,22 +176,23 @@ $(BUILD)/mcmcLib/mcmc.o: ../bioinformaticsLib/rand.h
 $(BUILD)/mcmcLib/mcmc.o: ../bioinformaticsLib/dataVec.h
 $(BUILD)/mcmcLib/mcmc.o: ../bioinformaticsLib/libCommon.h
 $(BUILD)/mcmcLib/mcmc.o: ../bioinformaticsLib/printEx.h
+$(BUILD)/mcmcLib/mcmc.o: ../bioinformaticsLib/stringEx.h
 $(BUILD)/mcmcLib/mcmc.o: ../bioinformaticsLib/inQuotes.h mcmcLib/mcmc.h
 $(BUILD)/mcmcLib/mcmc.o: mcmcLib/params.h
 $(BUILD)/mcmcLib/mcmc.o: ../bioinformaticsLib/nelderMeadOptimiser.h
-$(BUILD)/mcmcLib/mcmc.o: ../bioinformaticsLib/stringEx.h
 $(BUILD)/mcmcLib/params.o: ../bioinformaticsLib/rand.h
 $(BUILD)/mcmcLib/params.o: ../bioinformaticsLib/dataVec.h
 $(BUILD)/mcmcLib/params.o: ../bioinformaticsLib/libCommon.h
 $(BUILD)/mcmcLib/params.o: ../bioinformaticsLib/printEx.h
+$(BUILD)/mcmcLib/params.o: ../bioinformaticsLib/stringEx.h
 $(BUILD)/mcmcLib/params.o: ../bioinformaticsLib/inQuotes.h mcmcLib/params.h
 $(BUILD)/mcmcLib/params.o: ../bioinformaticsLib/nelderMeadOptimiser.h
-$(BUILD)/mcmcLib/params.o: ../bioinformaticsLib/stringEx.h
 $(BUILD)/LiBiNormSrc/FeatureFileEx.o: LiBiNormSrc/FeatureFileEx.h
 $(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bioinformaticsLib/containerEx.h
 $(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bioinformaticsLib/libCommon.h
 $(BUILD)/LiBiNormSrc/FeatureFileEx.o: LiBiNormSrc/Regions.h
 $(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bioinformaticsLib/printEx.h
+$(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bioinformaticsLib/stringEx.h
 $(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bioinformaticsLib/inQuotes.h
 $(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bamtools/src/api/BamReader.h
 $(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bamtools/src/api/api_global.h
@@ -210,7 +211,6 @@ $(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bamtools/src/api/SamSequence.h
 $(BUILD)/LiBiNormSrc/FeatureFileEx.o: LiBiNormSrc/Options.h
 $(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bioinformaticsLib/featureFile.h
 $(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bioinformaticsLib/genbankFile.h
-$(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bioinformaticsLib/stringEx.h
 $(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bioinformaticsLib/dataVec.h
 $(BUILD)/LiBiNormSrc/FeatureFileEx.o: LiBiNormSrc/GeneCountData.h
 $(BUILD)/LiBiNormSrc/FeatureFileEx.o: ../bioinformaticsLib/libParser.h
@@ -262,6 +262,7 @@ $(BUILD)/LiBiNormSrc/LiBiCount.o: ../bioinformaticsLib/containerEx.h
 $(BUILD)/LiBiNormSrc/LiBiCount.o: ../bioinformaticsLib/bamAlignmentEx.h
 $(BUILD)/LiBiNormSrc/LiBiCount.o: LiBiNormSrc/Regions.h
 $(BUILD)/LiBiNormSrc/LiBiCount.o: ../bioinformaticsLib/printEx.h
+$(BUILD)/LiBiNormSrc/LiBiCount.o: ../bioinformaticsLib/stringEx.h
 $(BUILD)/LiBiNormSrc/LiBiCount.o: ../bioinformaticsLib/inQuotes.h
 $(BUILD)/LiBiNormSrc/LiBiCount.o: ../bamtools/src/api/BamReader.h
 $(BUILD)/LiBiNormSrc/LiBiCount.o: ../bamtools/src/api/api_global.h
@@ -283,7 +284,6 @@ $(BUILD)/LiBiNormSrc/LiBiCount.o: LiBiNormSrc/LiBiCount.h
 $(BUILD)/LiBiNormSrc/LiBiCount.o: LiBiNormSrc/FeatureFileEx.h
 $(BUILD)/LiBiNormSrc/LiBiCount.o: ../bioinformaticsLib/featureFile.h
 $(BUILD)/LiBiNormSrc/LiBiCount.o: ../bioinformaticsLib/genbankFile.h
-$(BUILD)/LiBiNormSrc/LiBiCount.o: ../bioinformaticsLib/stringEx.h
 $(BUILD)/LiBiNormSrc/LiBiCount.o: ../bioinformaticsLib/dataVec.h
 $(BUILD)/LiBiNormSrc/LiBiCount.o: LiBiNormSrc/GeneCountData.h mcmcLib/mcmc.h
 $(BUILD)/LiBiNormSrc/LiBiCount.o: mcmcLib/params.h
@@ -332,11 +332,11 @@ $(BUILD)/LiBiNormSrc/LiBiOptimiser.o: ../bioinformaticsLib/rand.h
 $(BUILD)/LiBiNormSrc/LiBiOptimiser.o: ../bioinformaticsLib/dataVec.h
 $(BUILD)/LiBiNormSrc/LiBiOptimiser.o: ../bioinformaticsLib/libCommon.h
 $(BUILD)/LiBiNormSrc/LiBiOptimiser.o: ../bioinformaticsLib/printEx.h
+$(BUILD)/LiBiNormSrc/LiBiOptimiser.o: ../bioinformaticsLib/stringEx.h
 $(BUILD)/LiBiNormSrc/LiBiOptimiser.o: ../bioinformaticsLib/inQuotes.h
 $(BUILD)/LiBiNormSrc/LiBiOptimiser.o: LiBiNormSrc/Options.h
 $(BUILD)/LiBiNormSrc/LiBiOptimiser.o: LiBiNormSrc/LiBiOptimiser.h
 $(BUILD)/LiBiNormSrc/LiBiOptimiser.o: ../bioinformaticsLib/nelderMeadOptimiser.h
-$(BUILD)/LiBiNormSrc/LiBiOptimiser.o: ../bioinformaticsLib/stringEx.h
 $(BUILD)/LiBiNormSrc/LiBiOptimiser.o: LiBiNormSrc/ModelData.h mcmcLib/mcmc.h
 $(BUILD)/LiBiNormSrc/LiBiOptimiser.o: mcmcLib/params.h
 $(BUILD)/LiBiNormSrc/LiBiTools.o: ../bamtools/src/api/BamReader.h
@@ -414,8 +414,8 @@ $(BUILD)/LiBiNormSrc/ModelData.o: ../bioinformaticsLib/rand.h
 $(BUILD)/LiBiNormSrc/ModelData.o: ../bioinformaticsLib/dataVec.h
 $(BUILD)/LiBiNormSrc/ModelData.o: ../bioinformaticsLib/libCommon.h
 $(BUILD)/LiBiNormSrc/ModelData.o: ../bioinformaticsLib/printEx.h
-$(BUILD)/LiBiNormSrc/ModelData.o: ../bioinformaticsLib/inQuotes.h
 $(BUILD)/LiBiNormSrc/ModelData.o: ../bioinformaticsLib/stringEx.h
+$(BUILD)/LiBiNormSrc/ModelData.o: ../bioinformaticsLib/inQuotes.h
 $(BUILD)/LiBiNormSrc/ModelData.o: ../bioinformaticsLib/containerEx.h
 $(BUILD)/LiBiNormSrc/ModelData.o: LiBiNormSrc/ModelData.h
 $(BUILD)/LiBiNormSrc/ModelData.o: LiBiNormSrc/Options.h mcmcLib/mcmc.h
@@ -431,6 +431,7 @@ $(BUILD)/LiBiNormSrc/refSeqs.o: ../bioinformaticsLib/containerEx.h
 $(BUILD)/LiBiNormSrc/refSeqs.o: ../bioinformaticsLib/libCommon.h
 $(BUILD)/LiBiNormSrc/refSeqs.o: LiBiNormSrc/Regions.h
 $(BUILD)/LiBiNormSrc/refSeqs.o: ../bioinformaticsLib/printEx.h
+$(BUILD)/LiBiNormSrc/refSeqs.o: ../bioinformaticsLib/stringEx.h
 $(BUILD)/LiBiNormSrc/refSeqs.o: ../bioinformaticsLib/inQuotes.h
 $(BUILD)/LiBiNormSrc/refSeqs.o: ../bamtools/src/api/BamReader.h
 $(BUILD)/LiBiNormSrc/refSeqs.o: ../bamtools/src/api/api_global.h
@@ -449,7 +450,6 @@ $(BUILD)/LiBiNormSrc/refSeqs.o: ../bamtools/src/api/SamSequence.h
 $(BUILD)/LiBiNormSrc/refSeqs.o: LiBiNormSrc/Options.h
 $(BUILD)/LiBiNormSrc/refSeqs.o: ../bioinformaticsLib/featureFile.h
 $(BUILD)/LiBiNormSrc/refSeqs.o: ../bioinformaticsLib/genbankFile.h
-$(BUILD)/LiBiNormSrc/refSeqs.o: ../bioinformaticsLib/stringEx.h
 $(BUILD)/LiBiNormSrc/refSeqs.o: ../bioinformaticsLib/dataVec.h
 $(BUILD)/LiBiNormSrc/refSeqs.o: LiBiNormSrc/GeneCountData.h
 $(BUILD)/LiBiNormSrc/refSeqs.o: ../bioinformaticsLib/libParser.h
@@ -457,6 +457,7 @@ $(BUILD)/LiBiNormSrc/refSeqs.o: mcmcLib/mcmc.h mcmcLib/params.h
 $(BUILD)/LiBiNormSrc/refSeqs.o: ../bioinformaticsLib/nelderMeadOptimiser.h
 $(BUILD)/LiBiNormSrc/Regions.o: LiBiNormSrc/Regions.h
 $(BUILD)/LiBiNormSrc/Regions.o: ../bioinformaticsLib/printEx.h
+$(BUILD)/LiBiNormSrc/Regions.o: ../bioinformaticsLib/stringEx.h
 $(BUILD)/LiBiNormSrc/Regions.o: ../bioinformaticsLib/inQuotes.h
 $(BUILD)/LiBiNormSrc/Regions.o: ../bamtools/src/api/BamReader.h
 $(BUILD)/LiBiNormSrc/Regions.o: ../bamtools/src/api/api_global.h
@@ -481,11 +482,13 @@ $(BUILD)/bioinformaticsLib/codFile.o: ../bioinformaticsLib/libCommon.h
 $(BUILD)/bioinformaticsLib/dataVec.o: ../bioinformaticsLib/dataVec.h
 $(BUILD)/bioinformaticsLib/dataVec.o: ../bioinformaticsLib/libCommon.h
 $(BUILD)/bioinformaticsLib/dataVec.o: ../bioinformaticsLib/printEx.h
+$(BUILD)/bioinformaticsLib/dataVec.o: ../bioinformaticsLib/stringEx.h
 $(BUILD)/bioinformaticsLib/dataVec.o: ../bioinformaticsLib/inQuotes.h
 $(BUILD)/bioinformaticsLib/dataVec.o: ../bioinformaticsLib/containerEx.h
 $(BUILD)/bioinformaticsLib/dataVec.o: ../bioinformaticsLib/libParser.h
 $(BUILD)/bioinformaticsLib/dataVec.o: ../bioinformaticsLib/rand.h
 $(BUILD)/bioinformaticsLib/fastaFile.o: ../bioinformaticsLib/printEx.h
+$(BUILD)/bioinformaticsLib/fastaFile.o: ../bioinformaticsLib/stringEx.h
 $(BUILD)/bioinformaticsLib/fastaFile.o: ../bioinformaticsLib/inQuotes.h
 $(BUILD)/bioinformaticsLib/fastaFile.o: ../bioinformaticsLib/libParser.h
 $(BUILD)/bioinformaticsLib/fastaFile.o: ../bioinformaticsLib/libCommon.h
@@ -516,6 +519,8 @@ $(BUILD)/bioinformaticsLib/libCommon.o: ../bioinformaticsLib/stringEx.h
 $(BUILD)/bioinformaticsLib/libCommon.o: ../bioinformaticsLib/inQuotes.h
 $(BUILD)/bioinformaticsLib/libParser.o: ../bioinformaticsLib/libCommon.h
 $(BUILD)/bioinformaticsLib/libParser.o: ../bioinformaticsLib/libParser.h
+$(BUILD)/bioinformaticsLib/libParser.o: ../bioinformaticsLib/stringEx.h
+$(BUILD)/bioinformaticsLib/libParser.o: ../bioinformaticsLib/inQuotes.h
 $(BUILD)/bioinformaticsLib/nelderMeadOptimiser.o: ../bioinformaticsLib/libCommon.h
 $(BUILD)/bioinformaticsLib/nelderMeadOptimiser.o: ../bioinformaticsLib/nelderMeadOptimiser.h
 $(BUILD)/bioinformaticsLib/nelderMeadOptimiser.o: ../bioinformaticsLib/stringEx.h
@@ -523,16 +528,22 @@ $(BUILD)/bioinformaticsLib/nelderMeadOptimiser.o: ../bioinformaticsLib/inQuotes.
 $(BUILD)/bioinformaticsLib/nelderMeadOptimiser.o: ../bioinformaticsLib/dataVec.h
 $(BUILD)/bioinformaticsLib/nelderMeadOptimiser.o: ../bioinformaticsLib/printEx.h
 $(BUILD)/bioinformaticsLib/printEx.o: ../bioinformaticsLib/printEx.h
-$(BUILD)/bioinformaticsLib/printEx.o: ../bioinformaticsLib/inQuotes.h
 $(BUILD)/bioinformaticsLib/printEx.o: ../bioinformaticsLib/stringEx.h
+$(BUILD)/bioinformaticsLib/printEx.o: ../bioinformaticsLib/inQuotes.h
 $(BUILD)/bioinformaticsLib/rand.o: ../bioinformaticsLib/rand.h
 $(BUILD)/bioinformaticsLib/rand.o: ../bioinformaticsLib/dataVec.h
 $(BUILD)/bioinformaticsLib/rand.o: ../bioinformaticsLib/libCommon.h
 $(BUILD)/bioinformaticsLib/rand.o: ../bioinformaticsLib/printEx.h
+$(BUILD)/bioinformaticsLib/rand.o: ../bioinformaticsLib/stringEx.h
 $(BUILD)/bioinformaticsLib/rand.o: ../bioinformaticsLib/inQuotes.h
 $(BUILD)/bioinformaticsLib/smithWaterman.o: ../bioinformaticsLib/smithWaterman.h
 $(BUILD)/bioinformaticsLib/stringEx.o: ../bioinformaticsLib/stringEx.h
 $(BUILD)/bioinformaticsLib/stringEx.o: ../bioinformaticsLib/inQuotes.h
+$(BUILD)/bioinformaticsLib/stringEx.o: ../bioinformaticsLib/libParser.h
+$(BUILD)/bioinformaticsLib/stringEx.o: ../bioinformaticsLib/libCommon.h
+$(BUILD)/bioinformaticsLib/systemCalls.o: ../bioinformaticsLib/systemCalls.h
+$(BUILD)/bioinformaticsLib/threadEx.o: ../bioinformaticsLib/threadEx.h
+$(BUILD)/bioinformaticsLib/threadEx.o: ../bioinformaticsLib/libCommon.h
 $(BUILD)/bamtools/src/api/BamAlignment.o: ../bamtools/src/api/BamAlignment.h
 $(BUILD)/bamtools/src/api/BamAlignment.o: ../bamtools/src/api/api_global.h
 $(BUILD)/bamtools/src/api/BamAlignment.o: ../bamtools/src/shared/bamtools_global.h

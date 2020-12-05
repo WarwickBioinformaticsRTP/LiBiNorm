@@ -44,7 +44,11 @@ public:
 	};
 
 	featureRegion(featureRegion && gtf);
-	featureRegion(size_t start, size_t finish, const std::string & name, char strand, const std::string & type, const std::string & bioType);
+	featureRegion(size_t start, size_t finish, const std::string & name, char strand, const std::string & type, const std::string & bioType
+#ifdef GET_GENE_NAME 
+		, const std::string & id
+#endif
+	);
 	
 	void checkOverlap(const region & segment, std::vector<featureOverlap> & overlapList) const;
 
@@ -56,6 +60,10 @@ public:
 	const std::string bioType;
 	char strand;
 	chromosomeFeatureData::iterator overlaps;
+
+#ifdef GET_GENE_NAME 
+	const std::string id;
+#endif
 
 #ifdef HISAT2
 	std::string sequence;

@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.28307.960
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LiBiNorm", "LiBiNormSrc\LiBiNorm.vcxproj", "{8687182A-2A38-4161-BF43-302D3407C512}"
 	ProjectSection(ProjectDependencies) = postProject
@@ -57,8 +57,8 @@ Global
 		{1BB748F9-A024-405E-8286-A2D2F85953F2}.Debug|x86.Build.0 = Debug|Win32
 		{1BB748F9-A024-405E-8286-A2D2F85953F2}.release notOptimised|Mixed Platforms.ActiveCfg = Release|Win32
 		{1BB748F9-A024-405E-8286-A2D2F85953F2}.release notOptimised|Mixed Platforms.Build.0 = Release|Win32
-		{1BB748F9-A024-405E-8286-A2D2F85953F2}.release notOptimised|x64.ActiveCfg = Release|x64
-		{1BB748F9-A024-405E-8286-A2D2F85953F2}.release notOptimised|x64.Build.0 = Release|x64
+		{1BB748F9-A024-405E-8286-A2D2F85953F2}.release notOptimised|x64.ActiveCfg = release notOptimised|x64
+		{1BB748F9-A024-405E-8286-A2D2F85953F2}.release notOptimised|x64.Build.0 = release notOptimised|x64
 		{1BB748F9-A024-405E-8286-A2D2F85953F2}.release notOptimised|x86.ActiveCfg = Release|Win32
 		{1BB748F9-A024-405E-8286-A2D2F85953F2}.release notOptimised|x86.Build.0 = Release|Win32
 		{1BB748F9-A024-405E-8286-A2D2F85953F2}.Release|Mixed Platforms.ActiveCfg = Release|Win32
@@ -124,5 +124,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {01560563-9E88-428B-856F-5FF5A7A1F334}
 	EndGlobalSection
 EndGlobal

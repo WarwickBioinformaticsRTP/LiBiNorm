@@ -11,7 +11,7 @@
 #define OPTIONS_H
 
 
-#define LIBINORM_VERSION "2.4"
+#define LIBINORM_VERSION "2.5"
 //	Bam/gff file reading
 #define DEFAULT_FEATURE_TYPE_EXON "exon" 
 #define DEFAULT_GTF_ID_ATTRIBUTE "gene_id"

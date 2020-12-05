@@ -329,7 +329,7 @@ int LiBiCount::main(int argc, char **argv)
 	{
 		if (strncasecmp(i.RefName.c_str(), "chr", 3) == 0)
 			i.RefName = i.RefName.substr(3);
-#ifdef NEWVER
+#ifdef VER_2_5a
 		else if (strcasecmp(i.RefName.c_str(), "mitochondria") == 0)
 			i.RefName = "M";
 		else if (strcasecmp(i.RefName.c_str(), "chloroplast") == 0)
