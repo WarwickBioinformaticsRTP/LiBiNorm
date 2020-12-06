@@ -14,7 +14,10 @@ CCC = g++
 CCCALLFLAGS= -DBAM_LIBRARY
 ifeq ($(OS),Windows_NT)
 CCCALLFLAGS += -std=gnu++11
+else
+CCCALLFLAGS += -std=c++11
 endif
+
 # Flags required by all stages of C++ compiler
 
 # Directory information
