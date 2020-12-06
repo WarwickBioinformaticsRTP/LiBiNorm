@@ -11,8 +11,11 @@
 # Standard rules
 CCC = g++
 
-# Flags required by all stages of C++ compiler
 CCCALLFLAGS= -DBAM_LIBRARY
+ifeq ($(OS),Windows_NT)
+CCCALLFLAGS += -std=gnu++11
+endif
+# Flags required by all stages of C++ compiler
 
 # Directory information
 BAMTOOLSDIR = bamtools/src/
@@ -29,7 +32,7 @@ BUILD=$(DEBUGDIR)
 CCCALLFLAGS += -g3 -O0 -D_DEBUG -Wall -Wno-unknown-pragmas 
 else
 BUILD=$(RELDIR)
-CCCALLFLAGS += -O3
+CCCALLFLAGS += -O3 -Wno-constant-conversion
 endif
 
 INCLUDES= -I../$(BAMTOOLSDIR) -I../$(BIOINFORMATICSLIBDIR) -I$(MCMCLIBDIR) -I$(HISAT2DIR) -I$(LIBINORMSRCDIR)

@@ -46,7 +46,8 @@ void setSSfun(optionsType & options,modelType m)
 		options.ssfun = &FLL_ModelBD;
 		options.priorfun = &priorFunc;
 		break;
-	case none:;
+	case none:
+	case noModelSpecified:;
 	}
 }
 
@@ -76,6 +77,7 @@ stringEx conv(const modelType m, bool removeGaps)
 	case ModelE: retVal = "Model E"; break;
 	case ModelBD: retVal = "Model BD"; break;
 	case none: retVal = "None"; break;
+	case noModelSpecified:retVal = "No model specified"; break;
 	}
 	if (removeGaps)
 		retVal.replace(" ", "");
@@ -177,6 +179,7 @@ paramDescriptionSet GetModelParams(modelType model,dataVec * defaults, VEC_DATA_
 		};
 		break;
 	case none:
+	case noModelSpecified:
 		break;
 	};
 
@@ -742,7 +745,8 @@ void getBias(modelType m,dataVec & params,const dataVec & l, dataVec & bias)
 		t2 = pow(10, params[3]);
 		a = params[4];
 		break;
-	case none:;
+	case none:
+	case noModelSpecified:;
 	}
 
 	bias.resize(l.size());
@@ -791,7 +795,8 @@ void getBias(modelType m,dataVec & params,const dataVec & l, dataVec & bias)
 			(1 - exp(-l*(t1 + t2))) / (t1 + t2) / d);
 		break;
 	}
-	case none:;
+	case none:
+	case noModelSpecified:;
 	}
 	bias = bias * l[0] / bias[0];
 	bias /= l;
@@ -831,7 +836,8 @@ dataVec getDistribution(modelType m, size_t length, size_t points, dataVec & par
 		t2 = pow(10, params[3]);
 		a = params[4];
 		break;
-	case none:;
+	case none:
+	case noModelSpecified:;
 	}
 
 	
@@ -878,7 +884,8 @@ dataVec getDistribution(modelType m, size_t length, size_t points, dataVec & par
 	case ModelC:
 		dist = (x> h)*(x < l-h)*exp(-t2*(x+h)) +  exp(-t2*(x))/d;
 		break;
-	case none:;
+	case none:
+	case noModelSpecified:;
 	}
 	dist.normalise();
 	return dist;
