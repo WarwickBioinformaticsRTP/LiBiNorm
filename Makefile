@@ -265,7 +265,7 @@ $(BUILD)/LiBiNormSrc/LiBiConv.o: mcmcLib/mcmc.h mcmcLib/params.h
 $(BUILD)/LiBiNormSrc/LiBiConv.o: ../bioinformaticsLib/nelderMeadOptimiser.h
 $(BUILD)/LiBiNormSrc/LiBiCount.o: ../bioinformaticsLib/libCommon.h
 $(BUILD)/LiBiNormSrc/LiBiCount.o: ../bioinformaticsLib/containerEx.h
-$(BUILD)/LiBiNormSrc/LiBiCount.o: ../bioinformaticsLib/bamAlignmentEx.h
+$(BUILD)/LiBiNormSrc/LiBiCount.o: ../bioinformaticsLib/bamToolsEx.h
 $(BUILD)/LiBiNormSrc/LiBiCount.o: LiBiNormSrc/Regions.h
 $(BUILD)/LiBiNormSrc/LiBiCount.o: ../bioinformaticsLib/printEx.h
 $(BUILD)/LiBiNormSrc/LiBiCount.o: ../bioinformaticsLib/stringEx.h
@@ -514,9 +514,9 @@ $(BUILD)/bioinformaticsLib/genbankFile.o: ../bioinformaticsLib/stringEx.h
 $(BUILD)/bioinformaticsLib/genbankFile.o: ../bioinformaticsLib/inQuotes.h
 $(BUILD)/bioinformaticsLib/genbankFile.o: ../bioinformaticsLib/printEx.h
 $(BUILD)/bioinformaticsLib/genbankFile.o: ../bioinformaticsLib/libParser.h
+$(BUILD)/bioinformaticsLib/genomicPosition.o: ../bioinformaticsLib/genomicPosition.h
 $(BUILD)/bioinformaticsLib/genomicPosition.o: ../bioinformaticsLib/stringEx.h
 $(BUILD)/bioinformaticsLib/genomicPosition.o: ../bioinformaticsLib/inQuotes.h
-$(BUILD)/bioinformaticsLib/genomicPosition.o: ../bioinformaticsLib/genomicPosition.h
 $(BUILD)/bioinformaticsLib/genomicPosition.o: ../bioinformaticsLib/libParser.h
 $(BUILD)/bioinformaticsLib/genomicPosition.o: ../bioinformaticsLib/libCommon.h
 $(BUILD)/bioinformaticsLib/genomicPosition.o: ../bioinformaticsLib/printEx.h
