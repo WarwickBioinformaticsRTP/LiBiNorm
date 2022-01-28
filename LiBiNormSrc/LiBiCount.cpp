@@ -17,7 +17,7 @@
 
 #include "libCommon.h"
 #include "containerEx.h"
-#include "bamAlignmentEx.h"
+#include "bamToolsEx.h"
 #include "Regions.h"
 #include "libParser.h"
 #include "LiBiCount.h"
