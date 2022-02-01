@@ -146,7 +146,7 @@ int MakeFastq::main(int argc, char **argv)
 
 	stringEx bamFileName,outputFileRoot,foreignBamData;
 
-	stringEx skipChromosome;
+	stringEx skipChromosome,mitoName;
 
 	if(argc < 1)
 	{
@@ -163,6 +163,7 @@ int MakeFastq::main(int argc, char **argv)
 		printf("  -k ab, --skip=ab			skip chromosomes begining in ab\n");
 		printf("  -i f, --mito=f			Proportion of mitochondrial reads from original\n");
 		printf("							that are included in output (1.0)\n");
+		printf("  -j <nam>, --mitoname=<nam> Name of mitochondrial scaffold (default MT or chrMT)\n");
 		printf("  -u f, --unmapped=f		Proportion of completely unmapped reads in output (1.0)\n");
 		printf("  -m f, --mapped=f			Proportion of mapped reads in output (1.0)\n");
 		printf("  -v N f, --overamplified=N,f	degree of overamplification (N) and error rate in copies (g,0.002) \n");
@@ -198,9 +199,13 @@ int MakeFastq::main(int argc, char **argv)
 		{
 			start = atoi(opt2?argv[ni]+8:argv[++ni]);
 		}
-		else if((strcmp(argv[ni], "-i") == 0) || (opt2 = (strncmp(argv[ni], "--mito=",7) == 0)))
+		else if ((strcmp(argv[ni], "-i") == 0) || (opt2 = (strncmp(argv[ni], "--mito=", 7) == 0)))
 		{
-			mitoRate = atof(opt2?argv[ni]+9:argv[++ni]);
+			mitoRate = atof(opt2 ? argv[ni] + 7 : argv[++ni]);
+		}
+		else if ((strcmp(argv[ni], "-j") == 0) || (opt2 = (strncmp(argv[ni], "--mitoname=", 11) == 0)))
+		{
+			mitoName = opt2 ? argv[ni] + 11 : argv[++ni];
 		}
 		else if((strcmp(argv[ni], "-u") == 0) || (opt2 = (strncmp(argv[ni], "--unmapped=",11) == 0)))
 		{
@@ -263,15 +268,14 @@ int MakeFastq::main(int argc, char **argv)
 	int mitoRef = -1;
 	for (size_t i = 0;i < references.size();i++)
 	{
-		if ((references[i].RefName == "MT") || (references[i].RefName == "chrMT"))
+		if ((references[i].RefName == "MT") || (references[i].RefName == "chrMT") || (references[i].RefName == mitoName))
 		{
 			mitoRef = i;
 			break;
 		}
 	}
 	if (mitoRef == -1)
-		progMessage("No mitochondrial gene found");
-
+		progMessage("No mitochondrial scaffold/chromosome found");
 
 	cerr << "Skipping reads" << endl;
 	for (size_t i = 0;i < start;i++)
