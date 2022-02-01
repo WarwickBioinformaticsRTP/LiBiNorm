@@ -270,7 +270,7 @@ int MakeFastq::main(int argc, char **argv)
 		}
 	}
 	if (mitoRef == -1)
-		exitFail("No mitochondrial gene found");
+		progMessage("No mitochondrial gene found");
 
 
 	cerr << "Skipping reads" << endl;

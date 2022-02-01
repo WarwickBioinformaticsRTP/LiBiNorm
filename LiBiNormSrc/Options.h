@@ -112,7 +112,7 @@
 // #define SELECT_READS_SEED 2017
 
 //	Use this to add the mode which creates fastq files based on bam files with artificial problems
-// #define MAKE_FASTQ_MODE
+#define MAKE_FASTQ_MODE
 
 //	Use this to enable various addditional tools for exploring LiBiNorm data.  This currently
 //	provides the additional land, land2 and gene run modes
