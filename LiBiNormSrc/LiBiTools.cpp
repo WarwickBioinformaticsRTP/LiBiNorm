@@ -368,11 +368,12 @@ int LiBiTools::geneMain(int argc, char **argv)
 	TsvFile resFile;
 	resFile.open(fastq_filename.replaceSuffix(".genes.txt"));
 
-	bool OK = fasta.readEntry();
+	std::string seq;
+	bool OK = fasta.readEntry(seq);
 	while (OK)
 	{
 		resFile.print(fasta.NameStr());
-		OK = fasta.readEntry();
+		OK = fasta.readEntry(seq);
 	};
 	return EXIT_SUCCESS;
 
